@@ -89,13 +89,14 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 **Technical Notes**:
 - **Simplified CSV format**: `round,category,value,question,answer` (no daily_double column)
 - Support for Jeopardy, Double Jeopardy, and Final Jeopardy rounds
-- **Automatic Daily Double placement** using authentic probability distribution:
-  - Row 1 (lowest values): 0% chance
-  - Row 2: 9% chance
-  - Row 3: 26% chance
-  - Row 4: 39% chance
-  - Row 5 (highest values): 26% chance
-- **Category selection**: Random for Jeopardy (1 DD), different categories for Double Jeopardy (2 DDs)
+- **Automatic Daily Double placement** using authentic probability distribution
+  - **Category Selection**: Random for Jeopardy (1 DD), different categories for Double Jeopardy (2 DDs)
+  - **Row Selection**: Weighted random based on authentic Jeopardy! data
+    - Row 1 (lowest values): 0% chance
+    - Row 2: 9% chance
+    - Row 3: 26% chance
+    - Row 4: 39% chance
+    - Row 5 (highest values): 26% chance
 - Basic validation: required columns, proper round structure, 6 categories × 5 clues per round
 - **Reference**: See `docs/ai/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
 - **Deferred to Phase 2**: In-app question editor, drag-and-drop Daily Double placement, advanced validation
