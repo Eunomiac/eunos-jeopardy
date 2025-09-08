@@ -39,7 +39,6 @@ export async function testDatabaseConnection() {
     return false;
   }
 }
-// ❇️REMOVE_DISABLE_AFTER_DATABASE_CONFIGURED❇️
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getSample(tableName: keyof DefaultSchema["Tables"] & DefaultSchema["Views"]): Promise<Tables<any>[]> {
   console.log(`🃏 Fetching sample ${tableName}...`);
@@ -68,7 +67,6 @@ export async function runDatabaseTests() {
     return;
   }
 
-  // ❇️REMOVE_DISABLE_AFTER_DATABASE_CONFIGURED❇️
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const samples = await Promise.all(TABLE_NAMES.map(tableName => getSample(tableName))) as any[][]
 
