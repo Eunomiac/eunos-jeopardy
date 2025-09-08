@@ -13,8 +13,9 @@ This folder contains documentation specifically designed for AI code assistants 
 - **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Deployment procedures and environment setup
 
 ## 📖 **Project Context**
-- **[PROJECT_CHARTER (solo).md](./PROJECT_CHARTER%20(solo).md)** - Template for solo developer projects
-- **[PROJECT_CHARTER (multi).md](./PROJECT_CHARTER%20(multi).md)** - Template for multi-developer projects
+- **[PROJECT_CHARTER.md](./PROJECT_CHARTER.md)** - Project overview, database schema, and development phases
+- **[PROJECT_MANAGEMENT.md](./PROJECT_MANAGEMENT.md)** - Current sprint status, issues, and task tracking
+- **[DAILY_DOUBLE_ALGORITHM.md](./DAILY_DOUBLE_ALGORITHM.md)** - Automatic Daily Double placement specification
 
 ## 🎯 **Usage Guidelines**
 
@@ -39,11 +40,12 @@ This folder contains documentation specifically designed for AI code assistants 
 ## 🔄 **Quick Reference**
 
 **Most Frequently Used:**
-1. PROJECT_SETUP.md - New project initialization
+1. PROJECT_MANAGEMENT.md - Current sprint status and active issues
 2. TESTING_STRATEGY.md - Coverage decisions and test exclusions
 3. LINEAR_REFERENCE.md - Task management operations
+4. PROJECT_CHARTER.md - Database schema and project overview
 
-**Project-Specific:**
-- Update PROJECT_CHARTER after copying template
-- Customize SUPABASE_SETUP.md with new project credentials
-- Modify DEPLOYMENT_GUIDE.md for project-specific deployment needs
+**Algorithm & Implementation:**
+- DAILY_DOUBLE_ALGORITHM.md - CSV parsing and automatic Daily Double placement
+- SUPABASE_SETUP.md - Database configuration and RLS policies
+- DEPLOYMENT_GUIDE.md - Production deployment procedures

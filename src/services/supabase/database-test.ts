@@ -39,8 +39,8 @@ export async function testDatabaseConnection() {
     return false;
   }
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getSample(tableName: keyof DefaultSchema["Tables"] & DefaultSchema["Views"]): Promise<Tables<any>[]> {
+
+export async function getSample<T extends (keyof DefaultSchema["Tables"])>(tableName: T): Promise<Tables<T>[]> {
   console.log(`🃏 Fetching sample ${tableName}...`);
 
   const { data, error } = await supabase
@@ -53,8 +53,8 @@ export async function getSample(tableName: keyof DefaultSchema["Tables"] & Defau
     return [];
   }
 
-  console.log(`✅ Fetched ${data.length} sample ${tableName}`);
-  return data;
+  console.log(`✅ Fetched ${data?.length || 0} sample ${tableName}`);
+  return (data as Tables<T>[]) || [];
 }
 
 // Run all tests
@@ -67,8 +67,7 @@ export async function runDatabaseTests() {
     return;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const samples = await Promise.all(TABLE_NAMES.map((tableName) => getSample(tableName))) as any[][]
+  const samples = await Promise.all(TABLE_NAMES.map((tableName) => getSample(tableName)));
 
   console.log("📊 Database test results:");
   TABLE_NAMES.forEach((tableName, index) => {
@@ -76,7 +75,13 @@ export async function runDatabaseTests() {
   });
 
   if (samples[0].length > 0) {
-    console.log("🃏 Sample element:", samples[0][0].name);
+    const sampleElement = samples[0][0];
+    const keys = Object.keys(sampleElement).slice(0, 3); // Show first 3 properties
+    const preview = keys.reduce<Record<string, unknown>>((obj, key) => {
+      obj[key] = sampleElement[key as keyof typeof sampleElement];
+      return obj;
+    }, {});
+    console.log("🃏 Sample element:", JSON.stringify(preview, null, 2));
   }
 
   console.log("✅ Database tests completed!");

@@ -24,55 +24,88 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 - [x] Development environment configuration
 
 ### 🔄 Phase 3: Core Development (IN PROGRESS)
-**Current Focus**: Authentication and basic game structure
+**Current Focus**: Simplified authentication and CSV-based question loading
+
+**Approach**: Private-use-first development strategy
+- Implement minimal viable features for friend games
+- Defer complex security and UI features to Phase 4
+- Focus on core gameplay functionality
+- Maintain extensibility for future public release
 
 ---
 
-## Current Sprint: Authentication & Foundation
+## Current Sprint: Simplified Foundation
 
 ### 🔴 High Priority Issues
 
-#### Issue #1: Authentication System
+#### Issue #1: Simplified Authentication System (Private Use)
 **Status**: 🟡 TODO
 **Assignee**: Development Team
 **Epic**: User Management
+**Priority**: 🔴 High (Foundation)
 
-**Description**: Implement Supabase authentication flow with user registration, login, and session management.
+**Description**: Implement basic Supabase authentication for private friend games. Simplified approach without complex security features that can be added later for public release.
 
 **Acceptance Criteria**:
-- [ ] User registration with email/password
+- [ ] User registration with email/password (no email verification)
 - [ ] User login with session persistence
 - [ ] Logout functionality
 - [ ] Protected routes for authenticated users
-- [ ] User profile creation in `profiles` table
-- [ ] Error handling for auth failures
+- [ ] Basic auth context/provider pattern
+- [ ] Simple error handling for auth failures
 
 **Technical Notes**:
-- Use Supabase Auth with RLS policies
-- Integrate with existing `profiles` table
-- Implement auth context/provider pattern
+- Use Supabase Auth with simplified RLS policies
+- Skip email verification, password reset, user profiles initially
+- Focus on getting friends logged in quickly
+- **Deferred to Phase 2**: Email verification, password reset, user profiles, advanced security
+
+**Phase 2 Enhancements** (for public release):
+- Email verification flow
+- Password reset functionality
+- User profile creation and management
+- Advanced RLS policies and security headers
 
 ---
 
-#### Issue #2: Question Set Management
+#### Issue #2: CSV Question Set Loader (Simplified)
 **Status**: 🟡 TODO
 **Assignee**: Development Team
 **Epic**: Content Management
+**Priority**: 🔴 High (Foundation)
 
-**Description**: Build interface for hosts to create and manage question sets (Jeopardy/Double Jeopardy boards + Final Jeopardy).
+**Description**: Build CSV file upload and parser for question sets. Hosts create questions in CSV format externally, then upload to the game. Much faster to implement than complex in-app editor.
 
 **Acceptance Criteria**:
-- [ ] Create new question set form
-- [ ] Edit existing question sets
-- [ ] Question set validation (6 categories, 5 clues each)
-- [ ] Daily Double placement interface
-- [ ] Final Jeopardy question setup
-- [ ] Save/load question sets from database
+- [ ] Define simplified CSV format specification (round, category, value, question, answer)
+- [ ] Create example CSV files for testing
+- [ ] Build file upload component with drag-and-drop
+- [ ] Implement CSV parser with basic validation
+- [ ] **Implement automatic Daily Double placement algorithm**
+- [ ] Save parsed questions to database (`question_sets`, `boards`, `categories`, `clues` tables)
+- [ ] Error handling for malformed CSV files
+- [ ] Simple preview of loaded questions with Daily Double positions
 
 **Technical Notes**:
-- Use `question_sets`, `boards`, `categories`, `clues` tables
-- Implement form validation for Jeopardy rules
-- Consider drag-and-drop for Daily Double placement
+- **Simplified CSV format**: `round,category,value,question,answer` (no daily_double column)
+- Support for Jeopardy, Double Jeopardy, and Final Jeopardy rounds
+- **Automatic Daily Double placement** using authentic probability distribution:
+  - Row 1 (lowest values): 0% chance
+  - Row 2: 9% chance
+  - Row 3: 26% chance
+  - Row 4: 39% chance
+  - Row 5 (highest values): 26% chance
+- **Category selection**: Random for Jeopardy (1 DD), different categories for Double Jeopardy (2 DDs)
+- Basic validation: required columns, proper round structure, 6 categories × 5 clues per round
+- **Reference**: See `docs/ai/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
+- **Deferred to Phase 2**: In-app question editor, drag-and-drop Daily Double placement, advanced validation
+
+**Phase 2 Enhancements** (for public release):
+- In-app question set editor with rich UI
+- Visual Daily Double placement interface
+- Question set templates and sharing
+- Advanced validation and preview features
+- Import/export multiple formats
 
 ---
 
@@ -100,19 +133,27 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 
 ### 🟡 Medium Priority Issues
 
-#### Issue #4: Player Interface
+#### Issue #4: Simplified Player Interface (Voice-Chat Focused)
 **Status**: 🟡 TODO
 **Assignee**: Development Team
 **Epic**: Player Experience
+**Priority**: 🟡 Medium
 
-**Description**: Build player interface for joining games, buzzing in, and submitting answers.
+**Description**: Build streamlined player interface optimized for Discord voice chat gameplay. Focus on buzzer functionality since answers are communicated verbally.
 
 **Acceptance Criteria**:
 - [ ] Join game with game code
-- [ ] Buzzer button with visual feedback
-- [ ] Answer submission form
-- [ ] Score display
+- [ ] Large, responsive buzzer button with visual/audio feedback
+- [ ] Answer submission form **only for Final Jeopardy**
+- [ ] Score display and current game state
 - [ ] Game state awareness (can buzz, waiting, etc.)
+- [ ] Clean, minimal game-show aesthetic
+- [ ] Mobile-friendly buzzer interface
+
+**Technical Notes**:
+- **Simplified**: No text input forms except Final Jeopardy
+- Mobile-first responsive design for buzzer
+- **Deferred to Phase 2**: Complex answer submission, player profiles, chat features
 
 ---
 
@@ -183,6 +224,40 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 
 ---
 
+## Phase 4: Public Release Enhancements (Future)
+
+**When to implement**: After successful private friend games and decision to go public
+
+### Enhanced Authentication
+- [ ] Email verification flow
+- [ ] Password reset functionality
+- [ ] User profile creation and management
+- [ ] Advanced RLS policies and security headers
+- [ ] Rate limiting and abuse prevention
+
+### Advanced Question Management
+- [ ] In-app question set editor with rich UI
+- [ ] Visual Daily Double placement interface
+- [ ] Question set templates and sharing
+- [ ] Advanced validation and preview features
+- [ ] Import/export multiple formats
+
+### Enhanced Player Experience
+- [ ] In-app text answer submission for all questions
+- [ ] Player profiles and avatars
+- [ ] In-game chat functionality
+- [ ] Advanced buzzer customization
+- [ ] Mobile app considerations
+
+### Enterprise Features
+- [ ] Advanced analytics and reporting
+- [ ] Multi-tenant support
+- [ ] API rate limiting
+- [ ] Audit trails and logging
+- [ ] Performance monitoring
+
+---
+
 ## Technical Debt & Improvements
 
 ### Code Quality
@@ -234,7 +309,10 @@ For each issue to be considered complete:
 ### 2025-09-08
 - ✅ Completed Phase 2 setup (infrastructure & integrations)
 - ✅ Created project management document
-- 🎯 **Next**: Begin Issue #1 (Authentication System)
+- ✅ **Strategy Pivot**: Adopted private-use-first development approach
+- ✅ Simplified authentication and question management requirements
+- ✅ Updated project issues to reflect CSV-first question loading
+- 🎯 **Next**: Begin Issue #1 (Simplified Authentication) and Issue #2 (CSV Question Loader)
 
 ---
 
