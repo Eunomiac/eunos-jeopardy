@@ -27,7 +27,7 @@ Online platform to create and host custom Jeopardy!-style games with friends. In
 
 1. Clone the repository:
    ```bash
-   git clone ❇️REPOSITORY_URL❇️
+   git clone https://github.com/Eunomiac/eunos-jeopardy.git
    cd eunos-jeopardy
    ```
 

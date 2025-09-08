@@ -79,7 +79,7 @@ All placeholder values use the format ❇️PLACEHOLDER❇️:
 - ❇️PROJECT_NAME❇️ - Display name
 - ❇️PROJECT_NAME_KEBAB_CASE❇️ - Package name
 - ❇️PROJECT_DESCRIPTION❇️ - Brief description
-- ❇️REPOSITORY_URL❇️ - Git repository URL
+- https://github.com/Eunomiac/eunos-jeopardy.git - Git repository URL
 
 ### **Service Configuration**
 - **Supabase**: New project required
