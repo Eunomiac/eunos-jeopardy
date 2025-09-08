@@ -1,0 +1,36 @@
+// App component styles
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  
+  &__header {
+    background-color: $background-secondary;
+    border-bottom: $border-width solid $border-color;
+    padding: $spacing-md $spacing-lg;
+    
+    h1 {
+      margin: 0;
+      font-size: $font-size-xl;
+      color: $accent-color;
+    }
+  }
+  
+  &__main {
+    flex: 1;
+    padding: $spacing-lg;
+    max-width: $container-max-width;
+    margin: 0 auto;
+    width: 100%;
+  }
+  
+  &__footer {
+    background-color: $background-secondary;
+    border-top: $border-width solid $border-color;
+    padding: $spacing-md $spacing-lg;
+    text-align: center;
+    color: $text-muted;
+    font-size: $font-size-sm;
+  }
+}

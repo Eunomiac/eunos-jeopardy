@@ -1,0 +1,10 @@
+// Main SCSS entry point
+// Import order: variables → mixins → globals → components → utilities
+
+@import 'variables';
+@import 'mixins';
+@import 'globals';
+@import 'utilities';
+
+// Component styles
+@import 'components/app';
