@@ -86,7 +86,7 @@ Use available tools proactively and purposefully:
 5. **🔴 CRITICAL - Escalate when stuck**: Ask for user guidance if autonomous resolution isn't working
 
 ### When Things Go Wrong
-- **🔴 Service unavailable** (Linear, GitHub, Supabase): Inform user immediately, suggest alternatives, don't proceed with broken setup
+- **🔴 Service unavailable** (GitHub, Supabase): Inform user immediately, suggest alternatives, don't proceed with broken setup
 - **🟡 Conflicting requirements**: Present options with clear trade-offs, let user decide priority
 - **🟡 Partial failures**: Document what succeeded, what failed, provide specific recovery steps
 - **🔴 Data loss risk**: Stop immediately, confirm with user before any destructive operations
@@ -124,7 +124,7 @@ Use available tools proactively and purposefully:
 - **Restart only when necessary**: Only restart dev server when required for configuration changes or troubleshooting
 
 ### Always‑use tools
-- **Linear, GitHub, Notion, Supabase**: Always enabled/core services; follow their dedicated sections and references in docs/ai.
+- **GitHub, Notion, Supabase**: Always enabled/core services; follow their dedicated sections and references in docs/ai.
 - **Context 7**: Use for up‑to‑date package documentation whenever integrating or troubleshooting libraries/APIs.
 - **Playwright (Agent tool)**: Use for quick, safe browser automation and UI smoke checks during setup/triage. Do not confuse with repo E2E tests; for those, use @playwright/test as a devDependency.
 - **Sequential thinking**: Default for any non‑trivial planning/design/debugging task; prefer before large edits or complex refactors.
@@ -154,7 +154,7 @@ Use available tools proactively and purposefully:
 - Explain the reasoning behind recommendations
 - Help build good coding habits through examples and guidance
 - Balance practical solutions with educational value
-- **Recognize skill level**: User is intermediate-level coder, novice with React, and new to Linear, Notion, Supabase, Vite, and Jest
+- **Recognize skill level**: User is intermediate-level coder, novice with React, and new to Notion, Supabase, Vite, and Jest
 - **Testing experience**: User wants more experience with Jest testing framework and maintaining proper test coverage
 - **Proactive guidance**: Don't assume user knows the "right" way to do things - offer guidance even when not explicitly asked
 - **Prevent common pitfalls**: Anticipate and warn about typical mistakes or suboptimal patterns, especially with unfamiliar tools
@@ -192,19 +192,18 @@ The goal is to provide excellent coding assistance that helps create maintainabl
 
 # Tool-Specific Guidelines
 
-## Linear Project Management
-- **Fresh conversation protocol**: Always check Linear for current project status and upcoming tasks when starting a new conversation
-- **Primary source of truth**: Linear contains the current project state, priorities, and future direction
-- **Task tracking**: Use Linear to understand project priorities, current phase, and specific requirements
-- **Issue creation**: Create Linear issues for new features, bugs, or technical debt identified during development
-- **Progress updates**: Update Linear issues as work progresses and mark completed when finished
-- **Linear Reference**: Use `docs/LINEAR_REFERENCE.md` for workspace UUIDs (team, states, labels, users) to avoid repeated API queries for basic operations
-- **📛📛 THE AI HAS PROACTIVE RESPONSIBILITY FOR MAINTAINING LINEAR HYGEINE 📛📛**:
-  A - **Ensure actionable tasks exist**: There should be at least one task marked "in progress". If none exist, identify the most logical next task from available candidates and update it to "in progress" after user confirmation.
-  B - **Resolve priority conflicts**: If multiple tasks are "in progress", engage the user to determine priority and update Linear accordingly.
-  C - **Recognize planning gaps**: Before proceeding with any task, evaluate whether it's sufficiently detailed for implementation. Issues with vague descriptions, broad scope, or unclear requirements should trigger a planning conversation.
-  D - **Take initiative on breakdown**: When high-level issues lack actionable sub-issues, proactively propose a breakdown structure to the user. Don't wait to be asked - it's the AI's responsibility to identify when more planning is needed.
-  E - **Maintain project structure**: Proactively update Linear throughout the work session - mark completed sub-issues, update progress, and ensure the project state accurately reflects current reality.
+## Project Management
+- **Primary source of truth**: `docs/ai/PROJECT_MANAGEMENT.md` contains the current project state, priorities, and future direction
+- **Fresh conversation protocol**: Always check PROJECT_MANAGEMENT.md for current project status and upcoming tasks when starting a new conversation
+- **Task tracking**: Use PROJECT_MANAGEMENT.md to understand project priorities, current phase, and specific requirements
+- **Issue management**: Update issue statuses in PROJECT_MANAGEMENT.md as work progresses (🟡 TODO → 🔄 In Progress → ✅ Complete)
+- **Progress updates**: Add entries to the Progress Log section with daily accomplishments and next steps
+- **📛📛 THE AI HAS PROACTIVE RESPONSIBILITY FOR MAINTAINING PROJECT HYGIENE 📛📛**:
+  A - **Ensure actionable tasks exist**: There should be at least one issue marked "🔄 In Progress". If none exist, identify the most logical next task and update status after user confirmation.
+  B - **Resolve priority conflicts**: If multiple issues are "🔄 In Progress", engage the user to determine priority and update PROJECT_MANAGEMENT.md accordingly.
+  C - **Recognize planning gaps**: Before proceeding with any task, evaluate whether it's sufficiently detailed for implementation. Issues with vague descriptions should trigger a planning conversation.
+  D - **Take initiative on breakdown**: When high-level issues lack actionable sub-tasks, proactively propose detailed breakdown and update the document.
+  E - **Maintain project structure**: Proactively update PROJECT_MANAGEMENT.md throughout the work session - mark completed issues, update progress log, and ensure the project state accurately reflects current reality.
 
 ## Supabase Backend Services
 - **Database management**: Use for database schema management, authentication, and API endpoints
@@ -216,7 +215,7 @@ The goal is to provide excellent coding assistance that helps create maintainabl
 - **Workflow**: Follow conventional commit messages and branching strategies
 - **Deployment**: Set up automatic deployments for web applications
 - **Collaboration**: Create pull requests for significant features or changes
-- **Integration**: Link commits and PRs to Linear issues when applicable
+- **Integration**: Reference PROJECT_MANAGEMENT.md issues in commits and PRs when applicable
 - **Commit verification**: After git commit, use `git status` to verify success rather than reading from process output
 - **Avoid process hanging**: Don't attempt to read from or kill git processes - check status with separate commands
 
@@ -236,8 +235,8 @@ Euno's Jeopardy is an online platform to create and host custom Jeopardy!-style 
 ## Project Resources
 - **Project Charter**: Original project charter available in `docs/ai/PROJECT_CHARTER.md` for background context
 - **Testing Strategy**: Comprehensive testing decisions and coverage exclusions in `docs/ai/TESTING_STRATEGY.md` - **REFERENCE BEFORE MAKING TESTING DECISIONS**
-- **Service References**: Integration details in `docs/ai/LINEAR_REFERENCE.md` and `docs/ai/SUPABASE_SETUP.md`
-- **Current Status**: All current project state, priorities, and future direction managed in Linear
+- **Project Management**: Current project state, priorities, and development plan in `docs/ai/PROJECT_MANAGEMENT.md`
+- **Service References**: Integration details in `docs/ai/SUPABASE_SETUP.md`
 
 - Multi-user app: requires Supabase Auth and Realtime; enforce RLS on all tables.
 - Real-time gameplay: low-latency buzzer events with host lock/unlock authority.
