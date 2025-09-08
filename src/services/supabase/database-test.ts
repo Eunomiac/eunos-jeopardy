@@ -68,7 +68,7 @@ export async function runDatabaseTests() {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const samples = await Promise.all(TABLE_NAMES.map(tableName => getSample(tableName))) as any[][]
+  const samples = await Promise.all(TABLE_NAMES.map((tableName) => getSample(tableName))) as any[][]
 
   console.log("📊 Database test results:");
   TABLE_NAMES.forEach((tableName, index) => {

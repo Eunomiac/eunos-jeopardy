@@ -6,6 +6,9 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type GameStatus = "lobby" | "in_progress" | "completed" | "archived"
+export type RoundType = "jeopardy" | "double" | "final"
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -480,8 +483,8 @@ export type Database = {
       }
     }
     Enums: {
-      game_status: "lobby" | "in_progress" | "completed" | "archived"
-      round_type: "jeopardy" | "double" | "final"
+      game_status: GameStatus,
+      round_type: RoundType
     }
     CompositeTypes: {
       [_ in never]: never
@@ -591,7 +594,6 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
