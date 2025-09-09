@@ -204,12 +204,13 @@ final,Geography,0,Largest country?,Russia`
 
     /* istanbul ignore next - Requires Supabase integration testing */
     it('should handle database error during clue set creation', async () => {
+      const dbError = new Error('Database error')
       ;(supabase.from as jest.Mock).mockReturnValue({
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
               data: null,
-              error: { message: 'Database error' }
+              error: dbError
             })
           })
         })

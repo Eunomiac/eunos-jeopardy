@@ -24,7 +24,7 @@ describe('App', () => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     })
 
-    expect(screen.getByText('Login')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Email')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Password')).toBeInTheDocument()
   })

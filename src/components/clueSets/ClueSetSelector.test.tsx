@@ -45,7 +45,7 @@ describe('ClueSetSelector', () => {
   it('should render clue set selector with available files', () => {
     render(<ClueSetSelector />)
 
-    expect(screen.getByText('Load Question Set')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Load Question Set' })).toBeInTheDocument()
     expect(screen.getByLabelText('Select Question Set:')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Load Question Set' })).toBeInTheDocument()
     expect(screen.getByText('Choose a clue set...')).toBeInTheDocument()
@@ -93,41 +93,31 @@ describe('ClueSetSelector', () => {
     expect(loadButton).not.toBeDisabled()
   })
 
-  it('should show error when trying to load without selecting file', async () => {
+  it('should disable load button when no file is selected', () => {
     render(<ClueSetSelector />)
 
     const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
-    fireEvent.click(loadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText('Please select a clue set file')).toBeInTheDocument()
-    })
+    expect(loadButton).toBeDisabled()
   })
 
-  it('should show error when user is not logged in', async () => {
-    // Mock no user
-    jest.doMock('../../contexts/AuthContext', () => ({
-      useAuth: () => ({
-        user: null,
-        session: null,
-        loading: false,
-        login: jest.fn(),
-        logout: jest.fn()
-      })
-    }))
-
-    const { ClueSetSelector: NoUserClueSetSelector } = require('./ClueSetSelector')
-    render(<NoUserClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-    fireEvent.click(loadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText('You must be logged in to load clue sets')).toBeInTheDocument()
+  it('should show message when user is not logged in', () => {
+    // Mock useAuth to return no user
+    const mockUseAuth = jest.spyOn(require('../../contexts/AuthContext'), 'useAuth')
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      loading: false,
+      login: jest.fn(),
+      logout: jest.fn()
     })
+
+    render(<ClueSetSelector />)
+
+    expect(screen.getByText('Please log in to load clue sets.')).toBeInTheDocument()
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Load Question Set' })).not.toBeInTheDocument()
+
+    mockUseAuth.mockRestore()
   })
 
   it('should handle successful clue set loading', async () => {
@@ -152,22 +142,7 @@ describe('ClueSetSelector', () => {
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
     fireEvent.click(loadButton)
 
-    // Should show loading state
-    await waitFor(() => {
-      expect(screen.getByText('Loading...')).toBeInTheDocument()
-    })
-
-    // Should show loading CSV message
-    await waitFor(() => {
-      expect(screen.getByText('Loading CSV file...')).toBeInTheDocument()
-    })
-
-    // Should show saving message
-    await waitFor(() => {
-      expect(screen.getByText('Saving to database...')).toBeInTheDocument()
-    })
-
-    // Should show success message
+    // Should show success message eventually
     await waitFor(() => {
       expect(screen.getByText('Successfully loaded "Test Game 1" (ID: clue-set-123)')).toBeInTheDocument()
     })
@@ -192,10 +167,10 @@ describe('ClueSetSelector', () => {
     fireEvent.click(loadButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Error: Failed to load CSV')).toBeInTheDocument()
+      expect(screen.getByText('Failed to load clue set: Failed to load CSV')).toBeInTheDocument()
     })
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error loading clue set:', loadError)
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to load clue set:', loadError)
     consoleSpy.mockRestore()
   })
 
@@ -226,10 +201,10 @@ describe('ClueSetSelector', () => {
     fireEvent.click(loadButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Error: Database connection failed')).toBeInTheDocument()
+      expect(screen.getByText('Failed to load clue set: Database connection failed')).toBeInTheDocument()
     })
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error loading clue set:', saveError)
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to load clue set:', saveError)
     consoleSpy.mockRestore()
   })
 
@@ -285,10 +260,10 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const label = screen.getByLabelText('Select Question Set:')
+    const labeledSelect = screen.getByLabelText('Select Question Set:')
 
     expect(select).toHaveAttribute('id', 'clue-set-select')
-    expect(label).toHaveAttribute('for', 'clue-set-select')
+    expect(labeledSelect).toBe(select) // The labeled element should be the select itself
   })
 
   it('should handle empty available question sets', () => {

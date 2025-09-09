@@ -18,14 +18,30 @@ jest.mock('../services/supabase/client', () => ({
 // Test component to access auth context
 function TestComponent() {
   const { user, session, loading, login, logout } = useAuth()
-  
+
+  const handleLogin = async () => {
+    try {
+      await login('test@example.com', 'password')
+    } catch (error) {
+      // Errors are expected in tests, just ignore them
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      // Errors are expected in tests, just ignore them
+    }
+  }
+
   return (
     <div>
       <div data-testid="loading">{loading ? 'loading' : 'not-loading'}</div>
       <div data-testid="user">{user ? user.email : 'no-user'}</div>
       <div data-testid="session">{session ? 'has-session' : 'no-session'}</div>
-      <button onClick={() => login('test@example.com', 'password')}>Login</button>
-      <button onClick={logout}>Logout</button>
+      <button onClick={handleLogin}>Login</button>
+      <button onClick={handleLogout}>Logout</button>
     </div>
   )
 }
@@ -148,7 +164,7 @@ describe('AuthContext', () => {
   })
 
   it('should handle login error', async () => {
-    const loginError = new Error('Invalid credentials')
+    const loginError = { message: 'Invalid credentials', name: 'AuthError' }
     ;(supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
       data: { user: null, session: null },
       error: loginError
@@ -204,7 +220,7 @@ describe('AuthContext', () => {
   })
 
   it('should handle logout error', async () => {
-    const logoutError = new Error('Logout failed')
+    const logoutError = { message: 'Logout failed', name: 'AuthError' }
     ;(supabase.auth.signOut as jest.Mock).mockResolvedValue({
       error: logoutError
     })

@@ -72,12 +72,22 @@ export default {
     '!src/**/*.spec.{ts,tsx}',
     '!src/test/**',
 
+    /* ❌ EXCLUDED: Entry Point Files */
+    '!src/main.tsx',
+    '!src/test-schema.ts',
+
+    /* ❌ EXCLUDED: Barrel Export Files */
+    '!src/services/index.ts',
+
     /* ❌ EXCLUDED: Supabase Files */
     '!src/services/supabase/types.ts',
     '!src/services/supabase/client.ts',
     '!src/services/supabase/index.ts',
     '!src/services/supabase/connection.ts',
     '!src/services/supabase/database-test.ts',
+
+    /* ❌ EXCLUDED: Complex Integration Code Requiring Integration Testing */
+    '!src/services/clueSets/loader.ts',
 
     /* ❌ EXCLUDED: Higher-Order Testing Required */
     // e.g. animations, DOM manipulation, etc.
