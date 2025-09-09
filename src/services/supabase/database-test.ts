@@ -57,6 +57,71 @@ export async function getSample<T extends (keyof DefaultSchema["Tables"])>(table
   return (data as Tables<T>[]) || [];
 }
 
+/**
+ * Test authentication with our test users
+ */
+export async function testAuthUsers(): Promise<void> {
+  console.log("🔐 Testing authentication with test users...\n")
+
+  const testUsers = [
+    { email: "host@test.com", password: "1234" },
+    { email: "player1@test.com", password: "1234" },
+    { email: "player2@test.com", password: "1234" }
+  ]
+
+  for (const testUser of testUsers) {
+    console.log(`🧪 Testing login for: ${testUser.email}`)
+
+    try {
+      // Test login
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: testUser.email,
+        password: testUser.password
+      })
+
+      if (authError) {
+        console.log(`   ❌ Login failed: ${authError.message}`)
+        continue
+      }
+
+      console.log(`   ✅ Login successful`)
+      console.log(`   User ID: ${authData.user?.id}`)
+
+      // Test profile access (RLS policy check)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user?.id)
+        .single()
+
+      if (profileError) {
+        console.log(`   ⚠️  Profile access: ${profileError.message}`)
+      } else {
+        console.log(`   ✅ Profile access working`)
+        console.log(`   Profile: ${JSON.stringify(profileData, null, 2)}`)
+      }
+
+      // Test that user can't access other profiles (RLS security check)
+      const { data: allProfiles, error: allProfilesError } = await supabase
+        .from('profiles')
+        .select('*')
+
+      if (allProfilesError) {
+        console.log(`   ⚠️  RLS test failed: ${allProfilesError.message}`)
+      } else {
+        console.log(`   🔒 RLS Policy Check: Can see ${allProfiles.length} profile(s) (should be 1 - their own)`)
+      }
+
+      // Logout
+      await supabase.auth.signOut()
+      console.log(`   🚪 Logged out\n`)
+
+    } catch (error) {
+      console.log(`   ❌ Test failed: ${error}`)
+    }
+  }
+}
+
 // Run all tests
 export async function runDatabaseTests() {
   console.log("🚀 Running database tests...");

@@ -42,29 +42,33 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 
 ### 🔴 High Priority Issues
 
-#### Issue #1: Simplified Authentication System (Private Use)
+#### Issue #1: Simplified User Management System (For In-Dev Use)
 **Status**: 🟡 TODO
 **Assignee**: Development Team
 **Epic**: User Management
 **Priority**: 🔴 High (Foundation)
 
-**Description**: Implement basic Supabase authentication for private friend games. Simplified approach without complex security features that can be added later for public release.
+**Description**: Implement extremely simplified functionality to track users and logins.
 
 **Acceptance Criteria**:
-- [ ] User registration with email/password (no email verification)
-- [ ] User login with session persistence
-- [ ] Logout functionality
-- [ ] Protected routes for authenticated users
-- [ ] Basic auth context/provider pattern
-- [ ] Simple error handling for auth failures
+- [ ] Simple login/logout functionality
+- [ ] User registration can be handled manually by creating valid host/player accounts directly in Supabase
 
 **Technical Notes**:
-- Use Supabase Auth with simplified RLS policies
+- Focus on getting users to connect quickly to continue development
+- Ignore authentication and security concerns
 - Skip email verification, password reset, user profiles initially
-- Focus on getting friends logged in quickly
-- **Deferred to Phase 2**: Email verification, password reset, user profiles, advanced security
+- **Deferred to Phase 3**: user authentication, user registration, email verification, password reset, user profiles, advanced security
 
-**Phase 2 Enhancements** (for public release):
+**Phase 3 Enhancements**
+__near-future__
+- user registration with email/password
+- user login with session persistence
+- protected routes for authenticated users
+- basic auth context/provider pattern
+- simple error handling for auth failures
+
+__for public release__
 - Email verification flow
 - Password reset functionality
 - User profile creation and management
@@ -103,9 +107,9 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
     - Row 5 (highest values): 26% chance
 - Basic validation: required columns, proper round structure, 6 categories × 5 clues per round
 - **Reference**: See `docs/ai/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
-- **Deferred to Phase 2**: In-app question editor, drag-and-drop Daily Double placement, advanced validation
+- **Deferred to Phase 3**: In-app question editor, drag-and-drop Daily Double placement, advanced validation
 
-**Phase 2 Enhancements** (for public release):
+**Phase 3 Enhancements** (for public release):
 - In-app question set editor with rich UI
 - Visual Daily Double placement interface
 - Question set templates and sharing
@@ -158,7 +162,7 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 **Technical Notes**:
 - **Simplified**: No text input forms except Final Jeopardy
 - Mobile-first responsive design for buzzer
-- **Deferred to Phase 2**: Complex answer submission, player profiles, chat features
+- **Deferred to Phase 3**: Complex answer submission, player profiles, chat features
 
 ---
 

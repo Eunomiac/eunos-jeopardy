@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { SimpleLogin } from '../components/auth/SimpleLogin'
+import { useAuth } from '../contexts/AuthContext'
 
 export function App() {
   const [count, setCount] = useState(0)
+  const { user } = useAuth()
 
   return (
     <div className="app">
@@ -11,10 +14,14 @@ export function App() {
 
       <main className="app__main">
         <div className="d-flex flex-column align-center">
-          <h2>Welcome to your new project!</h2>
-          <p className="text-secondary mb-4">
-            This is a template React application with TypeScript, SCSS, and Jest testing.
-          </p>
+          <SimpleLogin />
+
+          {user && (
+            <>
+              <h2>Welcome to your new project!</h2>
+              <p className="text-secondary mb-4">
+                This is a template React application with TypeScript, SCSS, and Jest testing.
+              </p>
 
           <div className="d-flex align-center mb-4">
             <button
@@ -32,6 +39,8 @@ export function App() {
             </button>
           </div>
 
+
+
           <div className="text-center">
             <p className="text-muted">
               Edit <code>src/app/App.tsx</code> to get started.
@@ -40,6 +49,8 @@ export function App() {
               Run <code>npm test</code> to run the test suite.
             </p>
           </div>
+            </>
+          )}
         </div>
       </main>
 
