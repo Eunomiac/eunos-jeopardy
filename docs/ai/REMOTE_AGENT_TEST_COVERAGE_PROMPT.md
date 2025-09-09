@@ -1,3 +1,5 @@
+Note: These instructions are intended for remote agents tasked specifically with increasing testing coverage.
+
 # Mission
 Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScript application while maintaining code quality and following established patterns.
 
