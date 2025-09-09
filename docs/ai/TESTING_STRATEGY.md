@@ -165,6 +165,24 @@ Search integration code involves:
 - Manual testing for search performance and accuracy
 - User acceptance testing for search user experience
 
+### Clue Set Loading Integration Code
+
+**Files Excluded:**
+- `src/services/clueSets/loader.ts` - Complex async service with CSV parsing, validation, and database operations
+
+**Rationale:**
+Clue set loading code involves:
+1. Complex async workflows with multiple error handling branches
+2. File fetching and CSV parsing operations
+3. Database transactions with Supabase client
+4. Data validation and transformation logic
+
+**Alternative Testing Approach:**
+- Integration tests with real CSV files and database connections
+- End-to-end tests for complete CSV-to-database workflows
+- Manual testing for various CSV formats and edge cases
+- Error scenario testing with real network and database failures
+
 ### SonarQube Configuration
 (May be out-of-date: Always check the `sonar-project.properties` file for the most up-to-date exclusions)
 ```properties
