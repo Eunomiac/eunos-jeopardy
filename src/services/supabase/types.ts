@@ -6,9 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type GameStatus = "lobby" | "in_progress" | "completed" | "archived"
-export type RoundType = "jeopardy" | "double" | "final"
-
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -81,38 +78,21 @@ export type Database = {
       }
       boards: {
         Row: {
-          created_at: string
-          daily_double_cells: Json
+          clue_set_id: string | null
           id: string
-          owner_id: string
           round: Database["public"]["Enums"]["round_type"]
-          title: string
         }
         Insert: {
-          created_at?: string
-          daily_double_cells?: Json
+          clue_set_id?: string | null
           id?: string
-          owner_id: string
           round: Database["public"]["Enums"]["round_type"]
-          title: string
         }
         Update: {
-          created_at?: string
-          daily_double_cells?: Json
+          clue_set_id?: string | null
           id?: string
-          owner_id?: string
           round?: Database["public"]["Enums"]["round_type"]
-          title?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "boards_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       buzzes: {
         Row: {
@@ -164,20 +144,20 @@ export type Database = {
         Row: {
           board_id: string
           id: string
+          name: string
           position: number
-          title: string
         }
         Insert: {
           board_id: string
           id?: string
+          name: string
           position: number
-          title: string
         }
         Update: {
           board_id?: string
           id?: string
+          name?: string
           position?: number
-          title?: string
         }
         Relationships: [
           {
@@ -185,6 +165,35 @@ export type Database = {
             columns: ["board_id"]
             isOneToOne: false
             referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clue_sets: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_sets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -224,38 +233,35 @@ export type Database = {
       }
       clues: {
         Row: {
-          answer: string
-          board_id: string
-          category_position: number
+          category_id: string
           id: string
-          row_index: number
-          text: string
+          position: number
+          prompt: string
+          response: string
           value: number
         }
         Insert: {
-          answer: string
-          board_id: string
-          category_position: number
+          category_id: string
           id?: string
-          row_index: number
-          text: string
+          position: number
+          prompt: string
+          response: string
           value: number
         }
         Update: {
-          answer?: string
-          board_id?: string
-          category_position?: number
+          category_id?: string
           id?: string
-          row_index?: number
-          text?: string
+          position?: number
+          prompt?: string
+          response?: string
           value?: number
         }
         Relationships: [
           {
-            foreignKeyName: "clues_board_id_fkey"
-            columns: ["board_id"]
+            foreignKeyName: "clues_category_id_fkey"
+            columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "boards"
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]
@@ -300,7 +306,7 @@ export type Database = {
             foreignKeyName: "games_question_set_id_fkey"
             columns: ["question_set_id"]
             isOneToOne: false
-            referencedRelation: "question_sets"
+            referencedRelation: "clue_sets"
             referencedColumns: ["id"]
           },
         ]
@@ -365,64 +371,6 @@ export type Database = {
         }
         Relationships: []
       }
-      question_sets: {
-        Row: {
-          created_at: string
-          dj_board_id: string
-          final_answer: string
-          final_category: string
-          final_clue: string
-          id: string
-          jr_board_id: string
-          owner_id: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          dj_board_id: string
-          final_answer: string
-          final_category: string
-          final_clue: string
-          id?: string
-          jr_board_id: string
-          owner_id: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          dj_board_id?: string
-          final_answer?: string
-          final_category?: string
-          final_clue?: string
-          id?: string
-          jr_board_id?: string
-          owner_id?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "question_sets_dj_board_id_fkey"
-            columns: ["dj_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "question_sets_jr_board_id_fkey"
-            columns: ["jr_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "question_sets_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       wagers: {
         Row: {
           amount: number
@@ -483,7 +431,7 @@ export type Database = {
       }
     }
     Enums: {
-      game_status: GameStatus,
+      game_status: GameStatus
       round_type: RoundType
     }
     CompositeTypes: {
@@ -594,6 +542,7 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals

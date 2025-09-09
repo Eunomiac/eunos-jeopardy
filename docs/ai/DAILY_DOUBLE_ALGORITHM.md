@@ -8,14 +8,14 @@ The Daily Double placement system automatically assigns Daily Double positions d
 
 **Old Format** (manual specification):
 ```csv
-round,category,value,question,answer,daily_double
-jeopardy,HISTORY,400,This war ended in 1945,What is World War II?,true
+round,category,value,prompt,response,daily_double
+jeopardy,History,400,This war ended in 1945,What is World War II?,true
 ```
 
 **New Format** (automatic placement):
 ```csv
-round,category,value,question,answer
-jeopardy,HISTORY,400,This war ended in 1945,What is World War II?
+round,category,value,prompt,response
+jeopardy,History,400,This war ended in 1945,What is World War II?
 ```
 
 ## Probability Distribution
@@ -60,12 +60,12 @@ const DAILY_DOUBLE_ROW_PROBABILITIES = [
 
 ### 3. Implementation Steps
 
-1. **Parse CSV** - Load questions into memory
+1. **Parse CSV** - Load clues into memory
 2. **Validate Structure** - Ensure 6 categories × 5 clues per round
 3. **Select Categories** - Random selection based on round type
 4. **Select Rows** - Weighted random selection within each category
 5. **Store Positions** - Save to database `daily_double_cells` JSONB field
-6. **Return Result** - Parsed questions with Daily Double positions assigned
+6. **Return Result** - Parsed clues with Daily Double positions assigned
 
 ## Database Storage
 

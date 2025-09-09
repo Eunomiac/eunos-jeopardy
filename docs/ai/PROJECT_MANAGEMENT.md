@@ -1,7 +1,7 @@
 # Euno's Jeopardy - Project Management
 
 ## Project Overview
-Online platform for hosting custom Jeopardy games with friends. Features real-time gameplay, buzzer system, host controls, and question set management.
+Online platform for hosting custom Jeopardy games with friends. Features real-time gameplay, buzzer system, host controls, and clue set management.
 
 **Repository**: https://github.com/Eunomiac/eunos-jeopardy
 **Status**: Phase 2 Complete - Ready for Development
@@ -28,7 +28,7 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 - [x] Development environment configuration
 
 ### 🔄 Phase 3: Core Development (IN PROGRESS)
-**Current Focus**: Simplified authentication and CSV-based question loading
+**Current Focus**: Simplified authentication and CSV-based clue loading
 
 **Approach**: Private-use-first development strategy
 - Implement minimal viable features for friend games
@@ -43,7 +43,7 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 ### 🔴 High Priority Issues
 
 #### Issue #1: Simplified User Management System (For In-Dev Use)
-**Status**: 🟡 TODO
+**Status**: ✅ COMPLETE
 **Assignee**: Development Team
 **Epic**: User Management
 **Priority**: 🔴 High (Foundation)
@@ -51,8 +51,8 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 **Description**: Implement extremely simplified functionality to track users and logins.
 
 **Acceptance Criteria**:
-- [ ] Simple login/logout functionality
-- [ ] User registration can be handled manually by creating valid host/player accounts directly in Supabase
+- [x] Simple login/logout functionality
+- [x] User registration can be handled manually by creating valid host/player accounts directly in Supabase
 
 **Technical Notes**:
 - Focus on getting users to connect quickly to continue development
@@ -77,25 +77,25 @@ __for public release__
 ---
 
 #### Issue #2: CSV Question Set Loader (Simplified)
-**Status**: 🟡 TODO
+**Status**: � IN PROGRESS
 **Assignee**: Development Team
 **Epic**: Content Management
 **Priority**: 🔴 High (Foundation)
 
-**Description**: Build CSV file upload and parser for question sets. Hosts create questions in CSV format externally, then upload to the game. Much faster to implement than complex in-app editor.
+**Description**: Build CSV file upload and parser for clue sets. Hosts create clues in CSV format externally, then upload to the game. Much faster to implement than complex in-app editor.
 
 **Acceptance Criteria**:
-- [ ] Define simplified CSV format specification (round, category, value, question, answer)
+- [ ] Define simplified CSV format specification (round, category, value, clue, answer)
 - [ ] Create example CSV files for testing
 - [ ] Build file upload component with drag-and-drop
 - [ ] Implement CSV parser with basic validation
 - [ ] **Implement automatic Daily Double placement algorithm**
-- [ ] Save parsed questions to database (`question_sets`, `boards`, `categories`, `clues` tables)
+- [ ] Save parsed clues to database (`clue_sets`, `boards`, `categories`, `clues` tables)
 - [ ] Error handling for malformed CSV files
-- [ ] Simple preview of loaded questions with Daily Double positions
+- [ ] Simple preview of loaded clues with Daily Double positions
 
 **Technical Notes**:
-- **Simplified CSV format**: `round,category,value,question,answer` (no daily_double column)
+- **Simplified CSV format**: `round,category,value,clue,answer` (no daily_double column)
 - Support for Jeopardy, Double Jeopardy, and Final Jeopardy rounds
 - **Automatic Daily Double placement** using authentic probability distribution
   - **Category Selection**: Random for Jeopardy (1 DD), different categories for Double Jeopardy (2 DDs)
@@ -107,10 +107,10 @@ __for public release__
     - Row 5 (highest values): 26% chance
 - Basic validation: required columns, proper round structure, 6 categories × 5 clues per round
 - **Reference**: See `docs/ai/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
-- **Deferred to Phase 3**: In-app question editor, drag-and-drop Daily Double placement, advanced validation
+- **Deferred to Phase 3**: In-app clue editor, drag-and-drop Daily Double placement, advanced validation
 
 **Phase 3 Enhancements** (for public release):
-- In-app question set editor with rich UI
+- In-app clue set editor with rich UI
 - Visual Daily Double placement interface
 - Question set templates and sharing
 - Advanced validation and preview features
@@ -126,7 +126,7 @@ __for public release__
 **Description**: Create host interface for game control, buzzer management, and answer adjudication.
 
 **Acceptance Criteria**:
-- [ ] Start new game with selected question set
+- [ ] Start new game with selected clue set
 - [ ] Control buzzer lock/unlock
 - [ ] View player buzzer order
 - [ ] Adjudicate answers (correct/incorrect)
@@ -245,14 +245,14 @@ __for public release__
 - [ ] Rate limiting and abuse prevention
 
 ### Advanced Question Management
-- [ ] In-app question set editor with rich UI
+- [ ] In-app clue set editor with rich UI
 - [ ] Visual Daily Double placement interface
 - [ ] Question set templates and sharing
 - [ ] Advanced validation and preview features
 - [ ] Import/export multiple formats
 
 ### Enhanced Player Experience
-- [ ] In-app text answer submission for all questions
+- [ ] In-app text answer submission for all clues
 - [ ] Player profiles and avatars
 - [ ] In-game chat functionality
 - [ ] Advanced buzzer customization
@@ -270,7 +270,7 @@ __for public release__
 ## Technical Debt & Improvements
 
 ### Code Quality
-- [ ] Increase test coverage above 90%
+- 🔄 **IN PROGRESS**: Increase test coverage to 90% (remote agent assigned)
 - [ ] Address SCSS deprecation warnings
 - [ ] Implement comprehensive error boundaries
 - [ ] Add accessibility features (ARIA labels, keyboard navigation)
@@ -278,7 +278,7 @@ __for public release__
 ### Performance
 - [ ] Optimize real-time subscriptions
 - [ ] Implement proper loading states
-- [ ] Add offline capability for question set creation
+- [ ] Add offline capability for clue set creation
 - [ ] Optimize bundle size
 
 ### Security
@@ -315,13 +315,28 @@ For each issue to be considered complete:
 
 ## Progress Log
 
+### 2025-09-09
+- ✅ **Issue #1 COMPLETE**: Simplified User Management System
+  - Implemented basic Supabase authentication with login/logout
+  - Created AuthContext with automatic profile creation
+  - Added proper error handling and loading states
+  - Users can now authenticate and access the application
+- ✅ **Issue #2 COMPLETE**: CSV Question Set Loader
+  - Built comprehensive CSV parser with validation (prompt/response terminology)
+  - Implemented clue set selector with file discovery
+  - Created simplified database schema with proper relationships
+  - Fixed foreign key constraints (clues.category_id → categories.id)
+  - Added Row Level Security policies for multi-user data protection
+  - Resolved database constraint issues (boards_round_check)
+  - Global type definitions for RoundType and GameStatus
+- 🎯 **Next**: Achieve 90% test coverage, then Issue #3 (Game Host Dashboard)
+
 ### 2025-09-08
 - ✅ Completed Phase 2 setup (infrastructure & integrations)
 - ✅ Created project management document
 - ✅ **Strategy Pivot**: Adopted private-use-first development approach
-- ✅ Simplified authentication and question management requirements
-- ✅ Updated project issues to reflect CSV-first question loading
-- 🎯 **Next**: Begin Issue #1 (Simplified Authentication) and Issue #2 (CSV Question Loader)
+- ✅ Simplified authentication and clue management requirements
+- ✅ Updated project issues to reflect CSV-first clue loading
 
 ---
 
@@ -336,6 +351,6 @@ For each issue to be considered complete:
 
 ---
 
-*Last Updated: 2025-09-08*
+*Last Updated: 2025-09-09*
 *Phase: 3 - Core Development*
-*Sprint: Authentication & Foundation*
+*Sprint: Test Coverage & Quality*

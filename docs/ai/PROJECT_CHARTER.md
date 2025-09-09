@@ -3,7 +3,7 @@
 > This charter captures the initial intent and high-level plan. For ongoing work and prioritization, use Linear as the source of truth.
 
 ## Project Overview
-Online platform to create and host custom Jeopardy!-style games for friends. The app runs one game at a time: all connected non-host users are players in the current game (no in-app chat; players coordinate via Discord voice). The host adjudicates answers manually via UI controls. Players are currently unbounded (a later UI soft limit may apply). Hosts can prepare multiple question sets in advance and load one when a game begins. Each question set contains two boards (Jeopardy and Double Jeopardy: 6 categories × 5 clues with constrained Daily Double locations) plus a Final Jeopardy category and clue.
+Online platform to create and host custom Jeopardy!-style games for friends. The app runs one game at a time: all connected non-host users are players in the current game (no in-app chat; players coordinate via Discord voice). The host adjudicates answers manually via UI controls. Players are currently unbounded (a later UI soft limit may apply). Hosts can prepare multiple clue sets in advance and load one when a game begins. Each clue set contains two boards (Jeopardy and Double Jeopardy: 6 categories × 5 clues with constrained Daily Double locations) plus a Final Jeopardy category and clue.
 
 ## Technical Architecture
 
@@ -74,8 +74,8 @@ Goal: Improve quality and robustness.
 - boards — template boards owned by host, per-round (jeopardy/double); includes Daily Double cell positions
 - categories — per-board category headers (6)
 - clues — per-board clue cells (5 per category) with value, text, answer
-- question_sets — aggregates two boards (JR/DJ) and Final Jeopardy (category, clue, answer)
-- games — game session (host, selected question_set, status/round, buzzer lock)
+- clue_sets — aggregates two boards (JR/DJ) and Final Jeopardy (category, clue, answer)
+- games — game session (host, selected clue_set, status/round, buzzer lock)
 - players — game participants with score/nickname
 - clue_states — per-game reveal state for each clue
 - buzzes — who buzzed for a clue and when
@@ -83,9 +83,9 @@ Goal: Improve quality and robustness.
 - wagers — daily double & final jeopardy wagers (final wagers not tied to a clue)
 
 Relationships
-- profiles.id → boards.owner_id, question_sets.owner_id, games.host_id, players.user_id, buzzes.user_id, answers.user_id, wagers.user_id
-- boards.id → categories.board_id, clues.board_id, question_sets.jr_board_id, question_sets.dj_board_id
-- question_sets.id → games.question_set_id
+- profiles.id → boards.owner_id, clue_sets.owner_id, games.host_id, players.user_id, buzzes.user_id, answers.user_id, wagers.user_id
+- boards.id → categories.board_id, clues.board_id, clue_sets.jr_board_id, clue_sets.dj_board_id
+- clue_sets.id → games.clue_set_id
 - games.id → players.game_id, clue_states.game_id, buzzes.game_id, answers.game_id, wagers.game_id
 - clues.id → clue_states.clue_id, buzzes.clue_id, answers.clue_id, wagers.clue_id (nullable for final)
 
@@ -146,7 +146,7 @@ create table if not exists clues (
 );
 
 -- Question Sets (JR + DJ + Final)
-create table if not exists question_sets (
+create table if not exists clue_sets (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references profiles(id) on delete cascade,
   title text not null,
@@ -162,7 +162,7 @@ create table if not exists question_sets (
 create table if not exists games (
   id uuid primary key default gen_random_uuid(),
   host_id uuid not null references profiles(id) on delete cascade,
-  question_set_id uuid not null references question_sets(id) on delete restrict,
+  clue_set_id uuid not null references clue_sets(id) on delete restrict,
   status game_status not null default 'lobby',
   current_round round_type not null default 'jeopardy',
   is_buzzer_locked boolean not null default true,
@@ -231,7 +231,7 @@ alter table profiles    enable row level security;
 alter table boards      enable row level security;
 alter table categories  enable row level security;
 alter table clues       enable row level security;
-alter table question_sets enable row level security;
+alter table clue_sets enable row level security;
 alter table games       enable row level security;
 alter table players     enable row level security;
 alter table clue_states enable row level security;
@@ -245,10 +245,10 @@ drop policy if exists "profiles_select_own" on profiles;
 drop policy if exists "profiles_insert_own" on profiles;
 drop policy if exists "profiles_update_own" on profiles;
 
-drop policy if exists "qs_owner_select" on question_sets;
-drop policy if exists "qs_owner_insert" on question_sets;
-drop policy if exists "qs_owner_update" on question_sets;
-drop policy if exists "qs_owner_delete" on question_sets;
+drop policy if exists "qs_owner_select" on clue_sets;
+drop policy if exists "qs_owner_insert" on clue_sets;
+drop policy if exists "qs_owner_update" on clue_sets;
+drop policy if exists "qs_owner_delete" on clue_sets;
 
 drop policy if exists "boards_owner_select" on boards;
 drop policy if exists "boards_owner_write" on boards;
@@ -291,18 +291,18 @@ create policy "profiles_select_own" on profiles for select using (id = auth.uid(
 create policy "profiles_insert_own" on profiles for insert with check (id = auth.uid());
 create policy "profiles_update_own" on profiles for update using (id = auth.uid()) with check (id = auth.uid());
 
--- question_sets: owner CRUD
-create policy "qs_owner_select" on question_sets for select using (owner_id = auth.uid());
-create policy "qs_owner_insert" on question_sets for insert with check (owner_id = auth.uid());
-create policy "qs_owner_update" on question_sets for update using (owner_id = auth.uid()) with check (owner_id = auth.uid());
-create policy "qs_owner_delete" on question_sets for delete using (owner_id = auth.uid());
+-- clue_sets: owner CRUD
+create policy "qs_owner_select" on clue_sets for select using (owner_id = auth.uid());
+create policy "qs_owner_insert" on clue_sets for insert with check (owner_id = auth.uid());
+create policy "qs_owner_update" on clue_sets for update using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+create policy "qs_owner_delete" on clue_sets for delete using (owner_id = auth.uid());
 
 -- boards/categories/clues: owner can manage; participants in a game referencing the boards can select
 create policy "boards_owner_select" on boards for select using (owner_id = auth.uid());
 create policy "boards_owner_write" on boards for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "boards_select_game_participants" on boards for select using (
   exists(
-    select 1 from question_sets qs join games g on g.question_set_id = qs.id
+    select 1 from clue_sets qs join games g on g.clue_set_id = qs.id
     where (boards.id = qs.jr_board_id or boards.id = qs.dj_board_id) and is_game_participant(g.id)
   )
 );
@@ -315,8 +315,8 @@ create policy "categories_insert_owner" on categories for insert with check (
 );
 create policy "categories_select_game_participants" on categories for select using (
   exists(
-    select 1 from boards b join question_sets qs on (b.id = qs.jr_board_id or b.id = qs.dj_board_id)
-    join games g on g.question_set_id = qs.id
+    select 1 from boards b join clue_sets qs on (b.id = qs.jr_board_id or b.id = qs.dj_board_id)
+    join games g on g.clue_set_id = qs.id
     where b.id = board_id and is_game_participant(g.id)
   )
 );
@@ -329,8 +329,8 @@ create policy "clues_insert_owner" on clues for insert with check (
 );
 create policy "clues_select_game_participants" on clues for select using (
   exists(
-    select 1 from boards b join question_sets qs on (b.id = qs.jr_board_id or b.id = qs.dj_board_id)
-    join games g on g.question_set_id = qs.id
+    select 1 from boards b join clue_sets qs on (b.id = qs.jr_board_id or b.id = qs.dj_board_id)
+    join games g on g.clue_set_id = qs.id
     where b.id = board_id and is_game_participant(g.id)
   )
 );
@@ -421,7 +421,7 @@ create policy if not exists "boards_insert_host" on boards
 
 ## Core Features
 - Start/stop a game session; players join via link or code
-- Author and manage question sets (JR/DJ + Final) with preview
+- Author and manage clue sets (JR/DJ + Final) with preview
 - Host dashboard to control states: reading, unlock/lock buzzer, adjudicate
 - Player client for buzzing and answering
 - Scoreboard with history

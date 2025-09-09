@@ -24,8 +24,8 @@ export interface RoundData {
     category: number;
     row: number;
     value: number;
-    question: string;
-    answer: string;
+    prompt: string;
+    response: string;
   }>;
 }
 

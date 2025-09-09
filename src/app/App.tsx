@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SimpleLogin } from '../components/auth/SimpleLogin'
+import { ClueSetSelector } from '../components/clueSets/ClueSetSelector'
 import { useAuth } from '../contexts/AuthContext'
 
 export function App() {
@@ -18,37 +19,46 @@ export function App() {
 
           {user && (
             <>
-              <h2>Welcome to your new project!</h2>
+              <h2>Welcome to Euno's Jeopardy!</h2>
               <p className="text-secondary mb-4">
-                This is a template React application with TypeScript, SCSS, and Jest testing.
+                Logged in as: <strong>{user.email}</strong>
               </p>
 
-          <div className="d-flex align-center mb-4">
-            <button
-              className="btn btn-secondary mr-3"
-              onClick={() => setCount(count - 1)}
-            >
-              -
-            </button>
-            <span className="font-bold text-xl">Count: {count}</span>
-            <button
-              className="btn btn-primary ml-3"
-              onClick={() => setCount(count + 1)}
-            >
-              +
-            </button>
-          </div>
+              <div className="mb-5">
+                <ClueSetSelector />
+              </div>
 
+              <div className="mb-4">
+                <h3>Development Tools</h3>
+                <p className="text-secondary mb-4">
+                  This is a template React application with TypeScript, SCSS, and Jest testing.
+                </p>
 
+                <div className="d-flex align-center mb-4">
+                  <button
+                    className="btn btn-secondary mr-3"
+                    onClick={() => setCount(count - 1)}
+                  >
+                    -
+                  </button>
+                  <span className="font-bold text-xl">Count: {count}</span>
+                  <button
+                    className="btn btn-primary ml-3"
+                    onClick={() => setCount(count + 1)}
+                  >
+                    +
+                  </button>
+                </div>
 
-          <div className="text-center">
-            <p className="text-muted">
-              Edit <code>src/app/App.tsx</code> to get started.
-            </p>
-            <p className="text-muted">
-              Run <code>npm test</code> to run the test suite.
-            </p>
-          </div>
+                <div className="text-center">
+                  <p className="text-muted">
+                    Edit <code>src/app/App.tsx</code> to get started.
+                  </p>
+                  <p className="text-muted">
+                    Run <code>npm test</code> to run the test suite.
+                  </p>
+                </div>
+              </div>
             </>
           )}
         </div>

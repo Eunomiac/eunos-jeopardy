@@ -6,8 +6,16 @@ import type { Tables, Database } from "./types";
  * These functions can be used to verify the database connection and schema
  */
 
-const TABLE_NAMES = ["profiles", "games", "players", "question_sets", "boards", "categories", "clues"] as const;
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+const TABLE_NAMES = [
+  "profiles",
+  "games",
+  "players",
+  "clue_sets",
+  "boards",
+  "categories",
+  "clues",
+] as const;
+type DefaultSchema = Database[Extract<keyof Database, "public">];
 
 export async function testDatabaseConnection() {
   console.log("🔍 Testing database connection...");
@@ -31,22 +39,22 @@ export async function testDatabaseConnection() {
       return false;
     }
 
-    console.log(`✅ Database query successful - Found ${count} elements in ${TABLE_NAMES[0]} database`);
+    console.log(
+      `✅ Database query successful - Found ${count} elements in ${TABLE_NAMES[0]} database`
+    );
     return true;
-
   } catch (error) {
     console.error("❌ Connection test failed:", error);
     return false;
   }
 }
 
-export async function getSample<T extends (keyof DefaultSchema["Tables"])>(tableName: T): Promise<Tables<T>[]> {
+export async function getSample<T extends keyof DefaultSchema["Tables"]>(
+  tableName: T
+): Promise<Tables<T>[]> {
   console.log(`🃏 Fetching sample ${tableName}...`);
 
-  const { data, error } = await supabase
-    .from(tableName)
-    .select("*")
-    .limit(5);
+  const { data, error } = await supabase.from(tableName).select("*").limit(5);
 
   if (error) {
     console.error(`❌ Failed to fetch ${tableName}:`, error.message);
@@ -61,63 +69,64 @@ export async function getSample<T extends (keyof DefaultSchema["Tables"])>(table
  * Test authentication with our test users
  */
 export async function testAuthUsers(): Promise<void> {
-  console.log("🔐 Testing authentication with test users...\n")
+  console.log("🔐 Testing authentication with test users...\n");
 
   const testUsers = [
     { email: "host@test.com", password: "1234" },
     { email: "player1@test.com", password: "1234" },
-    { email: "player2@test.com", password: "1234" }
-  ]
+    { email: "player2@test.com", password: "1234" },
+  ];
 
   for (const testUser of testUsers) {
-    console.log(`🧪 Testing login for: ${testUser.email}`)
+    console.log(`🧪 Testing login for: ${testUser.email}`);
 
     try {
       // Test login
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: testUser.email,
-        password: testUser.password
-      })
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: testUser.email,
+          password: testUser.password,
+        });
 
       if (authError) {
-        console.log(`   ❌ Login failed: ${authError.message}`)
-        continue
+        console.log(`   ❌ Login failed: ${authError.message}`);
+      } else {
+        console.log(`   ✅ Login successful`);
       }
-
-      console.log(`   ✅ Login successful`)
-      console.log(`   User ID: ${authData.user?.id}`)
+      console.log(`   User ID: ${authData.user?.id}`);
 
       // Test profile access (RLS policy check)
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user?.id)
-        .single()
+        .from("profiles")
+        .select("*")
+        .eq("id", authData.user!.id)
+        .single();
 
       if (profileError) {
-        console.log(`   ⚠️  Profile access: ${profileError.message}`)
+        console.log(`   ⚠️  Profile access: ${profileError.message}`);
       } else {
-        console.log(`   ✅ Profile access working`)
-        console.log(`   Profile: ${JSON.stringify(profileData, null, 2)}`)
+        console.log(`   ✅ Profile access working`);
+        console.log(`   Profile: ${JSON.stringify(profileData, null, 2)}`);
       }
 
       // Test that user can't access other profiles (RLS security check)
       const { data: allProfiles, error: allProfilesError } = await supabase
-        .from('profiles')
-        .select('*')
+        .from("profiles")
+        .select("*");
 
       if (allProfilesError) {
-        console.log(`   ⚠️  RLS test failed: ${allProfilesError.message}`)
+        console.log(`   ⚠️  RLS test failed: ${allProfilesError.message}`);
       } else {
-        console.log(`   🔒 RLS Policy Check: Can see ${allProfiles.length} profile(s) (should be 1 - their own)`)
+        console.log(
+          `   🔒 RLS Policy Check: Can see ${allProfiles.length} profile(s) (should be 1 - their own)`
+        );
       }
 
       // Logout
-      await supabase.auth.signOut()
-      console.log(`   🚪 Logged out\n`)
-
+      await supabase.auth.signOut();
+      console.log(`   🚪 Logged out\n`);
     } catch (error) {
-      console.log(`   ❌ Test failed: ${error}`)
+      console.log(`   ❌ Test failed: ${error}`);
     }
   }
 }
@@ -132,7 +141,9 @@ export async function runDatabaseTests() {
     return;
   }
 
-  const samples = await Promise.all(TABLE_NAMES.map((tableName) => getSample(tableName)));
+  const samples = await Promise.all(
+    TABLE_NAMES.map((tableName) => getSample(tableName))
+  );
 
   console.log("📊 Database test results:");
   TABLE_NAMES.forEach((tableName, index) => {
