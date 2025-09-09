@@ -7,6 +7,10 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 **Status**: Phase 2 Complete - Ready for Development
 **Current Phase**: Phase 3 - Core Development
 
+## Issue Management
+- this document summarizes the current state of the project and the issues that need to be addressed
+- for more detailed plans to resolve each issue, refer to the numbered documents in the `docs/ai/issues/` folder
+
 ---
 
 ## Development Phases
