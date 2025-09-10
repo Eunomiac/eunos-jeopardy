@@ -83,3 +83,9 @@ temp/
 
 # Third-party packages (for reference only)
 docs/third-party-packages/
+
+# Local prompts with sensitive data
+docs/ai/prompts/
+
+# Remote agent prompts (contain sensitive information)
+docs/ai/prompts/
