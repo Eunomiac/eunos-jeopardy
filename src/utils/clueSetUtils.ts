@@ -34,7 +34,7 @@ function toTitleCase(str: string): string {
  * Get available clue set files
  * For now, this is hardcoded but could be made dynamic later
  */
-export function getAvailableQuestionSets(): string[] {
+export function getAvailableClueSets(): string[] {
   return [
     'test-game-1.csv'
     // Add more files as they become available
@@ -46,6 +46,6 @@ export function getAvailableQuestionSets(): string[] {
  * In development: /clue-sets/filename
  * In production: /clue-sets/filename (public folder contents moved to root)
  */
-export function getQuestionSetURL(filename: string): string {
+export function getClueSetURL(filename: string): string {
   return `/clue-sets/${filename}`
 }

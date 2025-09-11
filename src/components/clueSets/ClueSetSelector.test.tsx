@@ -7,8 +7,8 @@ jest.mock('../../services/clueSets/loader', () => ({
   saveClueSetToDatabase: jest.fn()
 }))
 
-jest.mock('../../utils/questionSetUtils', () => ({
-  getAvailableQuestionSets: jest.fn(),
+jest.mock('../../utils/clueSetUtils', () => ({
+  getAvailableClueSets: jest.fn(),
   filenameToDisplayName: jest.fn()
 }))
 
@@ -29,14 +29,14 @@ describe('ClueSetSelector', () => {
   // Get the mocked functions
   const mockLoadClueSetFromCSV = require('../../services/clueSets/loader').loadClueSetFromCSV as jest.Mock
   const mockSaveClueSetToDatabase = require('../../services/clueSets/loader').saveClueSetToDatabase as jest.Mock
-  const mockGetAvailableQuestionSets = require('../../utils/questionSetUtils').getAvailableQuestionSets as jest.Mock
-  const mockFilenameToDisplayName = require('../../utils/questionSetUtils').filenameToDisplayName as jest.Mock
+  const mockGetAvailableClueSets = require('../../utils/clueSetUtils').getAvailableClueSets as jest.Mock
+  const mockFilenameToDisplayName = require('../../utils/clueSetUtils').filenameToDisplayName as jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
 
     // Default mock implementations
-    mockGetAvailableQuestionSets.mockReturnValue(['test-game-1.csv', 'world-capitals.csv'])
+    mockGetAvailableClueSets.mockReturnValue(['test-game-1.csv', 'world-capitals.csv'])
     mockFilenameToDisplayName.mockImplementation((filename: string) =>
       filename.replace('.csv', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     )
@@ -45,13 +45,13 @@ describe('ClueSetSelector', () => {
   it('should render clue set selector with available files', () => {
     render(<ClueSetSelector />)
 
-    expect(screen.getByRole('heading', { name: 'Load Question Set' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Select Question Set:')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Load Question Set' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Load Clue Set' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Select Clue Set:')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Load Clue Set' })).toBeInTheDocument()
     expect(screen.getByText('Choose a clue set...')).toBeInTheDocument()
   })
 
-  it('should populate dropdown with available question sets', () => {
+  it('should populate dropdown with available clue sets', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
@@ -59,9 +59,9 @@ describe('ClueSetSelector', () => {
 
     // Check that options are rendered
     expect(screen.getByText('Choose a clue set...')).toBeInTheDocument()
-    
+
     // The actual option text will be the display names
-    expect(mockGetAvailableQuestionSets).toHaveBeenCalled()
+    expect(mockGetAvailableClueSets).toHaveBeenCalled()
     expect(mockFilenameToDisplayName).toHaveBeenCalledWith('test-game-1.csv')
     expect(mockFilenameToDisplayName).toHaveBeenCalledWith('world-capitals.csv')
   })
@@ -78,7 +78,7 @@ describe('ClueSetSelector', () => {
   it('should disable load button when no file is selected', () => {
     render(<ClueSetSelector />)
 
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
     expect(loadButton).toBeDisabled()
   })
 
@@ -86,7 +86,7 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
 
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
 
@@ -96,7 +96,7 @@ describe('ClueSetSelector', () => {
   it('should disable load button when no file is selected', () => {
     render(<ClueSetSelector />)
 
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
     expect(loadButton).toBeDisabled()
   })
 
@@ -115,7 +115,7 @@ describe('ClueSetSelector', () => {
 
     expect(screen.getByText('Please log in to load clue sets.')).toBeInTheDocument()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Load Question Set' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Load Clue Set' })).not.toBeInTheDocument()
 
     mockUseAuth.mockRestore()
   })
@@ -137,7 +137,7 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
 
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
     fireEvent.click(loadButton)
@@ -161,7 +161,7 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
 
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
     fireEvent.click(loadButton)
@@ -195,7 +195,7 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
 
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
     fireEvent.click(loadButton)
@@ -214,7 +214,7 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
 
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
     fireEvent.click(loadButton)
@@ -244,7 +244,7 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox') as HTMLSelectElement
-    const loadButton = screen.getByRole('button', { name: 'Load Question Set' })
+    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
 
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
     fireEvent.click(loadButton)
@@ -260,14 +260,14 @@ describe('ClueSetSelector', () => {
     render(<ClueSetSelector />)
 
     const select = screen.getByRole('combobox')
-    const labeledSelect = screen.getByLabelText('Select Question Set:')
+    const labeledSelect = screen.getByLabelText('Select Clue Set:')
 
     expect(select).toHaveAttribute('id', 'clue-set-select')
     expect(labeledSelect).toBe(select) // The labeled element should be the select itself
   })
 
-  it('should handle empty available question sets', () => {
-    mockGetAvailableQuestionSets.mockReturnValue([])
+  it('should handle empty available clue sets', () => {
+    mockGetAvailableClueSets.mockReturnValue([])
 
     render(<ClueSetSelector />)
 

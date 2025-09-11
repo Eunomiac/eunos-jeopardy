@@ -145,7 +145,7 @@ create table if not exists clues (
   unique (board_id, category_position, row_index)
 );
 
--- Question Sets (JR + DJ + Final)
+-- Clue Sets (JR + DJ + Final)
 create table if not exists clue_sets (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references profiles(id) on delete cascade,

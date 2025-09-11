@@ -207,7 +207,7 @@ export class ClueSetService {
 - `src/components/clueSets/ClueSetSelector.tsx` - File selection UI
 
 ### Medium Priority
-- `src/utils/questionSetUtils.ts` - Utility functions
+- `src/utils/clueSetUtils.ts` - Utility functions
 - `src/types/game.ts` - Type guards and validation functions
 
 ### Low Priority (Already Excluded)

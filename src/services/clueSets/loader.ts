@@ -1,6 +1,6 @@
 import { supabase } from '../supabase/client'
 import { parseCSV, validateJeopardyStructure, type CSVRow } from '../../utils/csvParser'
-import { filenameToDisplayName, getQuestionSetURL } from '../../utils/questionSetUtils'
+import { filenameToDisplayName, getClueSetURL } from '../../utils/clueSetUtils'
 import '../../types/game' // Load global types
 
 export interface CategoryData {
@@ -31,7 +31,7 @@ export interface ClueSetData {
 export async function loadClueSetFromCSV(filename: string): Promise<ClueSetData> {
   try {
     // Fetch CSV file
-    const url = getQuestionSetURL(filename)
+    const url = getClueSetURL(filename)
     const response = await fetch(url)
 
     if (!response.ok) {

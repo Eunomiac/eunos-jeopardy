@@ -1,10 +1,10 @@
-import { 
-  filenameToDisplayName, 
-  getAvailableQuestionSets, 
-  getQuestionSetURL 
-} from './questionSetUtils'
+import {
+  filenameToDisplayName,
+  getAvailableClueSets,
+  getClueSetURL
+} from './clueSetUtils'
 
-describe('questionSetUtils', () => {
+describe('clueSetUtils', () => {
   describe('filenameToDisplayName', () => {
     it('should convert basic filename to display name', () => {
       expect(filenameToDisplayName('test-game-1.csv')).toBe('Test Game 1')
@@ -59,83 +59,83 @@ describe('questionSetUtils', () => {
     })
   })
 
-  describe('getAvailableQuestionSets', () => {
-    it('should return array of available question sets', () => {
-      const questionSets = getAvailableQuestionSets()
-      
-      expect(Array.isArray(questionSets)).toBe(true)
-      expect(questionSets.length).toBeGreaterThan(0)
+  describe('getAvailableClueSets', () => {
+    it('should return array of available clue sets', () => {
+      const clueSets = getAvailableClueSets()
+
+      expect(Array.isArray(clueSets)).toBe(true)
+      expect(clueSets.length).toBeGreaterThan(0)
     })
 
     it('should include test-game-1.csv', () => {
-      const questionSets = getAvailableQuestionSets()
-      
-      expect(questionSets).toContain('test-game-1.csv')
+      const clueSets = getAvailableClueSets()
+
+      expect(clueSets).toContain('test-game-1.csv')
     })
 
     it('should return consistent results on multiple calls', () => {
-      const questionSets1 = getAvailableQuestionSets()
-      const questionSets2 = getAvailableQuestionSets()
-      
-      expect(questionSets1).toEqual(questionSets2)
+      const clueSets1 = getAvailableClueSets()
+      const clueSets2 = getAvailableClueSets()
+
+      expect(clueSets1).toEqual(clueSets2)
     })
 
     it('should return only CSV files', () => {
-      const questionSets = getAvailableQuestionSets()
-      
-      questionSets.forEach(filename => {
+      const clueSets = getAvailableClueSets()
+
+      clueSets.forEach((filename: string) => {
         expect(filename).toMatch(/\.csv$/i)
       })
     })
   })
 
-  describe('getQuestionSetURL', () => {
-    it('should generate correct URL for question set file', () => {
-      const url = getQuestionSetURL('test-game-1.csv')
-      
+  describe('getClueSetURL', () => {
+    it('should generate correct URL for clue set file', () => {
+      const url = getClueSetURL('test-game-1.csv')
+
       expect(url).toBe('/clue-sets/test-game-1.csv')
     })
 
     it('should handle different filenames', () => {
-      expect(getQuestionSetURL('world-capitals.csv')).toBe('/clue-sets/world-capitals.csv')
-      expect(getQuestionSetURL('science_facts.csv')).toBe('/clue-sets/science_facts.csv')
+      expect(getClueSetURL('world-capitals.csv')).toBe('/clue-sets/world-capitals.csv')
+      expect(getClueSetURL('science_facts.csv')).toBe('/clue-sets/science_facts.csv')
     })
 
     it('should handle filenames with special characters', () => {
-      expect(getQuestionSetURL('before-and-after_2024.csv')).toBe('/clue-sets/before-and-after_2024.csv')
+      expect(getClueSetURL('before-and-after_2024.csv')).toBe('/clue-sets/before-and-after_2024.csv')
     })
 
     it('should handle empty filename', () => {
-      expect(getQuestionSetURL('')).toBe('/clue-sets/')
+      expect(getClueSetURL('')).toBe('/clue-sets/')
     })
 
     it('should not modify the filename', () => {
       const filename = 'Test-Game-1.CSV'
-      expect(getQuestionSetURL(filename)).toBe('/clue-sets/Test-Game-1.CSV')
+      expect(getClueSetURL(filename)).toBe('/clue-sets/Test-Game-1.CSV')
     })
 
     it('should handle filenames without extension', () => {
-      expect(getQuestionSetURL('test-game-1')).toBe('/clue-sets/test-game-1')
+      expect(getClueSetURL('test-game-1')).toBe('/clue-sets/test-game-1')
     })
 
     it('should handle filenames with path separators', () => {
       // Note: This tests the current behavior, but in practice we might want to sanitize this
-      expect(getQuestionSetURL('folder/test-game-1.csv')).toBe('/clue-sets/folder/test-game-1.csv')
+      expect(getClueSetURL('folder/test-game-1.csv')).toBe('/clue-sets/folder/test-game-1.csv')
     })
   })
 
   describe('integration tests', () => {
-    it('should work together for available question sets', () => {
-      const questionSets = getAvailableQuestionSets()
-      
-      questionSets.forEach(filename => {
+    it('should work together for available clue sets', () => {
+      const clueSets = getAvailableClueSets()
+
+      clueSets.forEach((filename: string) => {
         // Should be able to generate display name
         const displayName = filenameToDisplayName(filename)
         expect(displayName).toBeTruthy()
         expect(typeof displayName).toBe('string')
-        
+
         // Should be able to generate URL
-        const url = getQuestionSetURL(filename)
+        const url = getClueSetURL(filename)
         expect(url).toMatch(/^\/clue-sets\//)
         expect(url).toContain(filename)
       })
@@ -148,16 +148,16 @@ describe('questionSetUtils', () => {
         'before-and-after_2024.csv',
         'science.csv'
       ]
-      
-      testFilenames.forEach(filename => {
+
+      testFilenames.forEach((filename: string) => {
         const displayName = filenameToDisplayName(filename)
-        const url = getQuestionSetURL(filename)
-        
+        const url = getClueSetURL(filename)
+
         // Display name should be human-readable
         expect(displayName).not.toContain('-')
         expect(displayName).not.toContain('_')
         expect(displayName).not.toContain('.csv')
-        
+
         // URL should contain original filename
         expect(url).toContain(filename)
       })

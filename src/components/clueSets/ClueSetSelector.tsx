@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { loadClueSetFromCSV, saveClueSetToDatabase } from '../../services/clueSets/loader'
-import { getAvailableQuestionSets, filenameToDisplayName } from '../../utils/questionSetUtils'
+import { getAvailableClueSets, filenameToDisplayName } from '../../utils/clueSetUtils'
 
 export function ClueSetSelector() {
   const { user } = useAuth()
@@ -10,9 +10,9 @@ export function ClueSetSelector() {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
 
-  const availableFiles = getAvailableQuestionSets()
+  const availableFiles = getAvailableClueSets()
 
-  const handleLoadQuestionSet = async () => {
+  const handleLoadClueSet = async () => {
     if (!selectedFile) {
       setMessage('Please select a clue set file')
       setMessageType('error')
@@ -61,11 +61,11 @@ export function ClueSetSelector() {
 
   return (
     <div className="clue-set-selector">
-      <h3>Load Question Set</h3>
+      <h3>Load Clue Set</h3>
 
       <div className="mb-3">
         <label htmlFor="clue-set-select" className="form-label">
-          Select Question Set:
+          Select Clue Set:
         </label>
         <select
           id="clue-set-select"
@@ -86,10 +86,10 @@ export function ClueSetSelector() {
       <div className="mb-3">
         <button
           className="btn btn-primary"
-          onClick={handleLoadQuestionSet}
+          onClick={handleLoadClueSet}
           disabled={loading || !selectedFile}
         >
-          {loading ? 'Loading...' : 'Load Question Set'}
+          {loading ? 'Loading...' : 'Load Clue Set'}
         </button>
       </div>
 
