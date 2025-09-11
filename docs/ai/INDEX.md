@@ -17,6 +17,10 @@ This folder contains documentation specifically designed for AI code assistants 
 - **[PROJECT_MANAGEMENT.md](./PROJECT_MANAGEMENT.md)** - Current sprint status, issues, and task tracking
 - **[DAILY_DOUBLE_ALGORITHM.md](./DAILY_DOUBLE_ALGORITHM.md)** - Automatic Daily Double placement specification
 
+## 🎯 **Current Development**
+- **[ISSUE_3_COMPLETION_PLAN.md](./ISSUE_3_COMPLETION_PLAN.md)** - Detailed plan to complete Game Host Dashboard (60% done)
+- **[issues/3. Game Host Dashboard.md](./issues/3.%20Game%20Host%20Dashboard.md)** - Complete Issue #3 specification with current status
+
 ## 🎯 **Usage Guidelines**
 
 ### For AI Assistants
@@ -41,9 +45,13 @@ This folder contains documentation specifically designed for AI code assistants 
 
 **Most Frequently Used:**
 1. PROJECT_MANAGEMENT.md - Current sprint status and active issues
-2. TESTING_STRATEGY.md - Coverage decisions and test exclusions
-3. LINEAR_REFERENCE.md - Task management operations
+2. ISSUE_3_COMPLETION_PLAN.md - Current development focus (Game Host Dashboard)
+3. TESTING_STRATEGY.md - Coverage decisions and test exclusions
 4. PROJECT_CHARTER.md - Database schema and project overview
+
+**Current Development Focus:**
+- ISSUE_3_COMPLETION_PLAN.md - Critical issues and completion roadmap for Issue #3
+- issues/3. Game Host Dashboard.md - Complete specification with implementation status
 
 **Algorithm & Implementation:**
 - DAILY_DOUBLE_ALGORITHM.md - CSV parsing and automatic Daily Double placement
