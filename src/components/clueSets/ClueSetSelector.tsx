@@ -1,115 +1,33 @@
-import { useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import { loadClueSetFromCSV, saveClueSetToDatabase } from '../../services/clueSets/loader'
 import { getAvailableClueSets, filenameToDisplayName } from '../../utils/clueSetUtils'
 
-export function ClueSetSelector() {
-  const { user } = useAuth()
-  const [selectedFile, setSelectedFile] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
+interface ClueSetSelectorProps {
+  readonly selectedClueSetId: string
+  readonly onClueSetSelected: (clueSetId: string) => void
+}
 
+export function ClueSetSelector({ selectedClueSetId, onClueSetSelected }: Readonly<ClueSetSelectorProps>) {
   const availableFiles = getAvailableClueSets()
 
-  const handleLoadClueSet = async () => {
-    if (!selectedFile) {
-      setMessage('Please select a clue set file')
-      setMessageType('error')
-      return
-    }
-
-    if (!user) {
-      setMessage('You must be logged in to load clue sets')
-      setMessageType('error')
-      return
-    }
-
-    setLoading(true)
-    setMessage('')
-    setMessageType('')
-
-    try {
-      // Load and parse CSV
-      setMessage('Loading CSV file...')
-      const clueSetData = await loadClueSetFromCSV(selectedFile)
-
-      // Save to database
-      setMessage('Saving to database...')
-      const clueSetId = await saveClueSetToDatabase(clueSetData, user.id)
-
-      setMessage(`Successfully loaded "${clueSetData.name}" (ID: ${clueSetId})`)
-      setMessageType('success')
-      setSelectedFile('')
-
-    } catch (error) {
-      console.error('Failed to load clue set:', error)
-      setMessage(`Failed to load clue set: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      setMessageType('error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (!user) {
-    return (
-      <div className="clue-set-selector">
-        <p className="text-muted">Please log in to load clue sets.</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="clue-set-selector">
-      <h3>Load Clue Set</h3>
+    <div className="clue-set-selector game-creator">
+      <h3 className="jeopardy-category section-title">
+        Clue Sets
+      </h3>
 
-      <div className="mb-3">
-        <label htmlFor="clue-set-select" className="form-label">
-          Select Clue Set:
-        </label>
+      <div className="form-group">
         <select
           id="clue-set-select"
-          className="form-select"
-          value={selectedFile}
-          onChange={(e) => setSelectedFile(e.target.value)}
-          disabled={loading}
+          className="jeopardy-input jeopardy-dropdown"
+          value={selectedClueSetId}
+          onChange={(e) => onClueSetSelected(e.target.value)}
         >
-          <option value="">Choose a clue set...</option>
+          <option value="">Choose a Clue Set...</option>
           {availableFiles.map((filename) => (
             <option key={filename} value={filename}>
               {filenameToDisplayName(filename)}
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="mb-3">
-        <button
-          className="btn btn-primary"
-          onClick={handleLoadClueSet}
-          disabled={loading || !selectedFile}
-        >
-          {loading ? 'Loading...' : 'Load Clue Set'}
-        </button>
-      </div>
-
-      {message && (
-        <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'}`}>
-          {message}
-        </div>
-      )}
-
-      <div className="text-muted mt-3">
-        <small>
-          <strong>Available Files:</strong>
-          <ul className="mt-2">
-            {availableFiles.map((filename) => (
-              <li key={filename}>
-                <code>{filename}</code> → "{filenameToDisplayName(filename)}"
-              </li>
-            ))}
-          </ul>
-        </small>
       </div>
     </div>
   )

@@ -1,4 +1,46 @@
 // Global styles
+@use 'sass:color';
+
+// ========================================
+// JEOPARDY FONT LOADING
+// ========================================
+
+// Title/Logo Font
+@font-face {
+  font-family: 'Annual Normal';
+  src: url('/assets/fonts/Annual.otf') format('opentype');
+  font-display: swap;
+}
+
+// Daily Double Font
+@font-face {
+  font-family: 'Steile Futura Bold';
+  src: url('/assets/fonts/Steile Futura Bold.otf') format('opentype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Korinna ITC Bold';
+  src: url('/assets/fonts/Korinna Itc Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Swiss 921';
+  src: url('/assets/fonts/Swiss 921.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Swiss 911 Extra Condensed';
+  src: url('/assets/fonts/Swiss  911 Extra Condensed.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 * {
   box-sizing: border-box;
@@ -48,11 +90,11 @@ a {
   color: $accent-color;
   text-decoration: none;
   transition: color $transition-fast;
-  
+
   &:hover {
-    color: lighten($accent-color, 15%);
+    color: color.adjust($accent-color, $lightness: 15%);
   }
-  
+
   &:focus {
     @include focus-ring;
   }
@@ -85,7 +127,7 @@ pre {
   border-radius: $border-radius-md;
   overflow-x: auto;
   margin: 0 0 $spacing-md 0;
-  
+
   code {
     background: none;
     padding: 0;
@@ -100,7 +142,7 @@ input, textarea, select, button {
 
 button {
   cursor: pointer;
-  
+
   &:focus {
     @include focus-ring;
   }
@@ -126,3 +168,90 @@ button {
 .text-success { color: $success-color; }
 .text-warning { color: $warning-color; }
 .text-error { color: $error-color; }
+
+// ========================================
+// JEOPARDY TYPOGRAPHY CLASSES
+// ========================================
+.jeopardy-sur-title {
+  font-family: $font-family-daily-double;
+  font-size: $font-size-lg;
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-white;
+  font-weight: normal;
+  line-height: $line-height-tight;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+  margin: 0;
+  margin-bottom: -25px; /* To force flush with top of title */
+  text-align: left;
+}
+
+.jeopardy-title {
+  font-family: $font-family-title;
+  font-size: $font-size-8xl; /* Increased from 5xl to 6xl */
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-white;
+  font-weight: normal;
+  line-height: $line-height-tight;
+  text-shadow: 3px 3px 6px $jeopardy-black;
+  margin: 0;
+}
+
+.jeopardy-daily-double {
+  font-family: $font-family-daily-double;
+  font-size: $font-size-2xl;
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-gold;
+  font-weight: bold;
+  line-height: $line-height-tight;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+}
+.jeopardy-clue {
+  font-family: $font-family-clue;
+  font-size: $font-size-clue;
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-white;
+  font-weight: bold;
+  line-height: $line-height-normal;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+}
+
+.jeopardy-category {
+  font-family: $font-family-category;
+  font-size: $font-size-category;
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-white;
+  font-weight: normal;
+  line-height: $line-height-tight;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+}
+
+.jeopardy-money {
+  font-family: $font-family-money;
+  font-size: $font-size-money;
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-gold;
+  font-weight: normal;
+  line-height: $line-height-tight;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+}
+
+.jeopardy-board-money {
+  font-family: $font-family-money;
+  font-size: $font-size-board-money;
+  text-transform: $jeopardy-text-transform;
+  color: $jeopardy-gold;
+  font-weight: normal;
+  line-height: $line-height-tight;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+}
+
+// Jeopardy color utilities
+.jeopardy-blue { color: $jeopardy-blue; }
+.jeopardy-gold { color: $jeopardy-gold; }
+.jeopardy-white { color: $jeopardy-white; }
+.jeopardy-black { color: $jeopardy-black; }
+
+.bg-jeopardy-blue { background-color: $jeopardy-blue; }
+.bg-jeopardy-gold { background-color: $jeopardy-gold; }
+.bg-jeopardy-white { background-color: $jeopardy-white; }
+.bg-jeopardy-black { background-color: $jeopardy-black; }

@@ -30,7 +30,7 @@ export class GameService {
   static async createGame(hostId: string, clueSetId: string): Promise<Game> {
     const gameData: GameInsert = {
       host_id: hostId,
-      question_set_id: clueSetId, // Using existing schema naming
+      clue_set_id: clueSetId,
       status: 'lobby',
       current_round: 'jeopardy',
       is_buzzer_locked: true
@@ -109,7 +109,7 @@ export class GameService {
    */
   static async toggleBuzzerLock(gameId: string, hostId: string): Promise<Game> {
     const game = await this.getGame(gameId, hostId)
-    
+
     return this.updateGame(gameId, {
       is_buzzer_locked: !game.is_buzzer_locked
     }, hostId)

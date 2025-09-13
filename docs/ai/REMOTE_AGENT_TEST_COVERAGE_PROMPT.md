@@ -290,6 +290,94 @@ npm test -- ClueSetSelector.test.tsx
 npm test -- --coverage --watchAll=false
 ```
 
+## Git Workflow Requirements
+
+### Consistent Progress Commits
+**CRITICAL**: You must commit your progress regularly to avoid losing work and enable monitoring:
+
+1. **Commit after each major milestone**:
+   - After adding tests for each component/service
+   - After reaching coverage milestones (70%, 80%, 85%, 90%)
+   - After fixing any failing tests
+   - After adding meaningful test suites
+
+2. **Use descriptive commit messages**:
+   ```bash
+   git add .
+   git commit -m "test: Add comprehensive tests for ClueSetSelector component
+
+   - Cover user interactions, error states, and edge cases
+   - Achieve 95% coverage for component
+   - Add proper mocking for file selection
+   - Progress: 72% overall coverage"
+
+   git push origin [your-branch-name]
+   ```
+
+3. **Push commits immediately**:
+   - Always push after each commit
+   - This ensures work is backed up and visible
+   - Enables monitoring of progress from VS Code/Augment
+
+### Automatic PR Submission
+**CRITICAL**: When you have completed the 90% test coverage goal:
+
+1. **Final commit and push**:
+   ```bash
+   git add .
+   git commit -m "feat: Achieve 90% test coverage across codebase
+
+   - Complete test suites for all core components and services
+   - Add comprehensive error handling tests
+   - Document coverage exclusions with Istanbul comments
+   - Final coverage: [X]% statements, [Y]% branches, [Z]% functions"
+
+   git push origin [your-branch-name]
+   ```
+
+2. **Create Pull Request automatically**:
+   Use the GitHub CLI or API to create a PR:
+   ```bash
+   # If GitHub CLI is available
+   gh pr create --title "feat: Achieve 90% test coverage" --body "
+   ## Summary
+   This PR achieves the 90% test coverage goal across the Euno's Jeopardy codebase.
+
+   ## Changes Made
+   - Added comprehensive test suites for core components
+   - Implemented proper mocking strategies for Supabase integration
+   - Added error handling and edge case tests
+   - Documented coverage exclusions with clear justifications
+
+   ## Coverage Results
+   - Statements: [X]%
+   - Branches: [Y]%
+   - Functions: [Z]%
+   - Lines: [W]%
+
+   ## Test Quality
+   - All tests pass consistently
+   - Fast execution (under 30 seconds)
+   - Meaningful test descriptions
+   - Proper mocking of external dependencies
+
+   Ready for review and merge.
+   " --head [your-branch-name] --base master
+   ```
+
+### Branch Naming Convention
+Use descriptive branch names like:
+- `test-coverage-90-percent`
+- `comprehensive-test-suite`
+- `testing-coverage-improvement`
+
+### Why This Matters
+The last remote agent session experienced crashes when trying to access the conversation from VS Code/Augment. By consistently pushing commits:
+1. **Work is preserved** even if the session crashes
+2. **Progress is visible** from the main development environment
+3. **Collaboration is enabled** - the main developer can see progress
+4. **Recovery is possible** - work can be continued from any commit point
+
 ## Final Notes
 
 ### Remember

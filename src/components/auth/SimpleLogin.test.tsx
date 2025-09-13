@@ -64,7 +64,7 @@ describe('SimpleLogin', () => {
 
     render(<SimpleLogin />)
 
-    expect(screen.getByText('Logged in as:')).toBeInTheDocument()
+    expect(screen.getByText('Currently logged in as')).toBeInTheDocument()
     expect(screen.getByText('test@example.com')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Logout' })).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('Email')).not.toBeInTheDocument()
@@ -243,8 +243,8 @@ describe('SimpleLogin', () => {
 
     render(<SimpleLogin />)
 
-    expect(screen.getByText('Logged in as:').closest('div')).toHaveClass('simple-login')
-    expect(screen.getByRole('button', { name: 'Logout' })).toHaveClass('btn', 'btn-secondary')
+    expect(screen.getByText('Currently logged in as').closest('div')).toHaveClass('login-info')
+    expect(screen.getByRole('button', { name: 'Logout' })).toHaveClass('jeopardy-button', 'logout-button')
 
     mockUseAuth.mockRestore()
   })

@@ -1,6 +1,7 @@
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 import { supabase } from '../services/supabase/client'
+import type { Session, User } from '@supabase/supabase-js'
 
 // Mock Supabase client
 jest.mock('../services/supabase/client', () => ({
@@ -22,15 +23,15 @@ function TestComponent() {
   const handleLogin = async () => {
     try {
       await login('test@example.com', 'password')
-    } catch (error) {
+    } catch {
       // Errors are expected in tests, just ignore them
     }
   }
 
   const handleLogout = async () => {
     try {
-      await logout()
-    } catch (error) {
+      logout()
+    } catch {
       // Errors are expected in tests, just ignore them
     }
   }
@@ -47,30 +48,36 @@ function TestComponent() {
 }
 
 describe('AuthContext', () => {
-  const mockUser = {
+  const mockUser: User = {
     id: '123',
     email: 'test@example.com',
-    user_metadata: { full_name: 'Test User' }
-  }
-  
-  const mockSession = {
+    user_metadata: { full_name: 'Test User' },
+    app_metadata: {},
+    aud: 'authenticated',
+    created_at: '2025-01-01T00:00:00Z'
+  } as User
+
+  const mockSession: Session = {
     user: mockUser,
-    access_token: 'mock-token'
-  }
+    access_token: 'mock-token',
+    refresh_token: 'mock-refresh-token',
+    expires_in: 3600,
+    token_type: 'bearer'
+  } as Session
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
+
     // Default mock implementations
     ;(supabase.auth.getSession as jest.Mock).mockResolvedValue({
       data: { session: null },
       error: null
     })
-    
+
     ;(supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue({
       data: { subscription: { unsubscribe: jest.fn() } }
     })
-    
+
     ;(supabase.from as jest.Mock).mockReturnValue({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -84,9 +91,9 @@ describe('AuthContext', () => {
   it('should throw error when useAuth is used outside AuthProvider', () => {
     // Suppress console.error for this test
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-    
+
     expect(() => render(<TestComponent />)).toThrow('useAuth must be used within an AuthProvider')
-    
+
     consoleSpy.mockRestore()
   })
 
@@ -98,7 +105,7 @@ describe('AuthContext', () => {
     )
 
     expect(screen.getByTestId('loading')).toHaveTextContent('loading')
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('not-loading')
     })
@@ -225,12 +232,25 @@ describe('AuthContext', () => {
       error: logoutError
     })
 
-    // Mock console.error to avoid test output noise
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+    // Test the logout function directly
+    let logoutFunction: (() => Promise<void>) | null = null
+
+    function TestComponentForLogoutError() {
+      const { user, session, loading, logout } = useAuth()
+      logoutFunction = logout
+
+      return (
+        <div>
+          <div data-testid="loading">{loading ? 'loading' : 'not-loading'}</div>
+          <div data-testid="user">{user ? user.email : 'no-user'}</div>
+          <div data-testid="session">{session ? 'has-session' : 'no-session'}</div>
+        </div>
+      )
+    }
 
     render(
       <AuthProvider>
-        <TestComponent />
+        <TestComponentForLogoutError />
       </AuthProvider>
     )
 
@@ -238,18 +258,13 @@ describe('AuthContext', () => {
       expect(screen.getByTestId('loading')).toHaveTextContent('not-loading')
     })
 
-    // The logout function should be called and the error should be thrown internally
-    await act(async () => {
-      screen.getByText('Logout').click()
-    })
-
+    // Test the logout function directly
+    await expect(logoutFunction!()).rejects.toEqual(logoutError)
     expect(supabase.auth.signOut).toHaveBeenCalled()
-
-    consoleSpy.mockRestore()
   })
 
   it('should handle auth state changes', async () => {
-    let authStateCallback: (event: string, session: any) => void
+    let authStateCallback: (event: string, session: Session | null) => void
 
     ;(supabase.auth.onAuthStateChange as jest.Mock).mockImplementation((callback) => {
       authStateCallback = callback
@@ -316,9 +331,9 @@ describe('AuthContext', () => {
     ;(supabase.from as jest.Mock).mockReturnValue({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ 
-            data: null, 
-            error: { code: 'SOME_ERROR', message: 'Database error' } 
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { code: 'SOME_ERROR', message: 'Database error' }
           })
         })
       }),

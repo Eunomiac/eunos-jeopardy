@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -102,6 +102,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     if (error) { throw error }
+
+    // Clear local state immediately after successful logout
+    setUser(null)
+    setSession(null)
   }, [])
 
   const value = useMemo(() => ({

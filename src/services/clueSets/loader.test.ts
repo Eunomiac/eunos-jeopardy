@@ -4,7 +4,7 @@ import { supabase } from '../supabase/client'
 // Mock dependencies
 jest.mock('../supabase/client')
 jest.mock('../../utils/csvParser')
-jest.mock('../../utils/questionSetUtils')
+jest.mock('../../utils/clueSetUtils')
 
 // Mock fetch globally
 global.fetch = jest.fn()
@@ -34,10 +34,10 @@ final,Geography,0,Largest country?,Russia`
       parseCSV.mockReturnValue(mockParsedRows)
       validateJeopardyStructure.mockImplementation(() => {}) // No error
 
-      // Mock question set utils
-      const { filenameToDisplayName, getQuestionSetURL } = require('../../utils/questionSetUtils')
+      // Mock clue set utils
+      const { filenameToDisplayName, getClueSetURL } = require('../../utils/clueSetUtils')
       filenameToDisplayName.mockReturnValue('Test Game 1')
-      getQuestionSetURL.mockReturnValue('/clue-sets/test-game-1.csv')
+      getClueSetURL.mockReturnValue('/clue-sets/test-game-1.csv')
 
       // Mock fetch
       ;(global.fetch as jest.Mock).mockResolvedValue({
@@ -117,8 +117,8 @@ final,Geography,0,Largest country?,Russia`
     it('should call correct URL for CSV file', async () => {
       await loadClueSetFromCSV('test-game-1.csv')
 
-      const { getQuestionSetURL } = require('../../utils/questionSetUtils')
-      expect(getQuestionSetURL).toHaveBeenCalledWith('test-game-1.csv')
+      const { getClueSetURL } = require('../../utils/clueSetUtils')
+      expect(getClueSetURL).toHaveBeenCalledWith('test-game-1.csv')
       expect(global.fetch).toHaveBeenCalledWith('/clue-sets/test-game-1.csv')
     })
 

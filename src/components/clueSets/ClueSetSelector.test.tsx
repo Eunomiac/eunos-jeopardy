@@ -1,278 +1,85 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { ClueSetSelector } from './ClueSetSelector'
 
 // Mock the dependencies
-jest.mock('../../services/clueSets/loader', () => ({
-  loadClueSetFromCSV: jest.fn(),
-  saveClueSetToDatabase: jest.fn()
-}))
-
 jest.mock('../../utils/clueSetUtils', () => ({
   getAvailableClueSets: jest.fn(),
   filenameToDisplayName: jest.fn()
 }))
 
-// Mock the auth context
-const mockUser = { id: 'user-123', email: 'test@example.com' }
-
-jest.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: mockUser,
-    session: { user: mockUser },
-    loading: false,
-    login: jest.fn(),
-    logout: jest.fn()
-  })
-}))
-
 describe('ClueSetSelector', () => {
-  // Get the mocked functions
-  const mockLoadClueSetFromCSV = require('../../services/clueSets/loader').loadClueSetFromCSV as jest.Mock
-  const mockSaveClueSetToDatabase = require('../../services/clueSets/loader').saveClueSetToDatabase as jest.Mock
   const mockGetAvailableClueSets = require('../../utils/clueSetUtils').getAvailableClueSets as jest.Mock
   const mockFilenameToDisplayName = require('../../utils/clueSetUtils').filenameToDisplayName as jest.Mock
+  const mockOnClueSetSelected = jest.fn()
 
   beforeEach(() => {
     jest.clearAllMocks()
 
     // Default mock implementations
-    mockGetAvailableClueSets.mockReturnValue(['test-game-1.csv', 'world-capitals.csv'])
+    mockGetAvailableClueSets.mockReturnValue(['test-game-1.csv', 'test-game-2.csv'])
     mockFilenameToDisplayName.mockImplementation((filename: string) =>
       filename.replace('.csv', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     )
   })
 
-  it('should render clue set selector with available files', () => {
-    render(<ClueSetSelector />)
+  const defaultProps = {
+    selectedClueSetId: '',
+    onClueSetSelected: mockOnClueSetSelected
+  }
 
-    expect(screen.getByRole('heading', { name: 'Load Clue Set' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Select Clue Set:')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Load Clue Set' })).toBeInTheDocument()
-    expect(screen.getByText('Choose a clue set...')).toBeInTheDocument()
+  it('should render clue set selector with title', () => {
+    render(<ClueSetSelector {...defaultProps} />)
+
+    expect(screen.getByRole('heading', { name: 'Clue Sets' })).toBeInTheDocument()
   })
 
-  it('should populate dropdown with available clue sets', () => {
-    render(<ClueSetSelector />)
+  it('should render dropdown with available clue sets', () => {
+    render(<ClueSetSelector {...defaultProps} />)
 
     const select = screen.getByRole('combobox')
     expect(select).toBeInTheDocument()
 
-    // Check that options are rendered
-    expect(screen.getByText('Choose a clue set...')).toBeInTheDocument()
+    // Check for default option
+    expect(screen.getByText('Choose a Clue Set...')).toBeInTheDocument()
 
-    // The actual option text will be the display names
-    expect(mockGetAvailableClueSets).toHaveBeenCalled()
-    expect(mockFilenameToDisplayName).toHaveBeenCalledWith('test-game-1.csv')
-    expect(mockFilenameToDisplayName).toHaveBeenCalledWith('world-capitals.csv')
+    // Check for available clue sets
+    expect(screen.getByText('Test Game 1')).toBeInTheDocument()
+    expect(screen.getByText('Test Game 2')).toBeInTheDocument()
   })
 
-  it('should handle file selection', () => {
-    render(<ClueSetSelector />)
+  it('should call onClueSetSelected when selection changes', () => {
+    render(<ClueSetSelector {...defaultProps} />)
 
-    const select = screen.getByRole('combobox') as HTMLSelectElement
+    const select = screen.getByRole('combobox')
     fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
 
+    expect(mockOnClueSetSelected).toHaveBeenCalledWith('test-game-1.csv')
+  })
+
+  it('should display selected clue set', () => {
+    render(<ClueSetSelector {...defaultProps} selectedClueSetId="test-game-1.csv" />)
+
+    const select = screen.getByRole('combobox') as HTMLSelectElement
     expect(select.value).toBe('test-game-1.csv')
   })
 
-  it('should disable load button when no file is selected', () => {
-    render(<ClueSetSelector />)
-
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-    expect(loadButton).toBeDisabled()
-  })
-
-  it('should enable load button when file is selected', () => {
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-
-    expect(loadButton).not.toBeDisabled()
-  })
-
-  it('should disable load button when no file is selected', () => {
-    render(<ClueSetSelector />)
-
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-    expect(loadButton).toBeDisabled()
-  })
-
-  it('should show message when user is not logged in', () => {
-    // Mock useAuth to return no user
-    const mockUseAuth = jest.spyOn(require('../../contexts/AuthContext'), 'useAuth')
-    mockUseAuth.mockReturnValue({
-      user: null,
-      session: null,
-      loading: false,
-      login: jest.fn(),
-      logout: jest.fn()
-    })
-
-    render(<ClueSetSelector />)
-
-    expect(screen.getByText('Please log in to load clue sets.')).toBeInTheDocument()
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Load Clue Set' })).not.toBeInTheDocument()
-
-    mockUseAuth.mockRestore()
-  })
-
-  it('should handle successful clue set loading', async () => {
-    const mockClueSetData = {
-      name: 'Test Game 1',
-      filename: 'test-game-1.csv',
-      rounds: {
-        jeopardy: [],
-        double: [],
-        final: { name: 'Final', clues: [] }
-      }
-    }
-
-    mockLoadClueSetFromCSV.mockResolvedValue(mockClueSetData)
-    mockSaveClueSetToDatabase.mockResolvedValue('clue-set-123')
-
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-    fireEvent.click(loadButton)
-
-    // Should show success message eventually
-    await waitFor(() => {
-      expect(screen.getByText('Successfully loaded "Test Game 1" (ID: clue-set-123)')).toBeInTheDocument()
-    })
-
-    expect(mockLoadClueSetFromCSV).toHaveBeenCalledWith('test-game-1.csv')
-    expect(mockSaveClueSetToDatabase).toHaveBeenCalledWith(mockClueSetData, 'user-123')
-  })
-
-  it('should handle CSV loading error', async () => {
-    const loadError = new Error('Failed to load CSV')
-    mockLoadClueSetFromCSV.mockRejectedValue(loadError)
-
-    // Mock console.error to avoid test output noise
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-    fireEvent.click(loadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load clue set: Failed to load CSV')).toBeInTheDocument()
-    })
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to load clue set:', loadError)
-    consoleSpy.mockRestore()
-  })
-
-  it('should handle database saving error', async () => {
-    const mockClueSetData = {
-      name: 'Test Game 1',
-      filename: 'test-game-1.csv',
-      rounds: {
-        jeopardy: [],
-        double: [],
-        final: { name: 'Final', clues: [] }
-      }
-    }
-
-    const saveError = new Error('Database connection failed')
-    mockLoadClueSetFromCSV.mockResolvedValue(mockClueSetData)
-    mockSaveClueSetToDatabase.mockRejectedValue(saveError)
-
-    // Mock console.error to avoid test output noise
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-    fireEvent.click(loadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load clue set: Database connection failed')).toBeInTheDocument()
-    })
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to load clue set:', saveError)
-    consoleSpy.mockRestore()
-  })
-
-  it('should disable controls during loading', async () => {
-    mockLoadClueSetFromCSV.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)))
-
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-    fireEvent.click(loadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText('Loading...')).toBeInTheDocument()
-    })
-
-    expect(select).toBeDisabled()
-    expect(loadButton).toBeDisabled()
-  })
-
-  it('should clear selection after successful load', async () => {
-    const mockClueSetData = {
-      name: 'Test Game 1',
-      filename: 'test-game-1.csv',
-      rounds: {
-        jeopardy: [],
-        double: [],
-        final: { name: 'Final', clues: [] }
-      }
-    }
-
-    mockLoadClueSetFromCSV.mockResolvedValue(mockClueSetData)
-    mockSaveClueSetToDatabase.mockResolvedValue('clue-set-123')
-
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox') as HTMLSelectElement
-    const loadButton = screen.getByRole('button', { name: 'Load Clue Set' })
-
-    fireEvent.change(select, { target: { value: 'test-game-1.csv' } })
-    fireEvent.click(loadButton)
-
-    await waitFor(() => {
-      expect(screen.getByText(/Successfully loaded/)).toBeInTheDocument()
-    })
-
-    expect(select.value).toBe('')
-  })
-
-  it('should have proper accessibility attributes', () => {
-    render(<ClueSetSelector />)
-
-    const select = screen.getByRole('combobox')
-    const labeledSelect = screen.getByLabelText('Select Clue Set:')
-
-    expect(select).toHaveAttribute('id', 'clue-set-select')
-    expect(labeledSelect).toBe(select) // The labeled element should be the select itself
-  })
-
-  it('should handle empty available clue sets', () => {
+  it('should handle empty clue sets list', () => {
     mockGetAvailableClueSets.mockReturnValue([])
 
-    render(<ClueSetSelector />)
+    render(<ClueSetSelector {...defaultProps} />)
 
     const select = screen.getByRole('combobox')
     expect(select).toBeInTheDocument()
-    expect(screen.getByText('Choose a clue set...')).toBeInTheDocument()
+
+    // Should only have the default option
+    expect(screen.getByText('Choose a Clue Set...')).toBeInTheDocument()
+    expect(select.children).toHaveLength(1)
+  })
+
+  it('should use filenameToDisplayName for option labels', () => {
+    render(<ClueSetSelector {...defaultProps} />)
+
+    expect(mockFilenameToDisplayName).toHaveBeenCalledWith('test-game-1.csv')
+    expect(mockFilenameToDisplayName).toHaveBeenCalledWith('test-game-2.csv')
   })
 })

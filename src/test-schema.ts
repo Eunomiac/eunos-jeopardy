@@ -8,70 +8,70 @@ declare global {
 }
 
 /**
+ * Test a single table for existence and structure
+ */
+async function testTable(tableName: 'clue_sets' | 'clues' | 'categories', emoji: string) {
+  console.log(`\n${emoji} Testing ${tableName} table...`)
+  const { data, error } = await supabase
+    .from(tableName)
+    .select('*')
+    .limit(1)
+
+  if (error) {
+    console.log(`❌ ${tableName} table error:`, error.message)
+    return null
+  }
+
+  console.log(`✅ ${tableName} table exists`)
+  return data
+}
+
+/**
+ * Check clue column structure for legacy field detection
+ */
+function checkClueColumns(clues: any[]) {
+  if (!clues || clues.length === 0) {
+    console.log('No clues data to check columns')
+    return
+  }
+
+  console.log('Columns:', Object.keys(clues[0]))
+
+  const hasPrompt = 'prompt' in clues[0]
+  const hasResponse = 'response' in clues[0]
+  const hasLegacyFields = 'question' in clues[0] || 'text' in clues[0]
+  const hasAnswer = 'answer' in clues[0]
+
+  console.log('Column check:')
+  console.log(`  - prompt: ${hasPrompt ? '✅' : '❌'}`)
+  console.log(`  - response: ${hasResponse ? '✅' : '❌'}`)
+  console.log(`  - legacy fields (question/text): ${hasLegacyFields ? '⚠️' : '✅'}`)
+  console.log(`  - answer: ${hasAnswer ? '✅' : '❌'}`)
+}
+
+/**
  * Test script to check current Supabase schema
  */
 export async function testCurrentSchema() {
   console.log('🔍 Testing current Supabase schema...')
 
   try {
-    // Test if clue_sets table exists
-    console.log('\n📋 Testing clue_sets table...')
-    const { data: clueSets, error: clueSetsError } = await supabase
-      .from('clue_sets')
-      .select('*')
-      .limit(1)
-
-    if (clueSetsError) {
-      console.log('❌ clue_sets table error:', clueSetsError.message)
-    } else {
-      console.log('✅ clue_sets table exists')
-      console.log('Columns:', Object.keys(clueSets?.[0] || {}))
+    // Test clue_sets table
+    const clueSets = await testTable('clue_sets', '📋')
+    if (clueSets) {
+      console.log('Columns:', Object.keys(clueSets[0] || {}))
     }
 
-    // Test clues table columns
-    console.log('\n🎯 Testing clues table...')
-    const { data: clues, error: cluesError } = await supabase
-      .from('clues')
-      .select('*')
-      .limit(1)
-
-    if (cluesError) {
-      console.log('❌ clues table error:', cluesError.message)
-    } else {
-      console.log('✅ clues table exists')
-      if (clues && clues.length > 0) {
-        console.log('Columns:', Object.keys(clues[0]))
-
-        // Check for new column names
-        const hasPrompt = 'prompt' in clues[0]
-        const hasResponse = 'response' in clues[0]
-        const hasQuestion = 'question' in clues[0] || 'text' in clues[0]
-        const hasAnswer = 'answer' in clues[0]
-
-        console.log('Column check:')
-        console.log(`  - prompt: ${hasPrompt ? '✅' : '❌'}`)
-        console.log(`  - response: ${hasResponse ? '✅' : '❌'}`)
-        console.log(`  - question/text: ${hasQuestion ? '✅' : '❌'}`)
-        console.log(`  - answer: ${hasAnswer ? '✅' : '❌'}`)
-      } else {
-        console.log('No clues data to check columns')
-      }
+    // Test clues table with column analysis
+    const clues = await testTable('clues', '🎯')
+    if (clues) {
+      checkClueColumns(clues)
     }
 
     // Test categories table
-    console.log('\n📂 Testing categories table...')
-    const { data: categories, error: categoriesError } = await supabase
-      .from('categories')
-      .select('*')
-      .limit(1)
-
-    if (categoriesError) {
-      console.log('❌ categories table error:', categoriesError.message)
-    } else {
-      console.log('✅ categories table exists')
-      if (categories && categories.length > 0) {
-        console.log('Columns:', Object.keys(categories[0]))
-      }
+    const categories = await testTable('categories', '📂')
+    if (categories && categories.length > 0) {
+      console.log('Columns:', Object.keys(categories[0]))
     }
 
   } catch (error) {

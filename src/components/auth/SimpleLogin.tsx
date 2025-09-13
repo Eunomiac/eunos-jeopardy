@@ -28,10 +28,13 @@ export function SimpleLogin() {
 
   if (user) {
     return (
-      <div className="simple-login">
-        <p>Logged in as: <strong>{user.email}</strong></p>
-        <button 
-          className="btn btn-secondary"
+      <div className="login-info">
+        <span className="login-text">Currently logged in as </span>
+        <span className="user-email jeopardy-category">
+          {user.email}
+        </span>
+        <button
+          className="jeopardy-button logout-button"
           onClick={handleLogout}
         >
           Logout
@@ -41,32 +44,39 @@ export function SimpleLogin() {
   }
 
   return (
-    <div className="simple-login">
-      <h3>Login</h3>
+    <div className="simple-login game-creator login-form">
+      <h3 className="jeopardy-category login-title">
+        Login
+      </h3>
       <form onSubmit={handleLogin}>
-        <div className="mb-3">
+        <div className="form-group">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="jeopardy-input"
           />
         </div>
-        <div className="mb-3">
+        <div className="form-group">
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className="jeopardy-input"
           />
         </div>
-        <button type="submit" className="btn btn-primary">
+        <button
+          type="submit"
+          className="jeopardy-button full-width"
+        >
           Login
         </button>
       </form>
-      <p className="text-muted mt-2">
+      <p className="jeopardy-category login-help-text">
         Test accounts: host@test.com, player1@test.com, player2@test.com (password: 1234)
       </p>
     </div>

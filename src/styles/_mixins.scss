@@ -1,4 +1,5 @@
 // SCSS Mixins
+@use 'sass:color';
 
 // Responsive breakpoints
 @mixin respond-to($breakpoint) {
@@ -51,7 +52,7 @@
   text-decoration: none;
   cursor: pointer;
   transition: all $transition-fast;
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -62,9 +63,9 @@
   @include button-base;
   background-color: $accent-color;
   color: $primary-color;
-  
+
   &:hover:not(:disabled) {
-    background-color: lighten($accent-color, 10%);
+    background-color: color.adjust($accent-color, $lightness: 10%);
   }
 }
 
@@ -73,7 +74,7 @@
   background-color: transparent;
   color: $text-color;
   border-color: $border-color;
-  
+
   &:hover:not(:disabled) {
     background-color: $secondary-color;
   }

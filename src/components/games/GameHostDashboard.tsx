@@ -3,11 +3,11 @@ import { useAuth } from '../../contexts/AuthContext'
 import { GameService, type Game, type Player } from '../../services/games/GameService'
 
 interface GameHostDashboardProps {
-  gameId: string
-  onBackToCreator: () => void
+  readonly gameId: string
+  readonly onBackToCreator: () => void
 }
 
-export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboardProps) {
+export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHostDashboardProps>) {
   const { user } = useAuth()
   const [game, setGame] = useState<Game | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
@@ -17,7 +17,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboard
 
   // Load game data
   useEffect(() => {
-    if (!user || !gameId) return
+    if (!user || !gameId) { return }
 
     const loadGameData = async () => {
       try {
@@ -46,7 +46,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboard
   }, [user, gameId])
 
   const handleToggleBuzzer = async () => {
-    if (!user || !game) return
+    if (!user || !game) { return }
 
     try {
       setMessage('Updating buzzer state...')
@@ -62,7 +62,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboard
   }
 
   const handleEndGame = async () => {
-    if (!user || !game) return
+    if (!user || !game) { return }
 
     if (!confirm('Are you sure you want to end this game?')) {
       return
@@ -73,7 +73,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboard
       await GameService.updateGame(gameId, { status: 'completed' }, user.id)
       setMessage('Game ended successfully')
       setMessageType('success')
-      
+
       // Go back to creator after a delay
       setTimeout(() => {
         onBackToCreator()
@@ -154,7 +154,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboard
                   {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
                 </button>
                 <div className="text-muted mt-2">
-                  <small>Press SPACE to toggle (coming soon)</small>
+                  <small>Press SPACE to toggle</small>
                 </div>
               </div>
 
@@ -229,7 +229,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: GameHostDashboard
               <p><strong>Host:</strong> {user.email}</p>
               <p><strong>Status:</strong> <span className="text-capitalize">{game.status}</span></p>
               <p><strong>Current Round:</strong> <span className="text-capitalize">{game.current_round}</span></p>
-              
+
               <div className="mt-3">
                 <h6>Coming Soon:</h6>
                 <ul className="text-muted">

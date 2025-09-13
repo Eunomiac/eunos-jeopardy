@@ -1,39 +1,13 @@
 import { GameService } from './GameService'
-import { supabase } from '../supabase/client'
 
 // Mock Supabase client
 jest.mock('../supabase/client', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn()
-        }))
-      })),
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(),
-          order: jest.fn(() => ({
-            single: jest.fn()
-          }))
-        }))
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn()
-          }))
-        }))
-      })),
-      delete: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          eq: jest.fn()
-        }))
-      }))
-    }))
+    from: jest.fn()
   }
 }))
 
+import { supabase } from '../supabase/client'
 const mockSupabase = supabase as jest.Mocked<typeof supabase>
 
 describe('GameService', () => {
@@ -46,7 +20,7 @@ describe('GameService', () => {
       const mockGame = {
         id: 'game-123',
         host_id: 'user-123',
-        question_set_id: 'clue-set-123',
+        clue_set_id: 'clue-set-123',
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
@@ -68,7 +42,7 @@ describe('GameService', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('games')
       expect(mockInsert).toHaveBeenCalledWith({
         host_id: 'user-123',
-        question_set_id: 'clue-set-123',
+        clue_set_id: 'clue-set-123',
         status: 'lobby',
         current_round: 'jeopardy',
         is_buzzer_locked: true
@@ -79,9 +53,9 @@ describe('GameService', () => {
     it('should handle database error', async () => {
       const mockInsert = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ 
-            data: null, 
-            error: { message: 'Database error' } 
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Database error' }
           })
         })
       })
@@ -115,7 +89,7 @@ describe('GameService', () => {
       const mockGame = {
         id: 'game-123',
         host_id: 'user-123',
-        question_set_id: 'clue-set-123',
+        clue_set_id: 'clue-set-123',
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
@@ -143,7 +117,7 @@ describe('GameService', () => {
       const mockGame = {
         id: 'game-123',
         host_id: 'user-123',
-        question_set_id: 'clue-set-123',
+        clue_set_id: 'clue-set-123',
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
@@ -167,9 +141,9 @@ describe('GameService', () => {
     it('should handle game not found', async () => {
       const mockSelect = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ 
-            data: null, 
-            error: { message: 'Not found' } 
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Not found' }
           })
         })
       })
@@ -188,7 +162,7 @@ describe('GameService', () => {
       const mockGame = {
         id: 'game-123',
         host_id: 'user-123',
-        question_set_id: 'clue-set-123',
+        clue_set_id: 'clue-set-123',
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
@@ -197,31 +171,19 @@ describe('GameService', () => {
 
       const updatedGame = { ...mockGame, is_buzzer_locked: false }
 
-      // Mock getGame call (first call to from)
-      const mockGameSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
-        })
-      })
-
-      // Mock update call (second call to from)
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({ data: updatedGame, error: null })
-          })
-        })
-      })
-
-      // Setup the mock chain for both calls
-      mockSupabase.from
-        .mockReturnValueOnce({ select: mockGameSelect } as any)
-        .mockReturnValueOnce({ update: mockUpdate } as any)
+      // Mock the GameService methods directly to avoid complex Supabase mocking
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(updatedGame)
 
       const result = await GameService.toggleBuzzerLock('game-123', 'user-123')
 
-      expect(mockUpdate).toHaveBeenCalledWith({ is_buzzer_locked: false })
+      expect(getGameSpy).toHaveBeenCalledWith('game-123', 'user-123')
+      expect(updateGameSpy).toHaveBeenCalledWith('game-123', { is_buzzer_locked: false }, 'user-123')
       expect(result).toEqual(updatedGame)
+
+      // Clean up spies
+      getGameSpy.mockRestore()
+      updateGameSpy.mockRestore()
     })
   })
 
@@ -280,7 +242,7 @@ describe('GameService', () => {
       const mockGame = {
         id: 'game-123',
         host_id: 'user-123',
-        question_set_id: 'clue-set-123',
+        clue_set_id: 'clue-set-123',
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
@@ -288,7 +250,7 @@ describe('GameService', () => {
       }
 
       const mockPlayer = { score: 100 }
-      const updatedPlayer = { 
+      const updatedPlayer = {
         game_id: 'game-123',
         user_id: 'player-123',
         score: 300,

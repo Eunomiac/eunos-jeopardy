@@ -1,0 +1,585 @@
+// ========================================
+// JEOPARDY THEME COMPONENTS
+// ========================================
+@use 'sass:color';
+
+// Standard Jeopardy Button Styling (for consistency across all components)
+@mixin jeopardy-button-base {
+  // Active Button: "Clue Blue" background, gold border, white text, black drop-shadow
+  background-color: $jeopardy-blue;
+  color: $jeopardy-white;
+  border: 2px solid $jeopardy-gold;
+  border-radius: $border-radius-md;
+  font-family: $font-family-category;
+  font-weight: normal;
+  text-transform: $jeopardy-text-transform;
+  text-shadow: 2px 2px 4px $jeopardy-black;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(1.2);
+    transform: scale(1.02);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  // Inactive Button: "Board Blue" background, no border, black text, no drop-shadow
+  &.inactive {
+    background-color: $jeopardy-darkest-blue;
+    color: $jeopardy-grey;
+    border-color: transparent;
+    text-shadow: none;
+  }
+}
+
+
+@mixin jeopardy-input {
+  background-color: $jeopardy-black;
+  color: $jeopardy-white;
+  border: 2px solid $jeopardy-blue;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  font-family: $font-family-ui;
+
+  &:focus {
+    outline: none;
+    border-color: $jeopardy-gold;
+    box-shadow: 0 0 0 3px rgba($jeopardy-gold, 0.3);
+  }
+}
+
+// Standard button sizes
+@mixin jeopardy-button-small {
+  @include jeopardy-button-base;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+}
+
+@mixin jeopardy-button-medium {
+  @include jeopardy-button-base;
+  padding: $spacing-md $spacing-lg;
+  font-size: $font-size-base;
+}
+
+@mixin jeopardy-button-large {
+  @include jeopardy-button-base;
+  padding: $spacing-lg $spacing-xl;
+  font-size: $font-size-lg;
+}
+
+// Mixins for Jeopardy styling patterns
+@mixin jeopardy-card {
+  background-color: $jeopardy-blue;
+  border: 2px solid $jeopardy-gold;
+  border-radius: $border-radius-md;
+  padding: $spacing-lg;
+  box-shadow: $shadow-lg;
+  transition: all $transition-normal;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+}
+
+// Utility button classes for easy use in components
+.jeopardy-button-small {
+  @include jeopardy-button-small;
+}
+
+.jeopardy-button {
+  @include jeopardy-button-medium;
+
+  &.inactive {
+    background-color: $jeopardy-blue;
+    color: $jeopardy-white;
+    border-color: $jeopardy-gold;
+  }
+}
+
+.jeopardy-button-large {
+  @include jeopardy-button-large;
+}
+
+// Utility classes
+.full-width {
+  width: 100%;
+}
+
+// Navigation and layout classes
+.app-container {
+  min-height: 100vh;
+  background-color: $jeopardy-background-blue;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  text-align: center;
+  padding: $spacing-lg 0;
+  width: min-content;
+  margin: 0 auto;
+}
+
+.app-main {
+  padding: 0 $spacing-xxl $spacing-lg;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 400px;
+}
+
+.navigation-tabs {
+  margin-bottom: $spacing-lg;
+  display: flex;
+  gap: $spacing-lg;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.host-game-section {
+  display: flex;
+  justify-content: center;
+  margin-top: $spacing-xl;
+}
+
+.selected-clue-set {
+  text-align: center;
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md;
+  background-color: rgba($jeopardy-blue, 0.3);
+  border: 1px solid $jeopardy-gold;
+  border-radius: $border-radius-md;
+}
+
+
+
+
+
+.content-section {
+  margin-bottom: $spacing-lg;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.dashboard-indicator {
+  @include jeopardy-button-base;
+  cursor: default;
+
+  &:hover {
+    transform: none;
+    background-color: $jeopardy-gold;
+  }
+}
+
+.app-top-header {
+  text-align: center;
+  padding: $spacing-lg;
+  border-bottom: 2px solid $jeopardy-gold;
+  background-color: $jeopardy-blue;
+
+  .login-info {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: $spacing-md;
+
+    .login-text {
+      color: $jeopardy-white;
+      font-family: $font-family-category;
+      font-size: $font-size-sm;
+      text-transform: uppercase;
+    }
+
+    .user-email {
+      color: $jeopardy-gold;
+    }
+
+    .logout-button {
+      @include jeopardy-button-small;
+      padding: $spacing-xs;
+      margin: $spacing-xs;
+    }
+  }
+}
+
+.app-footer {
+  text-align: center;
+  padding: $spacing-lg;
+  border-top: 2px solid $jeopardy-gold;
+  background-color: $jeopardy-blue;
+  margin-top: $spacing-lg;
+
+  .footer-text {
+    margin: 0;
+    font-size: $font-size-xs;
+  }
+}
+
+// Login form styles
+.login-form {
+  max-width: 400px;
+
+  .login-title {
+    color: $jeopardy-gold;
+    text-align: center;
+    margin-bottom: $spacing-xl;
+  }
+
+  .login-help-text {
+    font-size: $font-size-xs;
+    color: $text-muted;
+    text-align: center;
+    margin-top: $spacing-lg;
+  }
+}
+
+// Form input styles
+.jeopardy-input {
+  width: 100%;
+  padding: $spacing-md;
+  background-color: $jeopardy-blue;
+  color: $jeopardy-white;
+  border: 2px solid $jeopardy-gold;
+  border-radius: $border-radius-md;
+  font-family: $font-family-category;
+  text-transform: $jeopardy-text-transform;
+
+  &:focus {
+    outline: none;
+    border-color: color.adjust($jeopardy-gold, $lightness: 10%);
+    box-shadow: 0 0 0 2px rgba($jeopardy-gold, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Message display styles
+.message-display {
+  border-radius: $border-radius-md;
+  padding: $spacing-lg;
+  margin-top: $spacing-lg;
+  text-align: center;
+
+  &.success {
+    background-color: rgba($success-color, 0.2);
+    border: 1px solid $success-color;
+
+    .jeopardy-category {
+      color: $success-color;
+      font-size: $font-size-sm;
+    }
+  }
+
+  &.error {
+    background-color: rgba($error-color, 0.2);
+    border: 1px solid $error-color;
+
+    .jeopardy-category {
+      color: $error-color;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+// Development Tools section
+.dev-tools {
+  margin-top: $spacing-lg;
+
+  .dev-title {
+    color: $jeopardy-gold;
+    text-align: center;
+    margin-bottom: $spacing-md;
+  }
+
+  .dev-description {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+    text-align: center;
+    margin-bottom: $spacing-md;
+  }
+
+  .counter-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-md;
+
+    .counter-button {
+      @include jeopardy-button-small;
+      min-width: 50px;
+    }
+
+    .counter-display {
+      font-size: $font-size-lg;
+      min-width: 120px;
+      text-align: center;
+    }
+  }
+
+  .dev-instructions {
+    text-align: center;
+
+    p {
+      font-size: $font-size-sm;
+      color: $text-muted;
+      margin-bottom: $spacing-sm;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    code {
+      background-color: $jeopardy-gold;
+      color: $jeopardy-black;
+      padding: $spacing-xs $spacing-sm;
+      border-radius: $border-radius-sm;
+    }
+  }
+}
+
+
+// Game Board Components
+.jeopardy-board {
+  background-color: $jeopardy-blue;
+  border: 4px solid $jeopardy-gold;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+
+  .board-header {
+    text-align: center;
+    margin-bottom: $spacing-xl;
+
+    h1 {
+      @extend .jeopardy-category;
+      font-size: $font-size-4xl;
+      color: $jeopardy-gold;
+      margin: 0;
+    }
+  }
+
+  .categories-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+
+    .category-header {
+      @extend .jeopardy-category;
+      background-color: $jeopardy-blue;
+      border: 2px solid $jeopardy-gold;
+      padding: $spacing-md;
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 2px 2px 4px $jeopardy-black;
+    }
+  }
+
+  .clues-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: $spacing-sm;
+
+    .clue-cell {
+      @extend .jeopardy-board-money;
+      background-color: $jeopardy-blue;
+      border: 2px solid $jeopardy-gold;
+      padding: $spacing-lg;
+      text-align: center;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all $transition-fast;
+      text-shadow: 2px 2px 4px $jeopardy-black;
+
+      &:hover {
+        filter: brightness(1.1);
+      }
+
+      &.revealed {
+        background-color: color.adjust($jeopardy-blue, $lightness: -20%);
+        color: $text-muted;
+        cursor: not-allowed;
+
+        &:hover {
+          filter: none;
+        }
+      }
+
+      &.daily-double {
+        background: linear-gradient(45deg, $jeopardy-gold, color.adjust($jeopardy-gold, $lightness: 20%));
+        color: $jeopardy-black;
+
+        &::after {
+          content: "DD";
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          font-size: 0.75rem;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}
+
+// Clue Display Components (for individual clue viewing)
+.clue-display {
+  background-color: $jeopardy-clue-blue;
+  border: 4px solid $jeopardy-gold;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  text-align: center;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .clue-text {
+    @extend .jeopardy-clue;
+    font-size: $font-size-2xl;
+    text-shadow: 3px 3px 6px $jeopardy-black;
+    max-width: 80%;
+  }
+
+  .clue-category {
+    @extend .jeopardy-category;
+    position: absolute;
+    top: $spacing-lg;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba($jeopardy-black, 0.3);
+    padding: $spacing-sm $spacing-md;
+    border-radius: $border-radius-sm;
+  }
+
+  .clue-value {
+    @extend .jeopardy-money;
+    position: absolute;
+    bottom: $spacing-lg;
+    right: $spacing-lg;
+    font-size: $font-size-xl;
+  }
+}
+
+// Host Dashboard Components
+.host-dashboard {
+  background-color: $jeopardy-black;
+  min-height: 100vh;
+  padding: $spacing-lg;
+
+  .dashboard-header {
+    background-color: $jeopardy-blue;
+    border: 2px solid $jeopardy-gold;
+    border-radius: $border-radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-xl;
+    text-align: center;
+
+    h1 {
+      @extend .jeopardy-category;
+      font-size: $font-size-3xl;
+      color: $jeopardy-gold;
+      margin: 0;
+    }
+  }
+
+  .control-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: $spacing-lg;
+    margin-bottom: $spacing-xl;
+
+    .control-card {
+      @include jeopardy-card;
+
+      h3 {
+        @extend .jeopardy-category;
+        color: $jeopardy-gold;
+        margin-bottom: $spacing-md;
+      }
+
+      .control-buttons {
+        display: flex;
+        gap: $spacing-sm;
+        flex-wrap: wrap;
+
+        button {
+          @include jeopardy-button-medium;
+          flex: 1;
+          min-width: 120px;
+        }
+      }
+    }
+  }
+}
+
+
+
+// Alert/Message Components
+.jeopardy-alert {
+  border-radius: $border-radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  border: 2px solid;
+
+  &.alert-success {
+    background-color: rgba($success-color, 0.1);
+    border-color: $success-color;
+    color: $success-color;
+  }
+
+  &.alert-error {
+    background-color: rgba($error-color, 0.1);
+    border-color: $error-color;
+    color: $error-color;
+  }
+
+  &.alert-warning {
+    background-color: rgba($warning-color, 0.1);
+    border-color: $warning-color;
+    color: $warning-color;
+  }
+
+  &.alert-info {
+    background-color: rgba($jeopardy-gold, 0.1);
+    border-color: $jeopardy-gold;
+    color: $jeopardy-gold;
+  }
+}
+
+// Common section styling
+.section-title {
+  color: $jeopardy-gold;
+  text-align: center;
+  margin-bottom: $spacing-xl;
+}
+
+.login-required-message {
+  text-align: center;
+  color: $text-muted;
+}

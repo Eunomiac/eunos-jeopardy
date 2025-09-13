@@ -273,7 +273,7 @@ export type Database = {
           host_id: string
           id: string
           is_buzzer_locked: boolean
-          question_set_id: string
+          clue_set_id: string
           status: Database["public"]["Enums"]["game_status"]
         }
         Insert: {
@@ -282,7 +282,7 @@ export type Database = {
           host_id: string
           id?: string
           is_buzzer_locked?: boolean
-          question_set_id: string
+          clue_set_id: string
           status?: Database["public"]["Enums"]["game_status"]
         }
         Update: {
@@ -291,7 +291,7 @@ export type Database = {
           host_id?: string
           id?: string
           is_buzzer_locked?: boolean
-          question_set_id?: string
+          clue_set_id?: string
           status?: Database["public"]["Enums"]["game_status"]
         }
         Relationships: [
@@ -303,8 +303,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "games_question_set_id_fkey"
-            columns: ["question_set_id"]
+            foreignKeyName: "games_clue_set_id_fkey"
+            columns: ["clue_set_id"]
             isOneToOne: false
             referencedRelation: "clue_sets"
             referencedColumns: ["id"]

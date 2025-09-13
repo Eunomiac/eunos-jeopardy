@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { App } from './App'
 import { AuthProvider } from '../contexts/AuthContext'
 
@@ -13,7 +13,8 @@ describe('App', () => {
   it('renders the project name', () => {
     renderWithAuth(<App />)
 
-    expect(screen.getByText("Euno's Jeopardy")).toBeInTheDocument()
+    expect(screen.getByText("Eunomiac's")).toBeInTheDocument()
+    expect(screen.getByText("Jeopardy!")).toBeInTheDocument()
   })
 
   it('renders login form when user is not authenticated', async () => {
@@ -29,7 +30,7 @@ describe('App', () => {
     expect(screen.getByPlaceholderText('Password')).toBeInTheDocument()
   })
 
-  it('displays initial count of 0 when authenticated', () => {
+  it('displays clue set selector when authenticated', () => {
     // Mock authenticated user
     const mockUser = { id: '1', email: 'test@example.com' }
     jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
@@ -42,46 +43,11 @@ describe('App', () => {
 
     renderWithAuth(<App />)
 
-    expect(screen.getByText('Count: 0')).toBeInTheDocument()
+    expect(screen.getByText('Clue Sets')).toBeInTheDocument()
+    expect(screen.getByText('Host Game')).toBeInTheDocument()
   })
 
-  it('increments count when + button is clicked', () => {
-    // Mock authenticated user
-    const mockUser = { id: '1', email: 'test@example.com' }
-    jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
-      user: mockUser,
-      session: { user: mockUser },
-      loading: false,
-      login: jest.fn(),
-      logout: jest.fn()
-    })
 
-    renderWithAuth(<App />)
-
-    const incrementButton = screen.getByText('+')
-    fireEvent.click(incrementButton)
-
-    expect(screen.getByText('Count: 1')).toBeInTheDocument()
-  })
-
-  it('decrements count when - button is clicked', () => {
-    // Mock authenticated user
-    const mockUser = { id: '1', email: 'test@example.com' }
-    jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
-      user: mockUser,
-      session: { user: mockUser },
-      loading: false,
-      login: jest.fn(),
-      logout: jest.fn()
-    })
-
-    renderWithAuth(<App />)
-
-    const decrementButton = screen.getByText('-')
-    fireEvent.click(decrementButton)
-
-    expect(screen.getByText('Count: -1')).toBeInTheDocument()
-  })
 
   it('renders footer with copyright', () => {
     renderWithAuth(<App />)
@@ -89,7 +55,7 @@ describe('App', () => {
     expect(screen.getByText(/© 2025.*Built with React/)).toBeInTheDocument()
   })
 
-  it('shows welcome message and user email when authenticated', () => {
+  it('shows user email when authenticated', () => {
     // Mock authenticated user
     const mockUser = { id: '1', email: 'test@example.com' }
     jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
@@ -102,8 +68,7 @@ describe('App', () => {
 
     renderWithAuth(<App />)
 
-    expect(screen.getByText("Welcome to Euno's Jeopardy!")).toBeInTheDocument()
-    // Use getAllByText since the email appears in multiple places
-    expect(screen.getAllByText('test@example.com')).toHaveLength(2)
+    expect(screen.getByText('Currently logged in as')).toBeInTheDocument()
+    expect(screen.getByText('test@example.com')).toBeInTheDocument()
   })
 })

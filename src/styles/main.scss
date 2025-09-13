@@ -1,9 +1,10 @@
 // Main SCSS entry point
-// Import order: variables → mixins → globals → components → utilities
+// Import order: variables → mixins → globals → jeopardy-theme → components → utilities
 
 @import 'variables';
 @import 'mixins';
 @import 'globals';
+@import 'jeopardy-theme';
 @import 'utilities';
 
 // Component styles
