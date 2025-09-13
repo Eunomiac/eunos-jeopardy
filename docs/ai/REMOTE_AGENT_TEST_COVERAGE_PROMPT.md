@@ -6,14 +6,17 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 # Project Context
 - **Repository**: Euno's Jeopardy - Online Jeopardy game platform
 - **Tech Stack**: React + TypeScript + Vite + Jest + Supabase
-- **Current Status**: Issues #1 (Authentication) and #2 (CSV Loader) are complete
+- **Current Status**: Core game hosting workflow is complete and functional
+- **Recent Work**: Fixed complex authentication/RLS issues, game creation now works end-to-end
 - **Test Framework**: Jest with React Testing Library
 - **Coverage Tool**: Built into Jest, reported via SonarQube integration
 
 ## Current State
-- **Authentication system**: Working with Supabase Auth + profile creation
+- **Authentication system**: Working with Supabase Auth + profile creation + session management
 - **CSV loader**: Complete with parsing, validation, and database saving
-- **Database**: Supabase with RLS policies, proper schema relationships
+- **Game creation workflow**: Complete - users can create games and access host dashboard
+- **Host controls**: Buzzer lock/unlock and game ending functionality working
+- **Database**: Supabase with RLS policies rebuilt and working correctly
 - **Code quality**: SonarQube integration active, most critical issues resolved
 
 # Your Objectives
@@ -37,12 +40,14 @@ Achieve **90% test coverage** across the codebase while maintaining quality.
 5. **Database operations** - Supabase client interactions (with mocks)
 
 ## 2. What to Test Thoroughly
-- **Happy path scenarios** - Normal user workflows
+- **Happy path scenarios** - Normal user workflows (login → select clue set → create game → host dashboard)
 - **Error conditions** - Network failures, validation errors, edge cases
 - **User interactions** - Button clicks, form submissions, file selections
-- **State management** - Context providers, hooks, state transitions
+- **State management** - Context providers, hooks, state transitions (especially AuthContext)
 - **Data transformations** - CSV parsing, type conversions, validation
 - **Pure functions** - Logic without side effects
+- **Authentication flows** - Login, logout, session management, profile creation
+- **Game management** - Game creation, buzzer controls, game ending
 - **Mockable integrations** - External services with dependency injection
 
 ## 3. What to Exclude (With Justification)
@@ -203,12 +208,16 @@ export class ClueSetService {
 ### High Priority (Must Test)
 - `src/services/clueSets/loader.ts` - Core CSV processing logic
 - `src/utils/csvParser.ts` - CSV parsing and validation
-- `src/contexts/AuthContext.tsx` - Authentication state management
+- `src/contexts/AuthContext.tsx` - Authentication state management (recently fixed)
 - `src/components/clueSets/ClueSetSelector.tsx` - File selection UI
+- `src/services/games/GameService.ts` - Game creation and management (recently working)
+- `src/app/App.tsx` - Main application flow and game hosting workflow
 
 ### Medium Priority
 - `src/utils/clueSetUtils.ts` - Utility functions
 - `src/types/game.ts` - Type guards and validation functions
+- `src/components/games/GameHostDashboard.tsx` - Host dashboard UI (recently working)
+- `src/components/auth/SimpleLogin.tsx` - Login component
 
 ### Low Priority (Already Excluded)
 - `src/services/supabase/types.ts` - Generated types (excluded in config)
