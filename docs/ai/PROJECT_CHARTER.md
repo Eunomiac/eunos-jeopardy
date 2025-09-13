@@ -425,3 +425,4 @@ create policy if not exists "boards_insert_host" on boards
 - Host dashboard to control states: reading, unlock/lock buzzer, adjudicate
 - Player client for buzzing and answering
 - Scoreboard with history
+- **Multimedia clue support**: Images, audio, and video clues with preloading for instant playback
