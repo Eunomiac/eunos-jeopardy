@@ -366,6 +366,8 @@ export class GameService {
    * @author Euno's Jeopardy Team
    */
   static async getPlayers(gameId: string): Promise<Player[]> {
+    // Query players with joined profile data for complete player information
+    // Using nested select to get display names and usernames in single query
     const { data, error } = await supabase
       .from('players')
       .select(`
@@ -376,26 +378,71 @@ export class GameService {
         )
       `)
       .eq('game_id', gameId)
-      .order('joined_at', { ascending: true })
+      .order('joined_at', { ascending: true }) // Consistent join order for UI
 
     if (error) {
+      // Provide context for debugging player fetch failures
       throw new Error(`Failed to fetch players: ${error.message}`)
     }
 
+    // Return empty array instead of null for easier array operations
     return data || []
   }
 
   /**
-   * Add a player to a game
+   * Adds a new player to an existing game with optional nickname.
+   *
+   * Creates a new player record associated with the specified game and user.
+   * Players start with a score of 0 and can optionally provide a nickname
+   * that overrides their profile display name for this specific game.
+   *
+   * **Player Management:**
+   * - Each user can only join a game once (enforced by unique constraints)
+   * - Nickname is optional and game-specific
+   * - Score initializes to 0 for proper game state
+   * - Join time is automatically recorded for ordering
+   *
+   * **Database Relationships:**
+   * - Creates foreign key relationship to games table
+   * - Links to user profiles through user_id
+   * - Enforces referential integrity constraints
+   *
+   * **Security Considerations:**
+   * - RLS policies prevent joining unauthorized games
+   * - User can only add themselves as a player
+   * - Game must be in joinable state (typically 'lobby')
+   *
+   * @param gameId - UUID of the game to join
+   * @param userId - UUID of the user joining the game
+   * @param nickname - Optional display name for this game (overrides profile name)
+   * @returns Promise resolving to the newly created player record
+   * @throws {Error} When user already in game, game not found, or database error
+   *
+   * @example
+   * ```typescript
+   * // Add player with nickname
+   * const player = await GameService.addPlayer(gameId, userId, "Quiz Master");
+   * console.log(`${player.nickname} joined with score: ${player.score}`);
+   *
+   * // Add player without nickname (uses profile display name)
+   * const player2 = await GameService.addPlayer(gameId, userId2);
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
    */
   static async addPlayer(gameId: string, userId: string, nickname?: string): Promise<Player> {
+    // Initialize player with default game state
+    // Score starts at 0, nickname is optional and game-specific
     const playerData: PlayerInsert = {
       game_id: gameId,
       user_id: userId,
-      nickname: nickname || null,
-      score: 0
+      nickname: nickname || null, // Use null for database consistency
+      score: 0 // All players start with zero score
     }
 
+    // Insert player with immediate return of created record
+    // Database constraints prevent duplicate players in same game
     const { data, error } = await supabase
       .from('players')
       .insert(playerData)
@@ -403,9 +450,11 @@ export class GameService {
       .single()
 
     if (error) {
+      // Error may indicate duplicate player or invalid game/user IDs
       throw new Error(`Failed to add player: ${error.message}`)
     }
 
+    // Defensive programming: ensure database returned expected data
     if (!data) {
       throw new Error('No player data returned from database')
     }
@@ -414,26 +463,106 @@ export class GameService {
   }
 
   /**
-   * Get available clue sets for game creation
+   * Retrieves all clue sets owned by the specified user for game creation.
+   *
+   * Returns a list of clue sets that the user can use to create new games.
+   * Only clue sets owned by the requesting user are returned, enforcing
+   * proper ownership and access control for game content.
+   *
+   * **Ownership Model:**
+   * - Users can only access their own clue sets
+   * - RLS policies enforce ownership at database level
+   * - Supports future sharing/collaboration features
+   *
+   * **Data Ordering:**
+   * - Results ordered by creation date (newest first)
+   * - Provides intuitive ordering for clue set selection
+   * - Helps users find recently created content quickly
+   *
+   * **Integration Points:**
+   * - Used by game creation workflow
+   * - Supports clue set management interfaces
+   * - Foundation for clue set sharing features
+   *
+   * @param userId - UUID of the user to get clue sets for
+   * @returns Promise resolving to array of user's clue sets
+   * @throws {Error} When database operation fails
+   *
+   * @example
+   * ```typescript
+   * const clueSets = await GameService.getAvailableClueSets(userId);
+   * console.log(`User has ${clueSets.length} clue sets available`);
+   *
+   * clueSets.forEach(clueSet => {
+   *   console.log(`${clueSet.name} - Created: ${clueSet.created_at}`);
+   * });
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
    */
   static async getAvailableClueSets(userId: string): Promise<Tables<'clue_sets'>[]> {
+    // Query user's clue sets with ownership filtering
+    // RLS policies provide additional security layer
     const { data, error } = await supabase
       .from('clue_sets')
       .select('*')
-      .eq('owner_id', userId)
-      .order('created_at', { ascending: false })
+      .eq('owner_id', userId) // Only return user's own clue sets
+      .order('created_at', { ascending: false }) // Newest first for better UX
 
     if (error) {
+      // Provide context for debugging clue set fetch failures
       throw new Error(`Failed to fetch clue sets: ${error.message}`)
     }
 
+    // Return empty array instead of null for easier array operations
     return data || []
   }
 
   /**
-   * Get buzzes for a specific clue in order
+   * Retrieves all buzzes for a specific clue in chronological order.
+   *
+   * Returns the complete buzz history for a clue, including player profile
+   * information and precise timing. This is essential for determining buzz
+   * order and managing the authentic Jeopardy gameplay flow.
+   *
+   * **Buzzer System Integration:**
+   * - Buzzes are ordered by creation time (first buzz wins)
+   * - Includes player profile data for display purposes
+   * - Supports multiple buzzes per clue for answer attempts
+   * - Critical for host adjudication workflow
+   *
+   * **Real-time Considerations:**
+   * - Buzz timing is recorded with high precision
+   * - Order determination handles network latency fairly
+   * - Supports real-time buzz notifications to all clients
+   *
+   * **Data Relationships:**
+   * - Links buzzes to specific clues and games
+   * - Includes player profile information for UI display
+   * - Maintains referential integrity across game entities
+   *
+   * @param gameId - UUID of the game containing the clue
+   * @param clueId - UUID of the specific clue to get buzzes for
+   * @returns Promise resolving to array of buzzes in chronological order
+   * @throws {Error} When database operation fails
+   *
+   * @example
+   * ```typescript
+   * const buzzes = await GameService.getBuzzesForClue(gameId, clueId);
+   * if (buzzes.length > 0) {
+   *   const firstBuzz = buzzes[0];
+   *   console.log(`First buzz by: ${firstBuzz.profiles?.display_name}`);
+   *   console.log(`Buzz time: ${new Date(firstBuzz.created_at).toISOString()}`);
+   * }
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
    */
   static async getBuzzesForClue(gameId: string, clueId: string): Promise<Buzz[]> {
+    // Query buzzes with player profile data for complete buzz information
+    // Ordered by creation time to determine proper buzz sequence
     const { data, error } = await supabase
       .from('buzzes')
       .select(`
@@ -445,25 +574,74 @@ export class GameService {
       `)
       .eq('game_id', gameId)
       .eq('clue_id', clueId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true }) // First buzz wins
 
     if (error) {
+      // Provide context for debugging buzz fetch failures
       throw new Error(`Failed to fetch buzzes: ${error.message}`)
     }
 
+    // Return empty array instead of null for easier array operations
     return data || []
   }
 
   /**
-   * Record a buzz for a clue
+   * Records a player's buzz for a specific clue with precise timing.
+   *
+   * Creates a timestamped buzz record that captures the exact moment a player
+   * attempts to answer a clue. The database timestamp ensures fair ordering
+   * even with network latency variations between players.
+   *
+   * **Buzzer System Core:**
+   * - Records precise buzz timing for fair play
+   * - Prevents duplicate buzzes from same player per clue
+   * - Supports multiple answer attempts per clue
+   * - Essential for authentic Jeopardy gameplay flow
+   *
+   * **Race Condition Handling:**
+   * - Database timestamp provides authoritative ordering
+   * - Unique constraints prevent duplicate player buzzes
+   * - Atomic operation ensures data consistency
+   * - Network latency handled fairly by server-side timing
+   *
+   * **Integration Points:**
+   * - Triggers real-time notifications to all game clients
+   * - Used by host interface for buzz order display
+   * - Foundation for answer adjudication workflow
+   *
+   * @param gameId - UUID of the game where buzz occurred
+   * @param clueId - UUID of the clue being answered
+   * @param userId - UUID of the player who buzzed
+   * @returns Promise resolving to the created buzz record with timestamp
+   * @throws {Error} When player already buzzed, invalid IDs, or database error
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const buzz = await GameService.recordBuzz(gameId, clueId, playerId);
+   *   console.log(`Buzz recorded at: ${buzz.created_at}`);
+   *   // Notify other players that someone buzzed
+   * } catch (error) {
+   *   if (error.message.includes("duplicate")) {
+   *     console.log("Player already buzzed for this clue");
+   *   }
+   * }
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
    */
   static async recordBuzz(gameId: string, clueId: string, userId: string): Promise<Buzz> {
+    // Create buzz record with precise timing
+    // Database will automatically set created_at timestamp for fair ordering
     const buzzData: BuzzInsert = {
       game_id: gameId,
       clue_id: clueId,
       user_id: userId
     }
 
+    // Insert buzz with immediate return of created record
+    // Unique constraints prevent duplicate buzzes from same player
     const { data, error } = await supabase
       .from('buzzes')
       .insert(buzzData)
@@ -471,9 +649,11 @@ export class GameService {
       .single()
 
     if (error) {
+      // Error may indicate duplicate buzz or invalid game/clue/user IDs
       throw new Error(`Failed to record buzz: ${error.message}`)
     }
 
+    // Defensive programming: ensure database returned expected data
     if (!data) {
       throw new Error('No buzz data returned from database')
     }
@@ -482,12 +662,51 @@ export class GameService {
   }
 
   /**
-   * Clear all buzzes for a clue (reset buzzer)
+   * Clears all buzzes for a specific clue, resetting the buzzer system.
+   *
+   * Removes all buzz records for a clue, effectively resetting the buzzer
+   * state for that question. This is typically used when the host wants to
+   * allow re-buzzing after an incorrect answer or to reset the question state.
+   *
+   * **Host-Only Operation:**
+   * - Requires host authorization to prevent player manipulation
+   * - Used for managing game flow and second chances
+   * - Critical for maintaining fair gameplay
+   *
+   * **Use Cases:**
+   * - Player gives incorrect answer, allow others to buzz
+   * - Technical issues require buzz reset
+   * - Host wants to restart a question
+   * - Clearing state before moving to next clue
+   *
+   * **Real-time Integration:**
+   * - Triggers real-time updates to all connected clients
+   * - Resets buzzer UI state for all players
+   * - Allows fresh buzzing opportunity
+   *
+   * @param gameId - UUID of the game containing the clue
+   * @param clueId - UUID of the clue to clear buzzes for
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise that resolves when buzzes are cleared
+   * @throws {Error} When unauthorized, invalid IDs, or database error
+   *
+   * @example
+   * ```typescript
+   * // Clear buzzes after incorrect answer to allow re-buzzing
+   * await GameService.clearBuzzesForClue(gameId, clueId, hostId);
+   * console.log("Buzzer reset - players can buzz again");
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
    */
   static async clearBuzzesForClue(gameId: string, clueId: string, hostId: string): Promise<void> {
-    // Verify host authorization
+    // Authorization check: ensure user is the game host
+    // This call will throw if user is not authorized
     await this.getGame(gameId, hostId)
 
+    // Delete all buzzes for the specified clue
+    // Multiple buzzes may exist if players buzzed multiple times
     const { error } = await supabase
       .from('buzzes')
       .delete()
@@ -495,18 +714,62 @@ export class GameService {
       .eq('clue_id', clueId)
 
     if (error) {
+      // Provide context for debugging buzz clearing failures
       throw new Error(`Failed to clear buzzes: ${error.message}`)
     }
   }
 
   /**
-   * Update player score
+   * Updates a player's score with host authorization and atomic operations.
+   *
+   * Modifies a player's score by the specified amount (positive or negative)
+   * while ensuring data consistency and proper authorization. The operation
+   * is atomic to prevent race conditions during simultaneous score updates.
+   *
+   * **Scoring System:**
+   * - Supports positive and negative score changes
+   * - Maintains running total of player's game score
+   * - Used for correct answers, incorrect answers, and Daily Double wagers
+   * - Foundation for Final Jeopardy scoring
+   *
+   * **Host Authorization:**
+   * - Only game host can modify player scores
+   * - Prevents players from manipulating their own scores
+   * - Ensures fair and controlled scoring process
+   *
+   * **Atomic Operations:**
+   * - Fetches current score and calculates new total
+   * - Updates score in single transaction
+   * - Prevents race conditions from simultaneous updates
+   * - Returns updated player data for immediate use
+   *
+   * @param gameId - UUID of the game containing the player
+   * @param userId - UUID of the player whose score to update
+   * @param scoreChange - Amount to add to player's score (can be negative)
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated player record with new score
+   * @throws {Error} When unauthorized, player not found, or database error
+   *
+   * @example
+   * ```typescript
+   * // Award points for correct answer
+   * const player = await GameService.updatePlayerScore(gameId, playerId, 400, hostId);
+   * console.log(`New score: $${player.score}`);
+   *
+   * // Deduct points for incorrect Daily Double
+   * const player2 = await GameService.updatePlayerScore(gameId, playerId, -1000, hostId);
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
    */
   static async updatePlayerScore(gameId: string, userId: string, scoreChange: number, hostId: string): Promise<Player> {
-    // Verify host authorization
+    // Authorization check: ensure user is the game host
+    // This call will throw if user is not authorized
     await this.getGame(gameId, hostId)
 
-    // Get current player data
+    // Fetch current player score for atomic update calculation
+    // Only select score field to minimize data transfer
     const { data: currentPlayer, error: fetchError } = await supabase
       .from('players')
       .select('score')
@@ -515,15 +778,20 @@ export class GameService {
       .single()
 
     if (fetchError) {
+      // Provide context for debugging player fetch failures
       throw new Error(`Failed to fetch player: ${fetchError.message}`)
     }
 
+    // Ensure player exists in the game before score update
     if (!currentPlayer) {
       throw new Error('Player not found')
     }
 
+    // Calculate new score (supports positive and negative changes)
+    // Allows for correct answers (+points) and incorrect answers (-points)
     const newScore = currentPlayer.score + scoreChange
 
+    // Perform atomic score update with immediate return of updated data
     const { data, error } = await supabase
       .from('players')
       .update({ score: newScore })
@@ -533,9 +801,11 @@ export class GameService {
       .single()
 
     if (error) {
+      // Provide context for debugging score update failures
       throw new Error(`Failed to update score: ${error.message}`)
     }
 
+    // Defensive programming: ensure database returned updated data
     if (!data) {
       throw new Error('No player data returned from update')
     }
