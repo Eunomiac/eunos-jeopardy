@@ -1,4 +1,4 @@
-// MTG Brawl Deck Builder - Global Setup Utilities
+// Global Setup Utilities
 // Shared setup functions for both main application and tests
 
 /**

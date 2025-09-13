@@ -303,11 +303,21 @@ __for public release__
 - [ ] Address SCSS deprecation warnings
 - [ ] Implement comprehensive error boundaries
 - [ ] Add accessibility features (ARIA labels, keyboard navigation)
+- [ ] Implement React Error Boundaries for better error handling
+- [ ] Add comprehensive input validation for CSV parsing and user inputs
+- [ ] Configure Sentry for production monitoring and error tracking
+- [ ] Add JSDoc documentation for complex functions and APIs
+- [ ] Implement keyboard navigation for game controls
+- [ ] Add ARIA support for screen readers (game board, buzzer controls)
+- [ ] Consider feature-based folder organization for better scalability
 
 ### Performance
 - [ ] Optimize real-time subscriptions
 - [ ] Implement proper loading states
 - [ ] Add offline capability for clue set creation
+- [ ] Add React.memo to expensive components to prevent unnecessary re-renders
+- [ ] Optimize bundle size (review Sentry configuration for production)
+- [ ] Consider virtualization for large player lists (future scaling)
 - [ ] Optimize bundle size
 
 ### Security

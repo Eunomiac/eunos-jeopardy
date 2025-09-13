@@ -4,7 +4,14 @@ Online platform to create and host custom Jeopardy!-style games with friends. In
 
 ## Features
 
-❇️LIST_KEY_FEATURES❇️
+- **Host Custom Games**: Create and manage Jeopardy-style game sessions
+- **CSV Clue Set Loading**: Import clue sets from CSV files with validation
+- **Real-time Buzzer System**: Host-controlled buzzer lock/unlock functionality
+- **Game Host Dashboard**: Complete game management interface
+- **Authentication System**: Secure user management with Supabase Auth
+- **Score Tracking**: Player scoring and game state management
+- **Responsive Design**: Works on desktop and mobile devices
+- **Daily Double Algorithm**: Authentic Jeopardy rule implementation
 
 ## Tech Stack
 
@@ -21,7 +28,7 @@ Online platform to create and host custom Jeopardy!-style games with friends. In
 
 - Node.js 18+
 - npm or yarn
-- ❇️ADDITIONAL_PREREQUISITES❇️
+- Supabase account (for database and authentication)
 
 ### Installation
 
