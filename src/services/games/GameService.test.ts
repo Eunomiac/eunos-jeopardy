@@ -237,6 +237,190 @@ describe('GameService', () => {
     })
   })
 
+  describe('updateGame', () => {
+    it('should update game successfully', async () => {
+      const mockGame = {
+        id: 'game-123',
+        host_id: 'user-123',
+        clue_set_id: 'clue-set-123',
+        status: 'lobby' as const,
+        current_round: 'jeopardy' as const,
+        is_buzzer_locked: true,
+        created_at: '2025-01-01T00:00:00Z'
+      }
+
+      const updatedGame = { ...mockGame, status: 'in_progress' as const }
+
+      // Mock getGame call for authorization
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: updatedGame, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        update: mockUpdate
+      } as any)
+
+      const result = await GameService.updateGame('game-123', { status: 'in_progress' }, 'user-123')
+
+      expect(getGameSpy).toHaveBeenCalledWith('game-123', 'user-123')
+      expect(mockSupabase.from).toHaveBeenCalledWith('games')
+      expect(mockUpdate).toHaveBeenCalledWith({ status: 'in_progress' })
+      expect(result).toEqual(updatedGame)
+
+      getGameSpy.mockRestore()
+    })
+
+    it('should handle update error', async () => {
+      const mockGame = {
+        id: 'game-123',
+        host_id: 'user-123',
+        clue_set_id: 'clue-set-123',
+        status: 'lobby' as const,
+        current_round: 'jeopardy' as const,
+        is_buzzer_locked: true,
+        created_at: '2025-01-01T00:00:00Z'
+      }
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Update failed' }
+            })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        update: mockUpdate
+      } as any)
+
+      await expect(GameService.updateGame('game-123', { status: 'in_progress' }, 'user-123'))
+        .rejects.toThrow('Failed to update game: Update failed')
+
+      getGameSpy.mockRestore()
+    })
+
+    it('should handle missing data in update response', async () => {
+      const mockGame = {
+        id: 'game-123',
+        host_id: 'user-123',
+        clue_set_id: 'clue-set-123',
+        status: 'lobby' as const,
+        current_round: 'jeopardy' as const,
+        is_buzzer_locked: true,
+        created_at: '2025-01-01T00:00:00Z'
+      }
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        update: mockUpdate
+      } as any)
+
+      await expect(GameService.updateGame('game-123', { status: 'in_progress' }, 'user-123'))
+        .rejects.toThrow('No game data returned from update')
+
+      getGameSpy.mockRestore()
+    })
+  })
+
+  describe('getPlayers', () => {
+    it('should get players successfully', async () => {
+      const mockPlayers = [
+        {
+          id: 'player-1',
+          game_id: 'game-123',
+          user_id: 'user-456',
+          nickname: 'Player One',
+          score: 1000,
+          joined_at: '2025-01-01T00:00:00Z'
+        },
+        {
+          id: 'player-2',
+          game_id: 'game-123',
+          user_id: 'user-789',
+          nickname: null,
+          score: 500,
+          joined_at: '2025-01-01T00:01:00Z'
+        }
+      ]
+
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          order: jest.fn().mockResolvedValue({ data: mockPlayers, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        select: mockSelect
+      } as any)
+
+      const result = await GameService.getPlayers('game-123')
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('players')
+      expect(mockSelect).toHaveBeenCalledWith(`
+        *,
+        profiles:user_id (
+          display_name,
+          username
+        )
+      `)
+      expect(result).toEqual(mockPlayers)
+    })
+
+    it('should handle players fetch error', async () => {
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          order: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Fetch failed' }
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        select: mockSelect
+      } as any)
+
+      await expect(GameService.getPlayers('game-123'))
+        .rejects.toThrow('Failed to fetch players: Fetch failed')
+    })
+
+    it('should return empty array when no players', async () => {
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          order: jest.fn().mockResolvedValue({ data: null, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        select: mockSelect
+      } as any)
+
+      const result = await GameService.getPlayers('game-123')
+
+      expect(result).toEqual([])
+    })
+  })
+
   describe('updatePlayerScore', () => {
     it('should update player score successfully', async () => {
       const mockGame = {
@@ -294,6 +478,316 @@ describe('GameService', () => {
 
       expect(mockUpdate).toHaveBeenCalledWith({ score: 300 })
       expect(result).toEqual(updatedPlayer)
+    })
+  })
+
+  describe('addPlayer', () => {
+    it('should add player successfully', async () => {
+      const mockPlayer = {
+        id: 'player-1',
+        game_id: 'game-123',
+        user_id: 'user-456',
+        nickname: 'Player One',
+        score: 0,
+        joined_at: '2025-01-01T00:00:00Z'
+      }
+
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: mockPlayer, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      const result = await GameService.addPlayer('game-123', 'user-456', 'Player One')
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('players')
+      expect(mockInsert).toHaveBeenCalledWith({
+        game_id: 'game-123',
+        user_id: 'user-456',
+        nickname: 'Player One',
+        score: 0
+      })
+      expect(result).toEqual(mockPlayer)
+    })
+
+    it('should add player without nickname', async () => {
+      const mockPlayer = {
+        id: 'player-1',
+        game_id: 'game-123',
+        user_id: 'user-456',
+        nickname: null,
+        score: 0,
+        joined_at: '2025-01-01T00:00:00Z'
+      }
+
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: mockPlayer, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      const result = await GameService.addPlayer('game-123', 'user-456')
+
+      expect(mockInsert).toHaveBeenCalledWith({
+        game_id: 'game-123',
+        user_id: 'user-456',
+        nickname: null,
+        score: 0
+      })
+      expect(result).toEqual(mockPlayer)
+    })
+
+    it('should handle add player error', async () => {
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Insert failed' }
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      await expect(GameService.addPlayer('game-123', 'user-456'))
+        .rejects.toThrow('Failed to add player: Insert failed')
+    })
+
+    it('should handle missing player data in response', async () => {
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: null, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      await expect(GameService.addPlayer('game-123', 'user-456'))
+        .rejects.toThrow('No player data returned from database')
+    })
+  })
+
+  describe('getBuzzesForClue', () => {
+    it('should get buzzes successfully', async () => {
+      const mockBuzzes = [
+        {
+          id: 'buzz-1',
+          game_id: 'game-123',
+          clue_id: 'clue-456',
+          user_id: 'user-789',
+          created_at: '2025-01-01T00:00:00Z'
+        },
+        {
+          id: 'buzz-2',
+          game_id: 'game-123',
+          clue_id: 'clue-456',
+          user_id: 'user-101',
+          created_at: '2025-01-01T00:00:01Z'
+        }
+      ]
+
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({ data: mockBuzzes, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        select: mockSelect
+      } as any)
+
+      const result = await GameService.getBuzzesForClue('game-123', 'clue-456')
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('buzzes')
+      expect(mockSelect).toHaveBeenCalledWith(`
+        *,
+        profiles:user_id (
+          display_name,
+          username
+        )
+      `)
+      expect(result).toEqual(mockBuzzes)
+    })
+
+    it('should handle buzzes fetch error', async () => {
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Fetch failed' }
+            })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        select: mockSelect
+      } as any)
+
+      await expect(GameService.getBuzzesForClue('game-123', 'clue-456'))
+        .rejects.toThrow('Failed to fetch buzzes: Fetch failed')
+    })
+
+    it('should return empty array when no buzzes', async () => {
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        select: mockSelect
+      } as any)
+
+      const result = await GameService.getBuzzesForClue('game-123', 'clue-456')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('recordBuzz', () => {
+    it('should record buzz successfully', async () => {
+      const mockBuzz = {
+        id: 'buzz-1',
+        game_id: 'game-123',
+        clue_id: 'clue-456',
+        user_id: 'user-789',
+        created_at: '2025-01-01T00:00:00Z'
+      }
+
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: mockBuzz, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      const result = await GameService.recordBuzz('game-123', 'clue-456', 'user-789')
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('buzzes')
+      expect(mockInsert).toHaveBeenCalledWith({
+        game_id: 'game-123',
+        clue_id: 'clue-456',
+        user_id: 'user-789'
+      })
+      expect(result).toEqual(mockBuzz)
+    })
+
+    it('should handle record buzz error', async () => {
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Insert failed' }
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      await expect(GameService.recordBuzz('game-123', 'clue-456', 'user-789'))
+        .rejects.toThrow('Failed to record buzz: Insert failed')
+    })
+
+    it('should handle missing buzz data in response', async () => {
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: null, error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        insert: mockInsert
+      } as any)
+
+      await expect(GameService.recordBuzz('game-123', 'clue-456', 'user-789'))
+        .rejects.toThrow('No buzz data returned from database')
+    })
+  })
+
+  describe('clearBuzzesForClue', () => {
+    it('should clear buzzes successfully', async () => {
+      const mockGame = {
+        id: 'game-123',
+        host_id: 'user-123',
+        clue_set_id: 'clue-set-123',
+        status: 'lobby' as const,
+        current_round: 'jeopardy' as const,
+        is_buzzer_locked: true,
+        created_at: '2025-01-01T00:00:00Z'
+      }
+
+      // Mock getGame call for authorization
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
+
+      const mockDelete = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        delete: mockDelete
+      } as any)
+
+      await GameService.clearBuzzesForClue('game-123', 'clue-456', 'user-123')
+
+      expect(getGameSpy).toHaveBeenCalledWith('game-123', 'user-123')
+      expect(mockSupabase.from).toHaveBeenCalledWith('buzzes')
+      expect(mockDelete).toHaveBeenCalled()
+
+      getGameSpy.mockRestore()
+    })
+
+    it('should handle clear buzzes error', async () => {
+      const mockGame = {
+        id: 'game-123',
+        host_id: 'user-123',
+        clue_set_id: 'clue-set-123',
+        status: 'lobby' as const,
+        current_round: 'jeopardy' as const,
+        is_buzzer_locked: true,
+        created_at: '2025-01-01T00:00:00Z'
+      }
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
+
+      const mockDelete = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: { message: 'Delete failed' } })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        delete: mockDelete
+      } as any)
+
+      await expect(GameService.clearBuzzesForClue('game-123', 'clue-456', 'user-123'))
+        .rejects.toThrow('Failed to clear buzzes: Delete failed')
+
+      getGameSpy.mockRestore()
     })
   })
 })
