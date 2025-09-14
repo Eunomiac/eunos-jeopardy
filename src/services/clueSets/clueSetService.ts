@@ -1,4 +1,5 @@
 import { supabase } from '../supabase/client'
+import type { ClueSetData, CategoryData, ClueData } from './loader'
 
 /**
  * Represents a user's clue set for dropdown selection and management.
@@ -269,6 +270,141 @@ export class ClueSetService {
       },
       createdAt: clueSet.created_at,
       totalClues: totalClues || 0
+    }
+  }
+
+  /**
+   * Loads complete clue set data from the database for game hosting.
+   *
+   * Retrieves all clue set data including categories and clues for all rounds,
+   * structured for use in the Game Host Dashboard. This provides the complete
+   * data needed to display the game board and manage clue selection.
+   *
+   * **Data Structure:**
+   * - Jeopardy round: 6 categories with 5 clues each (200-1000 values)
+   * - Double Jeopardy round: 6 categories with 5 clues each (400-2000 values)
+   * - Final Jeopardy round: 1 category with 1 clue
+   *
+   * **Database Query:**
+   * Uses nested Supabase query to efficiently load all related data in a single
+   * request, including clue sets, boards, categories, and individual clues.
+   *
+   * @param clueSetId - Unique identifier of the clue set to load
+   * @returns Promise resolving to complete clue set data structure
+   * @throws {Error} When clue set is not found or database query fails
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const clueSetData = await ClueSetService.loadClueSetFromDatabase(clueSetId);
+   *   console.log(`Loaded clue set: ${clueSetData.name}`);
+   *   console.log(`Jeopardy categories: ${clueSetData.rounds.jeopardy.length}`);
+   * } catch (error) {
+   *   console.error('Failed to load clue set:', error.message);
+   * }
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async loadClueSetFromDatabase(clueSetId: string): Promise<ClueSetData> {
+    // First, get the clue set basic info
+    const { data: clueSet, error: clueSetError } = await supabase
+      .from('clue_sets')
+      .select('id, name')
+      .eq('id', clueSetId)
+      .single()
+
+    if (clueSetError) {
+      throw new Error(`Failed to load clue set: ${clueSetError.message}`)
+    }
+
+    if (!clueSet) {
+      throw new Error('Clue set not found')
+    }
+
+    // Load boards with their categories and clues
+    const { data: boards, error: boardsError } = await supabase
+      .from('boards')
+      .select(`
+        round,
+        categories (
+          name,
+          position,
+          clues (
+            value,
+            prompt,
+            response,
+            position
+          )
+        )
+      `)
+      .eq('clue_set_id', clueSetId)
+
+    if (boardsError) {
+      throw new Error(`Failed to load board data: ${boardsError.message}`)
+    }
+
+    if (!boards) {
+      throw new Error('No board data found for clue set')
+    }
+
+    // Extract boards by round type
+    const jeopardyBoard = boards.find((b: any) => b.round === 'jeopardy')
+    const doubleBoard = boards.find((b: any) => b.round === 'double')
+    const finalBoard = boards.find((b: any) => b.round === 'final')
+
+    // Transform categories and clues for regular rounds (jeopardy/double)
+    const transformRegularRound = (board: any): CategoryData[] => {
+      if (!board?.categories) return []
+
+      return board.categories
+        .sort((a: any, b: any) => a.position - b.position)
+        .map((category: any) => ({
+          name: category.name,
+          clues: (category.clues || [])
+            .sort((a: any, b: any) => a.position - b.position)
+            .map((clue: any) => ({
+              value: clue.value,
+              prompt: clue.prompt,
+              response: clue.response,
+              position: clue.position
+            }))
+        }))
+    }
+
+    // Transform final jeopardy (single category)
+    const transformFinalRound = (board: any): CategoryData => {
+      if (!board?.categories?.[0]) {
+        return {
+          name: 'Final Jeopardy',
+          clues: []
+        }
+      }
+
+      const category = board.categories[0]
+      return {
+        name: category.name,
+        clues: (category.clues || [])
+          .sort((a: any, b: any) => a.position - b.position)
+          .map((clue: any) => ({
+            value: clue.value,
+            prompt: clue.prompt,
+            response: clue.response,
+            position: clue.position
+          }))
+      }
+    }
+
+    // Structure data according to ClueSetData interface
+    return {
+      name: clueSet.name,
+      filename: `${clueSet.name}.csv`, // Reconstruct filename for compatibility
+      rounds: {
+        jeopardy: transformRegularRound(jeopardyBoard),
+        double: transformRegularRound(doubleBoard),
+        final: transformFinalRound(finalBoard)
+      }
     }
   }
 

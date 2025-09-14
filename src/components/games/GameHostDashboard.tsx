@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { GameService, type Game, type Player } from '../../services/games/GameService'
+import { ClueSetService } from '../../services/clueSets/clueSetService'
+import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
 import './GameHostDashboard.scss'
 
 /**
@@ -83,6 +85,9 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
   /** Current game data including status, settings, and metadata */
   const [game, setGame] = useState<Game | null>(null)
 
+  /** Complete clue set data for the current game */
+  const [clueSetData, setClueSetData] = useState<ClueSetData | null>(null)
+
   /** List of players who have joined the game with scores and timestamps */
   const [players, setPlayers] = useState<Player[]>([])
 
@@ -140,6 +145,11 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
         // This validates that the current user is authorized to host this game
         const gameData = await GameService.getGame(gameId, user.id)
         setGame(gameData)
+
+        // Fetch complete clue set data for the game board
+        // This provides all categories and clues needed for the dashboard
+        const clueSetData = await ClueSetService.loadClueSetFromDatabase(gameData.clue_set_id)
+        setClueSetData(clueSetData)
 
         // Fetch current player list for the game
         // This provides real-time player information for the dashboard
@@ -359,35 +369,99 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
           <div className="panel-content">
             <div className="jeopardy-board-container">
               <div className="jeopardy-board">
-              {/* Mock category grid for placeholder */}
-              <div className="category-grid">
-                {['A LONG CATEGORY NAME', 'CATEGORY 2', 'CATEGORY 3', 'CATEGORY 4', 'CATEGORY 5', 'CATEGORY 6'].map((category) => (
-                  <div key={category} className="category-header">{category}</div>
-                ))}
-              </div>
-              {/* Mock clue grid */}
-              <div className="clue-grid">
-                {(() => {
-                  // Always focus the fifth clue (index 4), then randomly select 12 of the remaining 29 clues
-                  const focusedIndex = 4; // Always the fifth clue
-                  const remainingIndices = Array.from({ length: 30 }, (_, i) => i).filter((i) => i !== focusedIndex);
-                  const shuffledRemaining = [...remainingIndices].sort(() => Math.random() - 0.5);
-                  const revealedIndices = new Set(shuffledRemaining.slice(0, 12));
+              {/* Game board with real clue set data */}
+              {clueSetData && game ? (
+                <>
+                  {/* Category headers from current round */}
+                  <div className="category-grid">
+                    {(() => {
+                      const currentRoundData = game.current_round === 'final'
+                        ? [clueSetData.rounds.final]
+                        : clueSetData.rounds[game.current_round] || []
 
-                  return Array.from({ length: 30 }, (_, index) => {
-                    const value = (Math.floor(index / 6) + 1) * 200;
-                    const isRevealed = revealedIndices.has(index);
-                    const isFocused = index === focusedIndex;
-                    const cellClass = `clue-cell ${isRevealed ? 'revealed' : ''} ${isFocused ? 'focused' : ''}`.trim();
+                      // For final jeopardy, show single category; otherwise show all 6 categories
+                      const categories = game.current_round === 'final'
+                        ? [currentRoundData.name]
+                        : currentRoundData.map(cat => cat.name)
 
-                    return (
-                      <div key={`clue-${index}-${value}`} className={cellClass}>
-                        ${value}
+                      return categories.map((categoryName, index) => (
+                        <div key={`category-${index}-${categoryName}`} className="category-header">
+                          {categoryName}
+                        </div>
+                      ))
+                    })()}
+                  </div>
+
+                  {/* Clue grid with real values from current round */}
+                  <div className="clue-grid">
+                    {(() => {
+                      const currentRoundData = game.current_round === 'final'
+                        ? [clueSetData.rounds.final]
+                        : clueSetData.rounds[game.current_round] || []
+
+                      if (game.current_round === 'final') {
+                        // Final Jeopardy has only one clue
+                        const finalClue = currentRoundData.clues?.[0]
+                        return finalClue ? (
+                          <div className="clue-cell final-jeopardy">
+                            Final Jeopardy
+                          </div>
+                        ) : null
+                      }
+
+                      // Regular rounds: create grid of all clues
+                      const allClues: Array<{categoryIndex: number, clue: ClueData}> = []
+                      currentRoundData.forEach((category, categoryIndex) => {
+                        category.clues.forEach(clue => {
+                          allClues.push({ categoryIndex, clue })
+                        })
+                      })
+
+                      // Sort by position to maintain proper board order
+                      allClues.sort((a, b) => {
+                        if (a.clue.position !== b.clue.position) {
+                          return a.clue.position - b.clue.position
+                        }
+                        return a.categoryIndex - b.categoryIndex
+                      })
+
+                      // For demo purposes, randomly reveal some clues (keep existing logic)
+                      const focusedIndex = 4
+                      const revealedIndices = new Set([1, 3, 7, 9, 12, 15, 18, 21, 24, 26, 28, 29])
+
+                      return allClues.map((item, index) => {
+                        const isRevealed = revealedIndices.has(index)
+                        const isFocused = index === focusedIndex
+                        const cellClass = `clue-cell ${isRevealed ? 'revealed' : ''} ${isFocused ? 'focused' : ''}`.trim()
+
+                        return (
+                          <div key={`clue-${index}-${item.clue.value}`} className={cellClass}>
+                            ${item.clue.value}
+                          </div>
+                        )
+                      })
+                    })()}
+                  </div>
+                </>
+              ) : (
+                /* Loading placeholder */
+                <>
+                  <div className="category-grid">
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={`loading-category-${i}`} className="category-header">
+                        Loading...
                       </div>
-                    )
-                  });
-                })()}
-              </div>
+                    ))}
+                  </div>
+                  <div className="clue-grid">
+                    {Array.from({ length: 30 }, (_, i) => (
+                      <div key={`loading-clue-${i}`} className="clue-cell">
+                        ...
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
             </div>
           </div>
