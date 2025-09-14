@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCSS Variables Reference - Euno's Jeopardy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.3;
+      color: #333;
+      background: white;
+      margin: 0;
+      padding: 0;
+      font-size: 14px;
+    }
+
+    .container {
+      width: 100vw;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #061276;
+      color: white;
+      padding: 6px 12px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      margin: 2px 0 0 0;
+    }
+
+    .content {
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 0.7fr 1fr 0.7fr;
+      gap: 8px;
+      height: calc(100vh - 60px);
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .section-title {
+      font-size: 13px;
+      color: #061276;
+      margin: 0 0 6px 0;
+      padding: 4px 6px;
+      background: #f0f0f0;
+      border-left: 3px solid #d69f4c;
+      font-weight: bold;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .subsection-title {
+      font-size: 11px;
+      color: #444;
+      margin: 8px 0 4px 0;
+      padding: 2px 4px;
+      background: #f8f9fa;
+      border-left: 2px solid #d69f4c;
+      font-weight: 600;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+
+
+    .variable-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .variable-item {
+      background: #fafafa;
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+      cursor: pointer;
+      transition: background 0.1s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .variable-item:hover {
+      background: #e3f2fd;
+      border-color: #2196f3;
+    }
+
+    .variable-name {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: #d63384;
+      min-width: 140px;
+      flex: 1;
+      white-space: nowrap;
+    }
+
+    .variable-value {
+      font-family: 'Courier New', monospace;
+      color: #198754;
+      min-width: 70px;
+      flex: 1;
+      white-space: nowrap;
+      overflow: ellipsis;
+    }
+
+    .section-color .variable-value {
+      flex: 0;
+    }
+
+    .variable-description {
+      color: #666;
+      line-height: 1.2;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-indicator {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      background: #28a745;
+      color: white;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 9px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .copy-indicator.show {
+      opacity: 1;
+    }
+
+    .usage-note {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      padding: 6px 8px;
+      margin: 0;
+      color: #856404;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 101;
+      text-align: center;
+    }
+
+    .emoji {
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>SCSS Variables Reference</h1>
+      <p>Click any variable to copy it to your clipboard</p>
+    </div>
+
+    <div class="content">
+      <div class="section section-color">
+        <h2 class="section-title">🎨 Colors</h2>
+
+        <!-- PRIMARY SEMANTIC COLORS (USE THESE!) -->
+        <h3 class="subsection-title">✨ Primary Theme Colors (Use These!)</h3>
+        <div class="variable-grid">
+          <div class="variable-item" onclick="copyToClipboard('$primary-color')">
+            <div class="variable-name">$primary-color</div>
+            <div class="variable-value">#061276</div>
+            <div class="variable-description">Main Jeopardy blue</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$secondary-color')">
+            <div class="variable-name">$secondary-color</div>
+            <div class="variable-value">#d69f4c</div>
+            <div class="variable-description">Jeopardy gold</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$accent-color')">
+            <div class="variable-name">$accent-color</div>
+            <div class="variable-value">#d69f4c</div>
+            <div class="variable-description">Interactive elements</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$background-color')">
+            <div class="variable-name">$background-color</div>
+            <div class="variable-value">#0b002a</div>
+            <div class="variable-description">Page backgrounds</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$background-secondary')">
+            <div class="variable-name">$background-secondary</div>
+            <div class="variable-value">#061276</div>
+            <div class="variable-description">Secondary panels</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$text-color')">
+            <div class="variable-name">$text-color</div>
+            <div class="variable-value">#ffffff</div>
+            <div class="variable-description">Primary text</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$text-secondary')">
+            <div class="variable-name">$text-secondary</div>
+            <div class="variable-value">#cccccc</div>
+            <div class="variable-description">Secondary text</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$text-muted')">
+            <div class="variable-name">$text-muted</div>
+            <div class="variable-value">#999999</div>
+            <div class="variable-description">Disabled text</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+        </div>
+
+        <!-- JEOPARDY SPECIFIC COLORS -->
+        <h3 class="subsection-title">🎯 Jeopardy-Specific Colors</h3>
+        <div class="variable-grid">
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-blue')">
+            <div class="variable-name">$jeopardy-blue</div>
+            <div class="variable-value">#061276</div>
+            <div class="variable-description">Board background</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-clue-blue')">
+            <div class="variable-name">$jeopardy-clue-blue</div>
+            <div class="variable-value">#0f1c8e</div>
+            <div class="variable-description">Clue cells</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-gold')">
+            <div class="variable-name">$jeopardy-gold</div>
+            <div class="variable-value">#d69f4c</div>
+            <div class="variable-description">Money values, borders</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-bright-gold')">
+            <div class="variable-name">$jeopardy-bright-gold</div>
+            <div class="variable-value">#ffd700</div>
+            <div class="variable-description">Active states</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-background-blue')">
+            <div class="variable-name">$jeopardy-background-blue</div>
+            <div class="variable-value">#0b002a</div>
+            <div class="variable-description">Base interface background</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-white')">
+            <div class="variable-name">$jeopardy-white</div>
+            <div class="variable-value">#ffffff</div>
+            <div class="variable-description">Text on blue backgrounds</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-grey')">
+            <div class="variable-name">$jeopardy-grey</div>
+            <div class="variable-value">#999999</div>
+            <div class="variable-description">Inactive elements</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$jeopardy-light-grey')">
+            <div class="variable-name">$jeopardy-light-grey</div>
+            <div class="variable-value">#cccccc</div>
+            <div class="variable-description">Light borders</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+        </div>
+
+        <!-- STATUS COLORS -->
+        <h3 class="subsection-title">🚦 Status Colors</h3>
+        <div class="variable-grid">
+          <div class="variable-item" onclick="copyToClipboard('$success-color')">
+            <div class="variable-name">$success-color</div>
+            <div class="variable-value">#28a745</div>
+            <div class="variable-description">Success states</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$warning-color')">
+            <div class="variable-name">$warning-color</div>
+            <div class="variable-value">#ffc107</div>
+            <div class="variable-description">Warning states</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$error-color')">
+            <div class="variable-name">$error-color</div>
+            <div class="variable-value">#dc3545</div>
+            <div class="variable-description">Error states</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+          <div class="variable-item" onclick="copyToClipboard('$info-color')">
+            <div class="variable-name">$info-color</div>
+            <div class="variable-value">#17a2b8</div>
+            <div class="variable-description">Info states</div>
+            <div class="copy-indicator">✓</div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="section section-typography">
+        <h2 class="section-title">🔤 Typography</h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Font Families (Authentic Jeopardy Fonts)</h3>
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$font-family-title')">
+              <div class="variable-name">$font-family-title</div>
+              <div class="variable-value">Annual Normal</div>
+              <div class="variable-description">Main titles and headers</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-family-category')">
+              <div class="variable-name">$font-family-category</div>
+              <div class="variable-value">Swiss 921</div>
+              <div class="variable-description">Category headers on game board</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-family-clue')">
+              <div class="variable-name">$font-family-clue</div>
+              <div class="variable-value">Korinna ITC Bold</div>
+              <div class="variable-description">Clue text display</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-family-money')">
+              <div class="variable-name">$font-family-money</div>
+              <div class="variable-value">Swiss 911 Extra Condensed</div>
+              <div class="variable-description">Monetary values</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-family-ui')">
+              <div class="variable-name">$font-family-ui</div>
+              <div class="variable-value">Swiss 921</div>
+              <div class="variable-description">General UI text and controls</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-family-daily-double')">
+              <div class="variable-name">$font-family-daily-double</div>
+              <div class="variable-value">Steile Futura Bold</div>
+              <div class="variable-description">Daily Double announcements</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Font Sizes</h3>
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$font-size-board-money')">
+              <div class="variable-name">$font-size-board-money</div>
+              <div class="variable-value">3rem</div>
+              <div class="variable-description">Money values on game board</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-size-money')">
+              <div class="variable-name">$font-size-money</div>
+              <div class="variable-value">2rem</div>
+              <div class="variable-description">Money values in UI</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-size-clue')">
+              <div class="variable-name">$font-size-clue</div>
+              <div class="variable-value">1.5rem</div>
+              <div class="variable-description">Clue text display</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-size-category')">
+              <div class="variable-name">$font-size-category</div>
+              <div class="variable-value">1.25rem</div>
+              <div class="variable-description">Category headers</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-size-base')">
+              <div class="variable-name">$font-size-base</div>
+              <div class="variable-value">1rem</div>
+              <div class="variable-description">Default body text</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-size-lg')">
+              <div class="variable-name">$font-size-lg</div>
+              <div class="variable-value">1.125rem</div>
+              <div class="variable-description">Slightly larger text</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Text Styling</h3>
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$jeopardy-text-transform')">
+              <div class="variable-name">$jeopardy-text-transform</div>
+              <div class="variable-value">uppercase</div>
+              <div class="variable-description">Use for authentic Jeopardy styling</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-weight-bold')">
+              <div class="variable-name">$font-weight-bold</div>
+              <div class="variable-value">700</div>
+              <div class="variable-description">Emphasis and headings</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$font-weight-normal')">
+              <div class="variable-name">$font-weight-normal</div>
+              <div class="variable-value">400</div>
+              <div class="variable-description">Body text</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$line-height-tight')">
+              <div class="variable-name">$line-height-tight</div>
+              <div class="variable-value">1.25</div>
+              <div class="variable-description">Compact text (game board)</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$line-height-normal')">
+              <div class="variable-name">$line-height-normal</div>
+              <div class="variable-value">1.5</div>
+              <div class="variable-description">Readable body text</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section section-spacing">
+        <h2 class="section-title">
+          <span class="emoji">📏</span>
+          Spacing
+        </h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">Spacing Scale (Ultra-compact for game interface)</h3>
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$spacing-xs')">
+              <div class="variable-name">$spacing-xs</div>
+              <div class="variable-value">0.125rem (2px)</div>
+              <div class="variable-description">Minimal spacing</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$spacing-sm')">
+              <div class="variable-name">$spacing-sm</div>
+              <div class="variable-value">0.25rem (4px)</div>
+              <div class="variable-description">Tight spacing</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$spacing-md')">
+              <div class="variable-name">$spacing-md</div>
+              <div class="variable-value">0.375rem (6px)</div>
+              <div class="variable-description">Standard spacing</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$spacing-lg')">
+              <div class="variable-name">$spacing-lg</div>
+              <div class="variable-value">0.5rem (8px)</div>
+              <div class="variable-description">Comfortable spacing</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$spacing-xl')">
+              <div class="variable-name">$spacing-xl</div>
+              <div class="variable-value">0.625rem (10px)</div>
+              <div class="variable-description">Generous spacing</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$spacing-xxl')">
+              <div class="variable-name">$spacing-xxl</div>
+              <div class="variable-value">0.75rem (12px)</div>
+              <div class="variable-description">Maximum spacing</div>
+              <div class="copy-indicator">Copied!</div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 1rem;">
+          <span class="emoji">🔳</span>
+          Borders
+        </h2>
+
+        <div class="subsection">
+          <h3 class="subsection-title">📐 Border Radius</h3>
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$border-radius-sm')">
+              <div class="variable-name">$border-radius-sm</div>
+              <div class="variable-value">0.25rem</div>
+              <div class="variable-description">Small rounded corners</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$border-radius-md')">
+              <div class="variable-name">$border-radius-md</div>
+              <div class="variable-value">0.375rem</div>
+              <div class="variable-description">Medium rounded corners</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$border-radius-lg')">
+              <div class="variable-name">$border-radius-lg</div>
+              <div class="variable-value">0.5rem</div>
+              <div class="variable-description">Large rounded corners</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$border-radius-xl')">
+              <div class="variable-name">$border-radius-xl</div>
+              <div class="variable-value">0.75rem</div>
+              <div class="variable-description">Extra large rounded corners</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+          </div>
+
+          <h3 class="subsection-title">🖼️ Border Properties</h3>
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$border-width')">
+              <div class="variable-name">$border-width</div>
+              <div class="variable-value">1px</div>
+              <div class="variable-description">Standard border thickness</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$border-color')">
+              <div class="variable-name">$border-color</div>
+              <div class="variable-value">#333333</div>
+              <div class="variable-description">Default border color</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top: 1rem;">
+          <span class="emoji">🥷</span>
+          Shadows
+        </h2>
+
+        <div class="subsection">
+          <div class="variable-grid">
+            <div class="variable-item" onclick="copyToClipboard('$shadow-sm')">
+              <div class="variable-name">$shadow-sm</div>
+              <div class="variable-value">0 1px 2px</div>
+              <div class="variable-description">Subtle shadow</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$shadow-md')">
+              <div class="variable-name">$shadow-md</div>
+              <div class="variable-value">0 4px 6px</div>
+              <div class="variable-description">Medium shadow</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$shadow-lg')">
+              <div class="variable-name">$shadow-lg</div>
+              <div class="variable-value">0 10px 15px</div>
+              <div class="variable-description">Large shadow</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+            <div class="variable-item" onclick="copyToClipboard('$shadow-xl')">
+              <div class="variable-name">$shadow-xl</div>
+              <div class="variable-value">0 20px 25px</div>
+              <div class="variable-description">Extra large shadow</div>
+              <div class="copy-indicator">✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="usage-note">
+      💡 Click any variable to copy • Use semantic names like $primary-color
+    </div>
+  </div>
+
+  <script>
+    async function copyToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+
+        // Find the clicked element and show the copy indicator
+        const clickedElement = event.target.closest('.variable-item');
+        const indicator = clickedElement.querySelector('.copy-indicator');
+
+        indicator.classList.add('show');
+        setTimeout(() => {
+          indicator.classList.remove('show');
+        }, 1500);
+
+      } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+
+        // Show indicator
+        const clickedElement = event.target.closest('.variable-item');
+        const indicator = clickedElement.querySelector('.copy-indicator');
+        indicator.classList.add('show');
+        setTimeout(() => {
+          indicator.classList.remove('show');
+        }, 1500);
+      }
+    }
+  </script>
+</body>
+
+</html>
