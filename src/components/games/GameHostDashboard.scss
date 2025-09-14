@@ -397,4 +397,51 @@
       }
     }
   }
+
+  // Enhanced clue cell styles for interactive gameplay
+  .jeopardy-board {
+    .clue-cell {
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(.completed):not(.revealed) {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba($jeopardy-gold, 0.4);
+      }
+
+      &.completed {
+        background-color: $jeopardy-dark-gray;
+        color: $jeopardy-light-gray;
+        cursor: default;
+        opacity: 0.6;
+      }
+
+      &.focused {
+        border: 3px solid $jeopardy-gold;
+        box-shadow: 0 0 15px rgba($jeopardy-gold, 0.6);
+        transform: scale(1.02);
+        animation: pulse-gold 2s infinite;
+      }
+    }
+
+    @keyframes pulse-gold {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba($jeopardy-gold, 0.6);
+      }
+      50% {
+        box-shadow: 0 0 25px rgba($jeopardy-gold, 0.9);
+      }
+    }
+  }
+
+  // No clue selected state
+  .no-clue-selected {
+    text-align: center;
+    padding: $spacing-xl;
+
+    .clue-text {
+      font-style: italic;
+      margin-top: $spacing-md;
+    }
+  }
 }

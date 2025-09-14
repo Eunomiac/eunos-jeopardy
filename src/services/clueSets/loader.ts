@@ -33,6 +33,9 @@ export interface CategoryData {
  * @author Euno's Jeopardy Team
  */
 export interface ClueData {
+  /** Database ID of the clue (only available when loaded from database) */
+  id?: string
+
   /** Point value of the clue (200-1000 for Jeopardy, 400-2000 for Double Jeopardy) */
   value: number
 
