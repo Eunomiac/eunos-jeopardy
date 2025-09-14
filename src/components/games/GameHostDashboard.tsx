@@ -348,43 +348,8 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
 
 
 
-      {/* 6-panel dashboard grid layout */}
+      {/* 4-panel dashboard grid layout */}
       <div className="dashboard-grid">
-        {/* Top Row - Panel 1: Buzzer Control */}
-        <div className="dashboard-panel buzzer-control-panel">
-          <div className="panel-header">
-            <h5>BUZZER CONTROL</h5>
-          </div>
-          <div className="panel-content">
-            {/* Large buzzer status indicator */}
-            <div className="buzzer-status-large">
-              <div className={`status-indicator ${game.is_buzzer_locked ? 'locked' : 'unlocked'}`}>
-                {game.is_buzzer_locked ? '🔒 LOCKED' : '🔓 UNLOCKED'}
-              </div>
-            </div>
-            <div className="keyboard-hint">
-              <small className="text-muted">💡 Press SPACE to toggle</small>
-            </div>
-            <div className="buzzer-control-buttons">
-              <button
-                className="jeopardy-button w-100"
-                onClick={handleToggleBuzzer}
-              >
-                {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
-              </button>
-            </div>
-            <div className="connection-info report-panel">
-              <div className="report-row">
-                <small className="text-muted">Connection Status:</small>
-                <small className="text-success">ACTIVE</small>
-              </div>
-              <div className="report-row">
-                <small className="text-muted">Latency Compensation:</small>
-                <small className="text-success">ACTIVE</small>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Top Row - Panel 2: Game Board Control */}
         <div className="dashboard-panel game-board-panel">
@@ -425,23 +390,44 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
               </div>
             </div>
             </div>
-            <div className="report-panel selected-clue-area">
-              <div className="report-row">
-                <small className="text-muted">Selected Clue:</small>
-                <small className="text-success">CATEGORY 5</small>
-                <small>◆</small>
-                <small className="jeopardy-gold">$200</small>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Top Row - Panel 3: Player Scores */}
+        {/* Top Row - Panel 1: Player Control */}
         <div className="dashboard-panel player-scores-panel">
           <div className="panel-header">
             <h5>PLAYER CONTROL</h5>
           </div>
           <div className="panel-content">
+            {/* Game Status Info - moved from Game Status Panel */}
+            <div className="game-status-info">
+              <div className="status-row">
+                <div className="status-item">
+                  <span className="text-uppercase jeopardy-gold">Round:</span>
+                  <span className="text-capitalize">{game.current_round}</span>
+                </div>
+                <div className="status-item">
+                  <span className="text-uppercase jeopardy-gold">Status:</span>
+                  <span className="text-capitalize">{game.status}</span>
+                </div>
+                <div className="status-item">
+                  <span className="text-uppercase jeopardy-gold">Clues Left:</span>
+                  <span>17</span>
+                </div>
+              </div>
+              <div className="round-progress">
+                <label htmlFor="round-progress-bar" className="form-label">Round Progress</label>
+                <progress
+                  id="round-progress-bar"
+                  className="progress-bar w-100"
+                  value={17/30*100}
+                  max={100}
+                >
+                  0% Complete
+                </progress>
+              </div>
+            </div>
+
             {players.length === 0 ? (
               <p className="text-muted">No players joined yet</p>
             ) : (
@@ -479,12 +465,18 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
           </div>
         </div>
 
-        {/* Bottom Row - Panel 4: Buzzer Queue */}
+        {/* Top Row - Panel 2: Buzzer Queue */}
         <div className="dashboard-panel buzzer-queue-panel">
           <div className="panel-header">
             <h5>BUZZER QUEUE</h5>
           </div>
           <div className="panel-content">
+            {/* Connection & Latency Status - moved from Buzzer Control Panel */}
+            <div className="connection-status">
+              <span>Connection Status: <span className="text-success">ACTIVE</span></span>
+              <span>Latency Compensation: <span className="text-success">ACTIVE</span></span>
+            </div>
+
             <div className="queue-status">
               <p className="text-muted">No active buzzes</p>
             </div>
@@ -506,7 +498,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
           </div>
         </div>
 
-        {/* Bottom Row - Panel 5: Clue Control */}
+        {/* Bottom Row - Panel 3: Clue Control */}
         <div className="dashboard-panel clue-control-panel">
           <div className="panel-header">
             <h5>CLUE CONTROL</h5>
@@ -521,11 +513,17 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 </div>
               </div>
 
-              {/* Reveal Prompt Button */}
+              {/* Reveal Prompt and Buzzer Control Buttons */}
               <div className="clue-control-buttons">
                 <div className="d-flex gap-2 mb-2">
                   <button className="jeopardy-button flex-1">
                     Reveal Prompt
+                  </button>
+                  <button
+                    className={`jeopardy-button flex-1 buzzer-toggle-button ${game.is_buzzer_locked ? 'locked' : 'unlocked'}`}
+                    onClick={handleToggleBuzzer}
+                  >
+                    {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
                   </button>
                 </div>
               </div>
@@ -549,40 +547,8 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 </button>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Bottom Row - Panel 6: Game Status */}
-        <div className="dashboard-panel game-status-panel">
-          <div className="panel-header">
-            <h5>GAME STATUS</h5>
-          </div>
-          <div className="panel-content">
-            <div className="status-info">
-              <div className="status-item">
-                <span className="text-uppercase jeopardy-gold">Round:</span><span className="text-capitalize">{game.current_round}</span>
-              </div>
-              <div className="status-item">
-                <span className="text-uppercase jeopardy-gold">Status:</span><span className="text-capitalize">{game.status}</span>
-              </div>
-              <div className="status-item">
-
-                <span className="text-uppercase jeopardy-gold">Clues Left:</span><span >17</span>
-              </div>
-            </div>
-            <div className="round-progress">
-              <label htmlFor="round-progress-bar" className="form-label">Round Progress</label>
-              <progress
-                id="round-progress-bar"
-                className="progress-bar w-100"
-                value={17/30*100}
-                max={100}
-              >
-                0% Complete
-              </progress>
-            </div>
-
-            {/* Game Control Buttons - moved from controls bar */}
+            {/* Game Control Buttons - moved from Game Status Panel */}
             <div className="game-control-buttons d-flex gap-2">
               <button
                 className="jeopardy-button flex-1"
@@ -599,15 +565,10 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 End Game
               </button>
             </div>
-
-            <div className="game-metadata">
-              <small className="text-muted">
-                Created: {new Date(game.created_at).toLocaleDateString()}<br/>
-                Host: {user.email?.split('@')[0]}
-              </small>
-            </div>
           </div>
         </div>
+
+
       </div>
     </div>
   )

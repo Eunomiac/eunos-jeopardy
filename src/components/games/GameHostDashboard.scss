@@ -12,11 +12,13 @@
   overflow: hidden;
 
   .game-host-dashboard {
-    position: absolute;
+    position: fixed; // Use fixed instead of absolute for full viewport coverage
     top: 40px; // Position just below the "currently logged in as" header
     left: 0;
     right: 0;
     bottom: 0;
+    width: 100vw; // Ensure full viewport width
+    height: calc(100vh - 40px); // Full viewport height minus header
     @include flex-column;
     padding: $spacing-lg;
     background-color: $jeopardy-background-blue;
@@ -76,15 +78,19 @@
       font-size: $font-size-sm;
     }
 
-    // Dashboard Grid Layout
+    // Dashboard Grid Layout - 4 Panel Layout
     .dashboard-grid {
       position: relative;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       grid-template-rows: 1fr 1fr;
+      grid-template-areas:
+        "player-control buzzer-queue board-control"
+        "player-control buzzer-queue clue-control";
       gap: $spacing-lg;
       flex: 1;
-      min-height: 0;
+      min-height: calc(100vh - 200px); // Ensure minimum height for grid
+      height: 100%; // Take full available height
 
       // Panel Styles
       .dashboard-panel {
@@ -93,50 +99,9 @@
         @include flex-column;
         overflow: hidden;
 
-        // Buzzer Control Panel
-        &.buzzer-control-panel {
-          .buzzer-status-large {
-            text-align: center;
-
-            .status-indicator {
-              font-family: $font-family-ui;
-              font-size: $font-size-lg;
-              font-weight: $font-weight-bold;
-              text-transform: $jeopardy-text-transform;
-              text-shadow: $shadow-sm;
-              padding: $spacing-lg;
-              border-radius: $border-radius-md;
-              border: 2px solid;
-
-              &.locked {
-                background: $error-color;
-                color: $jeopardy-white;
-                border-color: darken($error-color, 10%);
-              }
-
-              &.unlocked {
-                background: $success-color;
-                color: $jeopardy-white;
-                border-color: darken($success-color, 10%);
-              }
-            }
-          }
-
-          .buzzer-control-buttons {
-            margin-bottom: $spacing-lg;
-          }
-
-          .keyboard-hint {
-            text-align: center;
-            margin-bottom: $spacing-lg;
-            font-size: $font-size-xs;
-            color: $text-muted;
-            font-family: $font-family-ui;
-          }
-        }
-
         // Game Board Panel
         &.game-board-panel {
+          grid-area: board-control;
           padding-left: 0;
           padding-right: 0;
 
@@ -150,7 +115,7 @@
             // Container for scaled board to prevent overflow
             .jeopardy-board-container {
               width: 100%;
-              height: 85%; // Increased to show all 5 rows including $1000
+              height: 100%; // Full height now that footer is removed
               overflow: hidden;
               position: relative;
             }
@@ -169,6 +134,48 @@
 
         // Player Scores Panel
         &.player-scores-panel {
+          grid-area: player-control;
+
+          .game-status-info {
+            margin-bottom: $spacing-lg;
+            padding: $spacing-sm $spacing-md;
+            background: rgba($jeopardy-gold, 0.1);
+            border-radius: $border-radius-sm;
+            border: 1px solid rgba($jeopardy-gold, 0.3);
+
+            .status-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: $spacing-sm;
+
+              .status-item {
+                display: flex;
+                gap: 5px;
+                font-family: $font-family-ui;
+                font-size: $font-size-xs;
+                color: $jeopardy-white;
+              }
+            }
+
+            .round-progress {
+              margin-top: $spacing-sm;
+
+              .form-label {
+                font-size: $font-size-xs;
+                margin-bottom: $spacing-xs;
+                color: $jeopardy-white;
+              }
+
+              .progress-bar {
+                height: 20px;
+                border: 1px solid rgba($jeopardy-gold, 0.5);
+                border-radius: $border-radius-sm;
+                overflow: hidden;
+              }
+            }
+          }
+
           .player-scores-list {
             max-height: 200px;
             overflow-y: auto;
@@ -219,6 +226,21 @@
 
         // Buzzer Queue Panel
         &.buzzer-queue-panel {
+          grid-area: buzzer-queue;
+
+          .connection-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: $spacing-sm $spacing-md;
+            margin-bottom: $spacing-md;
+            background: rgba($jeopardy-gold, 0.1);
+            border-radius: $border-radius-sm;
+            font-size: $font-size-xs;
+            color: $jeopardy-white;
+            border: 1px solid rgba($jeopardy-gold, 0.3);
+          }
+
           .queue-status {
             text-align: center;
             margin-bottom: $spacing-lg;
@@ -254,13 +276,15 @@
 
           .jeopardy-button-small {
             position: absolute;
-            top: 5px;
+            top: 60px; // Move below connection status area
             right: 0;
           }
         }
 
         // Clue Control Panel
         &.clue-control-panel {
+          grid-area: clue-control;
+
           .focused-clue-display {
             margin-bottom: $spacing-xl;
 
@@ -277,6 +301,26 @@
 
           .clue-control-buttons {
             margin-bottom: $spacing-lg;
+
+            .buzzer-toggle-button {
+              &.locked {
+                background-color: $error-color;
+                border-color: darken($error-color, 10%);
+
+                &:hover {
+                  background-color: darken($error-color, 5%);
+                }
+              }
+
+              &.unlocked {
+                background-color: $success-color;
+                border-color: darken($success-color, 10%);
+
+                &:hover {
+                  background-color: darken($success-color, 5%);
+                }
+              }
+            }
           }
 
           .game-control-buttons {
@@ -286,60 +330,7 @@
           }
         }
 
-        // Game Status Panel
-        &.game-status-panel {
-          .status-info {
-            display: flex;
-            justify-content: space-between;
 
-            .status-item {
-              display: flex;
-              justify-content: space-between;
-              gap: 5px;
-              margin-bottom: $spacing-sm;
-              padding: $spacing-sm 0;
-              font-family: $font-family-ui;
-              color: $jeopardy-white;
-
-              strong {
-                font-weight: $font-weight-bold;
-              }
-            }
-          }
-
-          .round-progress {
-            margin-bottom: $spacing-lg;
-
-            .form-label {
-              position: absolute;
-              color: $jeopardy-black;
-              margin: 0;
-              margin-top: 6px;
-              margin-left: 10px;
-            }
-
-            .progress-bar {
-              height: 30px;
-              border: 2px outset $border-color;
-              border-radius: $border-radius-lg;
-              overflow: hidden;
-            }
-          }
-
-          .game-metadata {
-            text-align: center;
-            padding-top: $spacing-lg;
-            border-top: 1px solid rgba($jeopardy-gold, 0.5);
-            color: $jeopardy-white;
-            font-family: $font-family-ui;
-            font-size: $font-size-xs;
-            position: absolute;
-            bottom: 0;
-            width: calc(100% - 2 * #{$spacing-lg});
-            left: 50%;
-            transform: translate(-50%, 0%);
-          }
-        }
 
         .panel-header {
           background: linear-gradient(
