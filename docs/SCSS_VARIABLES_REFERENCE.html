@@ -15,8 +15,8 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.3;
-      color: #333;
-      background: white;
+      color: #ffffff;
+      background: #0b002a;
       margin: 0;
       padding: 0;
       font-size: 14px;
@@ -64,11 +64,11 @@
     }
 
     .section-title {
-      font-size: 13px;
-      color: #061276;
+      font-size: 16px;
+      color: white;
       margin: 0 0 6px 0;
       padding: 4px 6px;
-      background: #f0f0f0;
+      background: transparent;
       border-left: 3px solid #d69f4c;
       font-weight: bold;
       text-transform: uppercase;
@@ -77,12 +77,12 @@
 
     .subsection-title {
       font-size: 11px;
-      color: #444;
+      color: #ccc;
       margin: 8px 0 4px 0;
       padding: 2px 4px;
-      background: #f8f9fa;
+      background: transparent;
       border-left: 2px solid #d69f4c;
-      font-weight: 600;
+      font-weight: 1000;
       text-transform: uppercase;
       flex-shrink: 0;
     }
@@ -98,8 +98,9 @@
     }
 
     .variable-item {
-      background: #fafafa;
-      border: 1px solid #ddd;
+      background: black;
+      /* border: 1px solid #d69f4c; */
+      margin: 2px;
       padding: 4px 6px;
       cursor: pointer;
       transition: background 0.1s ease;
@@ -111,14 +112,15 @@
     }
 
     .variable-item:hover {
-      background: #e3f2fd;
-      border-color: #2196f3;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      border-color: #ffffff;
     }
 
     .variable-name {
       font-family: 'Courier New', monospace;
       font-weight: bold;
-      color: #d63384;
+      color: #f154a3;
       min-width: 140px;
       flex: 1;
       white-space: nowrap;
@@ -126,7 +128,7 @@
 
     .variable-value {
       font-family: 'Courier New', monospace;
-      color: #198754;
+      color: #2ad686;
       min-width: 70px;
       flex: 1;
       white-space: nowrap;
@@ -138,7 +140,7 @@
     }
 
     .variable-description {
-      color: #666;
+      color: #c0c0c0;
       line-height: 1.2;
       flex: 1;
       overflow: hidden;
@@ -340,37 +342,37 @@
           <div class="variable-grid">
             <div class="variable-item" onclick="copyToClipboard('$font-family-title')">
               <div class="variable-name">$font-family-title</div>
-              <div class="variable-value">Annual Normal</div>
+              <div class="variable-value" style="font-family: 'Annual Normal', serif; text-transform: uppercase; font-size: 24px; line-height: 18px;">Annual Normal</div>
               <div class="variable-description">Main titles and headers</div>
               <div class="copy-indicator">Copied!</div>
             </div>
             <div class="variable-item" onclick="copyToClipboard('$font-family-category')">
               <div class="variable-name">$font-family-category</div>
-              <div class="variable-value">Swiss 921</div>
+              <div class="variable-value" style="font-family: 'Swiss921 BT'; text-transform: uppercase;font-size: 18px;line-height: 18px;">Swiss 921</div>
               <div class="variable-description">Category headers on game board</div>
               <div class="copy-indicator">Copied!</div>
             </div>
             <div class="variable-item" onclick="copyToClipboard('$font-family-clue')">
               <div class="variable-name">$font-family-clue</div>
-              <div class="variable-value">Korinna ITC Bold</div>
+              <div class="variable-value" style="font-family: 'Korinna', serif; text-transform: uppercase; font-weight: bold;">Korinna ITC Bold</div>
               <div class="variable-description">Clue text display</div>
               <div class="copy-indicator">Copied!</div>
             </div>
             <div class="variable-item" onclick="copyToClipboard('$font-family-money')">
               <div class="variable-name">$font-family-money</div>
-              <div class="variable-value">Swiss 911 Extra Condensed</div>
+              <div class="variable-value" style="font-family: 'SwitzerlandExtraCond', sans-serif; text-transform: uppercase; font-size: 18px;line-height: 18px;">Swiss 911 Extra Condensed</div>
               <div class="variable-description">Monetary values</div>
               <div class="copy-indicator">Copied!</div>
             </div>
             <div class="variable-item" onclick="copyToClipboard('$font-family-ui')">
               <div class="variable-name">$font-family-ui</div>
-              <div class="variable-value">Swiss 921</div>
+              <div class="variable-value" style="font-family: 'Swiss921 BT'; font-size: 18px;line-height: 18px;">Swiss 921</div>
               <div class="variable-description">General UI text and controls</div>
               <div class="copy-indicator">Copied!</div>
             </div>
             <div class="variable-item" onclick="copyToClipboard('$font-family-daily-double')">
               <div class="variable-name">$font-family-daily-double</div>
-              <div class="variable-value">Steile Futura Bold</div>
+              <div class="variable-value" style="font-family: 'Steile Futura BQ', sans-serif; text-transform: uppercase; font-weight: bold; font-size: 18px; line-height: 18px;">Steile Futura Bold</div>
               <div class="variable-description">Daily Double announcements</div>
               <div class="copy-indicator">Copied!</div>
             </div>
@@ -597,6 +599,64 @@
   </div>
 
   <script>
+    // Function to calculate luminance for contrast calculation
+    function getLuminance(hex) {
+      // Convert hex to RGB
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+
+      // Convert to relative luminance
+      const [rs, gs, bs] = [r, g, b].map(c => {
+        c = c / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      });
+
+      return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+    }
+
+    // Function to get the best contrast color (black or white)
+    function getContrastColor(hex) {
+      const luminance = getLuminance(hex);
+      return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+
+    // Add hover event listeners to all color variable items
+    document.addEventListener('DOMContentLoaded', function() {
+      const colorItems = document.querySelectorAll('.section-color .variable-item');
+
+      colorItems.forEach(item => {
+        const colorValue = item.querySelector('.variable-value').textContent.trim();
+
+        // Only apply to items that have hex color values
+        if (colorValue.startsWith('#') && colorValue.length === 7) {
+          item.addEventListener('mouseenter', function() {
+            const contrastColor = getContrastColor(colorValue);
+
+            // Change background to the color
+            this.style.backgroundColor = colorValue;
+
+            // Change all text colors for maximum contrast
+            const textElements = this.querySelectorAll('.variable-name, .variable-value, .variable-description, .copy-indicator');
+            textElements.forEach(el => {
+              el.style.color = contrastColor;
+            });
+          });
+
+          item.addEventListener('mouseleave', function() {
+            // Reset to original styling
+            this.style.backgroundColor = '';
+
+            // Reset text colors
+            const textElements = this.querySelectorAll('.variable-name, .variable-value, .variable-description, .copy-indicator');
+            textElements.forEach(el => {
+              el.style.color = '';
+            });
+          });
+        }
+      });
+    });
+
     async function copyToClipboard(text) {
       try {
         await navigator.clipboard.writeText(text);
