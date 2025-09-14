@@ -23,6 +23,13 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      'prefer-const': [
+        'error',
+        {
+          destructuring: 'all',
+          ignoreReadBeforeAssign: false
+        }
+      ],
     },
   },
 )

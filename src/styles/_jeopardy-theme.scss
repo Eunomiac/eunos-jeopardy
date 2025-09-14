@@ -2,6 +2,7 @@
 // JEOPARDY THEME COMPONENTS
 // ========================================
 @use "sass:color";
+@import "../styles/globals";
 
 // Standard Jeopardy Button Styling (for consistency across all components)
 @mixin jeopardy-button-base {
@@ -110,6 +111,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
+
+  &.drag-active {
+    // Visual feedback when dragging files over the entire app
+    .game-creator-section {
+      background-color: rgba($jeopardy-gold, 0.05);
+      border: 2px dashed rgba($jeopardy-gold, 0.3);
+      border-radius: $border-radius-lg;
+    }
+  }
 }
 
 .app-header {
@@ -141,10 +151,81 @@
   justify-content: center;
 }
 
+.clue-set-selection-row {
+  @include flex-center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
 .host-game-section {
   display: flex;
   justify-content: center;
   margin-top: $spacing-xl;
+}
+
+// Drag and drop functionality styles
+
+.game-creator-section {
+  position: relative;
+  transition: all $transition-normal;
+
+  &.uploading {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+}
+
+.drag-overlay,
+.upload-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba($jeopardy-black, 0.9);
+  @include flex-center;
+  z-index: $z-modal;
+
+  .drag-message,
+  .upload-message {
+    text-align: center;
+    color: $jeopardy-white;
+    padding: $spacing-xl;
+    border: 2px dashed $jeopardy-gold;
+    border-radius: $border-radius-lg;
+    background: rgba($jeopardy-blue, 0.8);
+
+    h3 {
+      @extend .jeopardy-category;
+      font-size: $font-size-2xl;
+      color: $jeopardy-gold;
+      margin: 0 0 $spacing-md 0;
+    }
+
+    p {
+      font-family: $font-family-ui;
+      font-size: $font-size-base;
+      margin: 0;
+      color: $jeopardy-white;
+    }
+  }
+}
+
+.drag-hint {
+  margin-top: $spacing-xl;
+  text-align: center;
+  padding: $spacing-md;
+  background: rgba($jeopardy-gold, 0.05);
+  border: 1px solid rgba($jeopardy-gold, 0.2);
+  border-radius: $border-radius-md;
+
+  .hint-text {
+    font-family: $font-family-ui;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin: 0;
+    font-style: italic;
+  }
 }
 
 .selected-clue-set {

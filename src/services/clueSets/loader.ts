@@ -81,6 +81,80 @@ export interface ClueSetData {
 }
 
 /**
+ * Loads and parses a Jeopardy clue set from a File object (for drag-and-drop uploads).
+ *
+ * This function processes uploaded CSV files directly from File objects,
+ * parsing the content and structuring it for Jeopardy gameplay. It handles
+ * the complete workflow from file reading to data validation.
+ *
+ * **Processing Steps:**
+ * 1. Read file content as text
+ * 2. Parse CSV content into structured rows
+ * 3. Validate Jeopardy game structure requirements
+ * 4. Structure data by rounds for game use
+ *
+ * **File Format Requirements:**
+ * - CSV format with header: round,category,value,prompt,response
+ * - Jeopardy round: 30 clues (6 categories × 5 values each)
+ * - Double Jeopardy round: 30 clues (6 categories × 5 values each)
+ * - Final Jeopardy: 1 clue
+ * - Values: Jeopardy (200,400,600,800,1000), Double (400,800,1200,1600,2000)
+ *
+ * @param file - The uploaded CSV file to process
+ * @param customName - Optional custom name for the clue set
+ * @returns Promise resolving to structured clue set data
+ * @throws {Error} When file reading, parsing, or validation fails
+ *
+ * @example
+ * ```typescript
+ * // Handle dropped file
+ * const handleFileDrop = async (file: File) => {
+ *   try {
+ *     const clueSet = await loadClueSetFromFile(file, 'My Custom Game');
+ *     console.log(`Loaded: ${clueSet.name}`);
+ *     console.log(`Jeopardy categories: ${clueSet.rounds.jeopardy.length}`);
+ *   } catch (error) {
+ *     console.error('Failed to load clue set:', error.message);
+ *   }
+ * };
+ * ```
+ *
+ * @since 0.1.0
+ * @author Euno's Jeopardy Team
+ */
+export async function loadClueSetFromFile(file: File, customName?: string): Promise<ClueSetData> {
+  try {
+    // Step 1: Read file content as text
+    const csvText = await file.text()
+
+    // Step 2: Parse CSV content into structured rows
+    const rows = parseCSV(csvText)
+
+    // Step 3: Validate that structure meets Jeopardy requirements
+    validateJeopardyStructure(rows)
+
+    // Step 4: Structure data by rounds for game use
+    const clueSetData: ClueSetData = {
+      name: customName || filenameToDisplayName(file.name), // Use custom name or derive from filename
+      filename: file.name, // Preserve original filename
+      rounds: {
+        // Filter and structure each round type
+        jeopardy: structureRoundData(rows.filter((row) => row.round === 'jeopardy')),
+        double: structureRoundData(rows.filter((row) => row.round === 'double')),
+        final: structureFinalRoundData(rows.filter((row) => row.round === 'final'))
+      }
+    }
+
+    return clueSetData
+
+  } catch (error) {
+    // Log error for debugging while preserving original error for caller
+    console.error('Error loading clue set from file:', error)
+    throw error
+  }
+}
+
+/**
  * Loads and parses a CSV clue set from the public directory into structured data.
  *
  * This is the main entry point for loading clue sets from CSV files. It handles
@@ -402,14 +476,15 @@ function getCluePosition(value: number, round: RoundType): number {
  */
 export async function saveClueSetToDatabase(
   clueSetData: ClueSetData,
-  userId: string
+  userId: string,
+  customName?: string
 ): Promise<string> {
   try {
     // Step 1: Create top-level clue set record
     const { data: clueSet, error: clueSetError } = await supabase
       .from('clue_sets')
       .insert({
-        name: clueSetData.name,
+        name: customName || clueSetData.name,
         owner_id: userId // Associate with user for RLS
       })
       .select('id')

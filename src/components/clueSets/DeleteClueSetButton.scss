@@ -1,0 +1,37 @@
+// Delete Clue Set Button Component Styles
+@import "../../styles/variables";
+@import "../../styles/mixins";
+@import "../../styles/jeopardy-theme";
+
+.delete-clue-set-button {
+  @include jeopardy-button-small;
+  background-color: $error-color;
+  border-color: darken($error-color, 10%);
+  color: $jeopardy-white;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-xs;
+  min-width: auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background-color: darken($error-color, 10%);
+    filter: brightness(1.1);
+  }
+
+  &:active:not(:disabled) {
+    background-color: darken($error-color, 15%);
+    transform: scale(0.98);
+  }
+
+  .delete-icon {
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    line-height: 1;
+  }
+}
+
+// No additional styles needed - using browser confirm() dialog

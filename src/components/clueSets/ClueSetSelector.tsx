@@ -1,4 +1,6 @@
-import { getAvailableClueSets, filenameToDisplayName } from '../../utils/clueSetUtils'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
+import { ClueSetService, type UserClueSet } from '../../services/clueSets/clueSetService'
 
 /**
  * Props interface for the ClueSetSelector component.
@@ -11,52 +13,54 @@ import { getAvailableClueSets, filenameToDisplayName } from '../../utils/clueSet
  * @author Euno's Jeopardy Team
  */
 interface ClueSetSelectorProps {
-  /** Currently selected clue set filename, empty string if none selected */
+  /** Currently selected clue set ID, empty string if none selected */
   readonly selectedClueSetId: string
 
   /** Callback function called when user selects a different clue set */
   readonly onClueSetSelected: (clueSetId: string) => void
+
+  /** Optional refresh trigger to reload clue sets (increment to trigger refresh) */
+  readonly refreshTrigger?: number
 }
 
 /**
- * Clue Set Selector component for choosing CSV clue sets for Jeopardy games.
+ * Database-driven Clue Set Selector component for choosing user-uploaded clue sets.
  *
- * This component provides a dropdown interface for selecting from available
- * CSV clue set files in the public/clue-sets directory. It handles file
- * discovery, display name formatting, and selection state management.
+ * This component provides a dropdown interface for selecting from the user's
+ * uploaded clue sets stored in the database. It handles loading, error states,
+ * and real-time updates when clue sets are added or removed.
  *
  * **Key Features:**
- * - Automatic discovery of available CSV clue sets
- * - User-friendly display names from filenames
+ * - Database-driven clue set discovery from user's collection
+ * - Real-time loading and error state management
+ * - User-friendly display names from database records
  * - Controlled component pattern with external state management
  * - Jeopardy-themed styling and branding
- * - Placeholder option for initial state
+ * - Authentication-aware (shows only user's clue sets)
  *
- * **File Discovery:**
- * - Uses getAvailableClueSets() to find CSV files in public/clue-sets/
- * - Automatically updates when new files are added to the directory
- * - Filters for valid CSV files with proper naming conventions
- *
- * **Display Names:**
- * - Converts filenames to user-friendly display names
- * - Removes file extensions and formats for readability
- * - Example: "sample-game.csv" → "Sample Game"
+ * **Database Integration:**
+ * - Uses ClueSetService to query user's clue sets from database
+ * - Automatically updates when user authentication changes
+ * - Handles loading states during database queries
+ * - Provides error feedback for failed database operations
  *
  * **State Management:**
  * - Controlled component receiving selection state from parent
  * - Calls onClueSetSelected callback when user makes selection
  * - Parent component (App.tsx) manages the selected clue set state
+ * - Internal state for loading, error, and clue set data
  *
  * **Integration Points:**
  * - Used by App.tsx in the game creation workflow
- * - Selected clue set is used by handleHostGame for game creation
- * - Works with clueSetUtils for file operations
+ * - Selected clue set ID is used by handleHostGame for game creation
+ * - Works with ClueSetService for database operations
+ * - Integrates with AuthContext for user identification
  *
- * **Future Enhancements:**
- * - Could add clue set preview functionality
- * - Could display metadata (number of clues, categories, etc.)
- * - Could support drag-and-drop file upload
- * - Could add clue set validation indicators
+ * **User Experience:**
+ * - Shows loading message while fetching clue sets
+ * - Displays helpful error messages for database failures
+ * - Provides appropriate placeholder text when no clue sets exist
+ * - Updates automatically when new clue sets are uploaded
  *
  * @param props - Component props containing selection state and callback
  * @returns JSX element representing the clue set selection interface
@@ -72,10 +76,39 @@ interface ClueSetSelectorProps {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export function ClueSetSelector({ selectedClueSetId, onClueSetSelected }: Readonly<ClueSetSelectorProps>) {
-  // Discover available CSV clue set files from public directory
-  /** Array of available clue set filenames from public/clue-sets/ directory */
-  const availableFiles = getAvailableClueSets()
+export function ClueSetSelector({ selectedClueSetId, onClueSetSelected, refreshTrigger }: Readonly<ClueSetSelectorProps>) {
+  // Authentication context for user identification
+  const { user } = useAuth()
+
+  // State for managing clue sets and loading
+  const [clueSets, setClueSets] = useState<UserClueSet[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Load user's clue sets from database
+  useEffect(() => {
+    async function loadClueSets() {
+      if (!user) {
+        setClueSets([])
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setError(null)
+        const userClueSets = await ClueSetService.getUserClueSets(user.id)
+        setClueSets(userClueSets)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load clue sets')
+        setClueSets([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadClueSets()
+  }, [user, refreshTrigger])
 
   return (
     <div className="clue-set-selector game-creator">
@@ -85,24 +118,41 @@ export function ClueSetSelector({ selectedClueSetId, onClueSetSelected }: Readon
       </h3>
 
       <div className="form-group">
-        {/* Dropdown selector for available clue sets */}
-        <select
-          id="clue-set-select"
-          className="jeopardy-input jeopardy-dropdown"
-          value={selectedClueSetId}
-          onChange={(e) => onClueSetSelected(e.target.value)}
-        >
-          {/* Default placeholder option */}
-          <option value="">Choose a Clue Set...</option>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="loading-message">
+            Loading your clue sets...
+          </div>
+        )}
 
-          {/* Dynamic options for each available clue set file */}
-          {availableFiles.map((filename) => (
-            <option key={filename} value={filename}>
-              {/* Convert filename to user-friendly display name */}
-              {filenameToDisplayName(filename)}
+        {/* Error state */}
+        {error && (
+          <div className="error-message">
+            Error: {error}
+          </div>
+        )}
+
+        {/* Dropdown selector for available clue sets */}
+        {!isLoading && !error && (
+          <select
+            id="clue-set-select"
+            className="jeopardy-input jeopardy-dropdown"
+            value={selectedClueSetId}
+            onChange={(e) => onClueSetSelected(e.target.value)}
+          >
+            {/* Default placeholder option */}
+            <option value="">
+              {clueSets.length === 0 ? 'Upload a CSV to get started!' : 'Choose or Upload a Clue Set...'}
             </option>
-          ))}
-        </select>
+
+            {/* Dynamic options for each user clue set */}
+            {clueSets.map((clueSet) => (
+              <option key={clueSet.id} value={clueSet.id}>
+                {clueSet.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   )
