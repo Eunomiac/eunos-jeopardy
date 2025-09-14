@@ -1,0 +1,62 @@
+round,category,value,prompt,response
+jeopardy,Renaissance Rebels,200,This Florentine artist defied convention by painting the human body with unprecedented realism in the Sistine Chapel,Who is Michelangelo?
+jeopardy,Renaissance Rebels,400,"This astronomer's 1543 work ""On the Revolutions of the Heavenly Spheres"" proposed a heliocentric model",Who is Nicolaus Copernicus?
+jeopardy,Renaissance Rebels,600,"This political thinker's ""The Prince"" shocked contemporaries with its pragmatic advice on power",Who is Niccoli Machiavelli?
+jeopardy,Renaissance Rebels,800,This scientist's conflict with the Catholic Church over heliocentrism led to his house arrest in 1633,Who is Galileo Galilei?
+jeopardy,Renaissance Rebels,1000,"This Dutch humanist's ""In Praise of Folly"" satirized the church and society",Who is Desiderius Erasmus?
+jeopardy,Symphonies of Nature,200,This insect's nighttime song comes from rubbing wings together,What is the cricket?
+jeopardy,Symphonies of Nature,400,The eerie low-frequency sounds of these marine giants can travel thousands of miles,What are blue whales?
+jeopardy,Symphonies of Nature,600,"This phenomenon produces ""singing sands"" when wind or footsteps cause grains to resonate",What are singing dunes?
+jeopardy,Symphonies of Nature,800,"This natural event inspired Stravinsky's ""The Rite of Spring"" with its birdcalls and sudden storms",What is springtime?
+jeopardy,Symphonies of Nature,1000,"The ""dawn chorus"" is created by these animals at first light",What are songbirds?
+jeopardy,Books That Changed Laws,200,This novel about the evils of slavery influenced U.S. opinion before the Civil War,What is Uncle Tom's Cabin?
+jeopardy,Books That Changed Laws,400,Rachel Carson's 1962 book helped launch the environmental movement,What is Silent Spring?
+jeopardy,Books That Changed Laws,600,This muckraker's 1906 novel about Chicago meatpacking led to U.S. food-safety reforms,What is The Jungle?
+jeopardy,Books That Changed Laws,800,Upton Sinclair intended this book to expose worker exploitation but it led to the Pure Food and Drug Act,What is The Jungle?
+jeopardy,Books That Changed Laws,1000,This 1944 report by Gunnar Myrdal influenced the U.S. Supreme Court's Brown v. Board decision,What is An American Dilemma?
+jeopardy,Letters from the Past,200,This U.S. president wrote the Gettysburg Address in 1863 as a letter-like speech,Who is Abraham Lincoln?
+jeopardy,Letters from the Past,400,This Russian czar corresponded with Voltaire for over fifteen years,Who is Catherine the Great?
+jeopardy,Letters from the Past,600,This famous scientist's 1939 letter to Roosevelt warned of nuclear weapon potential,Who is Albert Einstein?
+jeopardy,Letters from the Past,800,This imprisoned civil-rights leader penned a letter from Birmingham Jail in 1963,Who is Martin Luther King Jr.?
+jeopardy,Letters from the Past,1000,This English king's 1533 letter to the Pope sought annulment from Catherine of Aragon,Who is Henry VIII?
+jeopardy,Stagecraft Secrets,200,This illusion uses angled mirrors to make an actor seem to appear as a ghost on stage,What is Pepper's Ghost?
+jeopardy,Stagecraft Secrets,400,This hidden area beneath a stage allows actors or scenery to be raised or lowered,What is the trapdoor?
+jeopardy,Stagecraft Secrets,600,This quick-change technique allows costumes to be swapped in seconds,What is a tear-away costume?
+jeopardy,Stagecraft Secrets,800,This theatrical effect uses finely atomized water to create realistic mist,What is a fog machine?
+jeopardy,Stagecraft Secrets,1000,This secret signaling system used in magic shows lets assistants silently cue the magician,What is a code act?
+jeopardy,Banished & Exiled,200,This French emperor spent his final years on the remote island of Saint Helena,Who is Napoleon Bonaparte?
+jeopardy,Banished & Exiled,400,This ancient Greek philosopher was sentenced to drink hemlock after his trial in Athens,Who is Socrates?
+jeopardy,Banished & Exiled,600,This Russian novelist was exiled to Siberia after involvement in a revolutionary group,Who is Fyodor Dostoevsky?
+jeopardy,Banished & Exiled,800,This Tibetan spiritual leader fled to India in 1959 after a failed uprising,Who is the Dalai Lama?
+jeopardy,Banished & Exiled,1000,"This Italian poet was exiled from Florence and wrote ""The Divine Comedy""",Who is Dante Alighieri?
+double,The Shape of Things,400,This three-dimensional shape has 12 pentagonal faces,What is a dodecahedron?
+double,The Shape of Things,800,This naturally occurring spiral appears in sunflowers and nautilus shells,What is the Fibonacci spiral?
+double,The Shape of Things,1200,This curve represents the path of a thrown ball under gravity,What is a parabola?
+double,The Shape of Things,1600,This Greek letter represents the ratio of a circle's circumference to its diameter,What is pi?
+double,The Shape of Things,2000,This shape of minimal surface area encloses a given volume and explains bubble formation,What is a sphere?
+double,Strange Borders,400,This town is split by the U.S.-Canada border and shares a library building,What is Derby Line?
+double,Strange Borders,800,This tiny European country is landlocked within Italy,What is San Marino?
+double,Strange Borders,1200,This African enclave is surrounded entirely by South Africa,What is Lesotho?
+double,Strange Borders,1600,This European exclave lies between Lithuania and Poland and belongs to Russia,What is Kaliningrad?
+double,Strange Borders,2000,"This pair of countries shares the world's shortest land border, about 150 meters long",What are Botswana and Zambia?
+double,Haunted Innovations,400,This famous New York hotel elevator is rumored to stop on floors no one requested,What is the elevator at the Hotel Chelsea?
+double,Haunted Innovations,800,Thomas Edison once spoke of inventing a device to communicate with these beings,What are spirits?
+double,Haunted Innovations,1200,"This 19th-century photographic technique was exploited to create ""spirit photographs""",What is double exposure?
+double,Haunted Innovations,1600,"This famous ocean liner, now a museum in California, is said to be haunted",What is the RMS Queen Mary?
+double,Haunted Innovations,2000,This inventor of the telephone also experimented with devices for spirit communication,Who is Alexander Graham Bell?
+double,The Smell of History,400,This ancient resin was used in Egyptian mummification and prized as incense,What is myrrh?
+double,The Smell of History,800,This French queen's love of perfumes helped spark rumors during the Revolution,Who is Marie Antoinette?
+double,The Smell of History,1200,This 17th-century plague remedy involved carrying these aromatic items to mask odors,What are posies?
+double,The Smell of History,1600,This powerful perfume trade item was derived from the secretions of the civet cat,What is civet?
+double,The Smell of History,2000,This rare and costly fragrant wood is burned in Japanese Kodo ceremonies,What is agarwood?
+double,Art Heists & Forgeries,400,In 1911 this masterpiece was stolen from the Louvre and recovered two years later,What is the Mona Lisa?
+double,Art Heists & Forgeries,800,This Dutch painter's forged works by Han van Meegeren fooled Nazi officials,Who is Johannes Vermeer?
+double,Art Heists & Forgeries,1200,This 1990 Boston museum theft remains history's largest art heist,What is the Isabella Stewart Gardner Museum heist?
+double,Art Heists & Forgeries,1600,"This painter's ""supra-realistic"" forgeries of modern masters earned him notoriety in the 20th century",Who is Elmyr de Hory?
+double,Art Heists & Forgeries,2000,"This British painter's forgeries of ancient manuscripts caused the ""Shapira Scrolls"" scandal",Who is Moses Shapira?
+double,Math in the Wild,400,This spiral pattern is commonly found in galaxies and hurricanes,What is a logarithmic spiral?
+double,Math in the Wild,800,This mathematical sequence appears in the branching of trees and pinecones,What is the Fibonacci sequence?
+double,Math in the Wild,1200,This geometric fractal is famous for its self-similar triangular pattern,What is the Sierpinski triangle?
+double,Math in the Wild,1600,"This ratio, about 1.618, is often called the golden ratio",What is phi?
+double,Math in the Wild,2000,This natural phenomenon creates a ring of light through water droplets,What is a rainbow?
+final,Hidden Messages,0,During World War II the Allies hid invasion plans in fake documents attached to a corpse in this famous deception operation,What is Operation Mincemeat?

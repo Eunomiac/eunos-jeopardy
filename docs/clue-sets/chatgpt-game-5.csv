@@ -1,0 +1,62 @@
+round,category,value,prompt,response
+jeopardy,Tiny But Mighty,200,"This insect, though only a few millimeters long, spreads malaria to millions",What is the mosquito?
+jeopardy,Tiny But Mighty,400,This subatomic particle discovered in 2012 gives other particles mass,What is the Higgs boson?
+jeopardy,Tiny But Mighty,600,This tiny crustacean's fossilized remains form massive limestone deposits,What is the foraminifer?
+jeopardy,Tiny But Mighty,800,This small USB-sized device revolutionized data storage in the early 2000s,What is the flash drive?
+jeopardy,Tiny But Mighty,1000,This microscopic aquatic animal can survive extreme temperatures and even space,What is the tardigrade?
+jeopardy,Epic Engineering Fails,200,This luxury liner sank on its maiden voyage in 1912,What is the Titanic?
+jeopardy,Epic Engineering Fails,400,This San Francisco bridge collapsed in 1989's Loma Prieta earthquake,What is the Cypress Street Viaduct?
+jeopardy,Epic Engineering Fails,600,This 1940 collapse of a Washington bridge became famous for its dramatic oscillations,What is the Tacoma Narrows Bridge?
+jeopardy,Epic Engineering Fails,800,This Soviet nuclear plant exploded in 1986,What is Chernobyl?
+jeopardy,Epic Engineering Fails,1000,This 2018 Florida pedestrian bridge collapsed only days after installation,What is the FIU bridge?
+jeopardy,Machines with Personality,200,This friendly droid from Star Wars communicates only in beeps and whistles,Who is R2-D2?
+jeopardy,Machines with Personality,400,This IBM computer defeated Garry Kasparov in a 1997 chess match,What is Deep Blue?
+jeopardy,Machines with Personality,600,"This AI from ""2001: A Space Odyssey"" calmly says ""I'm sorry, Dave, I'm afraid I can't do that""",What is HAL 9000?
+jeopardy,Machines with Personality,800,This robot from Pixar's 2008 film loves to collect trinkets and care for plants,Who is WALL-E?
+jeopardy,Machines with Personality,1000,"This talking car from the 1980s TV series ""Knight Rider"" was voiced by William Daniels",What is KITT?
+jeopardy,Living Fossils,200,"This ""living fossil"" fish thought extinct until 1938 can grow over six feet long",What is the coelacanth?
+jeopardy,Living Fossils,400,This tree species dating back 270 million years is a common city street tree,What is the ginkgo?
+jeopardy,Living Fossils,600,This horseshoe-shaped marine creature has blue blood used in medical testing,What is the horseshoe crab?
+jeopardy,Living Fossils,800,This small reptile of New Zealand is the only surviving member of the order Rhynchocephalia,What is the tuatara?
+jeopardy,Living Fossils,1000,This ancient insect group includes dragonflies with wingspans once over two feet,What are giant dragonflies or Meganeura?
+jeopardy,Comics Without Capes,200,Art Spiegelman's Pulitzer-winning graphic novel depicts the Holocaust with mice and cats,What is Maus?
+jeopardy,Comics Without Capes,400,This long-running series by Bill Watterson features a boy and his tiger companion,What is Calvin and Hobbes?
+jeopardy,Comics Without Capes,600,This Neil Gaiman series follows the adventures of Dream of the Endless,What is The Sandman?
+jeopardy,Comics Without Capes,800,Marjane Satrapi's graphic memoir depicts her childhood in Iran,What is Persepolis?
+jeopardy,Comics Without Capes,1000,Bryan Lee O'Malley's series follows a slacker who must defeat seven evil exes,What is Scott Pilgrim?
+jeopardy,The Art of Deception,200,In 1917 these English cousins faked photographs of fairies,What are the Cottingley Fairies?
+jeopardy,The Art of Deception,400,This infamous forged diary claimed to be written by Jack the Ripper,What is the Hitler Diaries?
+jeopardy,The Art of Deception,600,"This 19th-century American showman exhibited the ""Feejee Mermaid""",Who is P.T. Barnum?
+jeopardy,The Art of Deception,800,This 1835 New York Sun hoax described life on the Moon,What is the Great Moon Hoax?
+jeopardy,The Art of Deception,1000,This con man swindled investors by selling the Eiffel Tower for scrap—twice,Who is Victor Lustig?
+double,Fashion Through Revolutions,400,This French queen's preference for simple muslin dresses sparked controversy before the Revolution,Who is Marie Antoinette?
+double,Fashion Through Revolutions,800,During China's Cultural Revolution this utilitarian outfit became the standard,What is the Mao suit?
+double,Fashion Through Revolutions,1200,"The ""sans-culottes"" of revolutionary France symbolically rejected these garments",What are knee breeches?
+double,Fashion Through Revolutions,1600,"After the American Revolution, men favored this more relaxed style of coat over elaborate British fashions",What is the frock coat?
+double,Fashion Through Revolutions,2000,In post-Soviet Eastern Europe this iconic footwear from Russia remained a status symbol,What are valenki boots?
+double,Hidden Women of History,400,This mathematician in ancient Alexandria was one of the first notable female scholars,Who is Hypatia?
+double,Hidden Women of History,800,This American spy for the Union during the Civil War later became a teacher and activist,Who is Harriet Tubman?
+double,Hidden Women of History,1200,This Polish physicist and chemist was the first woman to win a Nobel Prize,Who is Marie Curie?
+double,Hidden Women of History,1600,This 20th-century computer scientist developed the first compiler for a programming language,Who is Grace Hopper?
+double,Hidden Women of History,2000,This Mongolian queen and warrior commanded troops and influenced empire politics in the 13th century,Who is Töregene Khatun?
+double,Daring Escapes,400,This French author's fictional Count tunneled out of the Château d'If,Who is the Count of Monte Cristo?
+double,Daring Escapes,800,This American gangster escaped from Alcatraz in 1962 and was never definitively found,Who is Frank Morris?
+double,Daring Escapes,1200,This Allied airmen escape during World War II inspired a 1963 film,What is The Great Escape?
+double,Daring Escapes,1600,This legendary 18th-century Italian adventurer escaped the Doge's Palace prison in Venice,Who is Giacomo Casanova?
+double,Daring Escapes,2000,This South African leader famously escaped from police surveillance in 1961 to continue anti-apartheid work,Who is Nelson Mandela?
+double,Songs of Protest,400,"Bob Dylan's 1963 anthem declared ""the times they are a-changin'""","What is ""The Times They Are a-Changin'""?"
+double,Songs of Protest,800,"This 1985 charity single gathered stars to sing ""We Are the World""","What is ""We Are the World""?"
+double,Songs of Protest,1200,Billy Bragg and the band Wilco set these lost Woody Guthrie lyrics to music,What are the Mermaid Avenue sessions?
+double,Songs of Protest,1600,This song by Billie Holiday exposed the horrors of lynching,"What is ""Strange Fruit""?"
+double,Songs of Protest,2000,"This 1989 Public Enemy track warned listeners to ""Fight the Power""","What is ""Fight the Power""?"
+double,Feats of Memory,400,This ancient Greek poet is said to have invented the method of loci after a banquet hall collapse,Who is Simonides?
+double,Feats of Memory,800,This annual competition crowns champions who memorize decks of cards and long numbers,What is the World Memory Championships?
+double,Feats of Memory,1200,This memory technique uses vivid mental imagery to link items to specific locations,What is the memory palace?
+double,Feats of Memory,1600,This 5th-century Indian text systematized memory techniques for Vedic chants,What is the Vedanga?
+double,Feats of Memory,2000,"This savant famously memorized over 12,000 books despite lacking formal education",Who is Kim Peek?
+double,Galactic Gastronomy,400,This powdered orange drink was famously associated with early U.S. space missions,What is Tang?
+double,Galactic Gastronomy,800,This freeze-dried dessert became a popular astronaut-themed novelty,What is astronaut ice cream?
+double,Galactic Gastronomy,1200,"In Star Wars, this blue beverage is served on Tatooine",What is blue milk?
+double,Galactic Gastronomy,1600,The first meal eaten by humans on the Moon included this meat in foil packets,What is bacon?
+double,Galactic Gastronomy,2000,This Star Trek dish of Klingon cuisine is served live and wriggling,What is gagh?
+final,Poetic Numbers,0,"This 14-line poetic form takes its name from the Italian word for ""little song""",What is a sonnet?

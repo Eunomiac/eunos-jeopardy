@@ -1,0 +1,62 @@
+round,category,value,prompt,response
+jeopardy,Color Me Surprised,200,This primary pigment gave ancient Tyre its fame and came from sea snails,What is purple?
+jeopardy,Color Me Surprised,400,This color was once reserved by law for emperors in Rome and Byzantium,What is imperial purple?
+jeopardy,Color Me Surprised,600,This bright synthetic dye discovered in 1856 launched the modern chemical industry,What is mauve?
+jeopardy,Color Me Surprised,800,The blue in stained-glass windows often came from this costly pigment ground from lapis lazuli,What is ultramarine?
+jeopardy,Color Me Surprised,1000,This green pigment poisoned Victorian wallpaper with arsenic compounds,What is Scheele's green?
+jeopardy,Ocean's Mysteries,200,This deep trench in the Pacific contains the ocean's deepest known point,What is the Mariana Trench?
+jeopardy,Ocean's Mysteries,400,"The sound nicknamed 'The Bloop' was not caused by a giant sea monster, but by this natural process.",What is an icequake?
+jeopardy,Ocean's Mysteries,600,These hexagonal patterns on the seafloor near Japan sparked debate over natural versus man-made origins,What is the Yonaguni Monument?
+jeopardy,Ocean's Mysteries,800,This ancient analog computer was found in a shipwreck off a Greek island,What is the Antikythera mechanism?
+jeopardy,Ocean's Mysteries,1000,This elusive cephalopod with elbowed arms was first filmed in 2012 in its deep-sea realm,What is the giant squid?
+jeopardy,One-Hit Wonders,200,Carl Douglas chopped to the top of the charts in 1974 with this martial arts tune,"What is ""Kung Fu Fighting""?"
+jeopardy,One-Hit Wonders,400,This British band hit No. 1 in 1982 with 'Come On Eileen',What is Dexys Midnight Runners?
+jeopardy,One-Hit Wonders,600,"Known for one infectious question in 2000, this Bahamian group asked 'Who Let the Dogs Out?'",What are the Baha Men?
+jeopardy,One-Hit Wonders,800,Norman Greenbaum's lone big hit soared heavenward with this 1969 song,"What is ""Spirit in the Sky""?"
+jeopardy,One-Hit Wonders,1000,"This U.S. trio scored its solitary smash in 1969 with ""In the Year 2525""",What is Zager and Evans?
+jeopardy,Royal Pets & Beasts,200,This British monarch famously bred corgis and had one named Susan,Who is Queen Elizabeth II?
+jeopardy,Royal Pets & Beasts,400,Alexander the Great's legendary horse shared this bovine-sounding name,What is Bucephalus?
+jeopardy,Royal Pets & Beasts,600,This Mughal emperor kept cheetahs for royal hunts,Who is Akbar?
+jeopardy,Royal Pets & Beasts,800,"Gifted to a pope in 1514, Hanno was a famed white one of these.",What is an elephant?
+jeopardy,Royal Pets & Beasts,1000,This Prussian king adored his Italian greyhounds and had them buried at Sanssouci,Who is Frederick the Great?
+jeopardy,Quantum Quandaries,200,This principle says you cannot precisely know both a particle's position and momentum,What is the Heisenberg uncertainty principle?
+jeopardy,Quantum Quandaries,400,"Einstein called it ""spooky action at a distance""; today we test it with Bell inequalities",What is quantum entanglement?
+jeopardy,Quantum Quandaries,600,This two-slit experiment shows light and matter acting as both waves and particles,What is the double-slit experiment?
+jeopardy,Quantum Quandaries,800,"In 1997 scientists first achieved this ""beaming"" of quantum states of photons",What is quantum teleportation?
+jeopardy,Quantum Quandaries,1000,This theorem proved no local hidden-variable theory can reproduce all quantum predictions,What is Bell's theorem?
+jeopardy,Parallel Histories,200,These two U.S. presidents share eerie coincidences from last names to successors named Johnson,Who are Lincoln and Kennedy?
+jeopardy,Parallel Histories,400,Mark Twain was born in 1835 and died in 1910 with notable visits of this periodic celestial object,What is Halley's Comet?
+jeopardy,Parallel Histories,600,"Morgan Robertson's 1898 novella ""Futility"" foreshadowed this 1912 maritime disaster",What is the sinking of the Titanic?
+jeopardy,Parallel Histories,800,Two mathematicians independently developed calculus in the 17th century,Who are Newton and Leibniz?
+jeopardy,Parallel Histories,1000,"This 1815 volcanic eruption darkened skies; a year later Mary Shelley conceived ""Frankenstein"" amid similar gloom",What is the eruption of Mount Tambora?
+double,The Number's Up,400,Douglas Adams fans know this as the Answer to the Ultimate Question,What is 42?
+double,The Number's Up,800,This transcendental constant is about 3.14159,What is pi?
+double,The Number's Up,1200,This constant e is the base of natural logarithms,What is 2.71828?
+double,The Number's Up,1600,"This atomic number famously marks the ""number of the beast""",What is 666?
+double,The Number's Up,2000,Physicists note this dimensionless constant near 1/137 governs electromagnetic strength,What is the fine-structure constant?
+double,Cryptic Cartography,400,This pair of Arctic islands is only about 2.4 miles apart but almost a day different in time,What are the Diomede Islands?
+double,Cryptic Cartography,800,This Belgian–Dutch puzzle town is famous for its patchwork of enclaves and counter-enclaves,What is Baarle?
+double,Cryptic Cartography,1200,Between Egypt and Sudan lies this unclaimed wedge created by mismatched borders,What is Bir Tawil?
+double,Cryptic Cartography,1600,This U.S. exclave in Kentucky is cut off by a looping Mississippi River,What is the Kentucky Bend?
+double,Cryptic Cartography,2000,This long finger of Afghanistan touches China through a narrow corridor,What is the Wakhan Corridor?
+double,World's Shortest Wars,400,"Often cited as the shortest war in history, this 1896 conflict lasted under an hour",What is the Anglo-Zanzibar War?
+double,World's Shortest Wars,800,This 1967 conflict dramatically reshaped borders in less than a week,What is the Six-Day War?
+double,World's Shortest Wars,1200,This 1969 clash between El Salvador and Honduras ended in about 100 hours,What is the Football War?
+double,World's Shortest Wars,1600,Slovenia fought a brief independence war in 1991 commonly named for this span,What is the Ten-Day War?
+double,World's Shortest Wars,2000,This 1982 campaign to retake islands in the South Atlantic lasted about ten weeks,What is the Falklands War?
+double,Hidden Cities,400,"Buried by Vesuvius in 79 CE, this Roman city was frozen in ash",What is Pompeii?
+double,Hidden Cities,800,"Carved into rose-red cliffs,  this Nabataean city lay forgotten by Westerners for centuries",What is Petra?
+double,Hidden Cities,1200,This massive underground city in Cappadocia could shelter tens of thousands,What is Derinkuyu?
+double,Hidden Cities,1600,"Rediscovered off Egypt's coast,  Thonis is better known by this Greek name",What is Heracleion?
+double,Hidden Cities,2000,"This ""Lion City"" of China lies submerged beneath Qiandao Lake",What is Shicheng?
+double,Cosmic Oddities,400,"These brief, powerful radio flashes from deep space were first noted in 2007",What are fast radio bursts?
+double,Cosmic Oddities,800,"Detected in 2017, this interstellar visitor sped through our solar system on a hyperbolic path",What is ?Oumuamua?
+double,Cosmic Oddities,1200,These starless wanderers drift through space without a parent sun,What are rogue planets?
+double,Cosmic Oddities,1600,KIC 8462852 earned this nickname after its bizarre dimming puzzled astronomers,What is Tabby's Star?
+double,Cosmic Oddities,2000,This predicted ring of light forms from photons orbiting a black hole,What is the photon ring?
+double,Voices from Space,400,"His 1961 launch made him the first human in space; he radioed ""Poyekhali!""",Who is Yuri Gagarin?
+double,Voices from Space,800,"Upon lunar touchdown in 1969, these words signaled success to Mission Control","What is ""Houston, Tranquility Base here. The Eagle has landed.""?"
+double,Voices from Space,1200,In 1965 Gemini 6 astronauts surprised controllers by playing this holiday tune,"What is ""Jingle Bells""?"
+double,Voices from Space,1600,"This Canadian astronaut recorded ""Space Oddity"," the first full music video shot in orbit,Who is Chris Hadfield?"
+double,Voices from Space,2000,"Launched in 1977, these twin probes carry a Golden Record of sounds and greetings",What are Voyager 1 and Voyager 2?
+final,Mythic Mash-Ups,0,In a tale blending Greek and Near Eastern lore this hero fights a lion using a club while a similar Mesopotamian hero battles Humbaba; name either hero,Who is Heracles or Who is Gilgamesh?

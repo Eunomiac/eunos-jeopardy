@@ -1,0 +1,62 @@
+round,category,value,prompt,response
+jeopardy,Famous Landmarks,200,This New York City statue was a gift from France in 1886,What is the Statue of Liberty
+jeopardy,Famous Landmarks,400,This ancient monument in England is made of massive standing stones arranged in a circle,What is Stonehenge
+jeopardy,Famous Landmarks,600,This Parisian iron tower was completed in 1889 for a World's Fair,What is the Eiffel Tower
+jeopardy,Famous Landmarks,800,This vast wall was built to protect China from northern invaders,What is the Great Wall of China
+jeopardy,Famous Landmarks,1000,This massive amphitheater in Rome once hosted gladiatorial contests,What is the Colosseum
+jeopardy,Shakespeare,200,"This tragic Danish prince delivers the soliloquy beginning ""To be or not to be""",Who is Hamlet
+jeopardy,Shakespeare,400,This play tells of a Scottish noble and his ambitious wife plotting regicide,What is Macbeth
+jeopardy,Shakespeare,600,This play set in Venice and Cyprus features the Moor of Venice,What is Othello
+jeopardy,Shakespeare,800,"This play contains the line ""The quality of mercy is not strained""",What is The Merchant of Venice
+jeopardy,Shakespeare,1000,"This Shakespeare play is superstitiously called ""The Scottish Play""",What is Macbeth
+jeopardy,Science Facts,200,This planet is known as the Red Planet,What is Mars
+jeopardy,Science Facts,400,This gas exhaled by humans is used by plants during photosynthesis,What is carbon dioxide
+jeopardy,Science Facts,600,This part of the cell is known as the powerhouse,What is the mitochondrion
+jeopardy,Science Facts,800,This element has the chemical symbol Au,What is gold
+jeopardy,Science Facts,1000,This is the heaviest naturally occurring element on Earth,What is uranium
+jeopardy,American History,200,This man served as the first President of the United States,Who is George Washington
+jeopardy,American History,400,This year saw the signing of the Declaration of Independence,What is 1776
+jeopardy,American History,600,This U.S. President issued the Emancipation Proclamation,Who is Abraham Lincoln
+jeopardy,American History,800,This land deal of 1803 doubled the size of the United States,What is the Louisiana Purchase
+jeopardy,American History,1000,This early Chief Justice established judicial review in Marbury v. Madison,Who is John Marshall
+jeopardy,Famous Art,200,This artist painted the Mona Lisa,Who is Leonardo da Vinci
+jeopardy,Famous Art,400,This painter famously cut off part of his own ear,Who is Vincent van Gogh
+jeopardy,Famous Art,600,"This Spanish painter created surreal works such as ""The Persistence of Memory""",Who is Salvador Dalí
+jeopardy,Famous Art,800,This Renaissance master painted the ceiling of the Sistine Chapel,Who is Michelangelo
+jeopardy,Famous Art,1000,This French impressionist is famous for painting water lilies,Who is Claude Monet
+jeopardy,Classic Novels,200,"This author wrote ""Pride and Prejudice""",Who is Jane Austen
+jeopardy,Classic Novels,400,"This novel begins with the words ""Call me Ishmael""",What is Moby-Dick
+jeopardy,Classic Novels,600,This George Orwell novel depicts a dystopia ruled by Big Brother,What is 1984
+jeopardy,Classic Novels,800,This Russian novel features Raskolnikov and his moral dilemmas,What is Crime and Punishment
+jeopardy,Classic Novels,1000,This Homeric epic recounts the journey home from the Trojan War,What is The Odyssey
+double,Inventors & Inventions,400,This American is credited with inventing the practical light bulb,Who is Thomas Edison
+double,Inventors & Inventions,800,This man patented the telephone in 1876,Who is Alexander Graham Bell
+double,Inventors & Inventions,1200,The Wright brothers founded this company after inventing the airplane,What is the Wright Company
+double,Inventors & Inventions,1600,This Swedish chemist invented dynamite,Who is Alfred Nobel
+double,Inventors & Inventions,2000,This British scientist created the World Wide Web in 1989,Who is Tim Berners-Lee
+double,Mythology,400,This Greek god is king of the gods,Who is Zeus
+double,Mythology,800,This Norse god wields a mighty hammer and controls thunder,Who is Thor
+double,Mythology,1200,This Egyptian god of mummification has the head of a jackal,Who is Anubis
+double,Mythology,1600,This Roman goddess is the counterpart of the Greek Athena,Who is Minerva
+double,Mythology,2000,This Norse trickster god often causes mischief among the gods,Who is Loki
+double,Geography,400,This river runs the length of Egypt,What is the Nile
+double,Geography,800,This is the world's largest desert,What is the Sahara
+double,Geography,1200,This mountain range contains Mount Everest,What is the Himalayas
+double,Geography,1600,This country has more natural lakes than any other,What is Canada
+double,Geography,2000,This is the longest river in South America,What is the Amazon
+double,Music,400,"This man was known as the ""King of Rock and Roll""",Who is Elvis Presley
+double,Music,800,"This composer wrote the famous ""Fifth Symphony""",Who is Beethoven
+double,Music,1200,"This band released the classic album ""Dark Side of the Moon""",Who are Pink Floyd
+double,Music,1600,"This American singer is called the ""Queen of Soul""",Who is Aretha Franklin
+double,Music,2000,"This Russian composer wrote the ballet ""The Firebird""",Who is Igor Stravinsky
+double,Space Exploration,400,This man was the first person to walk on the moon,Who is Neil Armstrong
+double,Space Exploration,800,This year saw the landing of Apollo 11 on the moon,What is 1969
+double,Space Exploration,1200,This was the name of the first artificial satellite,What is Sputnik
+double,Space Exploration,1600,This planet is home to NASA's Curiosity rover,What is Mars
+double,Space Exploration,2000,This space telescope launched in 1990 still provides images of distant galaxies,What is the Hubble Space Telescope
+double,The Human Body,400,This is the number of bones in the adult human body,What is 206
+double,The Human Body,800,This organ produces insulin,What is the pancreas
+double,The Human Body,1200,This part of the eye controls the amount of light entering,What is the iris
+double,The Human Body,1600,This is the largest internal organ in the human body,What is the liver
+double,The Human Body,2000,This is the scientific name for the collarbone,What is the clavicle
+final,World Literature,0,This Gabriel García Márquez novel tells the story of seven generations of the Buendía family,What is One Hundred Years of Solitude
