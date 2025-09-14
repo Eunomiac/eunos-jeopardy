@@ -201,16 +201,19 @@ export type Database = {
       clue_states: {
         Row: {
           clue_id: string
+          completed: boolean
           game_id: string
           revealed: boolean
         }
         Insert: {
           clue_id: string
+          completed?: boolean
           game_id: string
           revealed?: boolean
         }
         Update: {
           clue_id?: string
+          completed?: boolean
           game_id?: string
           revealed?: boolean
         }
@@ -270,6 +273,8 @@ export type Database = {
         Row: {
           created_at: string
           current_round: Database["public"]["Enums"]["round_type"]
+          focused_clue_id: string | null
+          focused_player_id: string | null
           host_id: string
           id: string
           is_buzzer_locked: boolean
@@ -279,6 +284,8 @@ export type Database = {
         Insert: {
           created_at?: string
           current_round?: Database["public"]["Enums"]["round_type"]
+          focused_clue_id?: string | null
+          focused_player_id?: string | null
           host_id: string
           id?: string
           is_buzzer_locked?: boolean
@@ -288,6 +295,8 @@ export type Database = {
         Update: {
           created_at?: string
           current_round?: Database["public"]["Enums"]["round_type"]
+          focused_clue_id?: string | null
+          focused_player_id?: string | null
           host_id?: string
           id?: string
           is_buzzer_locked?: boolean

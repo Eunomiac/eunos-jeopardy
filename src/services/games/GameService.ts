@@ -720,6 +720,117 @@ export class GameService {
   }
 
   /**
+   * Sets the focused clue for a game.
+   *
+   * Updates the game's focused_clue_id to track which clue the host has
+   * selected for the current question. This is used to coordinate the
+   * clue display across all connected clients.
+   *
+   * @param gameId - UUID of the game
+   * @param clueId - UUID of the clue to focus, or null to clear focus
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async setFocusedClue(gameId: string, clueId: string | null, hostId: string): Promise<Game> {
+    return this.updateGame(gameId, { focused_clue_id: clueId }, hostId)
+  }
+
+  /**
+   * Sets the focused player for a game.
+   *
+   * Updates the game's focused_player_id to track which player is currently
+   * selected to answer the focused clue. This is typically set when a player
+   * is selected from the buzzer queue.
+   *
+   * @param gameId - UUID of the game
+   * @param playerId - UUID of the player to focus, or null to clear focus
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async setFocusedPlayer(gameId: string, playerId: string | null, hostId: string): Promise<Game> {
+    return this.updateGame(gameId, { focused_player_id: playerId }, hostId)
+  }
+
+  /**
+   * Completes the answer adjudication workflow for a clue.
+   *
+   * This method handles the complete process of adjudicating a player's answer:
+   * 1. Records the answer in the answers table
+   * 2. Updates the player's score based on the result
+   * 3. Marks the clue as completed if answer is correct
+   * 4. Clears focused clue/player state
+   *
+   * @param gameId - UUID of the game
+   * @param clueId - UUID of the clue being adjudicated
+   * @param playerId - UUID of the player who answered
+   * @param playerResponse - The player's response text
+   * @param isCorrect - Whether the answer is correct
+   * @param scoreValue - Point value to add/subtract (clue value or wager amount)
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async adjudicateAnswer(
+    gameId: string,
+    clueId: string,
+    playerId: string,
+    playerResponse: string,
+    isCorrect: boolean,
+    scoreValue: number,
+    hostId: string
+  ): Promise<Game> {
+    // Authorization check
+    await this.getGame(gameId, hostId)
+
+    // Record the answer
+    const answerData: AnswerInsert = {
+      game_id: gameId,
+      clue_id: clueId,
+      user_id: playerId,
+      response: playerResponse,
+      is_correct: isCorrect,
+      adjudicated_by: hostId
+    }
+
+    const { error: answerError } = await supabase
+      .from('answers')
+      .insert(answerData)
+
+    if (answerError) {
+      throw new Error(`Failed to record answer: ${answerError.message}`)
+    }
+
+    // Update player score
+    const scoreChange = isCorrect ? scoreValue : -scoreValue
+    await this.updatePlayerScore(gameId, playerId, scoreChange)
+
+    // If answer is correct, mark clue as completed and clear focus
+    if (isCorrect) {
+      // Mark clue as completed
+      const { error: clueStateError } = await supabase
+        .from('clue_states')
+        .update({ completed: true })
+        .eq('game_id', gameId)
+        .eq('clue_id', clueId)
+
+      if (clueStateError) {
+        throw new Error(`Failed to mark clue completed: ${clueStateError.message}`)
+      }
+
+      // Clear focused clue and player
+      return this.updateGame(gameId, {
+        focused_clue_id: null,
+        focused_player_id: null
+      }, hostId)
+    }
+
+    // If incorrect, just clear focused player (keep clue focused for re-buzzing)
+    return this.updateGame(gameId, { focused_player_id: null }, hostId)
+  }
+
+  /**
    * Updates a player's score with host authorization and atomic operations.
    *
    * Modifies a player's score by the specified amount (positive or negative)
