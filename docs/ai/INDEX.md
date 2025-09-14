@@ -27,7 +27,6 @@ This folder contains documentation specifically designed for AI code assistants 
 
 ## 📁 **Archive**
 - **[archive/](./archive/)** - Historical documents and outdated prompts
-  - **[PROJECT_CHARTER.md](./archive/PROJECT_CHARTER.md)** - Original project charter
   - **[prompts/](./archive/prompts/)** - Archived issue-specific prompts
 
 ## 🎯 **Usage Guidelines**
@@ -55,7 +54,7 @@ This folder contains documentation specifically designed for AI code assistants 
 **Most Frequently Used:**
 1. **CURRENT_STATUS.md** - Real-time project status and immediate next steps
 2. **PROJECT_MANAGEMENT.md** - Project structure, issues, and static information
-3. **issues/3. Game Host Dashboard.md** - Current active issue specification
+3. **issues/** - Current active issue specification (and proposed modifications) should be the only issues in the root of this folder
 
 **Service Configuration:**
 - **SUPABASE_REFERENCE.md** - Database configuration and RLS policies
@@ -65,3 +64,4 @@ This folder contains documentation specifically designed for AI code assistants 
 **Implementation Details:**
 - **DAILY_DOUBLE_ALGORITHM.md** - CSV parsing and automatic Daily Double placement
 - **reference/strategy/TESTING_STRATEGY.md** - Testing approach and best practices
+- **SCSS_STYLING_GUIDELINES.md** - SCSS styling conventions and best practices
