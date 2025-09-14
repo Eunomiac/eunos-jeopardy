@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { GameService, type Game, type Player } from '../../services/games/GameService'
+import './GameHostDashboard.scss'
 
 /**
  * Props interface for the GameHostDashboard component.
@@ -162,6 +163,24 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     loadGameData()
   }, [user, gameId])
 
+  // Effect to manage full-screen layout classes
+  useEffect(() => {
+    // Add classes for full-screen dashboard layout
+    document.body.classList.add('dashboard-active')
+    const rootElement = document.getElementById('root')
+    if (rootElement) {
+      rootElement.classList.add('dashboard-active')
+    }
+
+    // Cleanup function to remove classes when component unmounts
+    return () => {
+      document.body.classList.remove('dashboard-active')
+      if (rootElement) {
+        rootElement.classList.remove('dashboard-active')
+      }
+    }
+  }, [])
+
   /**
    * Handles toggling the buzzer lock state for the current game.
    *
@@ -305,148 +324,287 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     )
   }
 
-  // Main dashboard render: Display full host interface
+  // Main dashboard render: Display full host interface with 6-panel layout
   return (
     <div className="game-host-dashboard">
-      {/* Dashboard header with navigation and game identification */}
-      <header className="dashboard-header mb-4">
+      {/* Dashboard header with title and navigation */}
+      <header className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center">
-          <h2>Host Dashboard</h2>
-          <button className="btn btn-secondary" onClick={onBackToCreator}>
+          <h1 className="jeopardy-logo">Euno's Jeopardy</h1>
+          <h1 className="dashboard-title">GAME HOST DASHBOARD</h1>
+          <button className="jeopardy-button" onClick={onBackToCreator}>
             Back to Creator
           </button>
         </div>
-        <p className="text-muted">Game ID: {gameId}</p>
+        <p className="text-muted mb-0">Game ID: {gameId}</p>
       </header>
 
       {/* User feedback messages for operations */}
       {message && (
-        <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} mb-4`}>
+        <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} alert-compact`}>
           {message}
         </div>
       )}
 
-      <div className="row">
-        {/* Left column: Game Controls */}
-        <div className="col-md-4">
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5>Game Controls</h5>
+
+
+      {/* 6-panel dashboard grid layout */}
+      <div className="dashboard-grid">
+        {/* Top Row - Panel 1: Buzzer Control */}
+        <div className="dashboard-panel buzzer-control-panel">
+          <div className="panel-header">
+            <h5>BUZZER CONTROL</h5>
+          </div>
+          <div className="panel-content">
+            {/* Large buzzer status indicator */}
+            <div className="buzzer-status-large">
+              <div className={`status-indicator ${game.is_buzzer_locked ? 'locked' : 'unlocked'}`}>
+                {game.is_buzzer_locked ? '🔒 LOCKED' : '🔓 UNLOCKED'}
+              </div>
             </div>
-            <div className="card-body">
-              {/* Buzzer control section - core host functionality */}
-              <div className="mb-3">
-                <h6>Buzzer Control</h6>
-                {/* Visual indicator of current buzzer state */}
-                <div className="d-flex align-items-center mb-2">
-                  <span className={`badge ${game.is_buzzer_locked ? 'bg-danger' : 'bg-success'} me-2`}>
-                    {game.is_buzzer_locked ? '🔒 LOCKED' : '🔓 UNLOCKED'}
-                  </span>
-                </div>
-                {/* Toggle button with contextual styling */}
-                <button
-                  className={`btn ${game.is_buzzer_locked ? 'btn-success' : 'btn-warning'}`}
-                  onClick={handleToggleBuzzer}
-                >
-                  {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
-                </button>
-                {/* Future enhancement hint for keyboard shortcut */}
-                <div className="text-muted mt-2">
-                  <small>Press SPACE to toggle</small>
-                </div>
+            <div className="keyboard-hint">
+              <small className="text-muted">💡 Press SPACE to toggle</small>
+            </div>
+            <div className="buzzer-control-buttons">
+              <button
+                className="jeopardy-button w-100"
+                onClick={handleToggleBuzzer}
+              >
+                {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
+              </button>
+            </div>
+            <div className="connection-info report-panel">
+              <div className="report-row">
+                <small className="text-muted">Connection Status:</small>
+                <small className="text-success">ACTIVE</small>
               </div>
-
-              {/* Game status information display */}
-              <div className="mb-3">
-                <h6>Game Status</h6>
-                <p className="mb-1">
-                  <strong>Status:</strong> <span className="text-capitalize">{game.status}</span>
-                </p>
-                <p className="mb-1">
-                  <strong>Round:</strong> <span className="text-capitalize">{game.current_round}</span>
-                </p>
-              </div>
-
-              {/* Game termination control */}
-              <div className="mb-3">
-                <button
-                  className="btn btn-danger"
-                  onClick={handleEndGame}
-                  disabled={game.status === 'completed'}
-                >
-                  End Game
-                </button>
+              <div className="report-row">
+                <small className="text-muted">Latency Compensation:</small>
+                <small className="text-success">ACTIVE</small>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Center column: Player List and Management */}
-        <div className="col-md-4">
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5>Players ({players.length})</h5>
-            </div>
-            <div className="card-body">
-              {/* Empty state when no players have joined */}
-              {players.length === 0 ? (
-                <p className="text-muted">No players have joined yet.</p>
-              ) : (
-                /* Player list with scores and join timestamps */
-                <div className="player-list">
-                  {players.map((player, index) => (
-                    <div key={player.user_id} className="player-item mb-2 p-2 border rounded">
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                          <strong>
-                            {/* Display nickname or fallback to generic name */}
-                            {player.nickname || `Player ${index + 1}`}
-                          </strong>
-                        </div>
-                        <div className="text-end">
-                          {/* Current player score display */}
-                          <span className="badge bg-primary">
-                            ${player.score}
-                          </span>
-                        </div>
+        {/* Top Row - Panel 2: Game Board Control */}
+        <div className="dashboard-panel game-board-panel">
+          <div className="panel-header">
+            <h5>BOARD CONTROL</h5>
+          </div>
+          <div className="panel-content">
+            <div className="jeopardy-board-container">
+              <div className="jeopardy-board">
+              {/* Mock category grid for placeholder */}
+              <div className="category-grid">
+                {['A LONG CATEGORY NAME', 'CATEGORY 2', 'CATEGORY 3', 'CATEGORY 4', 'CATEGORY 5', 'CATEGORY 6'].map((category) => (
+                  <div key={category} className="category-header">{category}</div>
+                ))}
+              </div>
+              {/* Mock clue grid */}
+              <div className="clue-grid">
+                {(() => {
+                  // Always focus the fifth clue (index 4), then randomly select 12 of the remaining 29 clues
+                  const focusedIndex = 4; // Always the fifth clue
+                  const remainingIndices = Array.from({ length: 30 }, (_, i) => i).filter((i) => i !== focusedIndex);
+                  const shuffledRemaining = [...remainingIndices].sort(() => Math.random() - 0.5);
+                  const revealedIndices = new Set(shuffledRemaining.slice(0, 12));
+
+                  return Array.from({ length: 30 }, (_, index) => {
+                    const value = (Math.floor(index / 6) + 1) * 200;
+                    const isRevealed = revealedIndices.has(index);
+                    const isFocused = index === focusedIndex;
+                    const cellClass = `clue-cell ${isRevealed ? 'revealed' : ''} ${isFocused ? 'focused' : ''}`.trim();
+
+                    return (
+                      <div key={`clue-${index}-${value}`} className={cellClass}>
+                        ${value}
                       </div>
-                      {/* Player join timestamp for host reference */}
-                      <small className="text-muted">
-                        Joined: {new Date(player.joined_at).toLocaleTimeString()}
-                      </small>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    )
+                  });
+                })()}
+              </div>
+            </div>
+            </div>
+            <div className="report-panel selected-clue-area">
+              <div className="report-row">
+                <small className="text-muted">Selected Clue:</small>
+                <small className="text-success">CATEGORY 5</small>
+                <small>◆</small>
+                <small className="jeopardy-gold">$200</small>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right column: Game Information and Future Features */}
-        <div className="col-md-4">
-          <div className="card mb-4">
-            <div className="card-header">
-              <h5>Game Information</h5>
-            </div>
-            <div className="card-body">
-              {/* Game metadata for host reference */}
-              <p><strong>Game ID:</strong> {game.id}</p>
-              <p><strong>Created:</strong> {new Date(game.created_at).toLocaleString()}</p>
-              <p><strong>Host:</strong> {user.email}</p>
-              <p><strong>Status:</strong> <span className="text-capitalize">{game.status}</span></p>
-              <p><strong>Current Round:</strong> <span className="text-capitalize">{game.current_round}</span></p>
-
-              {/* Future feature roadmap for transparency */}
-              <div className="mt-3">
-                <h6>Coming Soon:</h6>
-                <ul className="text-muted">
-                  <li>Game Board Display</li>
-                  <li>Buzzer Queue</li>
-                  <li>Answer Adjudication</li>
-                  <li>Score Management</li>
-                  <li>Round Progression</li>
-                </ul>
+        {/* Top Row - Panel 3: Player Scores */}
+        <div className="dashboard-panel player-scores-panel">
+          <div className="panel-header">
+            <h5>PLAYER CONTROL</h5>
+          </div>
+          <div className="panel-content">
+            {players.length === 0 ? (
+              <p className="text-muted">No players joined yet</p>
+            ) : (
+              <div className="player-scores-list">
+                {players.map((player, index) => (
+                  <div key={player.user_id} className="player-score-item">
+                    <div className="player-info">
+                      <strong>{player.nickname || `Player ${index + 1}`}</strong>
+                      <div className="player-score">${player.score}</div>
+                    </div>
+                    <small className="join-time">
+                      {new Date(player.joined_at).toLocaleTimeString()}
+                    </small>
+                  </div>
+                ))}
               </div>
+            )}
+            <div className="player-count">
+              <small className="text-muted">Total Players: {players.length}</small>
+            </div>
+            {/* Score Adjustment - moved from Clue Control */}
+            <div className="score-adjustment">
+              <label className="form-label" htmlFor="score-adjustment-input">Score Adjustment:</label>
+              <div className="input-group input-group-sm">
+                <input
+                  id="score-adjustment-input"
+                  type="number"
+                  className="form-control"
+                  placeholder="Amount"
+                  disabled
+                />
+                <button className="btn btn-outline-secondary" disabled>Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Row - Panel 4: Buzzer Queue */}
+        <div className="dashboard-panel buzzer-queue-panel">
+          <div className="panel-header">
+            <h5>BUZZER QUEUE</h5>
+          </div>
+          <div className="panel-content">
+            <div className="queue-status">
+              <p className="text-muted">No active buzzes</p>
+            </div>
+            <div className="queue-placeholder">
+              <div className="queue-item placeholder">
+                <span className="queue-position">1.</span>
+                <span className="queue-player">Player Name</span>
+                <span className="queue-timing">0 ms</span>
+              </div>
+              <div className="queue-item placeholder">
+                <span className="queue-position">2.</span>
+                <span className="queue-player">Player Name</span>
+                <span className="queue-timing">+15 ms</span>
+              </div>
+            </div>
+            <button className="jeopardy-button-small" disabled>
+                Clear Queue
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Row - Panel 5: Clue Control */}
+        <div className="dashboard-panel clue-control-panel">
+          <div className="panel-header">
+            <h5>CLUE CONTROL</h5>
+          </div>
+          <div className="panel-content">
+            {/* Focused Clue Display */}
+            <div className="focused-clue-display">
+              <div className="clue-prompt">
+                <div className="form-label">Selected Clue:</div>
+                <div className="clue-text">
+                  JFK's Brother-In-Law Sargent Shriver was President of this Intl. Sports Program for people with intellectual disabilities
+                </div>
+              </div>
+
+              {/* Reveal Prompt Button */}
+              <div className="clue-control-buttons">
+                <div className="d-flex gap-2 mb-2">
+                  <button className="jeopardy-button flex-1">
+                    Reveal Prompt
+                  </button>
+                </div>
+              </div>
+
+              <div className="clue-response">
+                <div className="form-label">Correct Response:</div>
+                <div className="response-text">
+                  What is the Special Olympics?
+                </div>
+              </div>
+            </div>
+
+            {/* Adjudication Control Buttons */}
+            <div className="clue-control-buttons">
+              <div className="d-flex gap-2">
+                <button className="jeopardy-button flex-1">
+                  Mark Correct
+                </button>
+                <button className="jeopardy-button flex-1">
+                  Mark Wrong
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Row - Panel 6: Game Status */}
+        <div className="dashboard-panel game-status-panel">
+          <div className="panel-header">
+            <h5>GAME STATUS</h5>
+          </div>
+          <div className="panel-content">
+            <div className="status-info">
+              <div className="status-item">
+                <span className="text-uppercase jeopardy-gold">Round:</span><span className="text-capitalize">{game.current_round}</span>
+              </div>
+              <div className="status-item">
+                <span className="text-uppercase jeopardy-gold">Status:</span><span className="text-capitalize">{game.status}</span>
+              </div>
+              <div className="status-item">
+
+                <span className="text-uppercase jeopardy-gold">Clues Left:</span><span >17</span>
+              </div>
+            </div>
+            <div className="round-progress">
+              <label htmlFor="round-progress-bar" className="form-label">Round Progress</label>
+              <progress
+                id="round-progress-bar"
+                className="progress-bar w-100"
+                value={17/30*100}
+                max={100}
+              >
+                0% Complete
+              </progress>
+            </div>
+
+            {/* Game Control Buttons - moved from controls bar */}
+            <div className="game-control-buttons d-flex gap-2">
+              <button
+                className="jeopardy-button flex-1"
+                disabled
+                title="Round progression controls"
+              >
+                Next Round
+              </button>
+              <button
+                className="jeopardy-button flex-1"
+                onClick={handleEndGame}
+                disabled={game.status === 'completed'}
+              >
+                End Game
+              </button>
+            </div>
+
+            <div className="game-metadata">
+              <small className="text-muted">
+                Created: {new Date(game.created_at).toLocaleDateString()}<br/>
+                Host: {user.email?.split('@')[0]}
+              </small>
             </div>
           </div>
         </div>

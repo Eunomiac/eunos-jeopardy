@@ -103,22 +103,23 @@ describe('GameHostDashboard', () => {
   describe('Loading States', () => {
     it('should show loading state initially', async () => {
       mockGameService.getGame.mockImplementation(() => new Promise(() => {})) // Never resolves
-      
+
       renderWithAuth(<GameHostDashboard {...mockProps} />)
-      
+
       expect(screen.getByText('Loading Game...')).toBeInTheDocument()
       expect(screen.getByText('Please wait while we load the game data.')).toBeInTheDocument()
     })
 
     it('should load game data on mount', async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
-      
+
       await waitFor(() => {
         expect(mockGameService.getGame).toHaveBeenCalledWith('game-123', 'user-123')
         expect(mockGameService.getPlayers).toHaveBeenCalledWith('game-123')
       })
-      
-      expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+
+      expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+      expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
     })
   })
 
@@ -146,14 +147,14 @@ describe('GameHostDashboard', () => {
 
     it('should show game not found when game is null', async () => {
       mockGameService.getGame.mockRejectedValue(new Error('Game not found'))
-      
+
       renderWithAuth(<GameHostDashboard {...mockProps} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Game Not Found')).toBeInTheDocument()
         expect(screen.getByText('The requested game could not be found or you don\'t have permission to access it.')).toBeInTheDocument()
       })
-      
+
       const backButton = screen.getByText('Back to Game Creator')
       fireEvent.click(backButton)
       expect(mockProps.onBackToCreator).toHaveBeenCalled()
@@ -164,34 +165,35 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
     it('should display buzzer status correctly when unlocked', () => {
       expect(screen.getByText('🔓 UNLOCKED')).toBeInTheDocument()
-      expect(screen.getByText('Lock Buzzer')).toBeInTheDocument()
+      expect(screen.getByText('Lock Buzzer')).toBeInTheDocument() // Only in buzzer panel now
     })
 
     it('should display buzzer status correctly when locked', async () => {
       const lockedGame = { ...mockGame, is_buzzer_locked: true }
       mockGameService.getGame.mockResolvedValue(lockedGame)
-      
+
       renderWithAuth(<GameHostDashboard {...mockProps} />)
-      
+
       await waitFor(() => {
         expect(screen.getByText('🔒 LOCKED')).toBeInTheDocument()
-        expect(screen.getByText('Unlock Buzzer')).toBeInTheDocument()
+        expect(screen.getByText('Unlock Buzzer')).toBeInTheDocument() // Only in buzzer panel now
       })
     })
 
     it('should toggle buzzer lock successfully', async () => {
       const updatedGame = { ...mockGame, is_buzzer_locked: true }
       mockGameService.toggleBuzzerLock.mockResolvedValue(updatedGame)
-      
-      const toggleButton = screen.getByText('Lock Buzzer')
-      fireEvent.click(toggleButton)
-      
+
+      const toggleButtons = screen.getAllByText('Lock Buzzer')
+      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+
       await waitFor(() => {
         expect(mockGameService.toggleBuzzerLock).toHaveBeenCalledWith('game-123', 'user-123')
         expect(screen.getByText('Buzzer locked')).toBeInTheDocument()
@@ -201,10 +203,10 @@ describe('GameHostDashboard', () => {
     it('should handle buzzer toggle error', async () => {
       const error = new Error('Network error')
       mockGameService.toggleBuzzerLock.mockRejectedValue(error)
-      
-      const toggleButton = screen.getByText('Lock Buzzer')
-      fireEvent.click(toggleButton)
-      
+
+      const toggleButtons = screen.getAllByText('Lock Buzzer')
+      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+
       await waitFor(() => {
         expect(screen.getByText('Failed to toggle buzzer: Network error')).toBeInTheDocument()
       })
@@ -215,23 +217,24 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
     it('should end game successfully with confirmation', async () => {
       mockConfirm.mockReturnValue(true)
       mockGameService.updateGame.mockResolvedValue({ ...mockGame, status: 'completed' })
-      
+
       const endGameButton = screen.getByText('End Game')
       fireEvent.click(endGameButton)
-      
+
       await waitFor(() => {
         expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to end this game?')
         expect(mockGameService.updateGame).toHaveBeenCalledWith('game-123', { status: 'completed' }, 'user-123')
         expect(screen.getByText('Game ended successfully')).toBeInTheDocument()
       })
-      
+
       // Fast-forward timer to trigger onBackToCreator
       jest.advanceTimersByTime(2000)
       expect(mockProps.onBackToCreator).toHaveBeenCalled()
@@ -239,10 +242,10 @@ describe('GameHostDashboard', () => {
 
     it('should not end game when confirmation is cancelled', async () => {
       mockConfirm.mockReturnValue(false)
-      
+
       const endGameButton = screen.getByText('End Game')
       fireEvent.click(endGameButton)
-      
+
       expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to end this game?')
       expect(mockGameService.updateGame).not.toHaveBeenCalled()
     })
@@ -251,10 +254,10 @@ describe('GameHostDashboard', () => {
       mockConfirm.mockReturnValue(true)
       const error = new Error('Database error')
       mockGameService.updateGame.mockRejectedValue(error)
-      
+
       const endGameButton = screen.getByText('End Game')
       fireEvent.click(endGameButton)
-      
+
       await waitFor(() => {
         expect(screen.getByText('Failed to end game: Database error')).toBeInTheDocument()
       })
@@ -278,32 +281,37 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
     it('should display players with nicknames and scores', () => {
-      expect(screen.getByText('Players (2)')).toBeInTheDocument()
+      expect(screen.getByText('PLAYER CONTROL')).toBeInTheDocument()
       expect(screen.getByText('Player One')).toBeInTheDocument()
       expect(screen.getByText('Player 2')).toBeInTheDocument() // No nickname, uses default
-      expect(screen.getByText('$1000')).toBeInTheDocument()
+      // Check for player scores specifically in the player score context
+      const playerScores = screen.getAllByText('$1000')
+      expect(playerScores.length).toBeGreaterThan(0) // Should appear in both game board and player scores
       expect(screen.getByText('$500')).toBeInTheDocument()
     })
 
     it('should display empty state when no players', async () => {
       mockGameService.getPlayers.mockResolvedValue([])
-      
+
       renderWithAuth(<GameHostDashboard {...mockProps} />)
-      
+
       await waitFor(() => {
-        expect(screen.getByText('Players (0)')).toBeInTheDocument()
-        expect(screen.getByText('No players have joined yet.')).toBeInTheDocument()
+        // Check that the panel header exists (there might be duplicates due to test setup)
+        expect(screen.getAllByText('PLAYER CONTROL').length).toBeGreaterThan(0)
+        expect(screen.getByText('No players joined yet')).toBeInTheDocument()
       })
     })
 
     it('should display join times for players', () => {
       // Check that join times are displayed (formatted as locale time)
-      expect(screen.getAllByText(/Joined:/).length).toBeGreaterThan(0)
+      expect(screen.getByText('7:00:00 p.m.')).toBeInTheDocument()
+      expect(screen.getByText('7:01:00 p.m.')).toBeInTheDocument()
     })
   })
 
@@ -311,25 +319,26 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
     it('should display game information correctly', () => {
-      expect(screen.getByText('Game Information')).toBeInTheDocument()
-      expect(screen.getByText('game-123')).toBeInTheDocument()
-      expect(screen.getByText('test@example.com')).toBeInTheDocument()
+      expect(screen.getByText('GAME STATUS')).toBeInTheDocument()
+      expect(screen.getByText('Game ID: game-123')).toBeInTheDocument() // Game ID is in header
+      expect(screen.getByText(/Host:\s*test/)).toBeInTheDocument() // Email is truncated to username
       expect(screen.getAllByText('in_progress').length).toBeGreaterThan(0)
       expect(screen.getAllByText('jeopardy').length).toBeGreaterThan(0)
     })
 
-    it('should display coming soon features', () => {
-      expect(screen.getByText('Coming Soon:')).toBeInTheDocument()
-      expect(screen.getByText('Game Board Display')).toBeInTheDocument()
-      expect(screen.getByText('Buzzer Queue')).toBeInTheDocument()
-      expect(screen.getByText('Answer Adjudication')).toBeInTheDocument()
-      expect(screen.getByText('Score Management')).toBeInTheDocument()
-      expect(screen.getByText('Round Progression')).toBeInTheDocument()
+    it('should display placeholder content', () => {
+      // Updated to match your hard-coded test content
+      expect(screen.getAllByText('Selected Clue:').length).toBeGreaterThan(0)
+      expect(screen.getByText('No active buzzes')).toBeInTheDocument()
+      expect(screen.getByText('Correct Response:')).toBeInTheDocument()
+      // Check for some of the hard-coded content you've added for styling
+      expect(screen.getAllByText('CATEGORY 5').length).toBeGreaterThan(0)
     })
   })
 
@@ -337,7 +346,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
@@ -356,17 +366,18 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
     it('should show success messages with correct styling', async () => {
       const updatedGame = { ...mockGame, is_buzzer_locked: true }
       mockGameService.toggleBuzzerLock.mockResolvedValue(updatedGame)
-      
-      const toggleButton = screen.getByText('Lock Buzzer')
-      fireEvent.click(toggleButton)
-      
+
+      const toggleButtons = screen.getAllByText('Lock Buzzer')
+      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+
       await waitFor(() => {
         const alert = screen.getByText('Buzzer locked')
         expect(alert.closest('.alert')).toHaveClass('alert-success')
@@ -376,10 +387,10 @@ describe('GameHostDashboard', () => {
     it('should show error messages with correct styling', async () => {
       const error = new Error('Test error')
       mockGameService.toggleBuzzerLock.mockRejectedValue(error)
-      
-      const toggleButton = screen.getByText('Lock Buzzer')
-      fireEvent.click(toggleButton)
-      
+
+      const toggleButtons = screen.getAllByText('Lock Buzzer')
+      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+
       await waitFor(() => {
         const alert = screen.getByText('Failed to toggle buzzer: Test error')
         expect(alert.closest('.alert')).toHaveClass('alert-danger')

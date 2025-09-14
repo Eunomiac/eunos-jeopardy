@@ -1,0 +1,77 @@
+.jeopardy-board {
+  background: black;
+  border: none;
+  border-radius: 0;
+  padding: $spacing-sm;
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+
+    .category-header {
+      border: none;
+      border-radius: 0;
+      background: $jeopardy-blue;
+      color: $jeopardy-white;
+      padding: $spacing-sm;
+      text-align: center;
+      font-family: $font-family-category;
+      font-size: $font-size-base;
+      text-transform: $jeopardy-text-transform;
+      text-shadow: $shadow-sm;
+    }
+  }
+
+  .clue-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: $spacing-sm;
+    margin-bottom: $spacing-sm;
+    height: calc(100% - 60px);
+
+    .clue-cell {
+      background: $jeopardy-blue;
+      color: $jeopardy-gold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: $font-family-money;
+      font-size: $font-size-money;
+      text-transform: $jeopardy-text-transform;
+      text-shadow: $shadow-sm;
+      cursor: pointer;
+      transition: all $transition-fast;
+      min-height: 30%;
+      line-height: 1.2;
+
+      &:hover {
+        filter: brightness(1.1);
+        transform: scale(1.02);
+      }
+
+      &.revealed {
+        background: $jeopardy-background-blue;
+        color: $text-muted;
+        cursor: not-allowed;
+        text-shadow: none;
+        opacity: 0.5;
+
+        &:hover {
+          filter: none;
+          transform: none;
+        }
+      }
+
+      &.focused {
+        outline: 2px solid $jeopardy-gold;
+        transform: scale(1.5);
+        position: relative;
+        z-index: 1;
+        filter: brightness(1.5);
+      }
+    }
+  }
+}

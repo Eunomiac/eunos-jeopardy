@@ -169,6 +169,9 @@ button {
 .text-warning { color: $warning-color; }
 .text-error { color: $error-color; }
 
+.text-capitalize { text-transform: capitalize; }
+.text-uppercase { text-transform: uppercase; }
+
 // ========================================
 // JEOPARDY TYPOGRAPHY CLASSES
 // ========================================
@@ -213,6 +216,11 @@ button {
   font-weight: bold;
   line-height: $line-height-normal;
   text-shadow: 2px 2px 4px $jeopardy-black;
+  background: rgba($jeopardy-gold, 0.1);
+  padding: $spacing-lg;
+  border-radius: $border-radius-sm;
+  border: 1px solid rgba($jeopardy-gold, 0.3);
+  min-height: 40px;
 }
 
 .jeopardy-category {
@@ -255,3 +263,12 @@ button {
 .bg-jeopardy-gold { background-color: $jeopardy-gold; }
 .bg-jeopardy-white { background-color: $jeopardy-white; }
 .bg-jeopardy-black { background-color: $jeopardy-black; }
+
+
+// ========================================
+// JEOPARDY LAYOUT CLASSES
+// ========================================
+
+.gap-2 {
+  gap: 2px;
+}
