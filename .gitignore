@@ -85,7 +85,7 @@ temp/
 docs/third-party-packages/
 
 # Local prompts with sensitive data
-docs/ai/prompts/
+docs/ai/prompts/Local Prompts Library.md
 
-# Remote agent prompts (contain sensitive information)
-docs/ai/prompts/
+# Archived Documentation
+docs/archive/

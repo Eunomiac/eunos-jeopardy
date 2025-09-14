@@ -1,7 +1,7 @@
 # AI Coding Assistant Guidelines
 
 ## 🎯 **Quick Reference**
-- **🔴 AI Documentation Hub**: Start with `docs/ai/INDEX.md` for navigation and task-specific guidance
+- **🔴 Documentation Hub**: Start with `docs/ai/CURRENT_STATUS.md` for immediate status, then `docs/ai/INDEX.md` for navigation
 - **🟡 When Stuck**: Ask user for guidance rather than implementing workarounds
 - **🟡 Package Management**: Always use package managers (npm, pip, etc.) instead of editing config files
 - **🟢 Code Quality**: DRY principle, security awareness, impact analysis
@@ -138,27 +138,17 @@ Use available tools proactively and purposefully:
 **When setting up a new project workspace from this template**: Reference `docs/ai/INDEX.md` for complete setup guidance
 
 ### Testing and Validation
-- **📋 Comprehensive Testing Strategy**: Reference `docs/ai/INDEX.md` for navigation to testing guidance
 - **🔴 CRITICAL - Test-driven development**: Always suggest writing or updating tests after making code changes
-- **🟡 IMPORTANT - Coverage goals**: Maintain 80% coverage on new code, use exclusions documented in testing strategy
+- **🟡 Testing handled by remote agents**: Coverage goals and test strategy managed separately from main development
 
 ### Code Quality and Issue Detection
-- **Diagnostics command**: Use `diagnostics` tool to programmatically check for all IDE-reported issues including SonarQube, TypeScript, ESLint, and accessibility problems
-- **Issue verification**: Run diagnostics before and after code changes to verify fixes and catch new issues
-- **SonarQube integration**: Diagnostics tool shows real-time SonarQube analysis results from connected SonarQube Cloud project
-- **Comprehensive coverage**: Diagnostics includes accessibility issues, React Hook violations, performance problems, and code quality suggestions
-- **Systematic fixing**: Use diagnostics output to prioritize and systematically address code quality issues
+- **Diagnostics command**: Use `diagnostics` tool for IDE-reported issues (SonarQube, TypeScript, ESLint, accessibility)
+- **Issue verification**: Run diagnostics before and after code changes to verify fixes
 
 ### User Learning Goals
-- Emphasize industry best practices and standards
-- Explain the reasoning behind recommendations
-- Help build good coding habits through examples and guidance
-- Balance practical solutions with educational value
-- **Recognize skill level**: User is intermediate-level coder, novice with React, and new to Notion, Supabase, Vite, and Jest
-- **Testing experience**: User wants more experience with Jest testing framework and maintaining proper test coverage
-- **Proactive guidance**: Don't assume user knows the "right" way to do things - offer guidance even when not explicitly asked
-- **Prevent common pitfalls**: Anticipate and warn about typical mistakes or suboptimal patterns, especially with unfamiliar tools
-- **Explain the "why"**: When suggesting alternatives, explain not just what to do differently, but why it's better
+- **Skill level**: Intermediate coder, novice with React, new to Notion/Supabase/Vite/Jest
+- **Proactive guidance**: Explain reasoning, suggest better approaches, prevent common pitfalls
+- **Educational balance**: Industry best practices with practical solutions
 
 ### TypeScript Development Standards
 - **Always provide explicit typing**: Use proper types instead of `any` - be specific about data structures
@@ -193,23 +183,20 @@ The goal is to provide excellent coding assistance that helps create maintainabl
 # Tool-Specific Guidelines
 
 ## Project Management
-- **Primary source of truth**: `docs/ai/PROJECT_MANAGEMENT.md` contains the current project state, priorities, and future direction
-- **Fresh conversation protocol**: Always check PROJECT_MANAGEMENT.md for current project status and upcoming tasks when starting a new conversation
-- **Task tracking**: Use PROJECT_MANAGEMENT.md to understand project priorities, current phase, and specific requirements
-- **Issue management**: Update issue statuses in PROJECT_MANAGEMENT.md as work progresses (🟡 TODO → 🔄 In Progress → ✅ Complete)
-- **Progress updates**: Add entries to the Progress Log section with daily accomplishments and next steps
-- **📛📛 THE AI HAS PROACTIVE RESPONSIBILITY FOR MAINTAINING PROJECT HYGIENE 📛📛**:
-  A - **Ensure actionable tasks exist**: There should be at least one issue marked "🔄 In Progress". If none exist, identify the most logical next task and update status after user confirmation.
-  B - **Resolve priority conflicts**: If multiple issues are "🔄 In Progress", engage the user to determine priority and update PROJECT_MANAGEMENT.md accordingly.
-  C - **Recognize planning gaps**: Before proceeding with any task, evaluate whether it's sufficiently detailed for implementation. Issues with vague descriptions should trigger a planning conversation.
-  D - **Take initiative on breakdown**: When high-level issues lack actionable sub-tasks, proactively propose detailed breakdown and update the document.
-  E - **Maintain project structure**: Proactively update PROJECT_MANAGEMENT.md throughout the work session - mark completed issues, update progress log, and ensure the project state accurately reflects current reality.
+- **Current Status**: `docs/ai/CURRENT_STATUS.md` contains real-time status, progress, and immediate next steps
+- **Project Structure**: `docs/ai/PROJECT_MANAGEMENT.md` contains static project information, issue definitions, and architecture
+- **Fresh conversation protocol**: Always check CURRENT_STATUS.md first, then PROJECT_MANAGEMENT.md for context
+- **📛 PROACTIVE PROJECT HYGIENE RESPONSIBILITY 📛**:
+  - Ensure actionable tasks exist and are properly prioritized
+  - Update CURRENT_STATUS.md with progress and status changes
+  - Recognize planning gaps and trigger detailed breakdown conversations
+  - Maintain accurate project state across documentation
 
 ## Supabase Backend Services
 - **Database management**: Use for database schema management, authentication, and API endpoints
 - **Security**: Implement Row Level Security (RLS) policies for multi-user data protection
 - **Client safety**: Never expose service keys in client-side code
-- **Testing**: Test database changes and RLS policies thoroughly
+
 
 ## GitHub Version Control
 - **Workflow**: Follow conventional commit messages and branching strategies
@@ -233,14 +220,13 @@ The goal is to provide excellent coding assistance that helps create maintainabl
 Euno's Jeopardy is an online platform to create and host custom Jeopardy!-style games for friends. It features host-authored boards (categories, clues, answers), a buzzer system with host-controlled lock/unlock, score/money tracking, Double and Final Jeopardy flows, and an authentic, polished game interface.
 
 ## Project Resources
-- **Project Charter**: Original project charter available in `docs/ai/PROJECT_CHARTER.md` for background context
-- **Testing Strategy**: Comprehensive testing decisions and coverage exclusions in `docs/ai/TESTING_STRATEGY.md` - **REFERENCE BEFORE MAKING TESTING DECISIONS**
-- **Project Management**: Current project state, priorities, and development plan in `docs/ai/PROJECT_MANAGEMENT.md`
-- **Service References**: Integration details in `docs/ai/SUPABASE_SETUP.md`
+- **Navigation Hub**: `docs/ai/INDEX.md` - Complete documentation navigation
+- **Current Status**: `docs/ai/CURRENT_STATUS.md` - Real-time project status and immediate next steps
+- **Project Structure**: `docs/ai/PROJECT_MANAGEMENT.md` - Static project information and issue definitions
+- **Service Configuration**: `docs/ai/reference/SUPABASE_REFERENCE.md` - Database and service integration details
 
 - Multi-user app: requires Supabase Auth and Realtime; enforce RLS on all tables.
 - Real-time gameplay: low-latency buzzer events with host lock/unlock authority.
 - Roles: Host (owns room, controls board, adjudicates answers) and Players (buzz/answer).
 - Jeopardy rules: rounds (Jeopardy/Double/Final), daily doubles, score tracking with wagers.
 - UI: game-style interface with turns/states; prioritize keyboard accessibility for host controls.
-- Testing: simulate buzzer race conditions and scoring edge cases in Jest.
