@@ -5,7 +5,6 @@ This folder contains documentation specifically designed for AI code assistants 
 ## 📖 **Project Context**
 - **[CURRENT_STATUS.md](./CURRENT_STATUS.md)** - Real-time project status and immediate next steps
 - **[PROJECT_MANAGEMENT.md](./PROJECT_MANAGEMENT.md)** - Project structure, issues, and static information
-- **[archive/PROJECT_CHARTER.md](./archive/PROJECT_CHARTER.md)** - Historical project charter (archived)
 
 ## 🔧 **Service Integration & Configuration References**
 - **[LINEAR_REFERENCE.md](./reference/LINEAR_REFERENCE.md)** - Linear workspace UUIDs and configuration
@@ -14,6 +13,7 @@ This folder contains documentation specifically designed for AI code assistants 
 - **[TESTING_REFERENCE.md](./reference/TESTING_REFERENCE.md)** - Testing configuration and technical setup
 
 ## 📋 **Strategy & Best Practices**
+- **[SCSS_STYLING_GUIDELINES.md](./SCSS_STYLING_GUIDELINES.md)** - SCSS styling conventions and best practices
 - **[strategy/TESTING_STRATEGY.md](./reference/strategy/TESTING_STRATEGY.md)** - Comprehensive testing strategy and best practices
 
 ## 🌟 **Extended Feature Descriptions**
