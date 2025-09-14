@@ -148,8 +148,8 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
 
         // Fetch complete clue set data for the game board
         // This provides all categories and clues needed for the dashboard
-        const clueSetData = await ClueSetService.loadClueSetFromDatabase(gameData.clue_set_id)
-        setClueSetData(clueSetData)
+        const loadedClueSetData = await ClueSetService.loadClueSetFromDatabase(gameData.clue_set_id)
+        setClueSetData(loadedClueSetData)
 
         // Fetch current player list for the game
         // This provides real-time player information for the dashboard
@@ -375,33 +375,32 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                   {/* Category headers from current round */}
                   <div className="category-grid">
                     {(() => {
-                      const currentRoundData = game.current_round === 'final'
-                        ? [clueSetData.rounds.final]
-                        : clueSetData.rounds[game.current_round] || []
-
-                      // For final jeopardy, show single category; otherwise show all 6 categories
-                      const categories = game.current_round === 'final'
-                        ? [currentRoundData.name]
-                        : currentRoundData.map(cat => cat.name)
-
-                      return categories.map((categoryName, index) => (
-                        <div key={`category-${index}-${categoryName}`} className="category-header">
-                          {categoryName}
-                        </div>
-                      ))
+                      // Handle different round types with proper data structure
+                      if (game.current_round === 'final') {
+                        // Final jeopardy has single category
+                        return (
+                          <div key="final-category" className="category-header">
+                            {clueSetData.rounds.final.name}
+                          </div>
+                        )
+                      } else {
+                        // Regular rounds have array of categories
+                        const currentRoundData = clueSetData.rounds[game.current_round] || []
+                        return currentRoundData.map((category, index) => (
+                          <div key={`category-${index}-${category.name}`} className="category-header">
+                            {category.name}
+                          </div>
+                        ))
+                      }
                     })()}
                   </div>
 
                   {/* Clue grid with real values from current round */}
                   <div className="clue-grid">
                     {(() => {
-                      const currentRoundData = game.current_round === 'final'
-                        ? [clueSetData.rounds.final]
-                        : clueSetData.rounds[game.current_round] || []
-
                       if (game.current_round === 'final') {
                         // Final Jeopardy has only one clue
-                        const finalClue = currentRoundData.clues?.[0]
+                        const finalClue = clueSetData.rounds.final.clues?.[0]
                         return finalClue ? (
                           <div className="clue-cell final-jeopardy">
                             Final Jeopardy
@@ -410,9 +409,11 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                       }
 
                       // Regular rounds: create grid of all clues
+                      const currentRoundData = clueSetData.rounds[game.current_round] || []
                       const allClues: Array<{categoryIndex: number, clue: ClueData}> = []
+
                       currentRoundData.forEach((category, categoryIndex) => {
-                        category.clues.forEach(clue => {
+                        category.clues.forEach((clue) => {
                           allClues.push({ categoryIndex, clue })
                         })
                       })
