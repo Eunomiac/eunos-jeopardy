@@ -430,23 +430,7 @@ export async function saveClueSetToDatabase(
 
     // Step 3: Create categories and clues for each board sequentially
     // Sequential processing maintains proper ordering and error handling
-    for (let i = 0; i < boards.length; i++) {
-      const board = boards[i]
-      const roundType = ['jeopardy', 'double', 'final'][i] as RoundType
-      const roundData = clueSetData.rounds[roundType]
-
-      if (roundType === 'final') {
-        // Handle Final Jeopardy (single category with single clue)
-        await saveCategoryAndClues(board.id, roundData as CategoryData, 1)
-      } else {
-        // Handle regular rounds (Jeopardy/Double Jeopardy with multiple categories)
-        const categories = roundData as CategoryData[]
-        for (let j = 0; j < categories.length; j++) {
-          // Save each category with its position (1-6)
-          await saveCategoryAndClues(board.id, categories[j], j + 1)
-        }
-      }
-    }
+    await saveAllBoardsData(boards, clueSetData)
 
     // Return clue set ID for use in game creation
     return clueSetId
@@ -499,6 +483,64 @@ async function createBoard(clueSetId: string, round: RoundType) {
   if (!board) { throw new Error(`Failed to create ${round} board`) }
 
   return board
+}
+
+/**
+ * Saves all board data (categories and clues) for a clue set.
+ *
+ * Processes each board sequentially to maintain proper ordering and error handling.
+ * Handles both regular rounds (Jeopardy/Double Jeopardy with multiple categories)
+ * and Final Jeopardy (single category).
+ *
+ * @param boards - Array of board records to populate with data
+ * @param clueSetData - Parsed clue set data containing rounds
+ * @returns Promise that resolves when all boards are populated
+ * @throws Error if any database operations fail
+ *
+ * @since 0.1.0
+ * @author Euno's Jeopardy Team
+ */
+async function saveAllBoardsData(
+  boards: Array<{ id: string }>,
+  clueSetData: ClueSetData
+): Promise<void> {
+  for (let i = 0; i < boards.length; i++) {
+    const board = boards[i]
+    const roundType = ['jeopardy', 'double', 'final'][i] as RoundType
+    const roundData = clueSetData.rounds[roundType]
+
+    if (roundType === 'final') {
+      // Handle Final Jeopardy (single category with single clue)
+      await saveCategoryAndClues(board.id, roundData as CategoryData, 1)
+    } else {
+      // Handle regular rounds (Jeopardy/Double Jeopardy with multiple categories)
+      await saveRegularRoundCategories(board.id, roundData as CategoryData[])
+    }
+  }
+}
+
+/**
+ * Saves all categories for a regular round (Jeopardy/Double Jeopardy).
+ *
+ * Processes categories sequentially to maintain proper ordering.
+ * Each category is saved with its position (1-6) on the board.
+ *
+ * @param boardId - UUID of the board to associate categories with
+ * @param categories - Array of category data to save
+ * @returns Promise that resolves when all categories are saved
+ * @throws Error if any database operations fail
+ *
+ * @since 0.1.0
+ * @author Euno's Jeopardy Team
+ */
+async function saveRegularRoundCategories(
+  boardId: string,
+  categories: CategoryData[]
+): Promise<void> {
+  for (let j = 0; j < categories.length; j++) {
+    // Save each category with its position (1-6)
+    await saveCategoryAndClues(boardId, categories[j], j + 1)
+  }
 }
 
 /**

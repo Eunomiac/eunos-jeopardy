@@ -1,9 +1,36 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import type { User, Session } from '@supabase/supabase-js'
 import { SimpleLogin } from './SimpleLogin'
+import * as AuthContext from '../../contexts/AuthContext'
 
 // Mock the auth context
 const mockLogin = jest.fn()
 const mockLogout = jest.fn()
+
+// Create properly typed mock user and session
+const mockUser: User = {
+  id: '123',
+  email: 'test@example.com',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email_confirmed_at: '2023-01-01T00:00:00Z',
+  phone: '',
+  confirmed_at: '2023-01-01T00:00:00Z',
+  last_sign_in_at: '2023-01-01T00:00:00Z',
+  app_metadata: {},
+  user_metadata: {},
+  identities: [],
+  created_at: '2023-01-01T00:00:00Z',
+  updated_at: '2023-01-01T00:00:00Z'
+}
+
+const mockSession: Session = {
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  user: mockUser
+}
 
 jest.mock('../../contexts/AuthContext', () => ({
   ...jest.requireActual('../../contexts/AuthContext'),
@@ -33,7 +60,7 @@ describe('SimpleLogin', () => {
 
   it('should render loading state', () => {
     // Mock useAuth to return loading state
-    const mockUseAuth = jest.spyOn(require('../../contexts/AuthContext'), 'useAuth')
+    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -50,13 +77,11 @@ describe('SimpleLogin', () => {
   })
 
   it('should render user info and logout button when authenticated', () => {
-    const mockUser = { id: '123', email: 'test@example.com' }
-
     // Mock useAuth to return authenticated state
-    const mockUseAuth = jest.spyOn(require('../../contexts/AuthContext'), 'useAuth')
+    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: { user: mockUser },
+      session: mockSession,
       loading: false,
       login: mockLogin,
       logout: mockLogout
@@ -149,13 +174,11 @@ describe('SimpleLogin', () => {
   })
 
   it('should call logout function when logout button is clicked', () => {
-    const mockUser = { id: '123', email: 'test@example.com' }
-
     // Mock useAuth to return authenticated state
-    const mockUseAuth = jest.spyOn(require('../../contexts/AuthContext'), 'useAuth')
+    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: { user: mockUser },
+      session: mockSession,
       loading: false,
       login: mockLogin,
       logout: mockLogout
@@ -229,13 +252,11 @@ describe('SimpleLogin', () => {
   })
 
   it('should render authenticated state with proper CSS classes', () => {
-    const mockUser = { id: '123', email: 'test@example.com' }
-
     // Mock useAuth to return authenticated state
-    const mockUseAuth = jest.spyOn(require('../../contexts/AuthContext'), 'useAuth')
+    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: { user: mockUser },
+      session: mockSession,
       loading: false,
       login: mockLogin,
       logout: mockLogout

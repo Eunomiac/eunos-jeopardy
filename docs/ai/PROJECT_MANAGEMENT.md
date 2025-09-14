@@ -114,7 +114,7 @@ __for public release__
 ---
 
 #### Issue #2: CSV Question Set Loader (Simplified)
-**Status**: � IN PROGRESS
+**Status**: 🔄 IN PROGRESS
 **Assignee**: Development Team
 **Epic**: Content Management
 **Priority**: 🔴 High (Foundation)
@@ -122,19 +122,22 @@ __for public release__
 **Description**: Build CSV file upload and parser for clue sets. Hosts create clues in CSV format externally, then upload to the game. Much faster to implement than complex in-app editor.
 
 **Acceptance Criteria**:
-- [ ] Define simplified CSV format specification (round, category, value, clue, answer)
-- [ ] Create example CSV files for validation
-- [ ] Build file upload component with drag-and-drop
-- [ ] Implement CSV parser with basic validation
-- [ ] **Implement automatic Daily Double placement algorithm**
-- [ ] Save parsed clues to database (`clue_sets`, `boards`, `categories`, `clues` tables)
-- [ ] Error handling for malformed CSV files
-- [ ] Simple preview of loaded clues with Daily Double positions
+- [x] Define simplified CSV format specification (round, category, value, clue, answer)
+- [x] Create example CSV files for validation
+- [x] **Implement CSV parser with comprehensive validation** (388 lines complete)
+- [x] **Implement automatic Daily Double placement algorithm** (complete with authentic probability)
+- [x] **Save parsed clues to database** with full relationships (612 lines complete)
+- [x] **Error handling for malformed CSV files** (comprehensive validation implemented)
+- [x] **Temporary development workflow** (works with pre-placed CSV files)
+- [ ] **Replace file system with database-driven clue set selection**
+- [ ] **Build file upload component** with drag-and-drop interface
+- [ ] **Implement clue set management** (upload, naming, user's clue set list)
+- [ ] **Production upload workflow** integration
 
 **Technical Notes**:
-- **Simplified CSV format**: `round,category,value,clue,answer` (no daily_double column)
-- Support for Jeopardy, Double Jeopardy, and Final Jeopardy rounds
-- **Automatic Daily Double placement** using authentic probability distribution
+- ✅ **CSV Format**: `round,category,value,clue,answer` format fully implemented
+- ✅ **Full Round Support**: Jeopardy, Double Jeopardy, and Final Jeopardy rounds working
+- ✅ **Daily Double Algorithm**: Complete implementation with authentic probability distribution
   - **Category Selection**: Random for Jeopardy (1 DD), different categories for Double Jeopardy (2 DDs)
   - **Row Selection**: Weighted random based on authentic Jeopardy! data
     - Row 1 (lowest values): 0% chance
@@ -142,9 +145,17 @@ __for public release__
     - Row 3: 26% chance
     - Row 4: 39% chance
     - Row 5 (highest values): 26% chance
-- Basic validation: required columns, proper round structure, 6 categories × 5 clues per round
+- ✅ **Comprehensive Validation**: Full validation with detailed error messages
+- ✅ **Database Integration**: Complete clue set creation with proper relationships
+- ✅ **Temporary Development System**: Works with pre-placed CSV files (stopgap solution)
+- ❌ **Production Upload System**: Database-driven selection and file upload workflow
 - **Reference**: See `docs/ai/features/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
-- **Deferred to Phase 3**: In-app clue editor, drag-and-drop Daily Double placement, advanced validation
+
+**Architecture Notes**:
+- **Current**: `getAvailableClueSets()` returns hardcoded file list from `public/clue-sets/`
+- **Intended**: Database-driven selection populated from user's uploaded clue sets
+- **Upload Flow**: Upload CSV → Parse & Validate → Save to Database → Available in dropdown
+- **User Management**: Each user manages their own collection of uploaded clue sets
 
 **Phase 3 Enhancements**:
 - In-app clue set editor with rich UI
@@ -152,6 +163,19 @@ __for public release__
 - Question set templates and sharing
 - Advanced validation and preview features
 - Import/export multiple formats
+- **Game Analytics & Reporting System**:
+  - **Phase 3A - Data Collection**: Record detailed gameplay events in database
+    - Player buzz attempts and timing
+    - Correct/incorrect responses for each clue
+    - Daily Double wager amounts and outcomes
+    - Final Jeopardy responses and wagers
+    - Game duration and round timing
+    - "Full stumpers" (clues no one answered correctly)
+  - **Phase 3B - Report Generation**: Parse gameplay data into insightful reports
+    - Post-game summary with statistics
+    - Player performance analytics
+    - Clue difficulty analysis
+    - Game flow and engagement metrics
 - **Multimedia clue support**: Images, audio, and video clues (like real Jeopardy)
   - Image clues with proper display and scaling
   - Audio clues with playback controls
@@ -164,38 +188,45 @@ __for public release__
 ---
 
 #### Issue #3: Game Host Dashboard
-**Status**: 🔄 IN PROGRESS (Phase 2: Core Buzzer System)
+**Status**: 🟡 PARTIALLY STARTED (30% complete - UI shell implemented)
 **Assignee**: Development Team
 **Epic**: Game Control
-**Priority**: 🔴 High (Foundation)
+**Priority**: 🟡 Medium (Blocked until Issue #2 complete)
 
 **Description**: Create host interface for game control, buzzer management, and answer adjudication.
 
 **Acceptance Criteria**:
+
+**Phase 1: Foundation (Complete)**
 - [x] Start new game with selected clue set
 - [x] Host authorization and security checks
 - [x] Error handling and loading states
 - [x] Integration with existing authentication and clue set systems
 - [x] Service layer foundation (GameService with CRUD operations)
-- [x] Basic dashboard layout and navigation
-- [x] Control buzzer lock/unlock (working)
+- [x] Basic dashboard layout and navigation (6-panel UI shell)
+- [x] Control buzzer lock/unlock (visual toggle only)
 - [x] Game ending functionality (working)
 - [x] Code quality standards met (SonarQube quality gates passing)
-- [ ] View player buzzer order (deferred - no players yet)
-- [ ] Adjudicate answers (correct/incorrect) (deferred - no players yet)
-- [ ] Manage scoring and wagers (deferred - no players yet)
-- [ ] Control game flow (rounds, Final Jeopardy) (deferred - no players yet)
-- [ ] Real-time updates using Supabase Realtime (deferred - no players yet)
+
+**Phase 2: Core Functionality (Blocked until Issue #2 complete)**
+- [ ] Load real clue data into game board (currently hardcoded placeholders)
+- [ ] Implement interactive clue selection
+- [ ] Build functional buzzer queue system
+- [ ] Add player buzz-in detection and ordering
+- [ ] Implement answer adjudication controls
+- [ ] Add score management and adjustments
+- [ ] Create round progression controls
 
 **Technical Notes**:
 - ✅ Complete GameService with all CRUD operations implemented
-- ✅ GameHostDashboard component with full functionality
+- ✅ GameHostDashboard component UI shell with 6-panel layout
 - ✅ Tab-based navigation system in App.tsx
 - ✅ Authentication and session management working correctly
 - ✅ **RESOLVED**: RLS policies rebuilt and working correctly
-- ✅ **RESOLVED**: Game creation, buzzer controls, and game ending all functional
+- ✅ **RESOLVED**: Game creation and game ending functionality working
 - ✅ **RESOLVED**: Code quality standards met (SonarQube quality gates passing)
-- 🔄 **NEXT**: Complete Issue #3, then implement player interface
+- 🔄 **CURRENT**: Most dashboard functionality is placeholder/hardcoded
+- 🔄 **BLOCKED**: Real functionality requires clue data from Issue #2
 
 ---
 
@@ -289,6 +320,41 @@ __for public release__
 - [ ] Resume interrupted games
 - [ ] End game conditions
 - [ ] Winner determination
+
+---
+
+#### Issue #9: Game Analytics & Data Collection (Phase 3A)
+**Status**: 🟢 TODO (Phase 3 Enhancement)
+**Assignee**: Development Team
+**Epic**: Analytics & Reporting
+**Priority**: 🟢 Low (Enhancement)
+
+**Description**: Implement comprehensive gameplay event tracking to enable post-game analytics and reporting. This is Phase 3A of the analytics system - data collection only.
+
+**Acceptance Criteria**:
+- [ ] Design database schema for gameplay events
+- [ ] Track player buzz attempts with timestamps
+- [ ] Record correct/incorrect responses for each clue
+- [ ] Log Daily Double wager amounts and outcomes
+- [ ] Store Final Jeopardy responses and wagers
+- [ ] Track game duration and round timing
+- [ ] Identify and flag "full stumpers" (unanswered clues)
+- [ ] Ensure data privacy and user consent
+
+**Technical Notes**:
+- New database tables: `game_events`, `player_responses`, `clue_attempts`
+- Real-time event logging during gameplay
+- Efficient data structure for later analysis
+- **Phase 3B (Future)**: Report generation and analytics dashboard
+- **Deferred**: Advanced metrics, comparative analysis, data visualization
+
+**Potential Analytics Reports (Phase 3B)**:
+- Post-game summary with key statistics
+- "Full stumpers" count and identification
+- Player performance metrics
+- Clue difficulty analysis based on response rates
+- Game duration and pacing insights
+- Daily Double success rates and wager patterns
 
 ---
 

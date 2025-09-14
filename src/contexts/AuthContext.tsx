@@ -330,6 +330,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
+// eslint-disable-next-line react-refresh/only-export-components -- Standard React pattern: Context providers commonly export both the provider component and associated hook in the same file for cohesion and convenience
 export function useAuth() {
   // Get authentication context
   const context = useContext(AuthContext)

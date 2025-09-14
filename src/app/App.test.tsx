@@ -1,6 +1,8 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import type { User, Session } from '@supabase/supabase-js'
 import { App } from './App'
 import { AuthProvider } from '../contexts/AuthContext'
+import * as AuthContext from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { loadClueSetFromCSV, saveClueSetToDatabase } from '../services/clueSets/loader'
 
@@ -19,7 +21,7 @@ const renderWithAuth = (ui: React.ReactElement) => {
   )
 }
 
-const mockUser = {
+const mockUser: User = {
   id: 'user-123',
   email: 'test@example.com',
   aud: 'authenticated',
@@ -33,6 +35,14 @@ const mockUser = {
   identities: [],
   created_at: '2023-01-01T00:00:00Z',
   updated_at: '2023-01-01T00:00:00Z'
+}
+
+const mockSession: Session = {
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  user: mockUser
 }
 
 const mockClueSetData = {
@@ -108,10 +118,9 @@ describe('App', () => {
 
   it('displays clue set selector when authenticated', () => {
     // Mock authenticated user
-    const mockUser = { id: '1', email: 'test@example.com' }
-    jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
+    jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
-      session: { user: mockUser },
+      session: mockSession,
       loading: false,
       login: jest.fn(),
       logout: jest.fn()
@@ -133,10 +142,9 @@ describe('App', () => {
 
   it('shows user email when authenticated', () => {
     // Mock authenticated user
-    const mockUser = { id: '1', email: 'test@example.com' }
-    jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
+    jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
-      session: { user: mockUser },
+      session: mockSession,
       loading: false,
       login: jest.fn(),
       logout: jest.fn()
@@ -151,9 +159,9 @@ describe('App', () => {
   describe('Game Creation Workflow', () => {
     beforeEach(() => {
       // Mock authenticated user for all game creation tests
-      jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: mockUser,
-        session: { user: mockUser },
+        session: mockSession,
         loading: false,
         login: jest.fn(),
         logout: jest.fn()
@@ -185,7 +193,7 @@ describe('App', () => {
 
       // Wait for GameHostDashboard to load
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
     })
 
@@ -230,7 +238,7 @@ describe('App', () => {
 
     it('should not create game when user is not authenticated', async () => {
       // Override mock to return no user
-      jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: null,
         session: null,
         loading: false,
@@ -249,9 +257,9 @@ describe('App', () => {
   describe('Navigation and State Management', () => {
     beforeEach(() => {
       // Mock authenticated user
-      jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: mockUser,
-        session: { user: mockUser },
+        session: mockSession,
         loading: false,
         login: jest.fn(),
         logout: jest.fn()
@@ -275,7 +283,7 @@ describe('App', () => {
 
       // Wait for GameHostDashboard to load and find back button
       await waitFor(() => {
-        expect(screen.getByText('Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
       })
 
       // Click back to creator
@@ -300,7 +308,7 @@ describe('App', () => {
       expect(screen.getByText('Host Game')).toBeInTheDocument()
 
       // Mock user logout
-      jest.spyOn(require('../contexts/AuthContext'), 'useAuth').mockReturnValue({
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: null,
         session: null,
         loading: false,

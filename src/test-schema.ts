@@ -29,6 +29,7 @@
  */
 
 import { supabase } from './services/supabase/client'
+import type { Tables } from './services/supabase/types'
 
 /**
  * Global type declaration for browser console access.
@@ -137,7 +138,7 @@ async function testTable(tableName: 'clue_sets' | 'clues' | 'categories', emoji:
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-function checkClueColumns(clues: any[]) {
+function checkClueColumns(clues: Tables<'clues'>[]) {
   // Handle empty data gracefully
   if (!clues || clues.length === 0) {
     console.log('No clues data to check columns')
@@ -219,7 +220,7 @@ export async function testCurrentSchema() {
     // Test clues table with comprehensive column analysis
     const clues = await testTable('clues', '🎯')
     if (clues) {
-      checkClueColumns(clues)
+      checkClueColumns(clues as Tables<'clues'>[])
     }
 
     // Test categories table for category organization

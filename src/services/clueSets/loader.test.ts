@@ -1,5 +1,7 @@
 import { loadClueSetFromCSV, saveClueSetToDatabase } from './loader'
 import { supabase } from '../supabase/client'
+import * as csvParser from '../../utils/csvParser'
+import * as clueSetUtils from '../../utils/clueSetUtils'
 
 // Mock dependencies
 jest.mock('../supabase/client')
@@ -30,14 +32,16 @@ final,Geography,0,Largest country?,Russia`
 
     beforeEach(() => {
       // Mock the CSV parser
-      const { parseCSV, validateJeopardyStructure } = require('../../utils/csvParser')
-      parseCSV.mockReturnValue(mockParsedRows)
-      validateJeopardyStructure.mockImplementation(() => {}) // No error
+      const mockParseCSV = csvParser.parseCSV as jest.Mock
+      const mockValidateJeopardyStructure = csvParser.validateJeopardyStructure as jest.Mock
+      mockParseCSV.mockReturnValue(mockParsedRows)
+      mockValidateJeopardyStructure.mockImplementation(() => {}) // No error
 
       // Mock clue set utils
-      const { filenameToDisplayName, getClueSetURL } = require('../../utils/clueSetUtils')
-      filenameToDisplayName.mockReturnValue('Test Game 1')
-      getClueSetURL.mockReturnValue('/clue-sets/test-game-1.csv')
+      const mockFilenameToDisplayName = clueSetUtils.filenameToDisplayName as jest.Mock
+      const mockGetClueSetURL = clueSetUtils.getClueSetURL as jest.Mock
+      mockFilenameToDisplayName.mockReturnValue('Test Game 1')
+      mockGetClueSetURL.mockReturnValue('/clue-sets/test-game-1.csv')
 
       // Mock fetch
       ;(global.fetch as jest.Mock).mockResolvedValue({
@@ -97,8 +101,8 @@ final,Geography,0,Largest country?,Russia`
     })
 
     it('should handle CSV parsing error', async () => {
-      const { parseCSV } = require('../../utils/csvParser')
-      parseCSV.mockImplementation(() => {
+      const mockParseCSV = csvParser.parseCSV as jest.Mock
+      mockParseCSV.mockImplementation(() => {
         throw new Error('Invalid CSV format')
       })
 
@@ -106,8 +110,8 @@ final,Geography,0,Largest country?,Russia`
     })
 
     it('should handle validation error', async () => {
-      const { validateJeopardyStructure } = require('../../utils/csvParser')
-      validateJeopardyStructure.mockImplementation(() => {
+      const mockValidateJeopardyStructure = csvParser.validateJeopardyStructure as jest.Mock
+      mockValidateJeopardyStructure.mockImplementation(() => {
         throw new Error('Invalid Jeopardy structure')
       })
 
@@ -117,8 +121,8 @@ final,Geography,0,Largest country?,Russia`
     it('should call correct URL for CSV file', async () => {
       await loadClueSetFromCSV('test-game-1.csv')
 
-      const { getClueSetURL } = require('../../utils/clueSetUtils')
-      expect(getClueSetURL).toHaveBeenCalledWith('test-game-1.csv')
+      const mockGetClueSetURL = clueSetUtils.getClueSetURL as jest.Mock
+      expect(mockGetClueSetURL).toHaveBeenCalledWith('test-game-1.csv')
       expect(global.fetch).toHaveBeenCalledWith('/clue-sets/test-game-1.csv')
     })
 
@@ -131,8 +135,8 @@ final,Geography,0,Largest country?,Russia`
         { round: 'final', category: 'Geography', value: 0, prompt: 'Final Q', response: 'Final A' }
       ]
 
-      const { parseCSV } = require('../../utils/csvParser')
-      parseCSV.mockReturnValue(multiCategoryRows)
+      const mockParseCSV = csvParser.parseCSV as jest.Mock
+      mockParseCSV.mockReturnValue(multiCategoryRows)
 
       const result = await loadClueSetFromCSV('test-game-1.csv')
 

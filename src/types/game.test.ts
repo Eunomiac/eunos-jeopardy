@@ -19,12 +19,12 @@ describe('game types', () => {
     })
 
     it('should return false for non-string values', () => {
-      expect(isValidRoundType(null as any)).toBe(false)
-      expect(isValidRoundType(undefined as any)).toBe(false)
-      expect(isValidRoundType(123 as any)).toBe(false)
-      expect(isValidRoundType(true as any)).toBe(false)
-      expect(isValidRoundType({} as any)).toBe(false)
-      expect(isValidRoundType([] as any)).toBe(false)
+      expect(isValidRoundType(null)).toBe(false)
+      expect(isValidRoundType(undefined)).toBe(false)
+      expect(isValidRoundType(123)).toBe(false)
+      expect(isValidRoundType(true)).toBe(false)
+      expect(isValidRoundType({})).toBe(false)
+      expect(isValidRoundType([])).toBe(false)
     })
 
     it('should handle edge cases', () => {
@@ -42,7 +42,7 @@ describe('game types', () => {
 
     it('should work as type guard', () => {
       const testValue: string = 'jeopardy'
-      
+
       if (isValidRoundType(testValue)) {
         // TypeScript should know testValue is RoundType here
         const roundType: RoundType = testValue
@@ -72,12 +72,12 @@ describe('game types', () => {
     })
 
     it('should return false for non-string values', () => {
-      expect(isValidGameStatus(null as any)).toBe(false)
-      expect(isValidGameStatus(undefined as any)).toBe(false)
-      expect(isValidGameStatus(123 as any)).toBe(false)
-      expect(isValidGameStatus(true as any)).toBe(false)
-      expect(isValidGameStatus({} as any)).toBe(false)
-      expect(isValidGameStatus([] as any)).toBe(false)
+      expect(isValidGameStatus(null)).toBe(false)
+      expect(isValidGameStatus(undefined)).toBe(false)
+      expect(isValidGameStatus(123)).toBe(false)
+      expect(isValidGameStatus(true)).toBe(false)
+      expect(isValidGameStatus({})).toBe(false)
+      expect(isValidGameStatus([])).toBe(false)
     })
 
     it('should handle edge cases', () => {
@@ -98,7 +98,7 @@ describe('game types', () => {
 
     it('should work as type guard', () => {
       const testValue: string = 'in_progress'
-      
+
       if (isValidGameStatus(testValue)) {
         // TypeScript should know testValue is GameStatus here
         const gameStatus: GameStatus = testValue
@@ -138,11 +138,11 @@ describe('game types', () => {
         null           // invalid type
       ]
 
-      const validRounds = mixedValues.filter((val): val is RoundType => 
+      const validRounds = mixedValues.filter((val): val is RoundType =>
         typeof val === 'string' && isValidRoundType(val)
       )
-      
-      const validStatuses = mixedValues.filter((val): val is GameStatus => 
+
+      const validStatuses = mixedValues.filter((val): val is GameStatus =>
         typeof val === 'string' && isValidGameStatus(val)
       )
 
@@ -154,31 +154,31 @@ describe('game types', () => {
   describe('performance and edge cases', () => {
     it('should handle large number of validations efficiently', () => {
       const start = performance.now()
-      
+
       for (let i = 0; i < 10000; i++) {
         isValidRoundType('jeopardy')
         isValidRoundType('invalid')
         isValidGameStatus('lobby')
         isValidGameStatus('invalid')
       }
-      
+
       const end = performance.now()
       const duration = end - start
-      
+
       // Should complete in reasonable time (less than 100ms for 40k validations)
       expect(duration).toBeLessThan(100)
     })
 
     it('should handle very long strings', () => {
       const longString = 'a'.repeat(10000)
-      
+
       expect(isValidRoundType(longString)).toBe(false)
       expect(isValidGameStatus(longString)).toBe(false)
     })
 
     it('should handle special characters', () => {
       const specialChars = ['jeopardy!', 'jeopardy?', 'jeopardy.', 'jeopardy,', 'jeopardy;']
-      
+
       specialChars.forEach(char => {
         expect(isValidRoundType(char)).toBe(false)
         expect(isValidGameStatus(char)).toBe(false)
@@ -187,7 +187,7 @@ describe('game types', () => {
 
     it('should handle unicode characters', () => {
       const unicodeStrings = ['jéopardy', 'jeopardy™', 'jeopardy®', 'jeopardy©']
-      
+
       unicodeStrings.forEach(str => {
         expect(isValidRoundType(str)).toBe(false)
         expect(isValidGameStatus(str)).toBe(false)

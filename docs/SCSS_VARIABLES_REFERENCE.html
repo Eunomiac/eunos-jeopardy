@@ -19,7 +19,7 @@
       background: #0b002a;
       margin: 0;
       padding: 0;
-      font-size: 14px;
+      font-size: 10px;
     }
 
     .container {
@@ -53,8 +53,8 @@
       padding: 8px;
       display: grid;
       grid-template-columns: 0.7fr 1fr 0.7fr;
-      gap: 8px;
-      height: calc(100vh - 60px);
+      gap: 4px;
+      height: 100vh;
     }
 
     .section {
@@ -78,8 +78,9 @@
     .subsection-title {
       font-size: 11px;
       color: #ccc;
-      margin: 8px 0 4px 0;
-      padding: 2px 4px;
+      /* margin: 8px 0 4px 0; */
+      /* padding: 2px 4px; */
+      margin-top: 4px;
       background: transparent;
       border-left: 2px solid #d69f4c;
       font-weight: 1000;
@@ -100,7 +101,7 @@
     .variable-item {
       background: black;
       /* border: 1px solid #d69f4c; */
-      margin: 2px;
+      /* margin: 2px; */
       padding: 4px 6px;
       cursor: pointer;
       transition: background 0.1s ease;
@@ -188,14 +189,8 @@
 
 <body>
   <div class="container">
-    <div class="header">
-      <h1>SCSS Variables Reference</h1>
-      <p>Click any variable to copy it to your clipboard</p>
-    </div>
-
     <div class="content">
       <div class="section section-color">
-        <h2 class="section-title">🎨 Colors</h2>
 
         <!-- PRIMARY SEMANTIC COLORS (USE THESE!) -->
         <h3 class="subsection-title">✨ Primary Theme Colors (Use These!)</h3>
@@ -335,7 +330,6 @@
 
 
       <div class="section section-typography">
-        <h2 class="section-title">🔤 Typography</h2>
 
         <div class="subsection">
           <h3 class="subsection-title">Font Families (Authentic Jeopardy Fonts)</h3>
@@ -459,10 +453,6 @@
       </div>
 
       <div class="section section-spacing">
-        <h2 class="section-title">
-          <span class="emoji">📏</span>
-          Spacing
-        </h2>
 
         <div class="subsection">
           <h3 class="subsection-title">Spacing Scale (Ultra-compact for game interface)</h3>
@@ -591,10 +581,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="usage-note">
-      💡 Click any variable to copy • Use semantic names like $primary-color
     </div>
   </div>
 

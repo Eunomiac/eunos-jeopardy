@@ -8,6 +8,18 @@ jest.mock('../supabase/client', () => ({
 }))
 
 import { supabase } from '../supabase/client'
+
+// Type definitions for Supabase mock objects
+type MockSupabaseQueryBuilder = {
+  insert: jest.Mock
+  select: jest.Mock
+  update: jest.Mock
+  delete: jest.Mock
+  eq: jest.Mock
+  single: jest.Mock
+  limit: jest.Mock
+}
+
 const mockSupabase = supabase as jest.Mocked<typeof supabase>
 
 describe('GameService', () => {
@@ -35,7 +47,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.createGame('user-123', 'clue-set-123')
 
@@ -62,7 +74,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.createGame('user-123', 'clue-set-123'))
         .rejects.toThrow('Failed to create game: Database error')
@@ -77,7 +89,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.createGame('user-123', 'clue-set-123'))
         .rejects.toThrow('No game data returned from database')
@@ -104,7 +116,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getGame('game-123', 'user-123')
 
@@ -132,7 +144,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.getGame('game-123', 'user-456'))
         .rejects.toThrow('Only the game host can access this game')
@@ -150,7 +162,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.getGame('game-123', 'user-123'))
         .rejects.toThrow('Failed to fetch game: Not found')
@@ -212,7 +224,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getAvailableClueSets('user-123')
 
@@ -229,7 +241,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getAvailableClueSets('user-123')
 
@@ -264,7 +276,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         update: mockUpdate
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.updateGame('game-123', { status: 'in_progress' }, 'user-123')
 
@@ -302,7 +314,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         update: mockUpdate
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.updateGame('game-123', { status: 'in_progress' }, 'user-123'))
         .rejects.toThrow('Failed to update game: Update failed')
@@ -333,7 +345,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         update: mockUpdate
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.updateGame('game-123', { status: 'in_progress' }, 'user-123'))
         .rejects.toThrow('No game data returned from update')
@@ -371,7 +383,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getPlayers('game-123')
 
@@ -398,7 +410,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.getPlayers('game-123'))
         .rejects.toThrow('Failed to fetch players: Fetch failed')
@@ -413,7 +425,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getPlayers('game-123')
 
@@ -470,9 +482,9 @@ describe('GameService', () => {
       })
 
       mockSupabase.from
-        .mockReturnValueOnce({ select: mockGameSelect } as any)
-        .mockReturnValueOnce({ select: mockPlayerSelect } as any)
-        .mockReturnValueOnce({ update: mockUpdate } as any)
+        .mockReturnValueOnce({ select: mockGameSelect } as MockSupabaseQueryBuilder)
+        .mockReturnValueOnce({ select: mockPlayerSelect } as MockSupabaseQueryBuilder)
+        .mockReturnValueOnce({ update: mockUpdate } as MockSupabaseQueryBuilder)
 
       const result = await GameService.updatePlayerScore('game-123', 'player-123', 200, 'user-123')
 
@@ -500,7 +512,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.addPlayer('game-123', 'user-456', 'Player One')
 
@@ -532,7 +544,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.addPlayer('game-123', 'user-456')
 
@@ -557,7 +569,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.addPlayer('game-123', 'user-456'))
         .rejects.toThrow('Failed to add player: Insert failed')
@@ -572,7 +584,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.addPlayer('game-123', 'user-456'))
         .rejects.toThrow('No player data returned from database')
@@ -608,7 +620,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getBuzzesForClue('game-123', 'clue-456')
 
@@ -637,7 +649,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.getBuzzesForClue('game-123', 'clue-456'))
         .rejects.toThrow('Failed to fetch buzzes: Fetch failed')
@@ -654,7 +666,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         select: mockSelect
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.getBuzzesForClue('game-123', 'clue-456')
 
@@ -680,7 +692,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       const result = await GameService.recordBuzz('game-123', 'clue-456', 'user-789')
 
@@ -705,7 +717,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.recordBuzz('game-123', 'clue-456', 'user-789'))
         .rejects.toThrow('Failed to record buzz: Insert failed')
@@ -720,7 +732,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         insert: mockInsert
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.recordBuzz('game-123', 'clue-456', 'user-789'))
         .rejects.toThrow('No buzz data returned from database')
@@ -750,7 +762,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         delete: mockDelete
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await GameService.clearBuzzesForClue('game-123', 'clue-456', 'user-123')
 
@@ -782,7 +794,7 @@ describe('GameService', () => {
 
       mockSupabase.from.mockReturnValue({
         delete: mockDelete
-      } as any)
+      } as MockSupabaseQueryBuilder)
 
       await expect(GameService.clearBuzzesForClue('game-123', 'clue-456', 'user-123'))
         .rejects.toThrow('Failed to clear buzzes: Delete failed')

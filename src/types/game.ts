@@ -76,8 +76,9 @@ declare global {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export function isValidRoundType(value: string): value is RoundType {
-  return (value === "jeopardy" || value === "double" || value === "final")
+export function isValidRoundType(value: unknown): value is RoundType {
+  const validRounds: RoundType[] = ["jeopardy", "double", "final"]
+  return typeof value === "string" && validRounds.includes(value as RoundType)
 }
 
 /**
@@ -110,6 +111,7 @@ export function isValidRoundType(value: string): value is RoundType {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export function isValidGameStatus(value: string): value is GameStatus {
-  return (value === "lobby" || value === "in_progress" || value === "completed" || value === "archived")
+export function isValidGameStatus(value: unknown): value is GameStatus {
+  const validStatuses: GameStatus[] = ["lobby", "in_progress", "completed", "archived"]
+  return typeof value === "string" && validStatuses.includes(value as GameStatus)
 }

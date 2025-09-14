@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ClueSetSelector } from './ClueSetSelector'
+import * as clueSetUtils from '../../utils/clueSetUtils'
 
 // Mock the dependencies
 jest.mock('../../utils/clueSetUtils', () => ({
@@ -8,8 +9,8 @@ jest.mock('../../utils/clueSetUtils', () => ({
 }))
 
 describe('ClueSetSelector', () => {
-  const mockGetAvailableClueSets = require('../../utils/clueSetUtils').getAvailableClueSets as jest.Mock
-  const mockFilenameToDisplayName = require('../../utils/clueSetUtils').filenameToDisplayName as jest.Mock
+  const mockGetAvailableClueSets = clueSetUtils.getAvailableClueSets as jest.Mock
+  const mockFilenameToDisplayName = clueSetUtils.filenameToDisplayName as jest.Mock
   const mockOnClueSetSelected = jest.fn()
 
   beforeEach(() => {

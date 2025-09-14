@@ -185,8 +185,9 @@ export function App() {
     } catch (error) {
       // Log error for debugging and development
       console.error('Failed to create game:', error)
-      // TODO: Add user-friendly error notification UI
-      // Could display toast notification or error modal here
+      // Display user-friendly error notification
+      // Future enhancement: Could display toast notification or error modal here
+      alert('Failed to create game. Please try again.')
     }
   }
 
@@ -218,8 +219,7 @@ export function App() {
 
           {/* Main application content for authenticated users */}
           {user && (
-            <>
-              <div className="content-section game-creator-section">
+            <div className="content-section game-creator-section">
                 {/* Dashboard mode: Show active game host controls */}
                 {mode === 'dashboard' && currentGameId && (
                   <>
@@ -259,7 +259,6 @@ export function App() {
                   </>
                 )}
               </div>
-            </>
           )}
         </div>
       </main>
