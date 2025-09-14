@@ -3,30 +3,38 @@
 // ========================================
 // JEOPARDY THEME COLORS
 // ========================================
-$jeopardy-blue: #061276;        // Board background (main blue)
-$jeopardy-clue-blue: #0f1c8e;   // Individual clue backgrounds (slightly different shade)
-$jeopardy-background-blue: #0B002A;  // Base background color for interface
-$jeopardy-darkest-blue: #060016;  // Rarely used, e.g. inactive buttons
-$jeopardy-gold: #d69f4c;        // Money values, borders, accents
-$jeopardy-white: #ffffff;       // Text color for categories and clues
-$jeopardy-grey: #999999;        // Inactive buttons
-$jeopardy-black: #000000;       // Drop shadows and high contrast
 
-// Primary Theme Colors (Jeopardy-based)
-$primary-color: $jeopardy-blue;
-$secondary-color: $jeopardy-gold;
-$accent-color: $jeopardy-gold;
-$text-color: $jeopardy-white;
-$text-secondary: #cccccc;
-$text-muted: #999999;
-$background-color: $jeopardy-background-blue;
-$background-secondary: $jeopardy-blue;
+// Primary Theme Color Definitions
+$jeopardy-blue: #061276;             // Board background (main blue)
+$jeopardy-clue-blue: #0f1c8e;        // Individual clue backgrounds (slightly different shade)
+$jeopardy-gold: #d69f4c;             // Money values, borders, accents
+$jeopardy-white: #ffffff;            // Text color for categories and clues
+$jeopardy-black: #000000;            // Drop shadows and high contrast
+
+// Extended Color Definitions
+$jeopardy-background-blue: #0b002a;  // Base background color for interface
+$jeopardy-darkest-blue: #060016;     // Rarely used, e.g. inactive buttons
+$jeopardy-grey: #999999;             // Inactive buttons
+$jeopardy-light-grey: #cccccc;       // Light grey for borders
+$jeopardy-bright-gold: #ffd700;      // Bright gold for active states & highlighting
 
 // Status Colors
 $success-color: #28a745;
 $warning-color: #ffc107;
 $error-color: #dc3545;
 $info-color: #17a2b8;
+
+
+// Primary Theme Colors (Jeopardy-based)
+$primary-color: $jeopardy-blue;
+$secondary-color: $jeopardy-gold;
+$accent-color: $jeopardy-gold;
+$text-color: $jeopardy-white;
+$text-secondary: $jeopardy-light-grey;
+$text-muted: $jeopardy-grey;
+$background-color: $jeopardy-background-blue;
+$background-secondary: $jeopardy-blue;
+
 
 // Spacing (Ultra-compact layout)
 $spacing-xs: 0.125rem;
@@ -44,7 +52,7 @@ $font-family-daily-double: 'Steile Futura Bold', sans-serif;
 $font-family-clue: 'Korinna ITC Bold', serif;
 $font-family-category: 'Swiss 921', sans-serif;
 $font-family-money: 'Swiss 911 Extra Condensed', sans-serif;
-$font-family-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-family-ui: 'Swiss 921', sans-serif;
 
 // Jeopardy Text Transform (ALL UPPERCASE)
 $jeopardy-text-transform: uppercase;
