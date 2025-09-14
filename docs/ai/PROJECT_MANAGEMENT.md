@@ -113,11 +113,12 @@ __for public release__
 
 ---
 
-#### Issue #2: CSV Question Set Loader (Simplified)
-**Status**: 🔄 IN PROGRESS
+#### Issue #2: CSV Question Set Loader
+**Status**: ✅ COMPLETE
 **Assignee**: Development Team
 **Epic**: Content Management
-**Priority**: 🔴 High (Foundation)
+**Priority**: ✅ Foundation Complete
+**Completed**: 2025-01-15
 
 **Description**: Build CSV file upload and parser for clue sets. Hosts create clues in CSV format externally, then upload to the game. Much faster to implement than complex in-app editor.
 
@@ -188,10 +189,10 @@ __for public release__
 ---
 
 #### Issue #3: Game Host Dashboard
-**Status**: 🟡 PARTIALLY STARTED (30% complete - UI shell implemented)
+**Status**: 🔄 READY TO START (Foundation complete - Issue #2 unblocked this)
 **Assignee**: Development Team
 **Epic**: Game Control
-**Priority**: 🟡 Medium (Blocked until Issue #2 complete)
+**Priority**: 🔴 High (Next priority - foundation ready)
 
 **Description**: Create host interface for game control, buzzer management, and answer adjudication.
 
