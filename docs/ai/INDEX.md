@@ -2,33 +2,42 @@
 
 This folder contains documentation specifically designed for AI code assistants working on this project. All files are optimized for AI parsing and navigation.
 
-## 📋 **Setup & Configuration**
-- **[PROJECT_SETUP.md](./PROJECT_SETUP.md)** - Complete project setup guide for new workspaces
-- **[CONVERSATION_CONTINUITY.md](./CONVERSATION_CONTINUITY.md)** - Guidelines for maintaining project context across sessions
-- **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - Testing approach, coverage requirements, and exclusions
-
-## 🔧 **Service Integration**
-- **[LINEAR_REFERENCE.md](./LINEAR_REFERENCE.md)** - Linear workspace UUIDs and configuration
-- **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - Database configuration and connection details
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Deployment procedures and environment setup
-
 ## 📖 **Project Context**
-- **[PROJECT_CHARTER.md](./PROJECT_CHARTER.md)** - Project overview, database schema, and development phases
-- **[PROJECT_MANAGEMENT.md](./PROJECT_MANAGEMENT.md)** - Current sprint status, issues, and task tracking
-- **[DAILY_DOUBLE_ALGORITHM.md](./DAILY_DOUBLE_ALGORITHM.md)** - Automatic Daily Double placement specification
+- **[CURRENT_STATUS.md](./CURRENT_STATUS.md)** - Real-time project status and immediate next steps
+- **[PROJECT_MANAGEMENT.md](./PROJECT_MANAGEMENT.md)** - Project structure, issues, and static information
+- **[archive/PROJECT_CHARTER.md](./archive/PROJECT_CHARTER.md)** - Historical project charter (archived)
 
-## 🎯 **Current Development**
-- **[ISSUE_3_COMPLETION_PLAN.md](./ISSUE_3_COMPLETION_PLAN.md)** - Detailed plan to complete Game Host Dashboard (60% done)
-- **[issues/3. Game Host Dashboard.md](./issues/3.%20Game%20Host%20Dashboard.md)** - Complete Issue #3 specification with current status
+## 🔧 **Service Integration & Configuration References**
+- **[LINEAR_REFERENCE.md](./reference/LINEAR_REFERENCE.md)** - Linear workspace UUIDs and configuration
+- **[SUPABASE_REFERENCE.md](./reference/SUPABASE_REFERENCE.md)** - Database configuration and connection details
+- **[DEPLOYMENT_REFERENCE.md](./reference/DEPLOYMENT_REFERENCE.md)** - Deployment procedures and environment setup
+- **[TESTING_REFERENCE.md](./reference/TESTING_REFERENCE.md)** - Testing configuration and technical setup
+
+## 📋 **Strategy & Best Practices**
+- **[strategy/TESTING_STRATEGY.md](./reference/strategy/TESTING_STRATEGY.md)** - Comprehensive testing strategy and best practices
+
+## 🌟 **Extended Feature Descriptions**
+- **[DAILY_DOUBLE_ALGORITHM.md](./features/DAILY_DOUBLE_ALGORITHM.md)** - Automatic Daily Double placement specification
+
+## 🎯 **Current Focus & Active Development**
+- **[/issues/](./issues/)** - Issue-specific documentation for active development
+  - Active issues in the root of the `issues` folder
+  - Completed issues in the `issues/completed` folder
+  - Future issues in the `issues/future` folder
+
+## 📁 **Archive**
+- **[archive/](./archive/)** - Historical documents and outdated prompts
+  - **[PROJECT_CHARTER.md](./archive/PROJECT_CHARTER.md)** - Original project charter
+  - **[prompts/](./archive/prompts/)** - Archived issue-specific prompts
 
 ## 🎯 **Usage Guidelines**
 
 ### For AI Assistants
-1. **Start with PROJECT_SETUP.md** when setting up a new project workspace
-2. **Follow CONVERSATION_CONTINUITY.md** when user says "continue project"
-3. **Reference TESTING_STRATEGY.md** before making testing-related decisions
-4. **Use LINEAR_REFERENCE.md** for efficient Linear API operations
-5. **Check service setup guides** before configuring external integrations
+1. **Start with CURRENT_STATUS.md** for immediate project status and active work
+2. **Review PROJECT_MANAGEMENT.md** for project structure and issue definitions
+3. **Check active issues** in the `issues` folder for detailed implementation guidance
+4. **Reference service configuration** in the `reference` folder for external integrations
+5. **Use testing strategy** in `reference/strategy` for testing approach (coverage handled by remote agents)
 
 ### File Organization
 - All files use Markdown for optimal AI parsing
@@ -39,21 +48,20 @@ This folder contains documentation specifically designed for AI code assistants 
 ### Maintenance
 - Update service reference files when UUIDs or configurations change
 - Keep testing strategy current with project evolution
-- Archive outdated setup procedures in `docs/local/` folder
+- Archive outdated documents in the `archive/` folder
 
 ## 🔄 **Quick Reference**
 
 **Most Frequently Used:**
-1. PROJECT_MANAGEMENT.md - Current sprint status and active issues
-2. ISSUE_3_COMPLETION_PLAN.md - Current development focus (Game Host Dashboard)
-3. TESTING_STRATEGY.md - Coverage decisions and test exclusions
-4. PROJECT_CHARTER.md - Database schema and project overview
+1. **CURRENT_STATUS.md** - Real-time project status and immediate next steps
+2. **PROJECT_MANAGEMENT.md** - Project structure, issues, and static information
+3. **issues/3. Game Host Dashboard.md** - Current active issue specification
 
-**Current Development Focus:**
-- ISSUE_3_COMPLETION_PLAN.md - Critical issues and completion roadmap for Issue #3
-- issues/3. Game Host Dashboard.md - Complete specification with implementation status
+**Service Configuration:**
+- **SUPABASE_REFERENCE.md** - Database configuration and RLS policies
+- **DEPLOYMENT_REFERENCE.md** - Production deployment procedures
+- **LINEAR_REFERENCE.md** - Linear workspace configuration
 
-**Algorithm & Implementation:**
-- DAILY_DOUBLE_ALGORITHM.md - CSV parsing and automatic Daily Double placement
-- SUPABASE_SETUP.md - Database configuration and RLS policies
-- DEPLOYMENT_GUIDE.md - Production deployment procedures
+**Implementation Details:**
+- **DAILY_DOUBLE_ALGORITHM.md** - CSV parsing and automatic Daily Double placement
+- **reference/strategy/TESTING_STRATEGY.md** - Testing approach and best practices

@@ -1,15 +1,47 @@
 # Euno's Jeopardy - Project Management
 
 ## Project Overview
-Online platform for hosting custom Jeopardy games with friends. Features real-time gameplay, buzzer system, host controls, and clue set management.
+Online platform to create and host custom Jeopardy!-style games for friends. The app runs one game at a time: all connected non-host users are players in the current game (no in-app chat; players coordinate via Discord voice). The host adjudicates answers manually via UI controls. Players are currently unbounded (a later UI soft limit may apply). Hosts can prepare multiple clue sets in advance and load one when a game begins. Each clue set contains two boards (Jeopardy and Double Jeopardy: 6 categories × 5 clues with constrained Daily Double locations) plus a Final Jeopardy category and clue.
 
 **Repository**: https://github.com/Eunomiac/eunos-jeopardy
-**Status**: Phase 2 Complete - Ready for Development
 **Current Phase**: Phase 3 - Core Development
 
+## Technical Architecture
+
+### Frontend Stack
+- Framework: React 19 with TypeScript
+- Build Tool: Vite
+- Styling: SCSS (component-scoped + global styles)
+- UI Approach: Game-style interface with turns/states
+- Component Organization: Feature-based folders
+
+### Backend Strategy
+- Approach: Client app with Supabase backend services
+- Database: Supabase PostgreSQL with Row Level Security (RLS)
+- Authentication: Supabase Auth (email/password; consider magic links)
+- Real-time: Supabase Realtime channels for lobby/game/buzzer events
+- API Integrations: None initially
+
+### Data Management
+- Data Sources: User-authored game content (boards, categories, clues)
+- Processing: Simple validation and server-side checks where needed
+- Storage: Relational schema in Supabase; row ownership + RLS
+- Update Frequency: Real-time during games; on-demand for authoring
+
+### Deployment & Hosting
+- Platform: Vercel
+- Deployment: Automatic from GitHub main branch
+- Security: RLS policies, authenticated endpoints, input validation
+- Backup: Supabase automatic backups
+
+### Performance Considerations
+- Scale: Small/medium sessions (up to ~20 concurrent players)
+- Optimization: Batched updates, memoization, DB indexing, lean payloads
+
 ## Issue Management
-- this document summarizes the current state of the project and the issues that need to be addressed
-- for more detailed plans to resolve each issue, refer to the numbered documents in the `docs/ai/issues/` folder
+This document contains the static project structure and issue definitions. For current status, progress updates, and rapidly changing information, see **[CURRENT_STATUS.md](./CURRENT_STATUS.md)**.
+
+For detailed implementation plans for each issue, refer to the numbered documents in the `docs/ai/issues/` folder.
 
 ---
 
@@ -28,7 +60,7 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 - [x] Development environment configuration
 
 ### 🔄 Phase 3: Core Development (IN PROGRESS)
-**Current Focus**: Test coverage improvement and player interface development
+**Current Focus**: Player interface development and core buzzer system implementation
 
 **Completed**:
 - ✅ Simplified authentication and CSV-based clue loading
@@ -43,7 +75,7 @@ Online platform for hosting custom Jeopardy games with friends. Features real-ti
 
 ---
 
-## Current Sprint: Test Coverage & Player Interface
+## Current Sprint: Game Host Dashboard & Player Interface
 
 ### 🔴 High Priority Issues
 
@@ -91,7 +123,7 @@ __for public release__
 
 **Acceptance Criteria**:
 - [ ] Define simplified CSV format specification (round, category, value, clue, answer)
-- [ ] Create example CSV files for testing
+- [ ] Create example CSV files for validation
 - [ ] Build file upload component with drag-and-drop
 - [ ] Implement CSV parser with basic validation
 - [ ] **Implement automatic Daily Double placement algorithm**
@@ -111,7 +143,7 @@ __for public release__
     - Row 4: 39% chance
     - Row 5 (highest values): 26% chance
 - Basic validation: required columns, proper round structure, 6 categories × 5 clues per round
-- **Reference**: See `docs/ai/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
+- **Reference**: See `docs/ai/features/DAILY_DOUBLE_ALGORITHM.md` for complete algorithm specification
 - **Deferred to Phase 3**: In-app clue editor, drag-and-drop Daily Double placement, advanced validation
 
 **Phase 3 Enhancements**:
@@ -132,7 +164,7 @@ __for public release__
 ---
 
 #### Issue #3: Game Host Dashboard
-**Status**: ✅ COMPLETE
+**Status**: 🔄 IN PROGRESS (Phase 2: Core Buzzer System)
 **Assignee**: Development Team
 **Epic**: Game Control
 **Priority**: 🔴 High (Foundation)
@@ -148,6 +180,7 @@ __for public release__
 - [x] Basic dashboard layout and navigation
 - [x] Control buzzer lock/unlock (working)
 - [x] Game ending functionality (working)
+- [x] Code quality standards met (SonarQube quality gates passing)
 - [ ] View player buzzer order (deferred - no players yet)
 - [ ] Adjudicate answers (correct/incorrect) (deferred - no players yet)
 - [ ] Manage scoring and wagers (deferred - no players yet)
@@ -161,8 +194,8 @@ __for public release__
 - ✅ Authentication and session management working correctly
 - ✅ **RESOLVED**: RLS policies rebuilt and working correctly
 - ✅ **RESOLVED**: Game creation, buzzer controls, and game ending all functional
-- ❌ **REMAINING**: Test coverage at 68.79% (target: 90%+) - ready for remote agent
-- 🔄 **NEXT**: Achieve 90% test coverage, then implement player interface
+- ✅ **RESOLVED**: Code quality standards met (SonarQube quality gates passing)
+- 🔄 **NEXT**: Complete Issue #3, then implement player interface
 
 ---
 
@@ -295,11 +328,9 @@ __for public release__
 
 ## Technical Debt & Improvements
 
-### Code Quality
-- 🔄 **IN PROGRESS**: Fix test failures and achieve 90% coverage (currently 71.61%)
-  - 8 failing tests in GameCreator component need fixes
-  - GameHostDashboard component needs test coverage (currently 3.61%)
-  - Supabase mocking issues in test suite
+> **Note**: For current project status and immediate technical issues, see [CURRENT_STATUS.md](./CURRENT_STATUS.md).
+
+### Code Quality (Future Improvements)
 - [ ] Address SCSS deprecation warnings
 - [ ] Implement comprehensive error boundaries
 - [ ] Add accessibility features (ARIA labels, keyboard navigation)
@@ -332,8 +363,7 @@ __for public release__
 
 For each issue to be considered complete:
 - [ ] Feature implemented according to acceptance criteria
-- [ ] Unit tests written with >80% coverage for new code
-- [ ] Integration tests for critical paths
+- [ ] Code quality standards met (handled by remote agents)
 - [ ] Code reviewed and approved
 - [ ] SonarQube quality gate passed
 - [ ] Documentation updated
@@ -342,69 +372,28 @@ For each issue to be considered complete:
 
 ---
 
-## Next Actions
+## Next Actions & Progress
 
-1. **Fix Issue #3 Test Failures** (High Priority)
-   - Resolve 8 failing tests in GameCreator component
-   - Fix Supabase client mocking issues
-   - Achieve 90%+ test coverage target
+> **Note**: For current next actions, progress updates, and daily status changes, see [CURRENT_STATUS.md](./CURRENT_STATUS.md).
 
-2. **Add Games Table RLS Policy** (Critical Blocker)
-   - Add INSERT policy for authenticated users on games table
-   - Test game creation functionality end-to-end
+### Historical Progress Summary
 
-3. **Complete Issue #3 Implementation** (Medium Priority)
-   - Add Supabase Realtime subscriptions for live updates
-   - Complete GameHostDashboard UI components
-   - Implement buzzer control, answer adjudication, scoring
-
-4. **Begin Issue #4: Player Interface** (Next Sprint)
-   - Voice-chat focused player interface
-   - Large buzzer button with mobile-first design
-
----
-
-## Progress Log
-
-### 2025-09-13
-- ✅ **Issue #3 COMPLETE**: Game Host Dashboard
+#### 2025-09-13
+- ✅ **Issue #3 Major Progress**: Game Host Dashboard
   - ✅ **Authentication Issues Resolved**: Fixed session management and logout state clearing
   - ✅ **RLS Policies Rebuilt**: Completely rebuilt RLS policies with clean, working syntax
   - ✅ **Game Creation Working**: End-to-end game creation workflow functional
   - ✅ **Host Controls Working**: Buzzer lock/unlock and game ending functionality complete
   - ✅ **Database Integration**: All CRUD operations working with proper authentication
   - ✅ **UI Integration**: Seamless navigation between clue set selection, game creation, and host dashboard
-  - 🎯 **Next**: Achieve 90% test coverage via remote agent, then create detailed Issue #4 plan document
 
-### 2025-09-11
-- 🔄 **Issue #3 Development**: Game Host Dashboard Foundation
-  - ✅ **Core Architecture**: Complete GameService with CRUD operations for games, players, buzzes, answers, wagers
-  - ✅ **Components**: GameCreator for game creation, GameHostDashboard with basic layout
-  - ✅ **Navigation**: Tab-based system in App.tsx (Load Clue Sets → Host Game → Dashboard)
-  - ✅ **Integration**: Seamless integration with existing authentication and clue set systems
-  - ❌ **Discovered Issues**: Authentication/RLS policy problems preventing game creation
-
-### 2025-09-09
+#### 2025-09-09
 - ✅ **Issue #1 COMPLETE**: Simplified User Management System
-  - Implemented basic Supabase authentication with login/logout
-  - Created AuthContext with automatic profile creation
-  - Added proper error handling and loading states
-  - Users can now authenticate and access the application
 - ✅ **Issue #2 COMPLETE**: CSV Question Set Loader
-  - Built comprehensive CSV parser with validation (prompt/response terminology)
-  - Implemented clue set selector with file discovery
-  - Created simplified database schema with proper relationships
-  - Fixed foreign key constraints (clues.category_id → categories.id)
-  - Added Row Level Security policies for multi-user data protection
-  - Resolved database constraint issues (boards_round_check)
-  - Global type definitions for RoundType and GameStatus
 
-### 2025-09-08
+#### 2025-09-08
 - ✅ Completed Phase 2 setup (infrastructure & integrations)
-- ✅ Created project management document
 - ✅ **Strategy Pivot**: Adopted private-use-first development approach
-- ✅ Simplified authentication and clue management requirements
-- ✅ Updated project issues to reflect CSV-first clue loading
 
 ---
 
@@ -419,6 +408,5 @@ For each issue to be considered complete:
 
 ---
 
-*Last Updated: 2025-09-13*
 *Phase: 3 - Core Development*
-*Sprint: Test Coverage Improvement (90% Goal)*
+*For current sprint status and last updated information, see [CURRENT_STATUS.md](./CURRENT_STATUS.md)*
