@@ -24,6 +24,16 @@ export interface ClueWithState extends Clue {
 }
 
 /**
+ * Daily Double position data structure
+ */
+export interface DailyDoublePosition {
+  /** Category number (1-based) */
+  category: number
+  /** Row number (1-based) */
+  row: number
+}
+
+/**
  * Service class for managing clue-related operations during gameplay.
  *
  * This service handles clue state management, selection, revelation, and completion
@@ -138,6 +148,80 @@ export class ClueService {
     }
 
     return data || []
+  }
+
+  /**
+   * Checks if a clue is a Daily Double based on its position and board data.
+   *
+   * @param clueId - UUID of the clue to check
+   * @returns Promise resolving to true if the clue is a Daily Double
+   * @throws {Error} When database operation fails
+   */
+  static async isDailyDouble(clueId: string): Promise<boolean> {
+    // Get clue with its category and board information
+    const { data: clue, error: clueError } = await supabase
+      .from('clues')
+      .select(`
+        position,
+        category:categories!inner(
+          position,
+          board:boards!inner(
+            daily_double_cells
+          )
+        )
+      `)
+      .eq('id', clueId)
+      .single()
+
+    if (clueError) {
+      throw new Error(`Failed to check Daily Double status: ${clueError.message}`)
+    }
+
+    if (!clue || !clue.category) {
+      return false
+    }
+
+    // Parse Daily Double positions from JSONB
+    const dailyDoublePositions = clue.category.board?.daily_double_cells as unknown as DailyDoublePosition[] | null
+
+    if (!dailyDoublePositions || !Array.isArray(dailyDoublePositions)) {
+      return false
+    }
+
+    // Check if this clue's position matches any Daily Double position
+    return dailyDoublePositions.some(position =>
+      position.category === clue.category.position &&
+      position.row === clue.position
+    )
+  }
+
+  /**
+   * Gets Daily Double positions for a specific board/round.
+   *
+   * @param clueSetId - UUID of the clue set
+   * @param round - Round type to get Daily Double positions for
+   * @returns Promise resolving to array of Daily Double positions
+   * @throws {Error} When database operation fails
+   */
+  static async getDailyDoublePositions(clueSetId: string, round: 'jeopardy' | 'double' | 'final'): Promise<DailyDoublePosition[]> {
+    const { data: board, error: boardError } = await supabase
+      .from('boards')
+      .select('daily_double_cells')
+      .eq('clue_set_id', clueSetId)
+      .eq('round', round)
+      .single()
+
+    if (boardError) {
+      throw new Error(`Failed to get Daily Double positions: ${boardError.message}`)
+    }
+
+    if (!board || !board.daily_double_cells) {
+      return []
+    }
+
+    // Parse and validate Daily Double positions
+    const positions = board.daily_double_cells as unknown as DailyDoublePosition[]
+    return Array.isArray(positions) ? positions : []
   }
 
   /**

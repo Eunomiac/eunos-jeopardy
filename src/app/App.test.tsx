@@ -5,14 +5,17 @@ import { AuthProvider } from '../contexts/AuthContext'
 import * as AuthContext from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { loadClueSetFromCSV, saveClueSetToDatabase } from '../services/clueSets/loader'
+import { ClueSetService } from '../services/clueSets/clueSetService'
 
 // Mock the services
 jest.mock('../services/games/GameService')
 jest.mock('../services/clueSets/loader')
+jest.mock('../services/clueSets/clueSetService')
 
 const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockLoadClueSetFromCSV = loadClueSetFromCSV as jest.MockedFunction<typeof loadClueSetFromCSV>
 const mockSaveClueSetToDatabase = saveClueSetToDatabase as jest.MockedFunction<typeof saveClueSetToDatabase>
+const mockClueSetService = ClueSetService as jest.Mocked<typeof ClueSetService>
 
 // Helper function to render App with AuthProvider
 const renderWithAuth = (ui: React.ReactElement) => {
@@ -44,6 +47,21 @@ const mockSession: Session = {
   token_type: 'bearer',
   user: mockUser
 }
+
+const mockUserClueSets = [
+  {
+    id: 'clue-set-1',
+    name: 'Test Game 1',
+    created_by: 'user-123',
+    created_at: '2023-01-01T00:00:00Z'
+  },
+  {
+    id: 'clue-set-2',
+    name: 'Test Game 2',
+    created_by: 'user-123',
+    created_at: '2023-01-01T00:00:00Z'
+  }
+]
 
 const mockClueSetData = {
   name: 'Test Game 1',
@@ -95,6 +113,8 @@ describe('App', () => {
     // Mock GameService methods used by GameHostDashboard
     mockGameService.getGame.mockResolvedValue(mockGame)
     mockGameService.getPlayers.mockResolvedValue([])
+    // Mock ClueSetService methods used by ClueSetSelector
+    mockClueSetService.getUserClueSets.mockResolvedValue(mockUserClueSets)
   })
 
   it('renders the project name', () => {
@@ -172,9 +192,14 @@ describe('App', () => {
     it('should handle successful game creation and switch to dashboard mode', async () => {
       renderWithAuth(<App />)
 
+      // Wait for clue sets to load and dropdown to appear
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument()
+      })
+
       // Select a clue set
       const dropdown = screen.getByRole('combobox')
-      fireEvent.change(dropdown, { target: { value: 'test-game-1.csv' } })
+      fireEvent.change(dropdown, { target: { value: 'clue-set-1' } })
 
       // Click Host Game button
       const hostButton = screen.getByText('Host Game')
@@ -182,9 +207,7 @@ describe('App', () => {
 
       // Wait for game creation to complete
       await waitFor(() => {
-        expect(mockLoadClueSetFromCSV).toHaveBeenCalledWith('test-game-1.csv')
-        expect(mockSaveClueSetToDatabase).toHaveBeenCalledWith(mockClueSetData, 'user-123')
-        expect(mockGameService.createGame).toHaveBeenCalledWith('user-123', 'clue-set-123')
+        expect(mockGameService.createGame).toHaveBeenCalledWith('user-123', 'clue-set-1')
       })
 
       // Should switch to dashboard mode
@@ -200,13 +223,18 @@ describe('App', () => {
 
     it('should handle game creation error gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
-      mockLoadClueSetFromCSV.mockRejectedValue(new Error('Failed to load CSV'))
+      mockGameService.createGame.mockRejectedValue(new Error('Failed to create game'))
 
       renderWithAuth(<App />)
 
+      // Wait for clue sets to load and dropdown to appear
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument()
+      })
+
       // Select a clue set
       const dropdown = screen.getByRole('combobox')
-      fireEvent.change(dropdown, { target: { value: 'test-game-1.csv' } })
+      fireEvent.change(dropdown, { target: { value: 'clue-set-1' } })
 
       // Click Host Game button
       const hostButton = screen.getByText('Host Game')
@@ -227,13 +255,16 @@ describe('App', () => {
     it('should not create game when no clue set is selected', async () => {
       renderWithAuth(<App />)
 
+      // Wait for clue sets to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument()
+      })
+
       // Click Host Game button without selecting a clue set
       const hostButton = screen.getByText('Host Game')
       expect(hostButton).toBeDisabled()
 
       // Services should not be called
-      expect(mockLoadClueSetFromCSV).not.toHaveBeenCalled()
-      expect(mockSaveClueSetToDatabase).not.toHaveBeenCalled()
       expect(mockGameService.createGame).not.toHaveBeenCalled()
     })
 
@@ -270,9 +301,14 @@ describe('App', () => {
     it('should handle back to creator navigation from dashboard', async () => {
       renderWithAuth(<App />)
 
+      // Wait for clue sets to load and dropdown to appear
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument()
+      })
+
       // Select a clue set and create a game
       const dropdown = screen.getByRole('combobox')
-      fireEvent.change(dropdown, { target: { value: 'test-game-1.csv' } })
+      fireEvent.change(dropdown, { target: { value: 'clue-set-1' } })
 
       const hostButton = screen.getByText('Host Game')
       fireEvent.click(hostButton)

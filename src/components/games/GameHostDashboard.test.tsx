@@ -2,10 +2,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { GameHostDashboard } from './GameHostDashboard'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
+import { ClueService } from '../../services/clues/ClueService'
 
-// Mock GameService
+// Mock services
 jest.mock('../../services/games/GameService')
+jest.mock('../../services/clues/ClueService')
 const mockGameService = GameService as jest.Mocked<typeof GameService>
+const mockClueService = ClueService as jest.Mocked<typeof ClueService>
 
 // Mock window.confirm
 const mockConfirm = jest.fn()
@@ -93,6 +96,9 @@ describe('GameHostDashboard', () => {
     jest.clearAllMocks()
     mockGameService.getGame.mockResolvedValue(mockGame)
     mockGameService.getPlayers.mockResolvedValue(mockPlayers)
+    // Mock ClueService methods
+    mockClueService.getGameClueStates.mockResolvedValue([])
+    mockClueService.getDailyDoublePositions.mockResolvedValue([])
   })
 
   afterEach(() => {

@@ -101,6 +101,9 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
   /** Current buzzer queue for the focused clue */
   const [buzzerQueue, setBuzzerQueue] = useState<Buzz[]>([])
 
+  /** Daily Double positions for the current round */
+  const [dailyDoublePositions, setDailyDoublePositions] = useState<Array<{category: number, row: number}>>([])
+
   /** Loading state for initial data fetch and UI feedback */
   const [loading, setLoading] = useState(true)
 
@@ -169,6 +172,10 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
         // Load clue states for the game
         const clueStatesData = await ClueService.getGameClueStates(gameId)
         setClueStates(clueStatesData)
+
+        // Load Daily Double positions for the current round
+        const dailyDoubleData = await ClueService.getDailyDoublePositions(gameData.clue_set_id, gameData.current_round)
+        setDailyDoublePositions(dailyDoubleData)
 
         // Load focused clue if one is set
         if (gameData.focused_clue_id) {
@@ -260,8 +267,16 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
       const fullClueData = await ClueService.getClueById(clueId)
       setFocusedClue(fullClueData)
 
-      setMessage(`Clue selected: ${clueData.prompt.substring(0, 50)}...`)
-      setMessageType('success')
+      // Check if this is a Daily Double
+      const isDailyDouble = await ClueService.isDailyDouble(clueId)
+
+      if (isDailyDouble) {
+        setMessage(`🎯 Daily Double selected! Get player's wager before revealing.`)
+        setMessageType('success')
+      } else {
+        setMessage(`Clue selected: ${clueData.prompt.substring(0, 50)}...`)
+        setMessageType('success')
+      }
     } catch (error) {
       console.error('Failed to select clue:', error)
       setMessage(`Failed to select clue: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -631,10 +646,17 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                         const isCompleted = clueState?.completed || false
                         const isFocused = focusedClue && focusedClue.id === item.clue.id
 
+                        // Check if this clue is a Daily Double
+                        const isDailyDouble = dailyDoublePositions.some(position =>
+                          position.category === (item.categoryIndex + 1) &&
+                          position.row === item.clue.position
+                        )
+
                         let cellClass = 'clue-cell'
                         if (isCompleted) cellClass += ' completed'
                         else if (isRevealed) cellClass += ' revealed'
                         if (isFocused) cellClass += ' focused'
+                        if (isDailyDouble) cellClass += ' daily-double'
 
                         const handleClick = () => {
                           if (!isCompleted && !isRevealed && item.clue.id) {

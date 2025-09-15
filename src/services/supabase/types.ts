@@ -79,16 +79,19 @@ export type Database = {
       boards: {
         Row: {
           clue_set_id: string | null
+          daily_double_cells: Json | null
           id: string
           round: Database["public"]["Enums"]["round_type"]
         }
         Insert: {
           clue_set_id?: string | null
+          daily_double_cells?: Json | null
           id?: string
           round: Database["public"]["Enums"]["round_type"]
         }
         Update: {
           clue_set_id?: string | null
+          daily_double_cells?: Json | null
           id?: string
           round?: Database["public"]["Enums"]["round_type"]
         }
