@@ -310,6 +310,7 @@ export class ClueSetService {
   static async loadClueSetFromDatabase(clueSetId: string): Promise<ClueSetData> {
     // Define types for database response structure
     interface DatabaseClue {
+      id: string
       value: number
       prompt: string
       response: string
@@ -350,6 +351,7 @@ export class ClueSetService {
           name,
           position,
           clues (
+            id,
             value,
             prompt,
             response,
@@ -385,6 +387,7 @@ export class ClueSetService {
         clues: [...(category.clues || [])]
           .sort((a, b) => a.position - b.position)
           .map((clue) => ({
+            id: clue.id,
             value: clue.value,
             prompt: clue.prompt,
             response: clue.response,
@@ -408,6 +411,7 @@ export class ClueSetService {
         clues: [...(category.clues || [])]
           .sort((a, b) => a.position - b.position)
           .map((clue) => ({
+            id: clue.id,
             value: clue.value,
             prompt: clue.prompt,
             response: clue.response,

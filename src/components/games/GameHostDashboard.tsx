@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { GameService, type Game, type Player } from '../../services/games/GameService'
+import { ClueService, type Clue, type ClueState } from '../../services/clues/ClueService'
 import { ClueSetService } from '../../services/clueSets/clueSetService'
 import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
 import './GameHostDashboard.scss'
@@ -91,6 +92,15 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
   /** List of players who have joined the game with scores and timestamps */
   const [players, setPlayers] = useState<Player[]>([])
 
+  /** Current focused clue data */
+  const [focusedClue, setFocusedClue] = useState<Clue | null>(null)
+
+  /** All clue states for the current game */
+  const [clueStates, setClueStates] = useState<ClueState[]>([])
+
+  /** Current buzzer queue for the focused clue */
+  const [buzzerQueue, setBuzzerQueue] = useState<any[]>([])
+
   /** Loading state for initial data fetch and UI feedback */
   const [loading, setLoading] = useState(true)
 
@@ -156,6 +166,18 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
         const playersData = await GameService.getPlayers(gameId)
         setPlayers(playersData)
 
+        // Load clue states for the game
+        const clueStatesData = await ClueService.getGameClueStates(gameId)
+        setClueStates(clueStatesData)
+
+        // Load focused clue if one is set
+        if (gameData.focused_clue_id) {
+          const focusedClueData = await ClueService.getClueById(gameData.focused_clue_id)
+          setFocusedClue(focusedClueData)
+        } else {
+          setFocusedClue(null)
+        }
+
       } catch (error) {
         // Log error for debugging and development
         console.error('Failed to load game data:', error)
@@ -190,6 +212,177 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
       }
     }
   }, [])
+
+  // Load buzzer queue when focused clue changes
+  useEffect(() => {
+    loadBuzzerQueue()
+  }, [focusedClue])
+
+  /**
+   * Handles clue selection from the game board.
+   *
+   * Sets the selected clue as the focused clue for the game, which highlights
+   * it on both the host dashboard and player interfaces. The clue selection
+   * can be changed until the clue is revealed.
+   *
+   * @param clueId - UUID of the clue to select
+   * @param clueData - The clue data for immediate UI updates
+   */
+  const handleClueSelection = async (clueId: string, clueData: ClueData) => {
+    if (!user || !game) { return }
+
+    try {
+      setMessage('Selecting clue...')
+
+      // Set focused clue in game state
+      const updatedGame = await GameService.setFocusedClue(gameId, clueId, user.id)
+      setGame(updatedGame)
+
+      // Get full clue data and set as focused
+      const fullClueData = await ClueService.getClueById(clueId)
+      setFocusedClue(fullClueData)
+
+      setMessage(`Clue selected: ${clueData.prompt.substring(0, 50)}...`)
+      setMessageType('success')
+    } catch (error) {
+      console.error('Failed to select clue:', error)
+      setMessage(`Failed to select clue: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setMessageType('error')
+    }
+  }
+
+  /**
+   * Handles revealing the focused clue to all players.
+   *
+   * Marks the clue as revealed in the database and locks the clue selection.
+   * After revelation, players can see the clue prompt and the host can unlock
+   * the buzzer for player responses.
+   */
+  const handleRevealClue = async () => {
+    if (!user || !game || !focusedClue) { return }
+
+    try {
+      setMessage('Revealing clue...')
+
+      // Mark clue as revealed
+      await ClueService.revealClue(gameId, focusedClue.id)
+
+      // Update clue states
+      const updatedClueStates = await ClueService.getGameClueStates(gameId)
+      setClueStates(updatedClueStates)
+
+      setMessage('Clue revealed to all players')
+      setMessageType('success')
+    } catch (error) {
+      console.error('Failed to reveal clue:', error)
+      setMessage(`Failed to reveal clue: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setMessageType('error')
+    }
+  }
+
+  /**
+   * Loads the current buzzer queue for the focused clue.
+   */
+  const loadBuzzerQueue = async () => {
+    if (!focusedClue) {
+      setBuzzerQueue([])
+      return
+    }
+
+    try {
+      const buzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id)
+      setBuzzerQueue(buzzes)
+    } catch (error) {
+      console.error('Failed to load buzzer queue:', error)
+      setBuzzerQueue([])
+    }
+  }
+
+  /**
+   * Handles selecting a player from the buzzer queue.
+   *
+   * Sets the selected player as the focused player for answer adjudication.
+   *
+   * @param playerId - UUID of the player to select
+   */
+  const handlePlayerSelection = async (playerId: string) => {
+    if (!user || !game) { return }
+
+    try {
+      setMessage('Selecting player...')
+
+      const updatedGame = await GameService.setFocusedPlayer(gameId, playerId, user.id)
+      setGame(updatedGame)
+
+      // Find player name for feedback
+      const player = players.find(p => p.user_id === playerId)
+      const playerName = player?.display_name || 'Unknown Player'
+
+      setMessage(`Selected player: ${playerName}`)
+      setMessageType('success')
+    } catch (error) {
+      console.error('Failed to select player:', error)
+      setMessage(`Failed to select player: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setMessageType('error')
+    }
+  }
+
+  /**
+   * Handles marking an answer as correct or incorrect.
+   *
+   * Completes the adjudication workflow by recording the answer, updating
+   * the player's score, and managing clue completion state.
+   *
+   * @param isCorrect - Whether the player's answer is correct
+   */
+  const handleAdjudication = async (isCorrect: boolean) => {
+    if (!user || !game || !focusedClue || !game.focused_player_id) { return }
+
+    try {
+      setMessage(`Marking answer ${isCorrect ? 'correct' : 'incorrect'}...`)
+
+      // For now, use a placeholder response - in a real implementation,
+      // this would come from the player's actual response
+      const playerResponse = isCorrect ? 'Correct response' : 'Incorrect response'
+
+      // Use clue value for scoring (Daily Double wagers would be handled separately)
+      const scoreValue = focusedClue.value
+
+      // Complete adjudication workflow
+      const updatedGame = await GameService.adjudicateAnswer(
+        gameId,
+        focusedClue.id,
+        game.focused_player_id,
+        playerResponse,
+        isCorrect,
+        scoreValue,
+        user.id
+      )
+
+      setGame(updatedGame)
+
+      // If answer was correct, clear focused clue
+      if (isCorrect) {
+        setFocusedClue(null)
+      }
+
+      // Update clue states and player scores
+      const [updatedClueStates, updatedPlayers] = await Promise.all([
+        ClueService.getGameClueStates(gameId),
+        GameService.getPlayers(gameId)
+      ])
+
+      setClueStates(updatedClueStates)
+      setPlayers(updatedPlayers)
+
+      setMessage(`Answer marked ${isCorrect ? 'correct' : 'incorrect'}, score updated`)
+      setMessageType('success')
+    } catch (error) {
+      console.error('Failed to adjudicate answer:', error)
+      setMessage(`Failed to adjudicate answer: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setMessageType('error')
+    }
+  }
 
   /**
    * Handles toggling the buzzer lock state for the current game.
@@ -426,17 +619,34 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                         return a.categoryIndex - b.categoryIndex
                       })
 
-                      // For demo purposes, randomly reveal some clues (keep existing logic)
-                      const focusedIndex = 4
-                      const revealedIndices = new Set([1, 3, 7, 9, 12, 15, 18, 21, 24, 26, 28, 29])
-
                       return allClues.map((item, index) => {
-                        const isRevealed = revealedIndices.has(index)
-                        const isFocused = index === focusedIndex
-                        const cellClass = `clue-cell ${isRevealed ? 'revealed' : ''} ${isFocused ? 'focused' : ''}`.trim()
+                        // Find clue state for this clue using the clue ID
+                        const clueState = clueStates.find(state =>
+                          state.clue_id === item.clue.id
+                        )
+
+                        const isRevealed = clueState?.revealed || false
+                        const isCompleted = clueState?.completed || false
+                        const isFocused = focusedClue && focusedClue.id === item.clue.id
+
+                        let cellClass = 'clue-cell'
+                        if (isCompleted) cellClass += ' completed'
+                        else if (isRevealed) cellClass += ' revealed'
+                        if (isFocused) cellClass += ' focused'
+
+                        const handleClick = () => {
+                          if (!isCompleted && !isRevealed && item.clue.id) {
+                            handleClueSelection(item.clue.id, item.clue)
+                          }
+                        }
 
                         return (
-                          <div key={`clue-${index}-${item.clue.value}`} className={cellClass}>
+                          <div
+                            key={`clue-${item.clue.id || index}-${item.clue.value}`}
+                            className={cellClass}
+                            onClick={handleClick}
+                            style={{ cursor: (!isCompleted && !isRevealed) ? 'pointer' : 'default' }}
+                          >
                             ${item.clue.value}
                           </div>
                         )
@@ -487,7 +697,12 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 </div>
                 <div className="status-item">
                   <span className="text-uppercase jeopardy-gold">Clues Left:</span>
-                  <span>17</span>
+                  <span>{(() => {
+                    // Calculate clues left in current round
+                    const completedCount = clueStates.filter(state => state.completed).length
+                    const totalClues = game.current_round === 'final' ? 1 : 30 // 6 categories × 5 clues = 30
+                    return totalClues - completedCount
+                  })()}</span>
                 </div>
               </div>
               <div className="round-progress">
@@ -495,10 +710,18 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 <progress
                   id="round-progress-bar"
                   className="progress-bar w-100"
-                  value={17/30*100}
+                  value={(() => {
+                    const completedCount = clueStates.filter(state => state.completed).length
+                    const totalClues = game.current_round === 'final' ? 1 : 30
+                    return totalClues > 0 ? (completedCount / totalClues) * 100 : 0
+                  })()}
                   max={100}
                 >
-                  0% Complete
+                  {(() => {
+                    const completedCount = clueStates.filter(state => state.completed).length
+                    const totalClues = game.current_round === 'final' ? 1 : 30
+                    return totalClues > 0 ? Math.round((completedCount / totalClues) * 100) : 0
+                  })()}% Complete
                 </progress>
               </div>
             </div>
@@ -581,43 +804,66 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
           <div className="panel-content">
             {/* Focused Clue Display */}
             <div className="focused-clue-display">
-              <div className="clue-prompt">
-                <div className="form-label">Selected Clue:</div>
-                <div className="clue-text">
-                  JFK's Brother-In-Law Sargent Shriver was President of this Intl. Sports Program for people with intellectual disabilities
-                </div>
-              </div>
+              {focusedClue ? (
+                <>
+                  <div className="clue-prompt">
+                    <div className="form-label">Selected Clue (${focusedClue.value}):</div>
+                    <div className="clue-text">
+                      {focusedClue.prompt}
+                    </div>
+                  </div>
 
-              {/* Reveal Prompt and Buzzer Control Buttons */}
-              <div className="clue-control-buttons">
-                <div className="d-flex gap-2 mb-2">
-                  <button className="jeopardy-button flex-1">
-                    Reveal Prompt
-                  </button>
-                  <button
-                    className={`jeopardy-button flex-1 buzzer-toggle-button ${game.is_buzzer_locked ? 'locked' : 'unlocked'}`}
-                    onClick={handleToggleBuzzer}
-                  >
-                    {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
-                  </button>
-                </div>
-              </div>
+                  {/* Reveal Prompt and Buzzer Control Buttons */}
+                  <div className="clue-control-buttons">
+                    <div className="d-flex gap-2 mb-2">
+                      <button
+                        className="jeopardy-button flex-1"
+                        onClick={handleRevealClue}
+                        disabled={clueStates.find(state => state.clue_id === focusedClue.id)?.revealed || false}
+                      >
+                        {clueStates.find(state => state.clue_id === focusedClue.id)?.revealed ? 'Clue Revealed' : 'Reveal Prompt'}
+                      </button>
+                      <button
+                        className={`jeopardy-button flex-1 buzzer-toggle-button ${game.is_buzzer_locked ? 'locked' : 'unlocked'}`}
+                        onClick={handleToggleBuzzer}
+                      >
+                        {game.is_buzzer_locked ? 'Unlock Buzzer' : 'Lock Buzzer'}
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="clue-response">
-                <div className="form-label">Correct Response:</div>
-                <div className="response-text">
-                  What is the Special Olympics?
+                  <div className="clue-response">
+                    <div className="form-label">Correct Response:</div>
+                    <div className="response-text">
+                      {focusedClue.response}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-clue-selected">
+                  <div className="form-label">No Clue Selected</div>
+                  <div className="clue-text text-muted">
+                    Click on a clue from the game board to select it for play.
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Adjudication Control Buttons */}
             <div className="clue-control-buttons">
               <div className="d-flex gap-2">
-                <button className="jeopardy-button flex-1">
+                <button
+                  className="jeopardy-button flex-1"
+                  onClick={() => handleAdjudication(true)}
+                  disabled={!focusedClue || !game.focused_player_id}
+                >
                   Mark Correct
                 </button>
-                <button className="jeopardy-button flex-1">
+                <button
+                  className="jeopardy-button flex-1"
+                  onClick={() => handleAdjudication(false)}
+                  disabled={!focusedClue || !game.focused_player_id}
+                >
                   Mark Wrong
                 </button>
               </div>
