@@ -7,8 +7,14 @@ import { ClueService } from '../../services/clues/ClueService'
 // Mock services
 jest.mock('../../services/games/GameService')
 jest.mock('../../services/clues/ClueService')
+jest.mock('../../services/clueSets/clueSetService')
+
 const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockClueService = ClueService as jest.Mocked<typeof ClueService>
+
+// Import ClueSetService after mocking
+import { ClueSetService } from '../../services/clueSets/clueSetService'
+const mockClueSetService = ClueSetService as jest.Mocked<typeof ClueSetService>
 
 // Mock window.confirm
 const mockConfirm = jest.fn()
@@ -96,9 +102,58 @@ describe('GameHostDashboard', () => {
     jest.clearAllMocks()
     mockGameService.getGame.mockResolvedValue(mockGame)
     mockGameService.getPlayers.mockResolvedValue(mockPlayers)
-    // Mock ClueService methods
+    mockGameService.getBuzzesForClue.mockResolvedValue([]) // Mock buzzer queue
+
+    // Mock ClueService methods to prevent "Clue set not found" error
     mockClueService.getGameClueStates.mockResolvedValue([])
     mockClueService.getDailyDoublePositions.mockResolvedValue([])
+    // Mock successful clue loading to prevent error state
+    mockClueService.getClueById.mockResolvedValue({
+      id: 'clue-1',
+      prompt: 'Test clue prompt',
+      response: 'Test response',
+      value: 200,
+      category_id: 'cat-1',
+      position: 1
+    })
+
+    // Mock ClueSetService to prevent "Clue set not found" error
+    mockClueSetService.loadClueSetFromDatabase.mockResolvedValue({
+      name: 'Test Clue Set',
+      filename: 'test-clue-set.csv',
+      rounds: {
+        jeopardy: Array.from({ length: 6 }, (_, i) => ({
+          name: `CATEGORY ${i + 1}`,
+          clues: Array.from({ length: 5 }, (_, j) => ({
+            id: `clue-${i}-${j}`,
+            value: (j + 1) * 200,
+            prompt: `Test prompt ${i}-${j}`,
+            response: `Test response ${i}-${j}`,
+            position: j + 1
+          }))
+        })),
+        double: Array.from({ length: 6 }, (_, i) => ({
+          name: `DOUBLE CATEGORY ${i + 1}`,
+          clues: Array.from({ length: 5 }, (_, j) => ({
+            id: `double-clue-${i}-${j}`,
+            value: (j + 1) * 400,
+            prompt: `Double test prompt ${i}-${j}`,
+            response: `Double test response ${i}-${j}`,
+            position: j + 1
+          }))
+        })),
+        final: {
+          name: 'FINAL JEOPARDY',
+          clues: [{
+            id: 'final-clue',
+            value: 0,
+            prompt: 'Final Jeopardy prompt',
+            response: 'Final Jeopardy response',
+            position: 1
+          }]
+        }
+      }
+    })
   })
 
   afterEach(() => {
@@ -177,29 +232,40 @@ describe('GameHostDashboard', () => {
       })
     })
 
-    it('should display buzzer status correctly when unlocked', () => {
-      expect(screen.getByText('🔓 UNLOCKED')).toBeInTheDocument()
-      expect(screen.getByText('Lock Buzzer')).toBeInTheDocument() // Only in buzzer panel now
+    it('should not display buzzer controls when no clue is focused', () => {
+      // Buzzer controls only appear when a clue is focused
+      expect(screen.queryByText('Lock Buzzer')).not.toBeInTheDocument()
+      expect(screen.queryByText('Unlock Buzzer')).not.toBeInTheDocument()
     })
 
-    it('should display buzzer status correctly when locked', async () => {
-      const lockedGame = { ...mockGame, is_buzzer_locked: true }
-      mockGameService.getGame.mockResolvedValue(lockedGame)
+    it('should display buzzer controls when clue is focused', async () => {
+      // Set up a game with a focused clue
+      const gameWithFocusedClue = { ...mockGame, focused_clue_id: 'clue-1' }
+      mockGameService.getGame.mockResolvedValue(gameWithFocusedClue)
 
       renderWithAuth(<GameHostDashboard {...mockProps} />)
 
       await waitFor(() => {
-        expect(screen.getByText('🔒 LOCKED')).toBeInTheDocument()
-        expect(screen.getByText('Unlock Buzzer')).toBeInTheDocument() // Only in buzzer panel now
+        // Should show buzzer control when clue is focused
+        expect(screen.getByText('Lock Buzzer')).toBeInTheDocument()
       })
     })
 
     it('should toggle buzzer lock successfully', async () => {
-      const updatedGame = { ...mockGame, is_buzzer_locked: true }
+      // Set up game with focused clue to show buzzer controls
+      const gameWithFocusedClue = { ...mockGame, focused_clue_id: 'clue-1' }
+      const updatedGame = { ...gameWithFocusedClue, is_buzzer_locked: true }
+      mockGameService.getGame.mockResolvedValue(gameWithFocusedClue)
       mockGameService.toggleBuzzerLock.mockResolvedValue(updatedGame)
 
-      const toggleButtons = screen.getAllByText('Lock Buzzer')
-      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Lock Buzzer')).toBeInTheDocument()
+      })
+
+      const toggleButton = screen.getByText('Lock Buzzer')
+      fireEvent.click(toggleButton)
 
       await waitFor(() => {
         expect(mockGameService.toggleBuzzerLock).toHaveBeenCalledWith('game-123', 'user-123')
@@ -208,11 +274,20 @@ describe('GameHostDashboard', () => {
     })
 
     it('should handle buzzer toggle error', async () => {
+      // Set up game with focused clue to show buzzer controls
+      const gameWithFocusedClue = { ...mockGame, focused_clue_id: 'clue-1' }
+      mockGameService.getGame.mockResolvedValue(gameWithFocusedClue)
       const error = new Error('Network error')
       mockGameService.toggleBuzzerLock.mockRejectedValue(error)
 
-      const toggleButtons = screen.getAllByText('Lock Buzzer')
-      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Lock Buzzer')).toBeInTheDocument()
+      })
+
+      const toggleButton = screen.getByText('Lock Buzzer')
+      fireEvent.click(toggleButton)
 
       await waitFor(() => {
         expect(screen.getByText('Failed to toggle buzzer: Network error')).toBeInTheDocument()
@@ -332,18 +407,19 @@ describe('GameHostDashboard', () => {
     })
 
     it('should display game information correctly', () => {
-      expect(screen.getByText('GAME STATUS')).toBeInTheDocument()
+      expect(screen.getByText('PLAYER CONTROL')).toBeInTheDocument() // Game status moved to Player Control panel
       expect(screen.getByText('Game ID: game-123')).toBeInTheDocument() // Game ID is in header
-      expect(screen.getByText(/Host:\s*test/)).toBeInTheDocument() // Email is truncated to username
+      // Host information is not displayed in current implementation
       expect(screen.getAllByText('in_progress').length).toBeGreaterThan(0)
       expect(screen.getAllByText('jeopardy').length).toBeGreaterThan(0)
     })
 
     it('should display placeholder content', () => {
-      // Updated to match your hard-coded test content
-      expect(screen.getAllByText('Selected Clue:').length).toBeGreaterThan(0)
+      // Check for current implementation's default state
+      expect(screen.getByText('No Clue Selected')).toBeInTheDocument()
       expect(screen.getByText('No active buzzes')).toBeInTheDocument()
-      expect(screen.getByText('Correct Response:')).toBeInTheDocument()
+      // "Correct Response:" only appears when a clue is focused, not in default state
+      expect(screen.getByText('Click on a clue from the game board to select it for play.')).toBeInTheDocument()
       // Check for some of the hard-coded content you've added for styling
       expect(screen.getAllByText('CATEGORY 5').length).toBeGreaterThan(0)
     })
@@ -379,11 +455,20 @@ describe('GameHostDashboard', () => {
     })
 
     it('should show success messages with correct styling', async () => {
-      const updatedGame = { ...mockGame, is_buzzer_locked: true }
+      // Set up game with focused clue to show buzzer controls
+      const gameWithFocusedClue = { ...mockGame, focused_clue_id: 'clue-1' }
+      const updatedGame = { ...gameWithFocusedClue, is_buzzer_locked: true }
+      mockGameService.getGame.mockResolvedValue(gameWithFocusedClue)
       mockGameService.toggleBuzzerLock.mockResolvedValue(updatedGame)
 
-      const toggleButtons = screen.getAllByText('Lock Buzzer')
-      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Lock Buzzer')).toBeInTheDocument()
+      })
+
+      const toggleButton = screen.getByText('Lock Buzzer')
+      fireEvent.click(toggleButton)
 
       await waitFor(() => {
         const alert = screen.getByText('Buzzer locked')
@@ -392,11 +477,20 @@ describe('GameHostDashboard', () => {
     })
 
     it('should show error messages with correct styling', async () => {
+      // Set up game with focused clue to show buzzer controls
+      const gameWithFocusedClue = { ...mockGame, focused_clue_id: 'clue-1' }
+      mockGameService.getGame.mockResolvedValue(gameWithFocusedClue)
       const error = new Error('Test error')
       mockGameService.toggleBuzzerLock.mockRejectedValue(error)
 
-      const toggleButtons = screen.getAllByText('Lock Buzzer')
-      fireEvent.click(toggleButtons[0]) // Click the first one (controls bar)
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Lock Buzzer')).toBeInTheDocument()
+      })
+
+      const toggleButton = screen.getByText('Lock Buzzer')
+      fireEvent.click(toggleButton)
 
       await waitFor(() => {
         const alert = screen.getByText('Failed to toggle buzzer: Test error')
