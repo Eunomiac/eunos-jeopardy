@@ -1,5 +1,6 @@
 import { supabase } from '../supabase/client'
 import type { Tables, TablesInsert, TablesUpdate } from '../supabase/types'
+import { ClueService } from '../clues/ClueService'
 
 /** Game entity type from database schema */
 export type Game = Tables<'games'>
@@ -140,6 +141,14 @@ export class GameService {
     // Defensive programming: ensure database returned expected data
     if (!data) {
       throw new Error('No game data returned from database')
+    }
+
+    // Initialize clue states for the new game
+    try {
+      await ClueService.initializeClueStates(data.id)
+    } catch (error) {
+      // Log error but don't fail game creation - clue states can be initialized later
+      console.warn('Failed to initialize clue states for new game:', error)
     }
 
     return data

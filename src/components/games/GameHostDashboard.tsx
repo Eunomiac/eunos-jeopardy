@@ -98,6 +98,9 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
   /** All clue states for the current game */
   const [clueStates, setClueStates] = useState<ClueState[]>([])
 
+  /** Current buzzer queue for the focused clue */
+  const [buzzerQueue, setBuzzerQueue] = useState<any[]>([])
+
   /** Loading state for initial data fetch and UI feedback */
   const [loading, setLoading] = useState(true)
 
@@ -210,6 +213,11 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     }
   }, [])
 
+  // Load buzzer queue when focused clue changes
+  useEffect(() => {
+    loadBuzzerQueue()
+  }, [focusedClue])
+
   /**
    * Handles clue selection from the game board.
    *
@@ -268,6 +276,53 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     } catch (error) {
       console.error('Failed to reveal clue:', error)
       setMessage(`Failed to reveal clue: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setMessageType('error')
+    }
+  }
+
+  /**
+   * Loads the current buzzer queue for the focused clue.
+   */
+  const loadBuzzerQueue = async () => {
+    if (!focusedClue) {
+      setBuzzerQueue([])
+      return
+    }
+
+    try {
+      const buzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id)
+      setBuzzerQueue(buzzes)
+    } catch (error) {
+      console.error('Failed to load buzzer queue:', error)
+      setBuzzerQueue([])
+    }
+  }
+
+  /**
+   * Handles selecting a player from the buzzer queue.
+   *
+   * Sets the selected player as the focused player for answer adjudication.
+   *
+   * @param playerId - UUID of the player to select
+   */
+  const handlePlayerSelection = async (playerId: string) => {
+    if (!user || !game) { return }
+
+    try {
+      setMessage('Selecting player...')
+
+      const updatedGame = await GameService.setFocusedPlayer(gameId, playerId, user.id)
+      setGame(updatedGame)
+
+      // Find player name for feedback
+      const player = players.find(p => p.user_id === playerId)
+      const playerName = player?.display_name || 'Unknown Player'
+
+      setMessage(`Selected player: ${playerName}`)
+      setMessageType('success')
+    } catch (error) {
+      console.error('Failed to select player:', error)
+      setMessage(`Failed to select player: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setMessageType('error')
     }
   }
@@ -642,7 +697,12 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 </div>
                 <div className="status-item">
                   <span className="text-uppercase jeopardy-gold">Clues Left:</span>
-                  <span>17</span>
+                  <span>{(() => {
+                    // Calculate clues left in current round
+                    const completedCount = clueStates.filter(state => state.completed).length
+                    const totalClues = game.current_round === 'final' ? 1 : 30 // 6 categories × 5 clues = 30
+                    return totalClues - completedCount
+                  })()}</span>
                 </div>
               </div>
               <div className="round-progress">
@@ -650,10 +710,18 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                 <progress
                   id="round-progress-bar"
                   className="progress-bar w-100"
-                  value={17/30*100}
+                  value={(() => {
+                    const completedCount = clueStates.filter(state => state.completed).length
+                    const totalClues = game.current_round === 'final' ? 1 : 30
+                    return totalClues > 0 ? (completedCount / totalClues) * 100 : 0
+                  })()}
                   max={100}
                 >
-                  0% Complete
+                  {(() => {
+                    const completedCount = clueStates.filter(state => state.completed).length
+                    const totalClues = game.current_round === 'final' ? 1 : 30
+                    return totalClues > 0 ? Math.round((completedCount / totalClues) * 100) : 0
+                  })()}% Complete
                 </progress>
               </div>
             </div>
