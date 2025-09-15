@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { GameService, type Game, type Player } from '../../services/games/GameService'
+import { GameService, type Game, type Player, type Buzz } from '../../services/games/GameService'
 import { ClueService, type Clue, type ClueState } from '../../services/clues/ClueService'
 import { ClueSetService } from '../../services/clueSets/clueSetService'
 import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
@@ -99,7 +99,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
   const [clueStates, setClueStates] = useState<ClueState[]>([])
 
   /** Current buzzer queue for the focused clue */
-  const [buzzerQueue, setBuzzerQueue] = useState<any[]>([])
+  const [buzzerQueue, setBuzzerQueue] = useState<Buzz[]>([])
 
   /** Loading state for initial data fetch and UI feedback */
   const [loading, setLoading] = useState(true)
@@ -213,10 +213,28 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     }
   }, [])
 
+  /**
+   * Loads the current buzzer queue for the focused clue.
+   */
+  const loadBuzzerQueue = useCallback(async () => {
+    if (!focusedClue) {
+      setBuzzerQueue([])
+      return
+    }
+
+    try {
+      const buzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id)
+      setBuzzerQueue(buzzes)
+    } catch (error) {
+      console.error('Failed to load buzzer queue:', error)
+      setBuzzerQueue([])
+    }
+  }, [focusedClue, gameId])
+
   // Load buzzer queue when focused clue changes
   useEffect(() => {
     loadBuzzerQueue()
-  }, [focusedClue])
+  }, [loadBuzzerQueue])
 
   /**
    * Handles clue selection from the game board.
@@ -280,23 +298,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     }
   }
 
-  /**
-   * Loads the current buzzer queue for the focused clue.
-   */
-  const loadBuzzerQueue = async () => {
-    if (!focusedClue) {
-      setBuzzerQueue([])
-      return
-    }
 
-    try {
-      const buzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id)
-      setBuzzerQueue(buzzes)
-    } catch (error) {
-      console.error('Failed to load buzzer queue:', error)
-      setBuzzerQueue([])
-    }
-  }
 
   /**
    * Handles selecting a player from the buzzer queue.
@@ -316,7 +318,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
 
       // Find player name for feedback
       const player = players.find(p => p.user_id === playerId)
-      const playerName = player?.display_name || 'Unknown Player'
+      const playerName = player?.nickname || 'Unknown Player'
 
       setMessage(`Selected player: ${playerName}`)
       setMessageType('success')
@@ -775,23 +777,40 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
               <span>Latency Compensation: <span className="text-success">ACTIVE</span></span>
             </div>
 
-            <div className="queue-status">
-              <p className="text-muted">No active buzzes</p>
-            </div>
-            <div className="queue-placeholder">
-              <div className="queue-item placeholder">
-                <span className="queue-position">1.</span>
-                <span className="queue-player">Player Name</span>
-                <span className="queue-timing">0 ms</span>
+            {buzzerQueue.length === 0 ? (
+              <div className="queue-status">
+                <p className="text-muted">No active buzzes</p>
               </div>
-              <div className="queue-item placeholder">
-                <span className="queue-position">2.</span>
-                <span className="queue-player">Player Name</span>
-                <span className="queue-timing">+15 ms</span>
+            ) : (
+              <div className="queue-list">
+                {buzzerQueue.map((buzz, index) => {
+                  const player = players.find(p => p.user_id === buzz.user_id)
+                  const playerName = player?.nickname || 'Unknown Player'
+                  const buzzTime = new Date(buzz.created_at)
+                  const firstBuzzTime = new Date(buzzerQueue[0].created_at)
+                  const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime()
+
+                  return (
+                    <div
+                      key={buzz.id}
+                      className={`queue-item ${game?.focused_player_id === buzz.user_id ? 'selected' : ''}`}
+                      onClick={() => handlePlayerSelection(buzz.user_id)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span className="queue-position">{index + 1}.</span>
+                      <span className="queue-player">{playerName}</span>
+                      <span className="queue-timing">{timeDiff === 0 ? '0 ms' : `+${timeDiff} ms`}</span>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
-            <button className="jeopardy-button-small" disabled>
-                Clear Queue
+            )}
+            <button
+              className="jeopardy-button-small"
+              onClick={() => setBuzzerQueue([])}
+              disabled={buzzerQueue.length === 0}
+            >
+              Clear Queue
             </button>
           </div>
         </div>

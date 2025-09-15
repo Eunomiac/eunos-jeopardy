@@ -813,7 +813,7 @@ export class GameService {
 
     // Update player score
     const scoreChange = isCorrect ? scoreValue : -scoreValue
-    await this.updatePlayerScore(gameId, playerId, scoreChange)
+    await this.updatePlayerScore(gameId, playerId, scoreChange, hostId)
 
     // If answer is correct, mark clue as completed and clear focus
     if (isCorrect) {

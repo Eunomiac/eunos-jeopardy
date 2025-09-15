@@ -36,6 +36,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -105,6 +107,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -133,6 +137,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -178,6 +184,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -258,6 +266,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -296,6 +306,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -330,6 +342,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -442,6 +456,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -748,6 +764,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -781,6 +799,8 @@ describe('GameService', () => {
         status: 'lobby' as const,
         current_round: 'jeopardy' as const,
         is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 

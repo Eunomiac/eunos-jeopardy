@@ -81,8 +81,9 @@ const mockGame = {
   status: 'in_progress' as const,
   current_round: 'jeopardy' as const,
   is_buzzer_locked: false,
-  created_at: '2023-01-01T00:00:00Z',
-  updated_at: '2023-01-01T00:00:00Z'
+  focused_clue_id: null,
+  focused_player_id: null,
+  created_at: '2023-01-01T00:00:00Z'
 }
 
 describe('App', () => {

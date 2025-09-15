@@ -73,21 +73,44 @@ export class ClueService {
       throw new Error('Game does not have a clue set assigned')
     }
 
-    // Get all clues for this clue set
+    // Get all clues for this clue set using separate queries
+    // First, get all boards for this clue set
+    const { data: boards, error: boardsError } = await supabase
+      .from('boards')
+      .select('id')
+      .eq('clue_set_id', game.clue_set_id)
+
+    if (boardsError) {
+      throw new Error(`Failed to fetch boards: ${boardsError.message}`)
+    }
+
+    if (!boards || boards.length === 0) {
+      throw new Error('No boards found for this clue set')
+    }
+
+    const boardIds = boards.map(board => board.id)
+
+    // Then, get all categories for these boards
+    const { data: categories, error: categoriesError } = await supabase
+      .from('categories')
+      .select('id')
+      .in('board_id', boardIds)
+
+    if (categoriesError) {
+      throw new Error(`Failed to fetch categories: ${categoriesError.message}`)
+    }
+
+    if (!categories || categories.length === 0) {
+      throw new Error('No categories found for this clue set')
+    }
+
+    const categoryIds = categories.map(category => category.id)
+
+    // Finally, get all clues for these categories
     const { data: clues, error: cluesError } = await supabase
       .from('clues')
       .select('id')
-      .in('category_id', 
-        supabase
-          .from('categories')
-          .select('id')
-          .in('board_id',
-            supabase
-              .from('boards')
-              .select('id')
-              .eq('clue_set_id', game.clue_set_id)
-          )
-      )
+      .in('category_id', categoryIds)
 
     if (cluesError) {
       throw new Error(`Failed to fetch clues: ${cluesError.message}`)
@@ -259,9 +282,9 @@ export class ClueService {
    * @returns Promise resolving to count of completed clues
    * @throws {Error} When database operation fails
    */
-  static async getCompletedCluesCount(gameId: string, round: string): Promise<number> {
+  static async getCompletedCluesCount(gameId: string, _round: string): Promise<number> {
     // This is a complex query that needs to join multiple tables
-    // For now, return a placeholder - will implement full query later
+    // For now, return a simple count - will implement round-specific logic later
     const { data, error } = await supabase
       .from('clue_states')
       .select('*', { count: 'exact' })
