@@ -1,11 +1,17 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { User, Session } from '@supabase/supabase-js'
 import { SimpleLogin } from './SimpleLogin'
-import * as AuthContext from '../../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
+
+// Mock the useAuth hook
+jest.mock('../../contexts/AuthContext', () => ({
+  useAuth: jest.fn()
+}))
 
 // Mock the auth context
 const mockLogin = jest.fn()
 const mockLogout = jest.fn()
+const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 // Create properly typed mock user and session
 const mockUser: User = {
@@ -32,20 +38,22 @@ const mockSession: Session = {
   user: mockUser
 }
 
+// Mock the useAuth hook with jest.fn() for dynamic mocking
 jest.mock('../../contexts/AuthContext', () => ({
-  ...jest.requireActual('../../contexts/AuthContext'),
-  useAuth: () => ({
-    user: null,
-    session: null,
-    loading: false,
-    login: mockLogin,
-    logout: mockLogout
-  })
+  useAuth: jest.fn()
 }))
 
 describe('SimpleLogin', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Set default mock return value for unauthenticated state
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      loading: false,
+      login: mockLogin,
+      logout: mockLogout
+    })
   })
 
   it('should render login form when user is not authenticated', () => {
@@ -60,7 +68,6 @@ describe('SimpleLogin', () => {
 
   it('should render loading state', () => {
     // Mock useAuth to return loading state
-    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -72,13 +79,10 @@ describe('SimpleLogin', () => {
     render(<SimpleLogin />)
 
     expect(screen.getByText('Loading...')).toBeInTheDocument()
-
-    mockUseAuth.mockRestore()
   })
 
   it('should render user info and logout button when authenticated', () => {
     // Mock useAuth to return authenticated state
-    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: mockUser,
       session: mockSession,
@@ -94,8 +98,6 @@ describe('SimpleLogin', () => {
     expect(screen.getByRole('button', { name: 'Logout' })).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('Email')).not.toBeInTheDocument()
     expect(screen.queryByPlaceholderText('Password')).not.toBeInTheDocument()
-
-    mockUseAuth.mockRestore()
   })
 
   it('should handle form input changes', () => {
@@ -175,7 +177,6 @@ describe('SimpleLogin', () => {
 
   it('should call logout function when logout button is clicked', () => {
     // Mock useAuth to return authenticated state
-    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: mockUser,
       session: mockSession,
@@ -190,8 +191,6 @@ describe('SimpleLogin', () => {
     fireEvent.click(logoutButton)
 
     expect(mockLogout).toHaveBeenCalled()
-
-    mockUseAuth.mockRestore()
   })
 
   it('should prevent form submission with empty fields', async () => {
@@ -253,7 +252,6 @@ describe('SimpleLogin', () => {
 
   it('should render authenticated state with proper CSS classes', () => {
     // Mock useAuth to return authenticated state
-    const mockUseAuth = jest.spyOn(AuthContext, 'useAuth')
     mockUseAuth.mockReturnValue({
       user: mockUser,
       session: mockSession,
@@ -266,7 +264,5 @@ describe('SimpleLogin', () => {
 
     expect(screen.getByText('Currently logged in as').closest('div')).toHaveClass('login-info')
     expect(screen.getByRole('button', { name: 'Logout' })).toHaveClass('jeopardy-button', 'logout-button')
-
-    mockUseAuth.mockRestore()
   })
 })
