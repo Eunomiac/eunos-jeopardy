@@ -8,46 +8,34 @@
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: auto 1fr; // Categories take what they need, clues get remaining space
-  gap: $spacing-md;
+  grid-template-columns: repeat(6, 1fr); // 6 columns for categories and clues
+  grid-template-rows: auto repeat(5, 1fr); // Category row (auto) + 5 equal clue rows
+  gap: $spacing-sm;
+  overflow: hidden; // Allow clipping when space is tight
 
-  .category-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: $spacing-sm;
-    // No margin-bottom needed - parent grid gap handles spacing
-    // No flex-shrink needed - using CSS grid now
-
-    .category-header {
-      border: none;
-      border-radius: 0;
-      background: $jeopardy-blue;
-      color: $jeopardy-white;
-      padding: $spacing-sm;
-      text-align: center;
-      font-family: $font-family-category;
-      font-size: $font-size-base;
-      text-transform: $jeopardy-text-transform;
-      text-shadow: $shadow-sm;
-      word-wrap: break-word;
-      hyphens: auto;
-      line-height: 1.2;
-      min-height: 2.5em; // Ensure consistent height for wrapping
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  // Category headers - direct children, first row
+  .category-header {
+    border: none;
+    border-radius: 0;
+    background: $jeopardy-blue;
+    color: $jeopardy-white;
+    padding: $spacing-sm;
+    text-align: center;
+    font-family: $font-family-category;
+    font-size: $font-size-base;
+    text-transform: $jeopardy-text-transform;
+    text-shadow: $shadow-sm;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+    min-height: 2.5em; // Ensure consistent height for wrapping
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .clue-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(5, 1fr); // 5 equal rows sharing available space
-    gap: $spacing-sm;
-    min-height: 0; // Allow grid to shrink below content size if necessary
-    overflow: hidden; // Allow clipping of clue text when space is very tight
-
-    .clue-cell {
+  // Clue cells - direct children, rows 2-6
+  .clue-cell {
       background: $jeopardy-blue;
       color: $jeopardy-gold;
       display: flex;
@@ -104,5 +92,4 @@
         filter: brightness(1.5);
       }
     }
-  }
 }

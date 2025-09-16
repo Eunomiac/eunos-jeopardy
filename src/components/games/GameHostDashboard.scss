@@ -113,15 +113,9 @@
             justify-content: space-between;
             height: 100%;
 
-            // Container for scaled board to prevent overflow
-            .jeopardy-board-container {
-              width: 100%;
-              height: 100%; // Full height now that footer is removed
+            .jeopardy-board {
               overflow: hidden;
               position: relative;
-            }
-
-            .jeopardy-board {
               border-bottom: 2px solid $jeopardy-gold;
               // Scale down the board for host dashboard view
               // The board is styled for full player view, then scaled down here

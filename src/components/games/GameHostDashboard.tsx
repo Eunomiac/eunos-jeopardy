@@ -577,13 +577,11 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
             <h5>BOARD CONTROL</h5>
           </div>
           <div className="panel-content">
-            <div className="jeopardy-board-container">
               <div className="jeopardy-board">
               {/* Game board with real clue set data */}
               {clueSetData && game ? (
                 <>
-                  {/* Category headers from current round */}
-                  <div className="category-grid">
+                  {/* Category headers from current round - direct children of jeopardy-board */}
                     {(() => {
                       // Handle different round types with proper data structure
                       if (game.current_round === 'final') {
@@ -603,10 +601,8 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                         ))
                       }
                     })()}
-                  </div>
 
-                  {/* Clue grid with real values from current round */}
-                  <div className="clue-grid">
+                  {/* Clue cells from current round - direct children of jeopardy-board */}
                     {(() => {
                       if (game.current_round === 'final') {
                         // Final Jeopardy has only one clue
@@ -701,28 +697,22 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                         )
                       })
                     })()}
-                  </div>
                 </>
               ) : (
-                /* Loading placeholder */
+                /* Loading placeholder - direct children of jeopardy-board */
                 <>
-                  <div className="category-grid">
-                    {Array.from({ length: 6 }, (_, i) => (
-                      <div key={`loading-category-${i}`} className="category-header">
-                        Loading...
-                      </div>
-                    ))}
-                  </div>
-                  <div className="clue-grid">
-                    {Array.from({ length: 30 }, (_, i) => (
-                      <div key={`loading-clue-${i}`} className="clue-cell">
-                        ...
-                      </div>
-                    ))}
-                  </div>
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <div key={`loading-category-${i}`} className="category-header">
+                      Loading...
+                    </div>
+                  ))}
+                  {Array.from({ length: 30 }, (_, i) => (
+                    <div key={`loading-clue-${i}`} className="clue-cell">
+                      ...
+                    </div>
+                  ))}
                 </>
               )}
-            </div>
             </div>
           </div>
         </div>
