@@ -120,73 +120,7 @@
     }
   }
 
-  // Player Podiums
-  .player-podium-row {
-    position: absolute;
-    width: 100vw;
-    height: 20vh;
-    bottom: 0;
-    left: 0;
-    display: flex;
-    justify-content: stretch;
-    align-items: stretch;
-    padding: 0 1rem;
-    gap: 1rem;
+  // Player Podiums - Styles moved to PlayerPodiums.scss
 
-    .player-podium {
-      background: url("assets/images/player-podium.webp");
-      flex: 1;
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-      box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
-
-      &.main {
-        margin: 0 2%;
-        transform-origin: bottom center;
-        transform: scale(1.5);
-      }
-    }
-  }
-
-  // Clue Display Modal
-  .clue-reveal-modal {
-    --clue-display-width: 20vw;
-    position: absolute;
-    top: 5%;
-    left: 75%;
-    transform: translate(-50%, 0%);
-    width: 30vw;
-    max-width: 1000px;
-    height: auto;
-    background: rgba($jeopardy-background-blue, 1);
-    border-radius: $border-radius-lg;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
-    padding: 5vh;
-
-    .player-buzzer {
-      height: 10vw;
-      width: 10vw;
-      border-radius: 10vw;
-      font-size: 3rem;
-      text-align: center;
-      font-family: $font-family-daily-double;
-      text-transform: uppercase;
-      border: 0.5vw solid transparent;
-      margin-top: 1vw;
-
-      &.locked {
-        pointer-events: none;
-      }
-    }
-  }
+  // Clue Display Modal - Styles moved to ClueRevealModal.scss
 }
