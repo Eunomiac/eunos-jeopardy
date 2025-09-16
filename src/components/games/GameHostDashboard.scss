@@ -103,7 +103,10 @@
         // Game Board Panel
         &.game-board-panel {
           grid-area: board-control;
-          padding: 0; // Remove all padding
+          padding-top: $spacing-sm; // Restore top padding for proper header sizing
+          padding-left: 0;
+          padding-right: 0;
+          padding-bottom: 0;
 
           .panel-content {
             padding: 0; // Remove all padding

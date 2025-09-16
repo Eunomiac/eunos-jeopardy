@@ -28,7 +28,7 @@
     word-wrap: break-word;
     hyphens: auto;
     line-height: 1.2;
-    min-height: 2.5em; // Ensure consistent height for wrapping
+    // Remove min-height to allow natural content expansion
     display: flex;
     align-items: center;
     justify-content: center;
