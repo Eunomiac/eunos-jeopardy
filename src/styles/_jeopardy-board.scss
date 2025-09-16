@@ -4,18 +4,18 @@
   background: black;
   border: none;
   border-radius: 0;
-  padding: $spacing-sm;
+  padding: 0; // Remove all padding for precise sizing
   width: 100%;
   height: 100%;
   display: grid;
   grid-template-columns: repeat(6, 1fr); // 6 columns for categories and clues
   grid-template-rows: auto repeat(5, 1fr); // Category row (auto) + 5 equal clue rows
-  gap: $spacing-sm;
+  gap: 0; // Remove gaps - use borders instead for visual separation
   overflow: hidden; // Allow clipping when space is tight
 
   // Category headers - direct children, first row
   .category-header {
-    border: none;
+    border: 1px solid black; // Black borders for visual separation
     border-radius: 0;
     background: $jeopardy-blue;
     color: $jeopardy-white;
@@ -36,6 +36,7 @@
 
   // Clue cells - direct children, rows 2-6
   .clue-cell {
+      border: 1px solid black; // Black borders for visual separation
       background: $jeopardy-blue;
       color: $jeopardy-gold;
       display: flex;

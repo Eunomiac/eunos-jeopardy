@@ -103,26 +103,31 @@
         // Game Board Panel
         &.game-board-panel {
           grid-area: board-control;
-          padding-left: 0;
-          padding-right: 0;
+          padding: 0; // Remove all padding
 
           .panel-content {
-            padding: 0;
+            padding: 0; // Remove all padding
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             height: 100%;
+            overflow: hidden; // Prevent any scrolling in the panel
 
-            .jeopardy-board {
-              overflow: hidden;
+            .board-scale-wrapper {
+              width: 100%;
+              height: 100%;
               position: relative;
-              border-bottom: 2px solid $jeopardy-gold;
-              // Scale down the board for host dashboard view
-              // The board is styled for full player view, then scaled down here
-              transform: scale(0.7);
-              transform-origin: top left;
-              width: 142.857%; // Compensate for scale: 100% / 0.7 = 142.857%
-              height: 142.857%;
+              overflow: hidden;
+              padding: 0; // Remove all padding
+
+              .jeopardy-board {
+                width: 142.857%; // Scale up to compensate for 70% scale
+                height: 142.857%;
+                border-bottom: 2px solid $jeopardy-gold;
+                // Scale down the board for host dashboard view
+                transform: scale(0.7);
+                transform-origin: top left;
+              }
             }
           }
         }

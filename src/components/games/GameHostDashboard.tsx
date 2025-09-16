@@ -577,6 +577,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
             <h5>BOARD CONTROL</h5>
           </div>
           <div className="panel-content">
+            <div className="board-scale-wrapper">
               <div className="jeopardy-board">
               {/* Game board with real clue set data */}
               {clueSetData && game ? (
@@ -713,6 +714,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                   ))}
                 </>
               )}
+            </div>
             </div>
           </div>
         </div>
