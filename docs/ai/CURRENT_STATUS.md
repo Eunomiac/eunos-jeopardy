@@ -23,6 +23,8 @@
 8. **✅ SonarQube Compliance**: All complexity and code quality issues resolved (complexity limit adjusted to 25)
 9. **✅ Host/Player Routing**: URL parameter detection for proper interface selection
 10. **✅ Panel State Management**: Disabled styling for non-Player Control panels during lobby state
+11. **✅ Game Status Display**: Proper formatting of game status (in_progress → In Progress)
+12. **✅ Layout Stability**: Fixed layout shifts with persistent "Correct Response" placeholder
 
 **Outstanding**: Ready to proceed to Issue #4 - Simplified Player Interface
 
@@ -111,10 +113,9 @@
 - ✅ **Navigation**: Tab-based system functional
 
 ### Known Issues
-- 🟡 **MEDIUM**: ESLint warnings need resolution (arrow functions, accessibility)
 - 🟡 **MEDIUM**: SCSS deprecation warnings (@import, color functions)
 - 🟡 **HIGH**: Buzzer queue UI integration incomplete
-- 🟡 **Future**: Real-time subscriptions not yet implemented (planned for Issue #4)
+- 🟡 **Future**: Player interface routing needs integration (players see host interface by default)
 
 ---
 

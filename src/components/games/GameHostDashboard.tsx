@@ -1424,12 +1424,12 @@ export function GameHostDashboard({
                 </div>
               </div>
 
-              {focusedClue && (
-                <div className="clue-response-row">
-                  <span className="response-label">Correct Response:</span>
-                  <span className="response-text">{focusedClue.response}</span>
-                </div>
-              )}
+              <div className={`clue-response-row ${!focusedClue ? 'no-clue-focused' : ''}`}>
+                <span className="response-label">Correct Response:</span>
+                <span className="response-text">
+                  {focusedClue ? focusedClue.response : "No Clue Selected"}
+                </span>
+              </div>
             </div>
 
             {/* Adjudication Control Buttons */}

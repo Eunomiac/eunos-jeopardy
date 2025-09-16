@@ -405,6 +405,16 @@
                 color: $jeopardy-white;
                 font-family: $font-family-ui;
               }
+
+              // Styling when no clue is focused
+              &.no-clue-focused {
+                opacity: 0.5;
+
+                .response-text {
+                  color: #888;
+                  font-style: italic;
+                }
+              }
             }
 
             .clue-prompt,
