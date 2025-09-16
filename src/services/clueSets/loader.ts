@@ -1,6 +1,8 @@
 import { supabase } from '../supabase/client'
+import type { Json } from '../supabase/types'
 import { parseCSV, validateJeopardyStructure, type CSVRow } from '../../utils/csvParser'
 import { filenameToDisplayName, getClueSetURL } from '../../utils/clueSetUtils'
+import { generateDailyDoublePositions } from '../../utils/dailyDoubleAlgorithm'
 import '../../types/game' // Load global types
 
 /**
@@ -546,12 +548,20 @@ export async function saveClueSetToDatabase(
  * @author Euno's Jeopardy Team
  */
 async function createBoard(clueSetId: string, round: RoundType) {
-  // Create board record with foreign key to clue set
+  // Generate Daily Double positions for regular rounds (not Final Jeopardy)
+  let dailyDoublePositions = null
+  if (round === 'jeopardy' || round === 'double') {
+    dailyDoublePositions = generateDailyDoublePositions(round)
+    console.log(`Generated Daily Double positions for ${round} round:`, dailyDoublePositions)
+  }
+
+  // Create board record with foreign key to clue set and Daily Double positions
   const { data: board, error: boardError } = await supabase
     .from('boards')
     .insert({
       clue_set_id: clueSetId, // Link to parent clue set
-      round // Specify round type for game logic
+      round, // Specify round type for game logic
+      daily_double_cells: dailyDoublePositions as unknown as Json // Store Daily Double positions as JSONB
     })
     .select('id')
     .single()

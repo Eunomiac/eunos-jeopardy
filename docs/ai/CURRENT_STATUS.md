@@ -1,8 +1,8 @@
 # Current Project Status
 
-**Last Updated**: 2025-01-16, 8:15 PM
+**Last Updated**: 2025-01-16, 11:30 PM
 **Phase**: 3 - Core Development Complete + Real-time Systems
-**Sprint**: Issue #3 UI Polish & System Integration - COMPLETED + Game State Management
+**Sprint**: Issue #4 - Simplified Player Interface - PLANNING
 
 ---
 
@@ -68,10 +68,18 @@
 
 ## 🚀 **Next Immediate Actions**
 
-### Priority 1: ✅ COMPLETE - Phase 2 Daily Double Features
-**Status**: 🟢 **COMPLETE** - Daily Double detection, visual indicators, and workflow integration
-**Location**: `docs/ai/issues/3b. Continuation of Clue Implementation.md`
-**Commit**: Phase 2 complete - Daily Double features implemented
+### Priority 1: 🔄 IN PROGRESS - Issue #4 Simplified Player Interface
+**Status**: 🟡 **PLANNING** - Design decisions documented, ready for implementation
+**Location**: `docs/ai/issues/4. Simplified Player Interface.md`
+
+**Key Design Decisions Made**:
+- **Background**: Desktop-only focus, `bg-stage.webp` with `#0b002a` fallback color only
+- **Mobile Responsiveness**: Completely deferred to Phase 4 (may never happen)
+- **Buzzer Display**: Integrated with clue display as unified modal/overlay over central podium area
+- **Animation**: Bounce-scale animation for buzzer button entrance when host clicks "Reveal Prompt"
+- **Visual Theme**: Authentic TV show aesthetic using actual Jeopardy set screenshots
+
+**Next Steps**: Implement PlayerGame component with integrated clue+buzzer display concept
 
 **Remote Agent Completed (PR #6 - Merged but Broken)**:
 - ✅ **ClueService**: Complete service layer (277 lines) with clue lifecycle management

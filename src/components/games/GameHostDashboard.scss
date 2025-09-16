@@ -536,6 +536,7 @@
   // Enhanced clue cell styles for interactive gameplay
   .jeopardy-board {
     .clue-cell {
+      position: relative; // Enable absolute positioning for Daily Double indicator
       cursor: pointer;
       transition: all 0.2s ease;
 
@@ -556,6 +557,21 @@
         box-shadow: 0 0 15px rgba($jeopardy-gold, 0.6);
         transform: scale(1.02);
         animation: pulse-gold 2s infinite;
+      }
+
+      // Daily Double indicator - red dot in upper right corner
+      &.daily-double::after {
+        content: '';
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 12px;
+        height: 12px;
+        background-color: #ff0000;
+        border-radius: 50%;
+        border: 2px solid $jeopardy-white;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        z-index: 10; // Ensure it appears above the cell content
       }
     }
 
