@@ -1,5 +1,7 @@
 // Global styles
 @use 'sass:color';
+@use 'variables' as *;
+@use 'mixins' as *;
 
 // ========================================
 // JEOPARDY FONT LOADING

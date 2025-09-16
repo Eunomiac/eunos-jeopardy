@@ -2,7 +2,9 @@
 // JEOPARDY THEME COMPONENTS
 // ========================================
 @use "sass:color";
-@import "../styles/globals";
+@use "variables" as *;
+@use "mixins" as *;
+@use "../styles/globals";
 
 // Standard Jeopardy Button Styling (for consistency across all components)
 @mixin jeopardy-button-base {

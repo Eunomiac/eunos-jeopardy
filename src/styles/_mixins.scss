@@ -1,5 +1,6 @@
 // SCSS Mixins
 @use 'sass:color';
+@use 'variables' as *;
 
 // Responsive breakpoints
 @mixin respond-to($breakpoint) {

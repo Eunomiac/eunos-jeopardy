@@ -1,12 +1,13 @@
 // Delete Clue Set Button Component Styles
-@import "../../styles/variables";
-@import "../../styles/mixins";
-@import "../../styles/jeopardy-theme";
+@use "sass:color";
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "../../styles/jeopardy-theme" as *;
 
 .delete-clue-set-button {
   @include jeopardy-button-small;
   background-color: $error-color;
-  border-color: darken($error-color, 10%);
+  border-color: color.adjust($error-color, $lightness: -10%);
   color: $jeopardy-white;
   padding: $spacing-xs $spacing-sm;
   font-size: $font-size-xs;
@@ -18,12 +19,12 @@
   justify-content: center;
 
   &:hover:not(:disabled) {
-    background-color: darken($error-color, 10%);
+    background-color: color.adjust($error-color, $lightness: -10%);
     filter: brightness(1.1);
   }
 
   &:active:not(:disabled) {
-    background-color: darken($error-color, 15%);
+    background-color: color.adjust($error-color, $lightness: -15%);
     transform: scale(0.98);
   }
 

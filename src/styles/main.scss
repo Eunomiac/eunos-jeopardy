@@ -1,12 +1,12 @@
 // Main SCSS entry point
-// Import order: variables → mixins → globals → jeopardy-theme → components → utilities
+// Use order: variables → mixins → globals → jeopardy-theme → components → utilities
 
-@import 'variables';
-@import 'mixins';
-@import 'globals';
-@import 'jeopardy-theme';
-@import 'utilities';
-@import 'jeopardy-board';
+@use 'variables';
+@use 'mixins';
+@use 'globals';
+@use 'jeopardy-theme';
+@use 'utilities';
+@use 'jeopardy-board';
 
 // Component styles
-@import 'components/app';
+@use 'components/app';

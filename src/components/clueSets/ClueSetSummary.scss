@@ -1,7 +1,8 @@
 // Clue Set Summary Component Styles
-@import "../../styles/variables";
-@import "../../styles/mixins";
-@import "../../styles/jeopardy-theme";
+@use "sass:color";
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "../../styles/jeopardy-theme" as *;
 
 .clue-set-summary {
   @include jeopardy-card;
@@ -14,7 +15,7 @@
   z-index: $z-dropdown;
 
   .summary-header {
-    background: linear-gradient(135deg, darken($jeopardy-blue, 5%), darken($jeopardy-blue, 30%));
+    background: linear-gradient(135deg, color.adjust($jeopardy-blue, $lightness: -5%), color.adjust($jeopardy-blue, $lightness: -30%));
     color: $jeopardy-white;
     padding: $spacing-md $spacing-lg;
     border-bottom: 2px solid $jeopardy-gold;
@@ -127,7 +128,7 @@
 
         .final-category {
           padding: $spacing-sm;
-          background: linear-gradient(135deg, $jeopardy-gold, lighten($jeopardy-gold, 10%));
+          background: linear-gradient(135deg, $jeopardy-gold, color.adjust($jeopardy-gold, $lightness: 10%));
           border: 2px solid $jeopardy-gold;
           border-radius: $border-radius-md;
           text-align: center;
@@ -148,8 +149,8 @@
 
       .delete-clue-set-button {
         @include jeopardy-button-medium;
-        background-color: darken($error-color, 20%);
-        border-color: darken($error-color, 40%);
+        background-color: color.adjust($error-color, $lightness: -20%);
+        border-color: color.adjust($error-color, $lightness: -40%);
         color: $jeopardy-white;
         width: auto;
         height: auto;
@@ -160,13 +161,13 @@
         transform-origin: center;
 
         &:hover:not(:disabled) {
-          background-color: darken($error-color, 10%);
+          background-color: color.adjust($error-color, $lightness: -10%);
           filter: brightness(1.5);
           transform: scale(1.02);
         }
 
         &:active:not(:disabled) {
-          background-color: darken($error-color, 15%);
+          background-color: color.adjust($error-color, $lightness: -15%);
           transform: translateY(0);
         }
 

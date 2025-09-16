@@ -1,4 +1,6 @@
 // Utility classes
+@use 'variables' as *;
+@use 'mixins' as *;
 
 // Spacing utilities
 .m-0 { margin: 0; }

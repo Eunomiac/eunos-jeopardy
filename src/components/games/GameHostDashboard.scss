@@ -1,9 +1,10 @@
 // Game Host Dashboard Styles - Optimized for 1080p Desktop
-@import "../../styles/variables";
-@import "../../styles/mixins";
-@import "../../styles/globals";
-@import "../../styles/jeopardy-theme";
-@import "../../styles/jeopardy-board";
+@use "sass:color";
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "../../styles/globals" as *;
+@use "../../styles/jeopardy-theme" as *;
+@use "../../styles/jeopardy-board" as *;
 
 // Ensure full-screen layout
 .dashboard-active {
@@ -305,19 +306,19 @@
             .buzzer-toggle-button {
               &.locked {
                 background-color: $error-color;
-                border-color: darken($error-color, 10%);
+                border-color: color.adjust($error-color, $lightness: -10%);
 
                 &:hover {
-                  background-color: darken($error-color, 5%);
+                  background-color: color.adjust($error-color, $lightness: -5%);
                 }
               }
 
               &.unlocked {
                 background-color: $success-color;
-                border-color: darken($success-color, 10%);
+                border-color: color.adjust($success-color, $lightness: -10%);
 
                 &:hover {
-                  background-color: darken($success-color, 5%);
+                  background-color: color.adjust($success-color, $lightness: -5%);
                 }
               }
             }
@@ -335,8 +336,8 @@
         .panel-header {
           background: linear-gradient(
             135deg,
-            darken($jeopardy-blue, 5%),
-            darken($jeopardy-blue, 30%)
+            color.adjust($jeopardy-blue, $lightness: -5%),
+            color.adjust($jeopardy-blue, $lightness: -30%)
           );
           color: $jeopardy-white;
           text-align: center;
