@@ -5,6 +5,7 @@ import { ClueService, type Clue, type ClueState } from '../../services/clues/Clu
 import { ClueSetService } from '../../services/clueSets/clueSetService'
 import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
 import { SupabaseConnection } from '../../services/supabase/connection'
+import { supabase } from '../../services/supabase/client'
 import './GameHostDashboard.scss'
 
 /**
@@ -248,6 +249,83 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
     // Execute the data loading process
     loadGameData()
   }, [user, gameId])
+
+  /**
+   * Effect to set up real-time subscriptions for game state changes.
+   *
+   * Subscribes to changes in players, buzzes, and game state to provide
+   * real-time updates to the host dashboard without requiring manual refresh.
+   *
+   * **Subscriptions:**
+   * - Players: New players joining or leaving the game
+   * - Buzzes: Real-time buzzer queue updates
+   * - Game state: Changes to game status, focused clue/player, etc.
+   */
+  useEffect(() => {
+    if (!gameId) {
+      return
+    }
+
+    // Set up real-time subscription for this game
+    const subscription = supabase
+      .channel(`game:${gameId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'players',
+        filter: `game_id=eq.${gameId}`
+      }, async () => {
+        console.log('Player change detected')
+        // Refresh player list when players join/leave
+        try {
+          const updatedPlayers = await GameService.getPlayers(gameId)
+          setPlayers(updatedPlayers)
+        } catch (error) {
+          console.error('Failed to refresh players:', error)
+        }
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'buzzes',
+        filter: `game_id=eq.${gameId}`
+      }, async () => {
+        console.log('Buzz change detected')
+        // Refresh buzzer queue when new buzzes arrive
+        // Only refresh if we have a focused clue
+        if (focusedClue) {
+          try {
+            const updatedBuzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id)
+            setBuzzerQueue(updatedBuzzes)
+          } catch (error) {
+            console.error('Failed to refresh buzzes:', error)
+          }
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'games',
+        filter: `id=eq.${gameId}`
+      }, async () => {
+        console.log('Game state change detected')
+        // Refresh game state when host makes changes from another session
+        try {
+          if (user) {
+            const updatedGame = await GameService.getGame(gameId, user.id)
+            setGame(updatedGame)
+          }
+        } catch (error) {
+          console.error('Failed to refresh game state:', error)
+        }
+      })
+      .subscribe()
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [gameId, user, focusedClue])
 
   // Effect to manage full-screen layout classes
   useEffect(() => {
@@ -582,6 +660,76 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
   }
 
   /**
+   * Determines if a panel should be disabled based on game state.
+   *
+   * Panels are disabled when the game is in 'lobby' state, except for
+   * the Player Control panel which remains active for player management.
+   */
+  const isPanelDisabled = () => game?.status === 'lobby'
+
+  /**
+   * Gets the appropriate button text and handler for the Start/End Game button.
+   *
+   * Returns different text and functionality based on current game state:
+   * - 'lobby': Shows "Start Game" button
+   * - 'in_progress': Shows "End Game" button
+   * - 'completed': Shows "End Game" button (disabled)
+   */
+  const getGameControlButton = () => {
+    if (!game) {
+      return { text: 'Loading...', handler: () => {}, disabled: true }
+    }
+
+    switch (game.status) {
+      case 'lobby':
+        return { text: 'Start Game', handler: handleStartGame, disabled: false }
+      case 'in_progress':
+        return { text: 'End Game', handler: handleEndGame, disabled: false }
+      case 'completed':
+        return { text: 'End Game', handler: handleEndGame, disabled: true }
+      default:
+        return { text: 'End Game', handler: handleEndGame, disabled: true }
+    }
+  }
+
+  /**
+   * Handles starting the game (transitioning from lobby to in_progress).
+   *
+   * Changes the game status from 'lobby' to 'in_progress', which unlocks
+   * all dashboard panels and signals to players that the game has begun.
+   * This method validates that the game is in the correct state before proceeding.
+   *
+   * **Game Flow Integration:**
+   * - Only works when game is in 'lobby' state
+   * - Unlocks all dashboard panels for host interaction
+   * - Signals to all connected players that gameplay has begun
+   * - Maintains buzzer lock until first clue is revealed
+   *
+   * **Real-time Effects:**
+   * - All connected clients receive state change notification
+   * - Host dashboard panels lose 'disabled' class and become interactive
+   * - Player interfaces switch from lobby view to active game view
+   */
+  const handleStartGame = async () => {
+    // Validate prerequisites
+    if (!user || !game) { return }
+
+    try {
+      // Provide immediate user feedback
+      setMessage('Starting game...')
+
+      // Transition game from lobby to in_progress
+      const updatedGame = await GameService.startGame(gameId, user.id)
+      setGame(updatedGame)
+
+      setMessage('Game started! Ready to play.')
+    } catch (error) {
+      console.error('Error starting game:', error)
+      setMessage(`Error starting game: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  /**
    * Handles ending the current game with confirmation and cleanup.
    *
    * This is a destructive operation that marks the game as completed and
@@ -698,7 +846,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
       <div className="dashboard-grid">
 
         {/* Top Row - Panel 2: Game Board Control */}
-        <div className="dashboard-panel game-board-panel">
+        <div className={`dashboard-panel game-board-panel ${isPanelDisabled() ? 'disabled' : ''}`}>
           <div className="panel-header">
             <h5>BOARD CONTROL</h5>
           </div>
@@ -862,10 +1010,10 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
               </button>
               <button
                 className="jeopardy-button flex-1"
-                onClick={handleEndGame}
-                disabled={game.status === 'completed'}
+                onClick={getGameControlButton().handler}
+                disabled={getGameControlButton().disabled}
               >
-                End Game
+                {getGameControlButton().text}
               </button>
             </div>
 
@@ -951,7 +1099,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
         </div>
 
         {/* Top Row - Panel 2: Buzzer Queue */}
-        <div className="dashboard-panel buzzer-queue-panel">
+        <div className={`dashboard-panel buzzer-queue-panel ${isPanelDisabled() ? 'disabled' : ''}`}>
           <div className="panel-header">
             <h5>BUZZER QUEUE</h5>
           </div>
@@ -1027,7 +1175,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
         </div>
 
         {/* Bottom Row - Panel 3: Clue Control */}
-        <div className="dashboard-panel clue-control-panel">
+        <div className={`dashboard-panel clue-control-panel ${isPanelDisabled() ? 'disabled' : ''}`}>
           <div className="panel-header">
             <h5>CLUE CONTROL</h5>
           </div>

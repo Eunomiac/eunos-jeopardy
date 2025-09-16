@@ -4,6 +4,8 @@ import { ClueSetSelector } from '../components/clueSets/ClueSetSelector'
 import { ClueSetSummary } from '../components/clueSets/ClueSetSummary'
 import { UploadService } from '../services/clueSets/uploadService'
 import { GameHostDashboard } from '../components/games/GameHostDashboard'
+import { PlayerJoin } from '../components/players/PlayerJoin'
+import { PlayerLobby } from '../components/players/PlayerLobby'
 import { useAuth } from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 
@@ -11,15 +13,17 @@ import { GameService } from '../services/games/GameService'
 /**
  * Application mode type defining the current view state of the application.
  *
- * Controls which UI components are displayed and manages the game hosting workflow:
- * - 'clue-sets': Initial state for selecting CSV clue sets
+ * Controls which UI components are displayed and manages both hosting and playing workflows:
+ * - 'clue-sets': Initial state for selecting CSV clue sets (host only)
  * - 'host-game': Intermediate state during game creation (currently unused)
  * - 'dashboard': Active game state showing host controls
+ * - 'player-join': Player interface for entering game codes
+ * - 'player-lobby': Player waiting room after joining a game
  *
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-type AppMode = 'clue-sets' | 'host-game' | 'dashboard'
+type AppMode = 'clue-sets' | 'host-game' | 'dashboard' | 'player-join' | 'player-lobby'
 
 /**
  * Main application component that orchestrates the entire Euno's Jeopardy game hosting experience.
@@ -82,6 +86,9 @@ export function App() {
   /** UUID of the currently active game being hosted, null when no game is active */
   const [currentGameId, setCurrentGameId] = useState<string | null>(null)
 
+  /** UUID of the game the player has joined, null when not in a player session */
+  const [playerGameId, setPlayerGameId] = useState<string | null>(null)
+
   /** Identifier of the selected clue set from database, empty string when none selected */
   const [selectedClueSetId, setSelectedClueSetId] = useState<string>('')
 
@@ -101,6 +108,25 @@ export function App() {
   const { user } = useAuth()
 
   /**
+   * Effect to detect game join URLs and initialize player mode.
+   *
+   * Checks URL parameters for game codes and automatically switches to
+   * player join mode if a game parameter is detected.
+   */
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const gameParam = urlParams.get('game')
+
+    if (gameParam && user) {
+      // User is trying to join a game via URL
+      setMode('player-join')
+    } else if (!gameParam && mode === 'player-join') {
+      // No game parameter, return to host mode
+      setMode('clue-sets')
+    }
+  }, [user, mode])
+
+  /**
    * Effect to clean up application state when user logs out.
    *
    * Automatically resets all game-related state to prevent data leakage
@@ -109,12 +135,14 @@ export function App() {
    * **Cleanup Actions:**
    * - Clears current game ID to exit dashboard mode
    * - Resets selected clue set to force new selection
+   * - Clears player game state
    * - Returns to initial clue-sets mode
    */
   useEffect(() => {
     if (!user) {
       setCurrentGameId(null)
       setSelectedClueSetId('')
+      setPlayerGameId(null)
       setMode('clue-sets')
     }
   }, [user])
@@ -144,6 +172,91 @@ export function App() {
     setCurrentGameId(null)
     setSelectedClueSetId('')
     setMode('clue-sets')
+  }
+
+  /**
+   * Handles successful player game joining.
+   *
+   * Called when a player successfully joins a game. Transitions to
+   * the player lobby interface.
+   *
+   * @param gameId - UUID of the game the player joined
+   */
+  const handlePlayerGameJoined = (gameId: string) => {
+    setPlayerGameId(gameId)
+    setMode('player-lobby')
+  }
+
+  /**
+   * Handles player leaving a game.
+   *
+   * Resets player state and returns to the join interface.
+   */
+  const handlePlayerLeaveGame = () => {
+    setPlayerGameId(null)
+    setMode('player-join')
+  }
+
+  /**
+   * Renders the host interface (dashboard or setup modes).
+   */
+  const renderHostInterface = () => {
+    if (mode !== 'dashboard' && mode !== 'clue-sets' && mode !== 'host-game') {
+      return null
+    }
+
+    return (
+      <div className={`content-section game-creator-section ${isUploading ? 'uploading' : ''}`}>
+        {/* Dashboard mode: Show active game host controls */}
+        {mode === 'dashboard' && currentGameId && (
+          <>
+            {/* Navigation indicator showing current mode */}
+            <div className="navigation-tabs">
+              <span className="jeopardy-button">
+                Game Dashboard
+              </span>
+            </div>
+            {/* Host dashboard with game controls and back navigation */}
+            <GameHostDashboard
+              gameId={currentGameId}
+              onBackToCreator={handleBackToCreator}
+            />
+          </>
+        )}
+
+        {/* Setup mode: Show clue set selection and game creation */}
+        {mode !== 'dashboard' && renderSetupMode()}
+      </div>
+    )
+  }
+
+  /**
+   * Renders the player interface (join or lobby modes).
+   */
+  const renderPlayerInterface = () => {
+    if (mode === 'player-join') {
+      return (
+        <div className="content-section">
+          <PlayerJoin
+            gameId={new URLSearchParams(window.location.search).get('game') || undefined}
+            onGameJoined={handlePlayerGameJoined}
+          />
+        </div>
+      )
+    }
+
+    if (mode === 'player-lobby' && playerGameId) {
+      return (
+        <div className="content-section">
+          <PlayerLobby
+            gameId={playerGameId}
+            onLeaveGame={handlePlayerLeaveGame}
+          />
+        </div>
+      )
+    }
+
+    return null
   }
 
   /**
@@ -412,27 +525,13 @@ export function App() {
 
           {/* Main application content for authenticated users */}
           {user && (
-            <div className={`content-section game-creator-section ${isUploading ? 'uploading' : ''}`}>
-                {/* Dashboard mode: Show active game host controls */}
-                {mode === 'dashboard' && currentGameId && (
-                  <>
-                    {/* Navigation indicator showing current mode */}
-                    <div className="navigation-tabs">
-                      <span className="jeopardy-button">
-                        Game Dashboard
-                      </span>
-                    </div>
-                    {/* Host dashboard with game controls and back navigation */}
-                    <GameHostDashboard
-                      gameId={currentGameId}
-                      onBackToCreator={handleBackToCreator}
-                    />
-                  </>
-                )}
+            <>
+              {/* Host interface */}
+              {renderHostInterface()}
 
-                {/* Setup mode: Show clue set selection and game creation */}
-                {mode !== 'dashboard' && renderSetupMode()}
-              </div>
+              {/* Player interface */}
+              {renderPlayerInterface()}
+            </>
           )}
         </div>
       </main>

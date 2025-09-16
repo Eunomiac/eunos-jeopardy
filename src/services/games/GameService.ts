@@ -290,6 +290,52 @@ export class GameService {
   }
 
   /**
+   * Starts the game by transitioning from lobby to in_progress state.
+   *
+   * This method handles the game state transition when the host is ready to begin
+   * gameplay. It changes the game status from 'lobby' to 'in_progress', which
+   * triggers UI updates across all connected clients.
+   *
+   * **Game Flow Integration:**
+   * - Only works when game is in 'lobby' state
+   * - Unlocks game panels for host dashboard
+   * - Signals players that the game has begun
+   * - Maintains buzzer lock until first clue is revealed
+   *
+   * **Real-time Effects:**
+   * - All connected clients receive state change notification
+   * - Host dashboard panels become active
+   * - Player interfaces switch from lobby to game view
+   *
+   * @param gameId - UUID of the game to start
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object with in_progress status
+   * @throws {Error} When unauthorized, game not found, or game not in lobby state
+   *
+   * @example
+   * ```typescript
+   * // Start the game when host is ready
+   * const activeGame = await GameService.startGame(gameId, hostId);
+   * console.log(`Game status: ${activeGame.status}`); // "in_progress"
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async startGame(gameId: string, hostId: string): Promise<Game> {
+    // Verify current game state and host authorization
+    const currentGame = await this.getGame(gameId, hostId)
+
+    // Ensure game is in lobby state before starting
+    if (currentGame.status !== 'lobby') {
+      throw new Error(`Cannot start game: current status is '${currentGame.status}', expected 'lobby'`)
+    }
+
+    // Transition to in_progress state
+    return this.updateGame(gameId, { status: 'in_progress' }, hostId)
+  }
+
+  /**
    * Toggles the buzzer lock state for real-time buzzer control.
    *
    * This is a critical game control method that allows the host to enable/disable
