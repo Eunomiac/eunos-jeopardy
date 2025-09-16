@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { GameService, type Player } from '../../services/games/GameService'
 import { supabase } from '../../services/supabase/client'
@@ -32,7 +32,7 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
   /**
    * Loads game and player data.
    */
-  const loadGameData = async () => {
+  const loadGameData = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -49,12 +49,12 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
       setError('Failed to load game information')
       setLoading(false)
     }
-  }
+  }, [gameId])
 
   // Load initial data
   useEffect(() => {
     loadGameData()
-  }, [gameId])
+  }, [gameId, loadGameData])
 
   // Set up real-time subscriptions for player changes
   useEffect(() => {

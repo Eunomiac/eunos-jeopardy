@@ -15,11 +15,11 @@ interface PlayerJoinProps {
 
 /**
  * Player join interface for entering game codes and joining games.
- * 
+ *
  * This component provides a simple interface for players to join existing games
  * by entering a game code or using a direct link. It prevents players from
  * seeing the host game creation interface.
- * 
+ *
  * @param props - Component props
  * @returns JSX element for player join interface
  */
@@ -50,12 +50,12 @@ export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<Pla
     try {
       // Add player to the game
       await GameService.addPlayer(gameCode.trim(), user.id, nickname.trim() || undefined)
-      
+
       // Notify parent component that player joined
       onGameJoined(gameCode.trim())
-    } catch (error) {
-      console.error('Failed to join game:', error)
-      setError(error instanceof Error ? error.message : 'Failed to join game')
+    } catch (err) {
+      console.error('Failed to join game:', err)
+      setError(err instanceof Error ? err.message : 'Failed to join game')
     } finally {
       setLoading(false)
     }
