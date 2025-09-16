@@ -280,8 +280,6 @@
 
     .logout-button {
       @include jeopardy-button-small;
-      padding: $spacing-xs;
-      margin: $spacing-xs;
     }
   }
 }
@@ -567,58 +565,6 @@
     bottom: $spacing-lg;
     right: $spacing-lg;
     font-size: $font-size-xl;
-  }
-}
-
-// Host Dashboard Components
-.host-dashboard {
-  background-color: $jeopardy-black;
-  min-height: 100vh;
-  padding: $spacing-lg;
-
-  .dashboard-header {
-    background-color: $jeopardy-blue;
-    border: 2px solid $jeopardy-gold;
-    border-radius: $border-radius-lg;
-    padding: $spacing-lg;
-    margin-bottom: $spacing-xl;
-    text-align: center;
-
-    h1 {
-      @extend .jeopardy-category;
-      font-size: $font-size-3xl;
-      color: $jeopardy-gold;
-      margin: 0;
-    }
-  }
-
-  .control-panel {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: $spacing-lg;
-    margin-bottom: $spacing-xl;
-
-    .control-card {
-      @include jeopardy-card;
-
-      h3 {
-        @extend .jeopardy-category;
-        color: $jeopardy-gold;
-        margin-bottom: $spacing-md;
-      }
-
-      .control-buttons {
-        display: flex;
-        gap: $spacing-sm;
-        flex-wrap: wrap;
-
-        button {
-          @include jeopardy-button-medium;
-          flex: 1;
-          min-width: 120px;
-        }
-      }
-    }
   }
 }
 
