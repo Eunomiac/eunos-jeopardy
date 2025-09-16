@@ -1,19 +1,5 @@
-import React from 'react'
+import { BuzzerState } from '../../types/BuzzerState'
 import './PlayerBuzzer.scss'
-
-/**
- * Buzzer states for the player interface.
- */
-export enum BuzzerState {
-  /** Buzzer is locked - players cannot buzz in */
-  LOCKED = 'locked',
-  /** Buzzer is unlocked - players can buzz in */
-  UNLOCKED = 'unlocked',
-  /** Player has buzzed in - waiting for host response */
-  BUZZED = 'buzzed',
-  /** Buzzer is frozen - punishment for buzzing in too early (before host unlocks) */
-  FROZEN = 'frozen'
-}
 
 /**
  * Props for the PlayerBuzzer component.
@@ -55,6 +41,15 @@ export function PlayerBuzzer({
   reactionTime,
   showReactionTime = false
 }: Readonly<PlayerBuzzerProps>) {
+
+  /**
+   * Helper function to determine if reaction time should be displayed.
+   */
+  const shouldShowReactionTime = (
+    currentState: BuzzerState,
+    showTime: boolean,
+    time: number | null | undefined
+  ): boolean => currentState === BuzzerState.BUZZED && showTime && time !== null && time !== undefined
 
   /**
    * Handles buzzer click - only processes if unlocked.
@@ -148,7 +143,7 @@ export function PlayerBuzzer({
       </button>
 
       {/* Reaction time display (when buzzed and showing time) */}
-      {state === BuzzerState.BUZZED && showReactionTime && reactionTime !== null && reactionTime !== undefined && (
+      {shouldShowReactionTime(state, showReactionTime, reactionTime) && (
         <div className="reaction-time-display">
           <span className="reaction-time-label">Reaction Time:</span>
           <span className="reaction-time-value">{reactionTime}ms</span>

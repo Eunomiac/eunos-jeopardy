@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import './PlayerPodiums.scss'
 
 /**
@@ -29,27 +29,27 @@ interface PlayerPodiumsProps {
 
 /**
  * Player podiums component with three-section layout.
- * 
+ *
  * **Layout Structure:**
  * - **Left Section**: Up to 3 competitor podiums
  * - **Center Section**: Main player podium (current user, larger)
  * - **Right Section**: Up to 4 competitor podiums
- * 
+ *
  * **Dynamic Features:**
  * - Main player always centered regardless of join order
  * - Dynamic text scaling with scaleX transforms
  * - Ellipsis fallback for very long names
  * - Handwritten font assignment per player
- * 
+ *
  * **Font Scaling Algorithm:**
  * 1. Measure container width
  * 2. Measure text width
  * 3. Apply scaleX transform if text exceeds container
  * 4. Fall back to ellipsis if scaling becomes too small
- * 
+ *
  * @param props - Component props
  * @returns PlayerPodiums component
- * 
+ *
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
@@ -60,9 +60,9 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
    * Separates players into main player and competitors.
    */
   const separatePlayers = () => {
-    const mainPlayer = players.find(player => player.id === currentUserId)
-    const competitors = players.filter(player => player.id !== currentUserId)
-    
+    const mainPlayer = players.find((player) => player.id === currentUserId)
+    const competitors = players.filter((player) => player.id !== currentUserId)
+
     return { mainPlayer, competitors }
   }
 
@@ -73,21 +73,25 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
   const distributeCompetitors = (competitors: PlayerInfo[]) => {
     const leftCompetitors = competitors.slice(0, 3)
     const rightCompetitors = competitors.slice(3, 7) // Max 4 on right
-    
+
     return { leftCompetitors, rightCompetitors }
   }
 
   /**
    * Applies dynamic text scaling to player names.
    */
-  const applyTextScaling = (playerId: string, name: string) => {
+  const applyTextScaling = (playerId: string) => {
     const podiumElement = podiumRefs.current.get(playerId)
-    if (!podiumElement) return
+    if (!podiumElement) {
+      return
+    }
 
     const nameContainer = podiumElement.querySelector('.player-name-container') as HTMLElement
     const nameElement = podiumElement.querySelector('.player-name-text') as HTMLElement
-    
-    if (!nameContainer || !nameElement) return
+
+    if (!nameContainer || !nameElement) {
+      return
+    }
 
     // Reset any previous scaling
     nameElement.style.transform = ''
@@ -101,7 +105,7 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
 
     if (textWidth > containerWidth) {
       const scaleRatio = containerWidth / textWidth
-      
+
       // If scaling would make text too small, use ellipsis instead
       if (scaleRatio < 0.6) {
         nameElement.style.overflow = 'hidden'
@@ -119,8 +123,8 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
    * Effect to apply text scaling when players change.
    */
   useEffect(() => {
-    players.forEach(player => {
-      applyTextScaling(player.id, player.name)
+    players.forEach((player) => {
+      applyTextScaling(player.id)
     })
   }, [players])
 
@@ -138,11 +142,11 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
   /**
    * Renders a single player podium.
    */
-  const renderPodium = (player: PlayerInfo, isMain: boolean = false) => {
+  const renderPodium = (player: PlayerInfo, isMain = false) => {
     const podiumClass = isMain ? 'player-podium main' : 'player-podium competitor'
-    
+
     return (
-      <div 
+      <div
         key={player.id}
         className={podiumClass}
         ref={(el) => {
@@ -154,7 +158,7 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
         }}
       >
         <div className="player-name-container">
-          <div 
+          <div
             className="player-name-text"
             style={{ fontFamily: `'${player.fontFamily}', cursive` }}
           >
@@ -174,10 +178,10 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
   return (
     <div className="player-podiums-container">
       <div className="player-podiums-layout">
-        
+
         {/* Left Section - Up to 3 competitors */}
         <div className="player-podium-section player-podium-left">
-          {leftCompetitors.map(player => renderPodium(player))}
+          {leftCompetitors.map((player) => renderPodium(player))}
         </div>
 
         {/* Center Section - Main player */}
@@ -187,7 +191,7 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
 
         {/* Right Section - Up to 4 competitors */}
         <div className="player-podium-section player-podium-right">
-          {rightCompetitors.map(player => renderPodium(player))}
+          {rightCompetitors.map((player) => renderPodium(player))}
         </div>
 
       </div>

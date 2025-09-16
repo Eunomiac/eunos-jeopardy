@@ -434,7 +434,7 @@ export function App() {
     }
 
     if (mode === 'player-game' && playerGameId) {
-      return <PlayerDashboard />
+      return <PlayerDashboard gameId={playerGameId} />
     }
 
     console.log('❌ Player interface returning null - no matching mode')

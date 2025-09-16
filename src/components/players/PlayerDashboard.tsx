@@ -2,14 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { FontAssignmentService } from '../../services/fonts/FontAssignmentService'
-import { PlayerPodiums, PlayerInfo } from './PlayerPodiums'
-import { ClueRevealModal, ClueInfo } from './ClueRevealModal'
-import { BuzzerState } from './PlayerBuzzer'
+import { PlayerPodiums, type PlayerInfo } from './PlayerPodiums'
+import { ClueRevealModal, type ClueInfo } from './ClueRevealModal'
+import { BuzzerState } from '../../types/BuzzerState'
 import { supabase } from '../../services/supabase/client'
 import './PlayerDashboard.scss'
 
 interface PlayerDashboardProps {
   gameId: string
+}
+
+/**
+ * Game update payload from real-time subscriptions.
+ */
+interface GameUpdatePayload {
+  is_buzzer_locked?: boolean
+  focused_clue_id?: string | null
+  [key: string]: unknown
 }
 
 /**
@@ -62,15 +71,19 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
    * Loads initial game data and player information.
    */
   const loadGameData = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      return
+    }
 
     try {
       setLoading(true)
       setError(null)
 
       // Load game data
-      const game = await GameService.getGameById(gameId)
-      setGameData(game)
+      // TODO: Implement GameService.getGameById method
+      // const game = await GameService.getGameById(gameId)
+      // setGameData(game)
+      setGameData({ id: gameId, status: 'in_progress' }) // Temporary placeholder
 
       // Load players
       const gamePlayers = await GameService.getPlayers(gameId)
@@ -96,7 +109,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           }
 
           return {
-            id: player.id,
+            id: player.user_id, // Use user_id as the unique identifier
             name: player.nickname || 'Player',
             score: player.score,
             fontFamily: font,
@@ -119,7 +132,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
    * Sets up real-time subscriptions for game state updates.
    */
   const setupRealtimeSubscriptions = useCallback(() => {
-    if (!user) return
+    if (!user) {
+      return undefined
+    }
 
     // Subscribe to game state changes
     const gameSubscription = supabase
@@ -133,17 +148,18 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         console.log('🔔 Game state update:', payload)
         // Update game data based on changes
         if (payload.new) {
-          setGameData(payload.new)
+          const gameUpdate = payload.new as GameUpdatePayload
+          setGameData(gameUpdate)
 
           // Update buzzer state based on game state
-          if (payload.new.is_buzzer_locked) {
+          if (gameUpdate.is_buzzer_locked) {
             setBuzzerState(BuzzerState.LOCKED)
           } else {
             setBuzzerState(BuzzerState.UNLOCKED)
           }
 
           // Show clue modal if there's a focused clue
-          if (payload.new.focused_clue_id) {
+          if (gameUpdate.focused_clue_id) {
             // TODO: Load clue data and show modal
             setShowClueModal(true)
           } else {
@@ -208,8 +224,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
   // Set up real-time subscriptions
   useEffect(() => {
-    const cleanup = setupRealtimeSubscriptions()
-    return cleanup
+    return setupRealtimeSubscriptions()
   }, [setupRealtimeSubscriptions])
 
   // Loading state

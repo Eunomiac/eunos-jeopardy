@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { PlayerBuzzer, BuzzerState } from './PlayerBuzzer'
+import { PlayerBuzzer } from './PlayerBuzzer'
+import { BuzzerState } from '../../types/BuzzerState'
 import './ClueRevealModal.scss'
 
 /**
@@ -40,28 +41,28 @@ interface ClueRevealModalProps {
 
 /**
  * Clue reveal modal component with integrated buzzer.
- * 
+ *
  * **Features:**
  * - Displays clue prompt and category information
  * - Integrated buzzer with all four states
  * - Client-side timing calculation
  * - Animate-in/animate-out effects
  * - Daily Double indication
- * 
+ *
  * **Layout:**
  * - Positioned over central podium area
  * - Modal overlay with clue text
  * - Buzzer integrated below clue text
  * - Reaction time display when buzzed
- * 
+ *
  * **Timing Implementation:**
  * - Records unlock timestamp when buzzer becomes unlocked
  * - Records buzz timestamp when player clicks
  * - Calculates reaction time locally for fairness
- * 
+ *
  * @param props - Component props
  * @returns ClueRevealModal component
- * 
+ *
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
@@ -121,16 +122,16 @@ export function ClueRevealModal({
     if (buzzerState === BuzzerState.UNLOCKED && unlockTimestamp) {
       const buzzTimestamp = Date.now()
       const calculatedReactionTime = buzzTimestamp - unlockTimestamp
-      
+
       console.log('⚡ Player buzzed!', {
         unlockTime: unlockTimestamp,
         buzzTime: buzzTimestamp,
         reactionTime: calculatedReactionTime
       })
-      
+
       // Call parent callback with timing information
       onBuzz()
-      
+
       // TODO: Send timing data to server via real-time subscription
       // This will be implemented when integrating with GameService
     } else {
@@ -166,18 +167,13 @@ export function ClueRevealModal({
   ].filter(Boolean).join(' ')
 
   return (
-    <div 
-      className="clue-reveal-overlay"
-      onClick={onClose}
-      onKeyDown={handleClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="clue-prompt"
-      tabIndex={-1}
-    >
-      <div 
+    <div className="clue-reveal-overlay" onClick={onClose}>
+      <dialog
         className={modalClasses}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
+        open={isVisible}
+        aria-labelledby="clue-prompt"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleClose}
       >
         {/* Daily Double Indicator */}
         {clue.isDailyDouble && (
@@ -208,7 +204,7 @@ export function ClueRevealModal({
             showReactionTime={showReactionTime}
           />
         </div>
-      </div>
+      </dialog>
     </div>
   )
 }

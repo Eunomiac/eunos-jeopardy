@@ -3,19 +3,19 @@ import { GameService } from '../games/GameService'
 
 /**
  * Service for managing handwritten font assignments to ensure variety and avoid conflicts.
- * 
+ *
  * **Font Assignment Algorithm:**
  * 1. Check if user already has a permanent font assigned
  * 2. If not, assign using fair distribution (least-used fonts get priority)
  * 3. Check for conflicts with currently connected players
  * 4. If conflict exists, assign temporary override font
- * 
+ *
  * **Font Management:**
  * - 8 available handwritten fonts (handwritten-1 through handwritten-8)
  * - Permanent assignments stored in profiles.handwritten_font
  * - Temporary overrides stored in profiles.temp_handwritten_font
  * - Temporary fonts are cleared when games end
- * 
+ *
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
@@ -25,7 +25,7 @@ export class FontAssignmentService {
    */
   private static readonly AVAILABLE_FONTS = [
     'handwritten-1',
-    'handwritten-2', 
+    'handwritten-2',
     'handwritten-3',
     'handwritten-4',
     'handwritten-5',
@@ -37,7 +37,7 @@ export class FontAssignmentService {
   /**
    * Gets or assigns a handwritten font for a player joining a game.
    * Implements the three-step font assignment algorithm.
-   * 
+   *
    * @param userId - The user's ID
    * @param gameId - The game ID they're joining
    * @returns Promise resolving to the font name to use
@@ -45,8 +45,8 @@ export class FontAssignmentService {
   static async getPlayerFont(userId: string, gameId: string): Promise<string> {
     try {
       // Step 1: Check if user already has a font assigned
-      let userProfile = await this.getUserProfile(userId)
-      
+      const userProfile = await this.getUserProfile(userId)
+
       if (!userProfile.handwritten_font) {
         // Step 2: Assign permanent font using fair distribution
         const newFont = await this.assignPermanentFont(userId)
@@ -57,7 +57,7 @@ export class FontAssignmentService {
       // Step 3: Check for conflicts with currently connected players
       const connectedPlayers = await GameService.getPlayers(gameId)
       const fontsInUse = await this.getFontsInUse(connectedPlayers, userId)
-      
+
       if (fontsInUse.includes(userProfile.handwritten_font)) {
         // Assign temporary override (doesn't overwrite permanent assignment)
         const tempFont = await this.assignTemporaryFont(userId, fontsInUse)
@@ -101,16 +101,16 @@ export class FontAssignmentService {
   private static async assignPermanentFont(userId: string): Promise<string> {
     // Get font assignment counts across all users
     const fontCounts = await this.getFontAssignmentCounts()
-    
+
     // Find fonts with lowest assignment count
     const minCount = Math.min(...Object.values(fontCounts))
     const availableFonts = this.AVAILABLE_FONTS.filter(
-      font => (fontCounts[font] || 0) === minCount
+      (font) => (fontCounts[font] || 0) === minCount
     )
 
     // Random selection from least-used fonts
     const selectedFont = availableFonts[Math.floor(Math.random() * availableFonts.length)]
-    
+
     console.log(`🎨 Assigned permanent font "${selectedFont}" to user ${userId}`)
     return selectedFont
   }
@@ -130,15 +130,15 @@ export class FontAssignmentService {
     }
 
     const counts: Record<string, number> = {}
-    
+
     // Initialize all fonts with 0 count
-    this.AVAILABLE_FONTS.forEach(font => {
+    this.AVAILABLE_FONTS.forEach((font) => {
       counts[font] = 0
     })
 
     // Count actual assignments
-    profiles?.forEach(profile => {
-      if (profile.handwritten_font && counts.hasOwnProperty(profile.handwritten_font)) {
+    profiles?.forEach((profile) => {
+      if (profile.handwritten_font && profile.handwritten_font in counts) {
         counts[profile.handwritten_font]++
       }
     })
@@ -149,10 +149,10 @@ export class FontAssignmentService {
   /**
    * Gets fonts currently in use by connected players (excluding current user).
    */
-  private static async getFontsInUse(connectedPlayers: any[], excludeUserId: string): Promise<string[]> {
+  private static async getFontsInUse(connectedPlayers: Array<{ user_id: string }>, excludeUserId: string): Promise<string[]> {
     const otherPlayerIds = connectedPlayers
-      .filter(player => player.user_id !== excludeUserId)
-      .map(player => player.user_id)
+      .filter((player) => player.user_id !== excludeUserId)
+      .map((player) => player.user_id)
 
     if (otherPlayerIds.length === 0) {
       return []
@@ -169,8 +169,8 @@ export class FontAssignmentService {
     }
 
     const fontsInUse: string[] = []
-    
-    profiles?.forEach(profile => {
+
+    profiles?.forEach((profile) => {
       // Use temporary font if assigned, otherwise use permanent font
       const activeFont = profile.temp_handwritten_font || profile.handwritten_font
       if (activeFont) {
@@ -185,8 +185,8 @@ export class FontAssignmentService {
    * Assigns a temporary font that doesn't conflict with fonts in use.
    */
   private static async assignTemporaryFont(userId: string, fontsInUse: string[]): Promise<string> {
-    const availableFonts = this.AVAILABLE_FONTS.filter(font => !fontsInUse.includes(font))
-    
+    const availableFonts = this.AVAILABLE_FONTS.filter((font) => !fontsInUse.includes(font))
+
     if (availableFonts.length === 0) {
       // All fonts in use, assign random font (rare edge case with 8+ players)
       console.warn('⚠️ All fonts in use, assigning random font')
@@ -195,7 +195,7 @@ export class FontAssignmentService {
 
     // Random selection from available fonts
     const tempFont = availableFonts[Math.floor(Math.random() * availableFonts.length)]
-    
+
     console.log(`🎨 Assigned temporary font "${tempFont}" to user ${userId}`)
     return tempFont
   }
