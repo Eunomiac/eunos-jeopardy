@@ -68,14 +68,14 @@
         outline: none;
         padding: 0;
         margin: 0;
-        font: inherit;
-        color: inherit;
-        background: inherit;
-        text-align: inherit;
         text-decoration: none;
         appearance: none;
         -webkit-appearance: none;
         -moz-appearance: none;
+        // Don't use font: inherit - let the parent .clue-cell styles apply
+        // Don't use color: inherit - let the parent .clue-cell styles apply
+        // Don't use background: inherit - let the parent .clue-cell styles apply
+        // Don't use text-align: inherit - let the parent .clue-cell styles apply
       }
 
       &:hover {
