@@ -98,7 +98,7 @@ export class ClueService {
       throw new Error('No boards found for this clue set')
     }
 
-    const boardIds = boards.map(board => board.id)
+    const boardIds = boards.map((board) => board.id)
 
     // Then, get all categories for these boards
     const { data: categories, error: categoriesError } = await supabase
@@ -114,7 +114,7 @@ export class ClueService {
       throw new Error('No categories found for this clue set')
     }
 
-    const categoryIds = categories.map(category => category.id)
+    const categoryIds = categories.map((category) => category.id)
 
     // Finally, get all clues for these categories
     const { data: clues, error: cluesError } = await supabase
@@ -131,7 +131,7 @@ export class ClueService {
     }
 
     // Create clue state entries for all clues
-    const clueStateInserts: ClueStateInsert[] = clues.map(clue => ({
+    const clueStateInserts: ClueStateInsert[] = clues.map((clue) => ({
       game_id: gameId,
       clue_id: clue.id,
       revealed: false,
@@ -177,7 +177,7 @@ export class ClueService {
       throw new Error(`Failed to check Daily Double status: ${clueError.message}`)
     }
 
-    if (!clue || !clue.category) {
+    if (!clue?.category) {
       return false
     }
 
@@ -189,7 +189,7 @@ export class ClueService {
     }
 
     // Check if this clue's position matches any Daily Double position
-    return dailyDoublePositions.some(position =>
+    return dailyDoublePositions.some((position) =>
       position.category === clue.category.position &&
       position.row === clue.position
     )
@@ -215,7 +215,7 @@ export class ClueService {
       throw new Error(`Failed to get Daily Double positions: ${boardError.message}`)
     }
 
-    if (!board || !board.daily_double_cells) {
+    if (!board?.daily_double_cells) {
       return []
     }
 
@@ -366,7 +366,7 @@ export class ClueService {
    * @returns Promise resolving to count of completed clues
    * @throws {Error} When database operation fails
    */
-  static async getCompletedCluesCount(gameId: string, _round: string): Promise<number> {
+  static async getCompletedCluesCount(gameId: string): Promise<number> {
     // This is a complex query that needs to join multiple tables
     // For now, return a simple count - will implement round-specific logic later
     const { data, error } = await supabase

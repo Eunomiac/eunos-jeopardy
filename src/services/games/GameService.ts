@@ -146,9 +146,9 @@ export class GameService {
     // Initialize clue states for the new game
     try {
       await ClueService.initializeClueStates(data.id)
-    } catch (error) {
+    } catch (clueError) {
       // Log error but don't fail game creation - clue states can be initialized later
-      console.warn('Failed to initialize clue states for new game:', error)
+      console.warn('Failed to initialize clue states for new game:', clueError)
     }
 
     return data

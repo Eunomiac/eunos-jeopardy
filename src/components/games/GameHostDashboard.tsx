@@ -332,7 +332,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
       setGame(updatedGame)
 
       // Find player name for feedback
-      const player = players.find(p => p.user_id === playerId)
+      const player = players.find((p) => p.user_id === playerId)
       const playerName = player?.nickname || 'Unknown Player'
 
       setMessage(`Selected player: ${playerName}`)
@@ -561,7 +561,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
 
       {/* User feedback messages for operations */}
       {message && (
-        <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} alert-compact`}>
+        <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-danger'} jeopardy-alert`}>
           {message}
         </div>
       )}
@@ -638,7 +638,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
 
                       return allClues.map((item, index) => {
                         // Find clue state for this clue using the clue ID
-                        const clueState = clueStates.find(state =>
+                        const clueState = clueStates.find((state) =>
                           state.clue_id === item.clue.id
                         )
 
@@ -647,16 +647,23 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                         const isFocused = focusedClue && focusedClue.id === item.clue.id
 
                         // Check if this clue is a Daily Double
-                        const isDailyDouble = dailyDoublePositions.some(position =>
+                        const isDailyDouble = dailyDoublePositions.some((position) =>
                           position.category === (item.categoryIndex + 1) &&
                           position.row === item.clue.position
                         )
 
                         let cellClass = 'clue-cell'
-                        if (isCompleted) cellClass += ' completed'
-                        else if (isRevealed) cellClass += ' revealed'
-                        if (isFocused) cellClass += ' focused'
-                        if (isDailyDouble) cellClass += ' daily-double'
+                        if (isCompleted) {
+                          cellClass += ' completed'
+                        } else if (isRevealed) {
+                          cellClass += ' revealed'
+                        }
+                        if (isFocused) {
+                          cellClass += ' focused'
+                        }
+                        if (isDailyDouble) {
+                          cellClass += ' daily-double'
+                        }
 
                         const handleClick = () => {
                           if (!isCompleted && !isRevealed && item.clue.id) {
@@ -664,12 +671,36 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                           }
                         }
 
+                        const handleKeyDown = (event: React.KeyboardEvent) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            handleClick()
+                          }
+                        }
+
+                        const isInteractive = !isCompleted && !isRevealed
+
+                        // Build aria-label without nested ternary
+                        let ariaLabel = `Clue for $${item.clue.value}`
+                        if (isDailyDouble) {
+                          ariaLabel += ' - Daily Double'
+                        }
+                        if (isCompleted) {
+                          ariaLabel += ' - Completed'
+                        } else if (isRevealed) {
+                          ariaLabel += ' - Revealed'
+                        }
+
                         return (
                           <div
                             key={`clue-${item.clue.id || index}-${item.clue.value}`}
                             className={cellClass}
                             onClick={handleClick}
-                            style={{ cursor: (!isCompleted && !isRevealed) ? 'pointer' : 'default' }}
+                            onKeyDown={handleKeyDown}
+                            tabIndex={isInteractive ? 0 : -1}
+                            role="button"
+                            aria-label={ariaLabel}
+                            style={{ cursor: isInteractive ? 'pointer' : 'default' }}
                           >
                             ${item.clue.value}
                           </div>
@@ -723,7 +754,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                   <span className="text-uppercase jeopardy-gold">Clues Left:</span>
                   <span>{(() => {
                     // Calculate clues left in current round
-                    const completedCount = clueStates.filter(state => state.completed).length
+                    const completedCount = clueStates.filter((state) => state.completed).length
                     const totalClues = game.current_round === 'final' ? 1 : 30 // 6 categories × 5 clues = 30
                     return totalClues - completedCount
                   })()}</span>
@@ -735,14 +766,14 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                   id="round-progress-bar"
                   className="progress-bar w-100"
                   value={(() => {
-                    const completedCount = clueStates.filter(state => state.completed).length
+                    const completedCount = clueStates.filter((state) => state.completed).length
                     const totalClues = game.current_round === 'final' ? 1 : 30
                     return totalClues > 0 ? (completedCount / totalClues) * 100 : 0
                   })()}
                   max={100}
                 >
                   {(() => {
-                    const completedCount = clueStates.filter(state => state.completed).length
+                    const completedCount = clueStates.filter((state) => state.completed).length
                     const totalClues = game.current_round === 'final' ? 1 : 30
                     return totalClues > 0 ? Math.round((completedCount / totalClues) * 100) : 0
                   })()}% Complete
@@ -806,22 +837,37 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
             ) : (
               <div className="queue-list">
                 {buzzerQueue.map((buzz, index) => {
-                  const player = players.find(p => p.user_id === buzz.user_id)
+                  const player = players.find((p) => p.user_id === buzz.user_id)
                   const playerName = player?.nickname || 'Unknown Player'
                   const buzzTime = new Date(buzz.created_at)
                   const firstBuzzTime = new Date(buzzerQueue[0].created_at)
                   const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime()
+
+                  const handleKeyDown = (event: React.KeyboardEvent) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      handlePlayerSelection(buzz.user_id)
+                    }
+                  }
+
+                  // Build timing text without nested template literals
+                  const timingText = timeDiff === 0 ? '0 ms' : `+${timeDiff} ms`
+                  const ariaLabel = `Select player ${playerName} (position ${index + 1}, ${timingText})`
 
                   return (
                     <div
                       key={buzz.id}
                       className={`queue-item ${game?.focused_player_id === buzz.user_id ? 'selected' : ''}`}
                       onClick={() => handlePlayerSelection(buzz.user_id)}
+                      onKeyDown={handleKeyDown}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={ariaLabel}
                       style={{ cursor: 'pointer' }}
                     >
                       <span className="queue-position">{index + 1}.</span>
                       <span className="queue-player">{playerName}</span>
-                      <span className="queue-timing">{timeDiff === 0 ? '0 ms' : `+${timeDiff} ms`}</span>
+                      <span className="queue-timing">{timingText}</span>
                     </div>
                   )
                 })}
@@ -860,9 +906,9 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                       <button
                         className="jeopardy-button flex-1"
                         onClick={handleRevealClue}
-                        disabled={clueStates.find(state => state.clue_id === focusedClue.id)?.revealed || false}
+                        disabled={clueStates.find((state) => state.clue_id === focusedClue.id)?.revealed || false}
                       >
-                        {clueStates.find(state => state.clue_id === focusedClue.id)?.revealed ? 'Clue Revealed' : 'Reveal Prompt'}
+                        {clueStates.find((state) => state.clue_id === focusedClue.id)?.revealed ? 'Clue Revealed' : 'Reveal Prompt'}
                       </button>
                       <button
                         className={`jeopardy-button flex-1 buzzer-toggle-button ${game.is_buzzer_locked ? 'locked' : 'unlocked'}`}
