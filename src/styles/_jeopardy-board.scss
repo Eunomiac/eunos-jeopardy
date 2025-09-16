@@ -15,7 +15,7 @@
 
   // Category headers - direct children, first row
   .category-header {
-    border: 1px solid black; // Black borders for visual separation
+    border: 2px solid black; // Consistent thick borders for visual separation
     border-radius: 0;
     background: $jeopardy-blue;
     color: $jeopardy-white;
@@ -36,7 +36,7 @@
 
   // Clue cells - direct children, rows 2-6
   .clue-cell {
-      border: 1px solid black; // Black borders for visual separation
+      border: 2px solid black; // Consistent thick borders for visual separation
       background: $jeopardy-blue;
       color: $jeopardy-gold;
       display: flex;
