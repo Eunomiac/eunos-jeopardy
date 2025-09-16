@@ -22,6 +22,16 @@ interface GameUpdatePayload {
 }
 
 /**
+ * Buzz payload from real-time subscriptions.
+ */
+interface BuzzPayload {
+  user_id: string
+  game_id: string
+  clue_id: string
+  created_at: string
+}
+
+/**
  * PlayerDashboard Component
  *
  * Main dashboard interface for players during a Jeopardy game.
@@ -68,6 +78,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   // Font assignment
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [playerFont, setPlayerFont] = useState<string>('handwritten-1') // Will be used for font assignment logic
+
+  // Buzzer timing
+  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null)
 
   /**
    * Loads initial game data and player information.
@@ -131,6 +144,34 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }, [gameId, user])
 
   /**
+   * Loads clue data for display in the modal.
+   */
+  const loadClueData = useCallback(async (clueId: string) => {
+    try {
+      const { ClueService } = await import('../../services/clues/ClueService')
+      const clue = await ClueService.getClueById(clueId)
+
+      // Get category name from category_id
+      const { data: category } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('id', clue.category_id)
+        .single()
+
+      setCurrentClue({
+        id: clue.id,
+        prompt: clue.prompt,
+        value: clue.value,
+        category: category?.name || 'Unknown Category',
+        isDailyDouble: false // TODO: Implement Daily Double detection
+      })
+    } catch (error) {
+      console.error('Failed to load clue:', error)
+      setCurrentClue(null)
+    }
+  }, [])
+
+  /**
    * Sets up real-time subscriptions for game state updates.
    */
   const setupRealtimeSubscriptions = useCallback(() => {
@@ -156,16 +197,19 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           // Update buzzer state based on game state
           if (gameUpdate.is_buzzer_locked) {
             setBuzzerState(BuzzerState.LOCKED)
+            setBuzzerUnlockTime(null)
           } else {
             setBuzzerState(BuzzerState.UNLOCKED)
+            setBuzzerUnlockTime(Date.now()) // Record when buzzer was unlocked
           }
 
           // Show clue modal if there's a focused clue
           if (gameUpdate.focused_clue_id) {
-            // TODO: Load clue data and show modal
+            loadClueData(gameUpdate.focused_clue_id)
             setShowClueModal(true)
           } else {
             setShowClueModal(false)
+            setCurrentClue(null)
           }
         }
       })
@@ -185,29 +229,64 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       })
       .subscribe()
 
+    // Subscribe to buzzer events
+    const buzzesSubscription = supabase
+      .channel(`buzzes-${gameId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'buzzes',
+        filter: `game_id=eq.${gameId}`
+      }, (payload) => {
+        console.log('🔔 Buzz event:', payload)
+        // Handle buzzer state changes based on buzz events
+        if (payload.new && (payload.new as BuzzPayload).user_id === user?.id) {
+          // This player's buzz was recorded
+          setBuzzerState(BuzzerState.BUZZED)
+        }
+      })
+      .subscribe()
+
     return () => {
       gameSubscription.unsubscribe()
       playersSubscription.unsubscribe()
+      buzzesSubscription.unsubscribe()
     }
-  }, [gameId, user, loadGameData])
+  }, [gameId, user, loadGameData, loadClueData])
 
   /**
    * Handles player buzzer click.
    */
-  const handleBuzz = useCallback(() => {
-    if (buzzerState === BuzzerState.UNLOCKED) {
+  const handleBuzz = useCallback(async () => {
+    if (buzzerState === BuzzerState.UNLOCKED && user && currentClue) {
+      // Record buzz timestamp for client-side timing (will be implemented later)
       setBuzzerState(BuzzerState.BUZZED)
 
-      // TODO: Send buzz event to server with timing data
-      // This will be implemented when integrating with real-time subscriptions
+      try {
+        // Send buzz event to server
+        const { GameService } = await import('../../services/games/GameService')
+        await GameService.recordBuzz(gameId, currentClue.id, user.id)
 
-      console.log('⚡ Player buzzed in!')
+        console.log('⚡ Player buzzed in successfully!')
+
+        // Calculate and display reaction time using client-side timing
+        if (buzzerUnlockTime) {
+          const reactionTimeMs = Date.now() - buzzerUnlockTime
+          setReactionTime(reactionTimeMs)
+          console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`)
+        }
+
+      } catch (error) {
+        console.error('Failed to record buzz:', error)
+        // Reset buzzer state on error
+        setBuzzerState(BuzzerState.UNLOCKED)
+      }
     } else if (buzzerState === BuzzerState.LOCKED) {
       // Player buzzed too early - set frozen state
       setBuzzerState(BuzzerState.FROZEN)
       console.log('❄️ Player buzzed too early - frozen!')
     }
-  }, [buzzerState])
+  }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime])
 
   /**
    * Handles clue modal close.
