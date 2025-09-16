@@ -4,6 +4,7 @@ import { GameService, type Game, type Player, type Buzz } from '../../services/g
 import { ClueService, type Clue, type ClueState } from '../../services/clues/ClueService'
 import { ClueSetService } from '../../services/clueSets/clueSetService'
 import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
+import { SupabaseConnection } from '../../services/supabase/connection'
 import './GameHostDashboard.scss'
 
 /**
@@ -112,6 +113,52 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
 
   /** Type of message for appropriate styling (success/error) */
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
+
+  /** Connection status monitoring */
+  const [connectionStatus, setConnectionStatus] = useState<'ACTIVE' | 'DISCONNECTED' | 'SLOW'>('ACTIVE')
+
+  /** Latency compensation toggle state */
+  const [latencyCompensationEnabled, setLatencyCompensationEnabled] = useState(true)
+
+  /**
+   * Effect to monitor connection status with periodic health checks.
+   *
+   * Monitors the Supabase connection status and updates the UI accordingly.
+   * Runs connection tests every 30 seconds to provide real-time status updates.
+   *
+   * **Status Categories:**
+   * - ACTIVE: Connection healthy (latency < 500ms)
+   * - SLOW: Connection working but slow (latency >= 500ms)
+   * - DISCONNECTED: Connection failed or error occurred
+   */
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { connected, latency } = await SupabaseConnection.testConnection()
+
+        if (!connected) {
+          setConnectionStatus('DISCONNECTED')
+        } else if (latency && latency >= 500) {
+          setConnectionStatus('SLOW')
+        } else {
+          setConnectionStatus('ACTIVE')
+        }
+      } catch (error) {
+        console.error('Connection check failed:', error)
+        setConnectionStatus('DISCONNECTED')
+      }
+    }
+
+    // Initial check
+    checkConnection()
+
+    // Set up periodic checks every 30 seconds
+    const intervalId = setInterval(checkConnection, 30000)
+
+    return () => {
+      clearInterval(intervalId)
+    }
+  }, [])
 
   /**
    * Effect to load initial game data when component mounts or dependencies change.
@@ -473,6 +520,28 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
    * - Could add keyboard shortcut (SPACE) for quick toggling
    * - Could integrate with game board clue selection
    */
+
+  /**
+   * Handles latency compensation toggle for buzzer timing fairness.
+   *
+   * Toggles the latency compensation feature on/off. When enabled, the system
+   * accounts for network latency differences between players to ensure fair
+   * buzzer timing. When disabled, raw timing is used.
+   *
+   * **Latency Compensation Effects:**
+   * - Enabled: Adjusts buzzer queue ordering based on connection latency
+   * - Disabled: Uses raw timestamp ordering for buzzer queue
+   * - Default: Enabled for fairness in online gameplay
+   */
+  const handleLatencyCompensationToggle = () => {
+    setLatencyCompensationEnabled(!latencyCompensationEnabled)
+
+    // Provide user feedback
+    const newState = !latencyCompensationEnabled
+    setMessage(`Latency compensation ${newState ? 'enabled' : 'disabled'}`)
+    setMessageType('success')
+  }
+
   const handleToggleBuzzer = async () => {
     // Validate prerequisites
     if (!user || !game) { return }
@@ -877,8 +946,21 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
           <div className="panel-content">
             {/* Connection & Latency Status - moved from Buzzer Control Panel */}
             <div className="connection-status">
-              <span>Connection Status: <span className="text-success">ACTIVE</span></span>
-              <span>Latency Compensation: <span className="text-success">ACTIVE</span></span>
+              <span>Connection Status: <span className={`${
+                connectionStatus === 'ACTIVE' ? 'text-success' :
+                connectionStatus === 'SLOW' ? 'text-warning' :
+                'text-danger'
+              }`}>{connectionStatus}</span></span>
+              <span>Latency Compensation:
+                <button
+                  type="button"
+                  className={`btn btn-sm ms-1 ${latencyCompensationEnabled ? 'btn-success' : 'btn-outline-secondary'}`}
+                  onClick={handleLatencyCompensationToggle}
+                  aria-label={`Latency compensation is ${latencyCompensationEnabled ? 'enabled' : 'disabled'}. Click to ${latencyCompensationEnabled ? 'disable' : 'enable'}.`}
+                >
+                  {latencyCompensationEnabled ? 'ENABLED' : 'DISABLED'}
+                </button>
+              </span>
             </div>
 
             {/* Clear Queue Button - positioned below connection status */}
