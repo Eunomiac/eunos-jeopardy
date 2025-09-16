@@ -180,8 +180,8 @@ describe('GameHostDashboard', () => {
         expect(mockGameService.getPlayers).toHaveBeenCalledWith('game-123')
       })
 
-      expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-      expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+      expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+      expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
     })
   })
 
@@ -227,8 +227,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 
@@ -299,8 +299,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 
@@ -363,8 +363,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 
@@ -401,8 +401,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 
@@ -429,8 +429,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 
@@ -449,8 +449,8 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
-        expect(screen.getByText('Euno\'s Jeopardy')).toBeInTheDocument()
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 

@@ -217,7 +217,7 @@ describe('App', () => {
 
       // Wait for GameHostDashboard to load
       await waitFor(() => {
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
 
@@ -320,7 +320,7 @@ describe('App', () => {
 
       // Wait for GameHostDashboard to load and find back button
       await waitFor(() => {
-        expect(screen.getByText('GAME HOST DASHBOARD')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
 
       // Click back to creator
