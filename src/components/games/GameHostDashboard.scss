@@ -349,11 +349,6 @@
           .focused-clue-display {
             margin-bottom: $spacing-xl;
 
-            // CSS custom properties for the modular clue display
-            --clue-font-size: #{$font-size-lg};
-            --clue-display-width: 100%;
-            --clue-text-shadow: #{$shadow-sm};
-
             .clue-display-row {
               display: flex;
               gap: $spacing-lg;
@@ -362,6 +357,8 @@
 
               .jeopardy-clue-display {
                 flex: 1;
+                // Set custom properties for this context
+                --clue-display-width: 400px;
               }
 
               .clue-control-button {
