@@ -17,6 +17,8 @@ $jeopardy-darkest-blue: #060016;     // Rarely used, e.g. inactive buttons
 $jeopardy-grey: #999999;             // Inactive buttons
 $jeopardy-light-grey: #cccccc;       // Light grey for borders
 $jeopardy-bright-gold: #ffd700;      // Bright gold for active states & highlighting
+$jeopardy-dark-red: #701b23;
+$jeopardy-red: #dc3545;
 
 // Status Colors
 $success-color: #28a745;
@@ -53,6 +55,17 @@ $font-family-clue: 'Korinna ITC Bold', serif;
 $font-family-category: 'Swiss 921', sans-serif;
 $font-family-money: 'Swiss 911 Extra Condensed', sans-serif;
 $font-family-ui: 'Swiss 921', sans-serif;
+$font-family-base: 'Swiss 921', sans-serif;
+
+// Handwritten fonts for player names (8 different fonts)
+$font-family-handwritten-1: 'handwritten-1', cursive;
+$font-family-handwritten-2: 'handwritten-2', cursive;
+$font-family-handwritten-3: 'handwritten-3', cursive;
+$font-family-handwritten-4: 'handwritten-4', cursive;
+$font-family-handwritten-5: 'handwritten-5', cursive;
+$font-family-handwritten-6: 'handwritten-6', cursive;
+$font-family-handwritten-7: 'handwritten-7', cursive;
+$font-family-handwritten-8: 'handwritten-8', cursive;
 
 // Jeopardy Text Transform (ALL UPPERCASE)
 $jeopardy-text-transform: uppercase;
@@ -60,7 +73,7 @@ $jeopardy-text-transform: uppercase;
 // Typography Scale
 $font-size-xs: 0.75rem;
 $font-size-sm: 0.875rem;
-$font-size-base: 1rem;
+$font-size-md: 1rem;
 $font-size-lg: 1.125rem;
 $font-size-xl: 1.25rem;
 $font-size-2xl: 1.5rem;

@@ -84,10 +84,20 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
   /**
    * Handles leaving the game.
    */
-  const handleLeaveGame = () => {
-    // For now, just return to join interface
-    // Future enhancement: Remove player from game database
-    onLeaveGame()
+  const handleLeaveGame = async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      // Remove player from game database
+      await GameService.removePlayer(gameId, user.id)
+      // Return to join interface
+      onLeaveGame()
+    } catch (err) {
+      console.error('Failed to leave game:', err)
+      setError(err instanceof Error ? err.message : 'Failed to leave game')
+      setLoading(false)
+    }
   }
 
   if (loading) {

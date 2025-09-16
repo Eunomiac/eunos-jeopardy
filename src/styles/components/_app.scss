@@ -35,3 +35,44 @@
     font-size: $font-size-sm;
   }
 }
+
+// Role loading screen styles
+.role-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xxl;
+  text-align: center;
+  min-height: 300px;
+
+  h2 {
+    margin: $spacing-lg 0 $spacing-md 0;
+    color: $jeopardy-gold;
+    font-size: $font-size-2xl;
+  }
+
+  p {
+    color: $jeopardy-white;
+    font-size: $font-size-lg;
+    margin: 0;
+  }
+}
+
+.loading-spinner {
+  margin-bottom: $spacing-lg;
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba($jeopardy-gold, 0.3);
+    border-top: 4px solid $jeopardy-gold;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

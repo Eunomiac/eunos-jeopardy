@@ -341,6 +341,11 @@ export function GameHostDashboard({
 
         // Fetch complete clue set data for the game board
         // This provides all categories and clues needed for the dashboard
+        // Validate that game has a clue set assigned
+        if (!gameData.clue_set_id) {
+          throw new Error('Game does not have a clue set assigned');
+        }
+
         const loadedClueSetData = await ClueSetService.loadClueSetFromDatabase(
           gameData.clue_set_id
         );
@@ -349,6 +354,7 @@ export function GameHostDashboard({
         // Fetch current player list for the game
         // This provides real-time player information for the dashboard
         const playersData = await GameService.getPlayers(gameId);
+        console.log('🎮 Initial players loaded:', playersData);
         setPlayers(playersData);
 
         // Load clue states for the game
@@ -412,13 +418,14 @@ export function GameHostDashboard({
           filter: `game_id=eq.${gameId}`,
         },
         async () => {
-          console.log("Player change detected");
+          console.log("🎮 Player change detected via real-time");
           // Refresh player list when players join/leave
           try {
             const updatedPlayers = await GameService.getPlayers(gameId);
+            console.log('🎮 Updated players:', updatedPlayers);
             setPlayers(updatedPlayers);
           } catch (error) {
-            console.error("Failed to refresh players:", error);
+            console.error("❌ Failed to refresh players:", error);
           }
         }
       )
@@ -930,8 +937,8 @@ export function GameHostDashboard({
       // Provide immediate user feedback
       setMessage("Ending game...");
 
-      // Update game status to completed
-      await GameService.updateGame(gameId, { status: "completed" }, user.id);
+      // End game with appropriate status (completed or cancelled)
+      await GameService.endGame(gameId, user.id);
 
       // Show success message
       setMessage("Game ended successfully");
@@ -999,7 +1006,7 @@ export function GameHostDashboard({
       <header className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center">
           <h1 className="jeopardy-logo">Game Host Dashboard</h1>
-          <button className="jeopardy-button" onClick={onBackToCreator}>
+          <button className="jeopardy-button" onClick={handleEndGame}>
             Back to Creator
           </button>
         </div>

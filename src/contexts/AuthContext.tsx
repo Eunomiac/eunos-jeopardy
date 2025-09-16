@@ -126,7 +126,8 @@ async function ensureProfileExists(user: User): Promise<void> {
       .insert({
         id: user.id, // Use Supabase Auth user ID as primary key
         username: user.email?.split('@')[0] || null, // Extract username from email
-        display_name: user.user_metadata?.full_name || null // Use full name if provided
+        display_name: user.user_metadata?.full_name || null, // Use full name if provided
+        role: 'player' // Default new users to player role
       })
 
     // Log profile creation errors but don't throw - authentication should continue

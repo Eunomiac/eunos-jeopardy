@@ -56,7 +56,7 @@ describe('game types', () => {
       expect(isValidGameStatus('lobby')).toBe(true)
       expect(isValidGameStatus('in_progress')).toBe(true)
       expect(isValidGameStatus('completed')).toBe(true)
-      expect(isValidGameStatus('archived')).toBe(true)
+      expect(isValidGameStatus('cancelled')).toBe(true)
     })
 
     it('should return false for invalid game statuses', () => {
@@ -64,7 +64,7 @@ describe('game types', () => {
       expect(isValidGameStatus('LOBBY')).toBe(false)
       expect(isValidGameStatus('In_Progress')).toBe(false)
       expect(isValidGameStatus('COMPLETED')).toBe(false)
-      expect(isValidGameStatus('ARCHIVED')).toBe(false)
+      expect(isValidGameStatus('CANCELLED')).toBe(false)
       expect(isValidGameStatus('')).toBe(false)
       expect(isValidGameStatus('pending')).toBe(false)
       expect(isValidGameStatus('active')).toBe(false)
@@ -92,7 +92,7 @@ describe('game types', () => {
       expect(isValidGameStatus('Lobby')).toBe(false)
       expect(isValidGameStatus('IN_PROGRESS')).toBe(false)
       expect(isValidGameStatus('Completed')).toBe(false)
-      expect(isValidGameStatus('Archived')).toBe(false)
+      expect(isValidGameStatus('Cancelled')).toBe(false)
       expect(isValidGameStatus('LoBbY')).toBe(false)
     })
 
@@ -118,13 +118,13 @@ describe('game types', () => {
   describe('type guard integration', () => {
     it('should work together for validation', () => {
       const roundValues = ['jeopardy', 'double', 'final', 'invalid']
-      const statusValues = ['lobby', 'in_progress', 'completed', 'archived', 'invalid']
+      const statusValues = ['lobby', 'in_progress', 'completed', 'cancelled', 'invalid']
 
       const validRounds = roundValues.filter(isValidRoundType)
       const validStatuses = statusValues.filter(isValidGameStatus)
 
       expect(validRounds).toEqual(['jeopardy', 'double', 'final'])
-      expect(validStatuses).toEqual(['lobby', 'in_progress', 'completed', 'archived'])
+      expect(validStatuses).toEqual(['lobby', 'in_progress', 'completed', 'cancelled'])
     })
 
     it('should handle mixed type validation', () => {

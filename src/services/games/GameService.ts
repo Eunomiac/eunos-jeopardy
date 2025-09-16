@@ -75,6 +75,170 @@ export type ClueStateInsert = TablesInsert<'clue_states'>
  */
 export class GameService {
   /**
+   * Gets the currently active game (lobby or in_progress status).
+   *
+   * This method enforces the "one game at a time" rule by finding any game
+   * that is currently in lobby or in_progress status. Used to prevent multiple
+   * simultaneous games and to redirect hosts to existing active games.
+   *
+   * **Business Logic:**
+   * - Only one game can be active at any time
+   * - Active games are those with status 'lobby' or 'in_progress'
+   * - Completed/cancelled games are not considered active
+   *
+   * @returns Promise resolving to the active game or null if none exists
+   * @throws {Error} When database operation fails
+   *
+   * @example
+   * ```typescript
+   * const activeGame = await GameService.getActiveGame();
+   * if (activeGame) {
+   *   console.log(`Active game found: ${activeGame.id}`);
+   *   // Redirect host to manage this game
+   * } else {
+   *   // Allow creating new game
+   * }
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async getActiveGame(): Promise<Game | null> {
+    const { data, error } = await supabase
+      .from('games')
+      .select()
+      .in('status', ['lobby', 'in_progress'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      throw new Error(`Failed to get active game: ${error.message}`)
+    }
+
+    return data
+  }
+
+  /**
+   * Ends a game with appropriate status based on completion state.
+   *
+   * Determines whether the game should be marked as 'completed' (if Final Jeopardy
+   * was fully answered) or 'cancelled' (if the game was ended early). This provides
+   * better game state tracking and analytics.
+   *
+   * **Status Logic:**
+   * - 'completed': Final Jeopardy clue was revealed and answered
+   * - 'cancelled': Game ended before Final Jeopardy completion
+   *
+   * @param gameId - UUID of the game to end
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game with appropriate final status
+   * @throws {Error} When unauthorized, game not found, or database error
+   *
+   * @example
+   * ```typescript
+   * // End game - will check Final Jeopardy completion automatically
+   * const endedGame = await GameService.endGame(gameId, hostId);
+   * console.log(`Game ended with status: ${endedGame.status}`); // 'completed' or 'cancelled'
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async endGame(gameId: string, hostId: string): Promise<Game> {
+    // Verify authorization first
+    await this.getGame(gameId, hostId)
+
+    // Check if Final Jeopardy was completed
+    const finalJeopardyCompleted = await this.isFinalJeopardyCompleted(gameId)
+
+    // Set appropriate status based on completion
+    const finalStatus: GameStatus = finalJeopardyCompleted ? 'completed' : 'cancelled'
+
+    // Update game with final status
+    return this.updateGame(gameId, { status: finalStatus }, hostId)
+  }
+
+  /**
+   * Checks if Final Jeopardy was completed in the game.
+   *
+   * Determines completion by checking if the Final Jeopardy clue was both
+   * revealed and completed (answered). This is used to distinguish between
+   * games that ended naturally vs. games that were cancelled early.
+   *
+   * @param gameId - UUID of the game to check
+   * @returns Promise resolving to true if Final Jeopardy was completed
+   * @throws {Error} When database operation fails
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async isFinalJeopardyCompleted(gameId: string): Promise<boolean> {
+    try {
+      // Get the game's clue set ID
+      const { data: game, error: gameError } = await supabase
+        .from('games')
+        .select('clue_set_id')
+        .eq('id', gameId)
+        .single()
+
+      if (gameError || !game?.clue_set_id) {
+        console.warn('Error getting game clue set:', gameError)
+        return false
+      }
+
+      // Find the Final Jeopardy board for this clue set
+      const { data: finalBoard, error: boardError } = await supabase
+        .from('boards')
+        .select('id')
+        .eq('clue_set_id', game.clue_set_id)
+        .eq('round', 'final')
+        .single()
+
+      if (boardError || !finalBoard) {
+        console.warn('Error getting Final Jeopardy board:', boardError)
+        return false
+      }
+
+      // Get the Final Jeopardy clue from the board
+      const { data: finalClues, error: clueError } = await supabase
+        .from('clues')
+        .select(`
+          id,
+          categories!inner (
+            board_id
+          )
+        `)
+        .eq('categories.board_id', finalBoard.id)
+        .limit(1)
+
+      if (clueError || !finalClues?.[0]) {
+        console.warn('Error getting Final Jeopardy clue:', clueError)
+        return false
+      }
+
+      // Check the clue state for the Final Jeopardy clue
+      const { data: clueState, error: stateError } = await supabase
+        .from('clue_states')
+        .select('revealed, completed')
+        .eq('game_id', gameId)
+        .eq('clue_id', finalClues[0].id)
+        .single()
+
+      if (stateError) {
+        console.warn('Error getting Final Jeopardy clue state:', stateError)
+        return false
+      }
+
+      // Final Jeopardy is completed if it was both revealed and completed
+      return clueState?.revealed === true && clueState?.completed === true
+    } catch (error) {
+      console.warn('Error in isFinalJeopardyCompleted:', error)
+      return false
+    }
+  }
+
+  /**
    * Creates a new Jeopardy game with the specified clue set and host.
    *
    * Initializes a new game in the lobby state with the buzzer locked by default.
@@ -515,6 +679,38 @@ export class GameService {
     }
 
     return data
+  }
+
+  /**
+   * Removes a player from a game.
+   *
+   * Deletes the player record from the database, which will trigger
+   * real-time updates to notify the host dashboard of the change.
+   *
+   * @param gameId - UUID of the game to remove player from
+   * @param userId - UUID of the user to remove
+   * @throws {Error} When player not found or database operation fails
+   *
+   * @example
+   * ```typescript
+   * // Remove player from game
+   * await GameService.removePlayer(gameId, userId);
+   * console.log('Player removed from game');
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async removePlayer(gameId: string, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .eq('game_id', gameId)
+      .eq('user_id', userId)
+
+    if (error) {
+      throw new Error(`Failed to remove player: ${error.message}`)
+    }
   }
 
   /**

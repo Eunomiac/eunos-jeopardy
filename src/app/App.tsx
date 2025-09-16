@@ -6,8 +6,10 @@ import { UploadService } from '../services/clueSets/uploadService'
 import { GameHostDashboard } from '../components/games/GameHostDashboard'
 import { PlayerJoin } from '../components/players/PlayerJoin'
 import { PlayerLobby } from '../components/players/PlayerLobby'
+import PlayerDashboard from '../components/players/PlayerDashboard'
 import { useAuth } from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
+import { supabase } from '../services/supabase/client'
 
 
 /**
@@ -23,7 +25,7 @@ import { GameService } from '../services/games/GameService'
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-type AppMode = 'clue-sets' | 'host-game' | 'dashboard' | 'player-join' | 'player-lobby'
+type AppMode = 'clue-sets' | 'host-game' | 'dashboard' | 'player-join' | 'player-lobby' | 'player-game'
 
 /**
  * Main application component that orchestrates the entire Euno's Jeopardy game hosting experience.
@@ -107,24 +109,15 @@ export function App() {
   /** Current authenticated user from AuthContext */
   const { user } = useAuth()
 
-  /**
-   * Effect to detect game join URLs and initialize player mode.
-   *
-   * Checks URL parameters for game codes and automatically switches to
-   * player join mode if a game parameter is detected.
-   */
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const gameParam = urlParams.get('game')
+  /** Whether the current user is a host (has created games) or player */
+  const [userRole, setUserRole] = useState<'host' | 'player' | null>(null)
 
-    if (gameParam && user) {
-      // User is trying to join a game via URL
-      setMode('player-join')
-    } else if (!gameParam && mode === 'player-join') {
-      // No game parameter, return to host mode
-      setMode('clue-sets')
-    }
-  }, [user, mode])
+  /** Whether we're still determining the user's role */
+  const [roleLoading, setRoleLoading] = useState(false)
+
+  // URL parameter effect removed - no longer needed since we have:
+  // 1. Role-based interface detection (players automatically see player interface)
+  // 2. Auto-detection of lobby games (no need for game codes in URLs)
 
   /**
    * Effect to clean up application state when user logs out.
@@ -143,9 +136,159 @@ export function App() {
       setCurrentGameId(null)
       setSelectedClueSetId('')
       setPlayerGameId(null)
+      setUserRole(null)
+      setRoleLoading(false)
       setMode('clue-sets')
     }
   }, [user])
+
+  /**
+   * Effect to detect user role (host vs player) from the database profile.
+   *
+   * Fetches the user's role from their profile to determine if they should see
+   * the host interface (game creation) or player interface (game joining) by default.
+   */
+  useEffect(() => {
+    const detectUserRole = async () => {
+      if (!user) {
+        setUserRole(null)
+        setRoleLoading(false)
+        return
+      }
+
+      setRoleLoading(true)
+      console.log('🔍 Starting role detection for user:', user.id)
+
+      try {
+        // Get user's role from their profile
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        console.log('📊 Profile query result:', { profile, error })
+
+        if (error) {
+          console.error('❌ Error fetching user profile:', error)
+          // Default to player interface on error
+          setUserRole('player')
+          setMode('player-join')
+          console.log('🎮 Set to player mode (error fallback)')
+        } else {
+          const role = profile?.role as 'host' | 'player' || 'player'
+          console.log('👤 Detected role:', role)
+          setUserRole(role)
+
+          // Set default mode based on role
+          if (role === 'player') {
+            // For players, check if they've already joined an active game
+            try {
+              const { GameService } = await import('../services/games/GameService')
+              const activeGame = await GameService.getActiveGame()
+
+              if (activeGame) {
+                // Check if this player has already joined the active game
+                const players = await GameService.getPlayers(activeGame.id)
+                const playerInGame = players.find(p => p.user_id === user.id)
+
+                if (playerInGame) {
+                  console.log('🎯 Player already in active game, redirecting to lobby:', activeGame.id)
+                  setPlayerGameId(activeGame.id)
+                  setMode(activeGame.status === 'lobby' ? 'player-lobby' : 'player-game')
+                } else {
+                  console.log('🎮 Active game exists but player not joined, going to join screen')
+                  setMode('player-join')
+                }
+              } else {
+                console.log('🎮 No active game, going to join screen')
+                setMode('player-join')
+              }
+            } catch (error) {
+              console.error('❌ Error checking player game status:', error)
+              // Fallback to join screen on error
+              setMode('player-join')
+            }
+          } else {
+            // For hosts, check if there's an active game first
+            try {
+              const { GameService } = await import('../services/games/GameService')
+              const activeGame = await GameService.getActiveGame()
+
+              if (activeGame) {
+                console.log('🎯 Active game found, redirecting to dashboard:', activeGame.id)
+                setCurrentGameId(activeGame.id)
+                setMode('dashboard')
+              } else {
+                console.log('🎮 No active game, going to game creation')
+                setMode('clue-sets')
+              }
+            } catch (error) {
+              console.error('❌ Error checking for active game:', error)
+              // Fallback to game creation on error
+              setMode('clue-sets')
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error in detectUserRole:', error)
+        // Default to player interface on error
+        setUserRole('player')
+        setMode('player-join')
+      } finally {
+        setRoleLoading(false)
+      }
+    }
+
+    detectUserRole()
+  }, [user]) // Remove mode dependency to prevent flickering
+
+  /**
+   * Effect to monitor player game state changes.
+   *
+   * Subscribes to game state changes when a player has joined a game.
+   * Automatically transitions between lobby and active game modes based
+   * on the game status.
+   */
+  useEffect(() => {
+    if (!playerGameId || !user) {
+      return undefined
+    }
+
+    // Set up real-time subscription for game state changes
+    const subscription = supabase
+      .channel(`player-game-state:${playerGameId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'games',
+        filter: `id=eq.${playerGameId}`
+      }, async (payload) => {
+        console.log('Player detected game state change:', payload)
+
+        // Check the new game status
+        const newStatus = payload.new?.status
+
+        if (newStatus === 'in_progress' && mode === 'player-lobby') {
+          // Game started - transition to player dashboard
+          setMode('player-game')
+        } else if (newStatus === 'lobby' && mode === 'player-game') {
+          // Game returned to lobby - transition back to lobby
+          setMode('player-lobby')
+        } else if ((newStatus === 'completed' || newStatus === 'cancelled') &&
+                   (mode === 'player-lobby' || mode === 'player-game')) {
+          // Game ended - return to join screen
+          console.log('🎮 Game ended, returning to join screen')
+          setPlayerGameId(null)
+          setMode('player-join')
+        }
+      })
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [playerGameId, user, mode])
 
   /**
    * Handles successful game creation by transitioning to the host dashboard.
@@ -201,6 +344,11 @@ export function App() {
    * Renders the host interface (dashboard or setup modes).
    */
   const renderHostInterface = () => {
+    // Only show host interface if user is a host
+    if (userRole !== 'host') {
+      return null
+    }
+
     if (mode !== 'dashboard' && mode !== 'clue-sets' && mode !== 'host-game') {
       return null
     }
@@ -231,14 +379,22 @@ export function App() {
   }
 
   /**
-   * Renders the player interface (join or lobby modes).
+   * Renders the player interface (join, lobby, or active game modes).
    */
   const renderPlayerInterface = () => {
+    console.log('🎮 renderPlayerInterface called:', { userRole, mode })
+
+    // Only show player interface if user is a player
+    if (userRole !== 'player') {
+      console.log('❌ Not rendering player interface - userRole is not player:', userRole)
+      return null
+    }
+
     if (mode === 'player-join') {
+      console.log('✅ Rendering PlayerJoin component')
       return (
         <div className="content-section">
           <PlayerJoin
-            gameId={new URLSearchParams(window.location.search).get('game') || undefined}
             onGameJoined={handlePlayerGameJoined}
           />
         </div>
@@ -256,8 +412,28 @@ export function App() {
       )
     }
 
+    if (mode === 'player-game' && playerGameId) {
+      return <PlayerDashboard />
+    }
+
+    console.log('❌ Player interface returning null - no matching mode')
     return null
   }
+
+  /**
+   * Renders a loading screen while determining user role.
+   */
+  const renderRoleLoadingScreen = () => (
+    <div className="content-section">
+      <div className="role-loading">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+        </div>
+        <h2>Loading...</h2>
+        <p>Determining your interface...</p>
+      </div>
+    </div>
+  )
 
   /**
    * Handles successful clue set deletion by refreshing the list and clearing selection.
@@ -526,11 +702,22 @@ export function App() {
           {/* Main application content for authenticated users */}
           {user && (
             <>
-              {/* Host interface */}
-              {renderHostInterface()}
+              {/* Debug info */}
+              {console.log('🔍 Render state:', { user: !!user, roleLoading, userRole, mode })}
 
-              {/* Player interface */}
-              {renderPlayerInterface()}
+              {/* Show loading screen while determining user role */}
+              {roleLoading && renderRoleLoadingScreen()}
+
+              {/* Show appropriate interface once role is determined */}
+              {!roleLoading && (
+                <>
+                  {/* Host interface */}
+                  {renderHostInterface()}
+
+                  {/* Player interface */}
+                  {renderPlayerInterface()}
+                </>
+              )}
             </>
           )}
         </div>

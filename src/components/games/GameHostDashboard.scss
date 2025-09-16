@@ -52,6 +52,7 @@
         left: 0;
         z-index: 1;
         padding-left: 125px;
+        pointer-events: none;
       }
 
       .jeopardy-button {
@@ -507,7 +508,7 @@
             text-align: left;
             width: calc(100% - 2 * #{$spacing-lg});
             color: $jeopardy-white;
-            font-size: $font-size-base;
+            font-size: $font-size-md;
             border: 1px solid rgba($jeopardy-gold, 0.5);
             position: absolute;
             bottom: 0;

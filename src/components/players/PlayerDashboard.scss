@@ -1,0 +1,150 @@
+// Player Dashboard Styles - Optimized for 1080p Desktop
+@use "sass:color";
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "../../styles/globals" as *;
+@use "../../styles/jeopardy-theme" as *;
+@use "../../styles/jeopardy-board" as *;
+@use "../../styles/jeopardy-clue" as *;
+@use "../../styles/jeopardy-podium" as *;
+/**
+ * PlayerDashboard Styling
+ *
+ * Base styles for the player dashboard component.
+ * This file will be used to style the HTML content from MockPlayerUI.html
+ * during the design and layout phase.
+ */
+
+.player-dashboard {
+  // Full viewport coverage with authentic Jeopardy background
+  width: 100vw;
+  height: 100vh;
+  background-image: url('/assets/images/bg-stage.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  // Fallback background color if image doesn't load
+  background-color: $jeopardy-background-blue;
+
+  // Ensure content is positioned properly
+  position: relative;
+  overflow: hidden;
+
+  // Base typography for player interface
+  font-family: $font-family-base;
+  color: $jeopardy-white;
+
+  // Loading and error states
+  &.loading,
+  &.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: none; // Don't load background for loading/error states
+    background-color: $jeopardy-background-blue;
+  }
+
+  .loading-message {
+    font-size: $font-size-xl;
+    color: $jeopardy-gold;
+    text-align: center;
+    animation: pulse 2s infinite;
+  }
+
+  .error-message {
+    text-align: center;
+    padding: $spacing-xl;
+    background: rgba($jeopardy-black, 0.8);
+    border-radius: $border-radius-md;
+    border: 2px solid $jeopardy-red;
+
+    h3 {
+      color: $jeopardy-red;
+      margin-bottom: $spacing-md;
+      font-size: $font-size-xl;
+    }
+
+    p {
+      color: $jeopardy-white;
+      margin-bottom: $spacing-sm;
+      font-size: $font-size-md;
+
+      &:last-child {
+        margin-bottom: 0;
+        font-size: $font-size-sm;
+        color: $jeopardy-light-grey;
+      }
+    }
+  }
+
+  // Animation for loading state
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+// Styles that will be available for the HTML content in MockPlayerUI.html
+// Add your custom styling here as you work on the layout
+
+/* Example styles you can use in MockPlayerUI.html:
+
+.player-name {
+  // Use one of the 8 handwritten fonts (handwritten-1.otf through handwritten-8.otf)
+  font-family: 'handwritten-1', cursive; // Change number 1-8 for different fonts
+  color: $jeopardy-gold;
+  font-size: 2rem;
+  transform: scaleX(0.8); // Horizontally squashed as requested
+
+  // To randomly select a font, you could use different classes:
+  // .player-name-1 { font-family: 'handwritten-1', cursive; }
+  // .player-name-2 { font-family: 'handwritten-2', cursive; }
+  // etc.
+}
+
+.buzzer-button {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: $jeopardy-green;
+  border: 4px solid $jeopardy-white;
+  color: $jeopardy-white;
+  font-size: $font-size-xl;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba($jeopardy-gold, 0.6);
+  }
+
+  &.buzzed {
+    background: $jeopardy-gold;
+    color: $jeopardy-black;
+  }
+
+  &.locked {
+    background: $jeopardy-red;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.score-display {
+  background: rgba($jeopardy-black, 0.8);
+  border: 2px solid $jeopardy-gold;
+  border-radius: $border-radius-md;
+  padding: $spacing-md;
+  color: $jeopardy-gold;
+  font-size: $font-size-lg;
+  font-weight: bold;
+}
+
+*/

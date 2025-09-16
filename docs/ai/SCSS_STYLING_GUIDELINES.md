@@ -88,7 +88,7 @@ $font-family-ui: 'Swiss 921', sans-serif;
 // Font Sizes
 $font-size-xs: 0.75rem;
 $font-size-sm: 0.875rem;
-$font-size-base: 1rem;
+$font-size-md: 1rem;
 $font-size-lg: 1.125rem;
 $font-size-xl: 1.25rem;
 $font-size-2xl: 1.5rem;

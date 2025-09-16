@@ -44,6 +44,71 @@
   font-display: swap;
 }
 
+// Handwritten fonts for player names (8 different fonts)
+@font-face {
+  font-family: 'handwritten-1';
+  src: url('/assets/fonts/handwritten/handwritten-1.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-2';
+  src: url('/assets/fonts/handwritten/handwritten-2.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-3';
+  src: url('/assets/fonts/handwritten/handwritten-3.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-4';
+  src: url('/assets/fonts/handwritten/handwritten-4.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-5';
+  src: url('/assets/fonts/handwritten/handwritten-5.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-6';
+  src: url('/assets/fonts/handwritten/handwritten-6.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-7';
+  src: url('/assets/fonts/handwritten/handwritten-7.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'handwritten-8';
+  src: url('/assets/fonts/handwritten/handwritten-8.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -59,7 +124,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  font-size: $font-size-base;
+  font-size: $font-size-md;
   font-weight: $font-weight-normal;
   line-height: $line-height-normal;
   color: $text-color;

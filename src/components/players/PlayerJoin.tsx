@@ -1,37 +1,107 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
+import { supabase } from '../../services/supabase/client'
 import './PlayerJoin.scss'
 
 /**
  * Props for the PlayerJoin component.
  */
 interface PlayerJoinProps {
-  /** Optional game ID from URL parameter */
-  gameId?: string
   /** Callback when player successfully joins a game */
   onGameJoined: (gameId: string) => void
 }
 
 /**
- * Player join interface for entering game codes and joining games.
+ * Player join interface that automatically detects available lobby games.
  *
- * This component provides a simple interface for players to join existing games
- * by entering a game code or using a direct link. It prevents players from
- * seeing the host game creation interface.
+ * This component automatically finds games in lobby status and allows players
+ * to join them. It assumes only one game will be running at a time.
  *
  * @param props - Component props
  * @returns JSX element for player join interface
  */
-export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<PlayerJoinProps>) {
+export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
   const { user } = useAuth()
-  const [gameCode, setGameCode] = useState(initialGameId || '')
   const [nickname, setNickname] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [availableGame, setAvailableGame] = useState<{ id: string; host_id: string } | null>(null)
+  const [checkingForGame, setCheckingForGame] = useState(true)
 
   /**
-   * Handles joining a game with the entered game code and nickname.
+   * Effect to check for available lobby games and set up real-time monitoring.
+   * Re-runs when user changes (i.e., when someone logs in).
+   */
+  useEffect(() => {
+    // Don't run if no user is logged in
+    if (!user) {
+      setAvailableGame(null)
+      setCheckingForGame(false)
+      return
+    }
+    const checkForAvailableGame = async () => {
+      try {
+        setCheckingForGame(true)
+        setError('')
+
+        // Look for games in lobby status
+        const { data: games, error } = await supabase
+          .from('games')
+          .select('id, host_id')
+          .eq('status', 'lobby')
+          .limit(1)
+
+        if (error) {
+          console.error('❌ Error checking for games:', error)
+          setError('Failed to check for available games')
+          setAvailableGame(null)
+        } else {
+          const foundGame = games && games.length > 0 ? games[0] : null
+          setAvailableGame(foundGame)
+        }
+      } catch (err) {
+        console.error('❌ Error in checkForAvailableGame:', err)
+        setError('Failed to check for available games')
+        setAvailableGame(null)
+      } finally {
+        setCheckingForGame(false)
+      }
+    }
+
+    checkForAvailableGame()
+
+    // Set up real-time subscription to monitor for new lobby games
+    const subscription = supabase
+      .channel(`lobby-games-${user.id}`) // Use unique channel name per user
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'games'
+      }, (payload) => {
+        console.log('🔔 Real-time game event received:', {
+          eventType: payload.eventType,
+          table: payload.table,
+          schema: payload.schema
+        })
+        checkForAvailableGame()
+      })
+      .subscribe((status, err) => {
+        if (err) {
+          console.error('📡 Subscription error:', err)
+        }
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscription active')
+        }
+      })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [user])
+
+  /**
+   * Handles joining the available lobby game.
    */
   const handleJoinGame = async () => {
     if (!user) {
@@ -39,8 +109,8 @@ export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<Pla
       return
     }
 
-    if (!gameCode.trim()) {
-      setError('Please enter a game code')
+    if (!availableGame) {
+      setError('No game available to join')
       return
     }
 
@@ -48,11 +118,11 @@ export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<Pla
     setError('')
 
     try {
-      // Add player to the game
-      await GameService.addPlayer(gameCode.trim(), user.id, nickname.trim() || undefined)
+      // Add player to the available game
+      await GameService.addPlayer(availableGame.id, user.id, nickname.trim() || undefined)
 
       // Notify parent component that player joined
-      onGameJoined(gameCode.trim())
+      onGameJoined(availableGame.id)
     } catch (err) {
       console.error('Failed to join game:', err)
       setError(err instanceof Error ? err.message : 'Failed to join game')
@@ -69,29 +139,34 @@ export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<Pla
     handleJoinGame()
   }
 
+  // Determine button state and text
+  const getButtonState = () => {
+    if (checkingForGame) {
+      return { className: 'jeopardy-button', text: 'Checking for Games...', disabled: true }
+    }
+    if (!availableGame) {
+      return { className: 'jeopardy-button red', text: 'Waiting for Game', disabled: true }
+    }
+    if (loading) {
+      return { className: 'jeopardy-button green', text: 'Joining...', disabled: true }
+    }
+    return { className: 'jeopardy-button green', text: 'Join Game', disabled: false }
+  }
+
+  const buttonState = getButtonState()
+
   return (
     <div className="player-join">
       <div className="player-join-container">
         <h2>Join Game</h2>
         <p className="join-description">
-          Enter the game code provided by your host to join the game.
+          {availableGame
+            ? 'A game is available! Enter your nickname and join.'
+            : 'Waiting for a host to create a game...'
+          }
         </p>
 
         <form onSubmit={handleSubmit} className="join-form">
-          <div className="form-group">
-            <label htmlFor="gameCode">Game Code</label>
-            <input
-              id="gameCode"
-              type="text"
-              className="form-control"
-              value={gameCode}
-              onChange={(e) => setGameCode(e.target.value)}
-              placeholder="Enter game code..."
-              disabled={loading}
-              required
-            />
-          </div>
-
           <div className="form-group">
             <label htmlFor="nickname">Nickname (Optional)</label>
             <input
@@ -101,7 +176,7 @@ export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<Pla
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder="Your display name for this game..."
-              disabled={loading}
+              disabled={loading || checkingForGame}
               maxLength={50}
             />
             <small className="form-text text-muted">
@@ -117,19 +192,19 @@ export function PlayerJoin({ gameId: initialGameId, onGameJoined }: Readonly<Pla
 
           <button
             type="submit"
-            className="btn jeopardy-button"
-            disabled={loading || !gameCode.trim()}
+            className={buttonState.className}
+            disabled={buttonState.disabled}
           >
-            {loading ? 'Joining...' : 'Join Game'}
+            {buttonState.text}
           </button>
         </form>
 
         <div className="join-help">
-          <h3>Need Help?</h3>
+          <h3>How It Works</h3>
           <ul>
-            <li>Ask your host for the game code</li>
-            <li>Game codes are unique identifiers for each game</li>
-            <li>You can change your nickname for each game</li>
+            <li>Wait for a host to create a game</li>
+            <li>When a game is available, click "Join Game"</li>
+            <li>You can set a nickname for each game</li>
           </ul>
         </div>
       </div>

@@ -21,13 +21,13 @@
   transition: all $transition-fast;
 
   &.red {
-    background-color: #701b23;
-    border-color: #dc3545;
+    background-color: $jeopardy-dark-red;
+    border-color: $jeopardy-red;
     color: $jeopardy-white;
 
     &:hover:not(:disabled) {
-      background-color: #c82333;
-      border-color: #bd2130;
+      background-color:  color.adjust($jeopardy-red, $lightness: 25%);
+      border-color: color.adjust($jeopardy-red, $lightness: 10%);
     }
   }
 
@@ -88,7 +88,7 @@
 @mixin jeopardy-button-medium {
   @include jeopardy-button-base;
   padding: $spacing-md $spacing-lg;
-  font-size: $font-size-base;
+  font-size: $font-size-md;
 }
 
 @mixin jeopardy-button-large {
@@ -155,7 +155,6 @@
 
 .app-main {
   padding: 0 $spacing-xxl $spacing-lg;
-  max-width: 1200px;
   margin: 0 auto;
   flex: 1;
 }
@@ -164,7 +163,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 400px;
+  width: 80vw;
 }
 
 .navigation-tabs {
@@ -228,7 +227,7 @@
 
     p {
       font-family: $font-family-ui;
-      font-size: $font-size-base;
+      font-size: $font-size-md;
       margin: 0;
       color: $jeopardy-white;
     }

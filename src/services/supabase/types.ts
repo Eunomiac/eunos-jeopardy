@@ -193,7 +193,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "question_sets_owner_id_fkey"
+            foreignKeyName: "clue_sets_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -272,8 +272,65 @@ export type Database = {
           },
         ]
       }
+      game_reports: {
+        Row: {
+          clue_set_data: Json
+          clue_set_name: string
+          completed_at: string | null
+          created_at: string
+          current_round: Database["public"]["Enums"]["round_type"]
+          final_scores: Json | null
+          game_duration_minutes: number | null
+          host_id: string
+          id: string
+          original_game_id: string
+          report_created_at: string
+          status: Database["public"]["Enums"]["game_status"]
+          total_players: number
+        }
+        Insert: {
+          clue_set_data: Json
+          clue_set_name: string
+          completed_at?: string | null
+          created_at: string
+          current_round: Database["public"]["Enums"]["round_type"]
+          final_scores?: Json | null
+          game_duration_minutes?: number | null
+          host_id: string
+          id?: string
+          original_game_id: string
+          report_created_at?: string
+          status: Database["public"]["Enums"]["game_status"]
+          total_players?: number
+        }
+        Update: {
+          clue_set_data?: Json
+          clue_set_name?: string
+          completed_at?: string | null
+          created_at?: string
+          current_round?: Database["public"]["Enums"]["round_type"]
+          final_scores?: Json | null
+          game_duration_minutes?: number | null
+          host_id?: string
+          id?: string
+          original_game_id?: string
+          report_created_at?: string
+          status?: Database["public"]["Enums"]["game_status"]
+          total_players?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_reports_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
+          clue_set_id: string | null
           created_at: string
           current_round: Database["public"]["Enums"]["round_type"]
           focused_clue_id: string | null
@@ -281,10 +338,10 @@ export type Database = {
           host_id: string
           id: string
           is_buzzer_locked: boolean
-          clue_set_id: string
           status: Database["public"]["Enums"]["game_status"]
         }
         Insert: {
+          clue_set_id?: string | null
           created_at?: string
           current_round?: Database["public"]["Enums"]["round_type"]
           focused_clue_id?: string | null
@@ -292,10 +349,10 @@ export type Database = {
           host_id: string
           id?: string
           is_buzzer_locked?: boolean
-          clue_set_id: string
           status?: Database["public"]["Enums"]["game_status"]
         }
         Update: {
+          clue_set_id?: string | null
           created_at?: string
           current_round?: Database["public"]["Enums"]["round_type"]
           focused_clue_id?: string | null
@@ -303,22 +360,35 @@ export type Database = {
           host_id?: string
           id?: string
           is_buzzer_locked?: boolean
-          clue_set_id?: string
           status?: Database["public"]["Enums"]["game_status"]
         }
         Relationships: [
-          {
-            foreignKeyName: "games_host_id_fkey"
-            columns: ["host_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "games_clue_set_id_fkey"
             columns: ["clue_set_id"]
             isOneToOne: false
             referencedRelation: "clue_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_focused_clue_id_fkey"
+            columns: ["focused_clue_id"]
+            isOneToOne: false
+            referencedRelation: "clues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_focused_player_id_fkey"
+            columns: ["focused_player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -367,18 +437,21 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          role: string
           username: string | null
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           id: string
+          role?: string
           username?: string | null
         }
         Update: {
           created_at?: string
           display_name?: string | null
           id?: string
+          role?: string
           username?: string | null
         }
         Relationships: []
@@ -437,14 +510,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_game_report: {
+        Args: { p_game_id: string }
+        Returns: string
+      }
       is_game_participant: {
         Args: { p_game_id: string }
         Returns: boolean
       }
     }
     Enums: {
-      game_status: GameStatus
-      round_type: RoundType
+      game_status: "lobby" | "in_progress" | "completed" | "cancelled"
+      round_type: "jeopardy" | "double" | "final"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -554,7 +631,8 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
@@ -571,7 +649,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      game_status: ["lobby", "in_progress", "completed", "archived"],
+      game_status: ["lobby", "in_progress", "completed", "cancelled"],
       round_type: ["jeopardy", "double", "final"],
     },
   },
