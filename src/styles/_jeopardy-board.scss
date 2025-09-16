@@ -53,7 +53,7 @@
 
       // Reset button styling when used as button element
       &[type="button"] {
-        border: none;
+        // Keep the border from parent .clue-cell - don't override it
         outline: none;
         padding: 0;
         margin: 0;
