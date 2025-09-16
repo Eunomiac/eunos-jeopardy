@@ -671,12 +671,7 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                           }
                         }
 
-                        const handleKeyDown = (event: React.KeyboardEvent) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            handleClick()
-                          }
-                        }
+
 
                         const isInteractive = !isCompleted && !isRevealed
 
@@ -692,18 +687,17 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                         }
 
                         return (
-                          <div
+                          <button
                             key={`clue-${item.clue.id || index}-${item.clue.value}`}
+                            type="button"
                             className={cellClass}
                             onClick={handleClick}
-                            onKeyDown={handleKeyDown}
-                            tabIndex={isInteractive ? 0 : -1}
-                            role="button"
+                            disabled={!isInteractive}
                             aria-label={ariaLabel}
                             style={{ cursor: isInteractive ? 'pointer' : 'default' }}
                           >
                             ${item.clue.value}
-                          </div>
+                          </button>
                         )
                       })
                     })()}
@@ -843,32 +837,25 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                   const firstBuzzTime = new Date(buzzerQueue[0].created_at)
                   const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime()
 
-                  const handleKeyDown = (event: React.KeyboardEvent) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      handlePlayerSelection(buzz.user_id)
-                    }
-                  }
+
 
                   // Build timing text without nested template literals
                   const timingText = timeDiff === 0 ? '0 ms' : `+${timeDiff} ms`
                   const ariaLabel = `Select player ${playerName} (position ${index + 1}, ${timingText})`
 
                   return (
-                    <div
+                    <button
                       key={buzz.id}
+                      type="button"
                       className={`queue-item ${game?.focused_player_id === buzz.user_id ? 'selected' : ''}`}
                       onClick={() => handlePlayerSelection(buzz.user_id)}
-                      onKeyDown={handleKeyDown}
-                      tabIndex={0}
-                      role="button"
                       aria-label={ariaLabel}
                       style={{ cursor: 'pointer' }}
                     >
                       <span className="queue-position">{index + 1}.</span>
                       <span className="queue-player">{playerName}</span>
                       <span className="queue-timing">{timingText}</span>
-                    </div>
+                    </button>
                   )
                 })}
               </div>

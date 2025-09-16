@@ -259,6 +259,21 @@
             font-size: $font-size-xs;
             color: $jeopardy-white;
 
+            // Reset button styling when used as button element
+            &[type="button"] {
+              border: none;
+              outline: none;
+              font: inherit;
+              color: inherit;
+              background: inherit;
+              text-align: inherit;
+              text-decoration: none;
+              appearance: none;
+              -webkit-appearance: none;
+              -moz-appearance: none;
+              width: 100%;
+            }
+
             .queue-position {
               font-weight: $font-weight-bold;
               color: $jeopardy-gold;
