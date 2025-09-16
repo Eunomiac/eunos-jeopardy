@@ -141,12 +141,21 @@ export function ClueRevealModal({
   }
 
   /**
-   * Handles modal close (ESC key, etc.)
+   * Handles modal close (ESC key only - prevent accidental closing)
    */
-  const handleClose = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
       onClose()
     }
+  }
+
+  /**
+   * Prevents modal from closing when clicking on the overlay
+   */
+  const handleOverlayClick = (event: React.MouseEvent) => {
+    // Prevent closing when clicking outside - players might accidentally click
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   // Don't render if not visible and not animating out
@@ -167,12 +176,13 @@ export function ClueRevealModal({
   ].filter(Boolean).join(' ')
 
   return (
-    <button
+    <div
       className="clue-reveal-overlay"
-      onClick={onClose}
-      onKeyDown={handleClose}
-      aria-label="Close modal"
-      type="button"
+      onClick={handleOverlayClick}
+      onKeyDown={handleKeyDown}
+      role="dialog"
+      aria-label="Clue reveal modal"
+      tabIndex={-1}
     >
       <dialog
         className={modalClasses}
@@ -209,6 +219,6 @@ export function ClueRevealModal({
           />
         </div>
       </dialog>
-    </button>
+    </div>
   )
 }

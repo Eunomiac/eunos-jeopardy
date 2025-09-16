@@ -1339,7 +1339,12 @@ export function GameHostDashboard({
                   const player = players.find(
                     (p) => p.user_id === buzz.user_id
                   );
-                  const playerName = player?.nickname || "Unknown Player";
+                  // Use profile data from buzz if available, fallback to player nickname, then display_name
+                  const buzzWithProfile = buzz as Buzz & { profiles?: { display_name?: string; username?: string } }
+                  const playerName = player?.nickname ||
+                    buzzWithProfile.profiles?.display_name ||
+                    buzzWithProfile.profiles?.username ||
+                    "Unknown Player";
                   const buzzTime = new Date(buzz.created_at);
                   const firstBuzzTime = new Date(buzzerQueue[0].created_at);
                   const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime();

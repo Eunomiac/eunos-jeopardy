@@ -6,6 +6,8 @@ import { PlayerPodiums, type PlayerInfo } from './PlayerPodiums'
 import { ClueRevealModal, type ClueInfo } from './ClueRevealModal'
 import { BuzzerState } from '../../types/BuzzerState'
 import { supabase } from '../../services/supabase/client'
+
+import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
 import './PlayerDashboard.scss'
 
 interface PlayerDashboardProps {
@@ -63,12 +65,17 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const { user } = useAuth()
 
   // Game state
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [gameData, setGameData] = useState<GameUpdatePayload | null>(null) // Will be used for game state updates
+  const [game, setGame] = useState<GameUpdatePayload | null>(null)
   const [players, setPlayers] = useState<PlayerInfo[]>([])
   const [currentClue, setCurrentClue] = useState<ClueInfo | null>(null)
+  const [focusedClue, setFocusedClue] = useState<ClueInfo | null>(null)
   const [buzzerState, setBuzzerState] = useState<BuzzerState>(BuzzerState.LOCKED)
   const [reactionTime, setReactionTime] = useState<number | null>(null)
+
+  // Game board data
+  const [clueSetData, setClueSetData] = useState<any>(null)
+  const [clueStates, setClueStates] = useState<any[]>([])
+  const [dailyDoublePositions, setDailyDoublePositions] = useState<any[]>([])
 
   // UI state
   const [loading, setLoading] = useState(true)
@@ -94,11 +101,15 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       setLoading(true)
       setError(null)
 
-      // Load game data
-      // TODO: Implement GameService.getGameById method
-      // const game = await GameService.getGameById(gameId)
-      // setGameData(game)
-      setGameData({ id: gameId, status: 'in_progress' }) // Temporary placeholder
+      // Load game data - set a basic game state that will be updated by real-time subscriptions
+      setGame({
+        id: gameId,
+        status: 'in_progress',
+        current_round: 'jeopardy',
+        is_buzzer_locked: true,
+        focused_clue_id: null,
+        focused_player_id: null
+      } as GameUpdatePayload)
 
       // Load players
       const gamePlayers = await GameService.getPlayers(gameId)
@@ -144,9 +155,62 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }, [gameId, user])
 
   /**
+   * Loads game board data for players (simplified approach).
+   * Players don't need full game access - they get board structure from real-time updates.
+   */
+  const loadGameBoardData = useCallback(async () => {
+    try {
+      // For players, we only load clue states to show board progress
+      // The actual game data and clue content comes through real-time subscriptions
+      const { data: states, error: statesError } = await supabase
+        .from('clue_states')
+        .select('*')
+        .eq('game_id', gameId)
+
+      if (statesError) throw statesError
+      setClueStates(states || [])
+
+      // TODO: Load daily double positions when table is available
+      setDailyDoublePositions([])
+
+      // Set a placeholder clue set structure - this will be populated by real-time updates
+      // We don't need the actual clue content for the board display
+      setClueSetData({
+        rounds: {
+          jeopardy: Array(6).fill(null).map((_, catIndex) => ({
+            name: 'Loading...',
+            clues: Array(5).fill(null).map((_, clueIndex) => ({
+              id: `placeholder-jeopardy-${catIndex}-${clueIndex}`,
+              prompt: 'Loading...',
+              response: 'Loading...',
+              value: (clueIndex + 1) * 200,
+              position: clueIndex + 1
+            }))
+          })),
+          double: Array(6).fill(null).map((_, catIndex) => ({
+            name: 'Loading...',
+            clues: Array(5).fill(null).map((_, clueIndex) => ({
+              id: `placeholder-double-${catIndex}-${clueIndex}`,
+              prompt: 'Loading...',
+              response: 'Loading...',
+              value: (clueIndex + 1) * 400,
+              position: clueIndex + 1
+            }))
+          })),
+          final: []
+        }
+      })
+
+    } catch (error) {
+      console.error('Failed to load game board data:', error)
+      setError('Failed to load game data')
+    }
+  }, [gameId])
+
+  /**
    * Loads clue data for display in the modal.
    */
-  const loadClueData = useCallback(async (clueId: string) => {
+  const loadClueData = useCallback(async (clueId: string): Promise<ClueInfo | null> => {
     try {
       const { ClueService } = await import('../../services/clues/ClueService')
       const clue = await ClueService.getClueById(clueId)
@@ -158,18 +222,24 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         .eq('id', clue.category_id)
         .single()
 
-      setCurrentClue({
+      const clueInfo: ClueInfo = {
         id: clue.id,
         prompt: clue.prompt,
         value: clue.value,
         category: category?.name || 'Unknown Category',
-        isDailyDouble: false // TODO: Implement Daily Double detection
-      })
+        isDailyDouble: dailyDoublePositions.some(dd =>
+          dd.clue_id === clue.id
+        )
+      }
+
+      setCurrentClue(clueInfo)
+      return clueInfo
     } catch (error) {
       console.error('Failed to load clue:', error)
       setCurrentClue(null)
+      return null
     }
-  }, [])
+  }, [dailyDoublePositions])
 
   /**
    * Sets up real-time subscriptions for game state updates.
@@ -187,12 +257,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         schema: 'public',
         table: 'games',
         filter: `id=eq.${gameId}`
-      }, (payload) => {
+      }, async (payload) => {
         console.log('🔔 Game state update:', payload)
         // Update game data based on changes
         if (payload.new) {
           const gameUpdate = payload.new as GameUpdatePayload
-          setGameData(gameUpdate)
+          setGame(gameUpdate)
 
           // Update buzzer state based on game state
           if (gameUpdate.is_buzzer_locked) {
@@ -203,13 +273,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
             setBuzzerUnlockTime(Date.now()) // Record when buzzer was unlocked
           }
 
-          // Show clue modal if there's a focused clue
+          // Handle focused clue (just highlight on board, don't show modal)
           if (gameUpdate.focused_clue_id) {
-            loadClueData(gameUpdate.focused_clue_id)
-            setShowClueModal(true)
+            const clueInfo = await loadClueData(gameUpdate.focused_clue_id)
+            setFocusedClue(clueInfo)
           } else {
-            setShowClueModal(false)
-            setCurrentClue(null)
+            setFocusedClue(null)
           }
         }
       })
@@ -226,6 +295,41 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       }, () => {
         console.log('🔔 Players update')
         loadGameData() // Reload player data
+      })
+      .subscribe()
+
+    // Subscribe to clue state changes (for revealed clues)
+    const clueStatesSubscription = supabase
+      .channel(`clue-states-${gameId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'clue_states',
+        filter: `game_id=eq.${gameId}`
+      }, (payload) => {
+        console.log('🔔 Clue state update:', payload)
+        if (payload.new) {
+          const clueState = payload.new as { clue_id: string; revealed: boolean; completed: boolean }
+          // Update clue states
+          setClueStates(prev => {
+            const updated = prev.filter(s => s.clue_id !== clueState.clue_id)
+            return [...updated, clueState]
+          })
+
+          // Show modal when clue is revealed and it's the focused clue
+          if (clueState.revealed && focusedClue && clueState.clue_id === focusedClue.id) {
+            setCurrentClue(focusedClue)
+            setShowClueModal(true)
+          }
+
+          // Hide modal when clue is completed or unfocused
+          if (clueState.completed || !clueState.revealed) {
+            setShowClueModal(false)
+            setCurrentClue(null)
+            setBuzzerState(BuzzerState.LOCKED)
+            setReactionTime(null)
+          }
+        }
       })
       .subscribe()
 
@@ -250,9 +354,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
     return () => {
       gameSubscription.unsubscribe()
       playersSubscription.unsubscribe()
+      clueStatesSubscription.unsubscribe()
       buzzesSubscription.unsubscribe()
     }
-  }, [gameId, user, loadGameData, loadClueData])
+  }, [gameId, user, loadGameData, loadClueData, focusedClue])
 
   /**
    * Handles player buzzer click.
@@ -301,7 +406,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   // Load initial data
   useEffect(() => {
     loadGameData()
-  }, [loadGameData])
+    loadGameBoardData()
+  }, [loadGameData, loadGameBoardData])
 
   // Set up real-time subscriptions
   useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions])
@@ -332,18 +438,161 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
   return (
     <div className="player-dashboard">
+      {/* Round Header */}
+      <div className="jeopardy-board-header">
+        <h2>
+          {game?.current_round === 'final'
+            ? 'Final Jeopardy'
+            : game?.current_round === 'double'
+              ? 'Double Jeopardy Round'
+              : 'The Jeopardy Round'
+          }
+        </h2>
+      </div>
+
       {/* Jeopardy Board */}
       <div className="jeopardy-board-container">
         <div className="jeopardy-board">
-          {/* TODO: Implement game board display */}
-          <div style={{
-            color: 'white',
-            textAlign: 'center',
-            padding: '2rem',
-            fontSize: '1.5rem'
-          }}>
-            Game Board Coming Soon
-          </div>
+          {clueSetData && game ? (
+            <>
+              {/* Category headers */}
+              {(() => {
+                if (game.current_round === "final") {
+                  return (
+                    <div key="final-category" className="category-header">
+                      {clueSetData.rounds.final.name}
+                    </div>
+                  )
+                } else {
+                  const roundKey = game.current_round as 'jeopardy' | 'double'
+                  const currentRoundData = clueSetData.rounds[roundKey] || []
+                  return currentRoundData.map((category: { name: string; clues: ClueData[] }, index: number) => (
+                    <div
+                      key={`category-${index}-${category.name}`}
+                      className="category-header"
+                    >
+                      {category.name}
+                    </div>
+                  ))
+                }
+              })()}
+
+              {/* Clue cells */}
+              {(() => {
+                if (game.current_round === "final") {
+                  const finalClue = clueSetData.rounds.final.clues?.[0]
+                  return finalClue ? (
+                    <button
+                      type="button"
+                      className="clue-cell final-jeopardy"
+                      style={{ pointerEvents: 'none' }}
+                      aria-label="Final Jeopardy"
+                    >
+                      Final Jeopardy
+                    </button>
+                  ) : null
+                }
+
+                // Regular rounds: create grid of all clues
+                const roundKey = game.current_round as 'jeopardy' | 'double'
+                const currentRoundData = clueSetData.rounds[roundKey] || []
+                const allClues: Array<{
+                  categoryIndex: number
+                  clue: ClueData
+                }> = []
+
+                currentRoundData.forEach((category: { name: string; clues: ClueData[] }, categoryIndex: number) => {
+                  category.clues.forEach((clue: ClueData) => {
+                    allClues.push({ categoryIndex, clue })
+                  })
+                })
+
+                // Sort by position to maintain proper board order
+                allClues.sort((a, b) => {
+                  if (a.clue.position !== b.clue.position) {
+                    return a.clue.position - b.clue.position
+                  }
+                  return a.categoryIndex - b.categoryIndex
+                })
+
+                return allClues.map((item, index) => {
+                  // Find clue state for this clue
+                  const clueState = clueStates.find(
+                    (state) => state.clue_id === item.clue.id
+                  )
+
+                  const isRevealed = clueState?.revealed || false
+                  const isCompleted = clueState?.completed || false
+                  const isFocused = focusedClue && focusedClue.id === item.clue.id
+
+                  // Check if this clue is a Daily Double
+                  const isDailyDouble = dailyDoublePositions.some(
+                    (position) =>
+                      position.category === item.categoryIndex + 1 &&
+                      position.row === item.clue.position
+                  )
+
+                  let cellClass = "clue-cell"
+                  if (isCompleted) {
+                    cellClass += " completed"
+                  } else if (isRevealed) {
+                    cellClass += " revealed"
+                  }
+                  if (isFocused) {
+                    cellClass += " focused"
+                  }
+                  if (isDailyDouble) {
+                    cellClass += " daily-double"
+                  }
+
+                  let ariaLabel = `Clue for $${item.clue.value}`
+                  if (isDailyDouble) {
+                    ariaLabel += " - Daily Double"
+                  }
+                  if (isCompleted) {
+                    ariaLabel += " - Completed"
+                  } else if (isRevealed) {
+                    ariaLabel += " - Revealed"
+                  }
+                  if (isFocused) {
+                    ariaLabel += " - Focused"
+                  }
+
+                  return (
+                    <button
+                      key={`clue-${item.clue.id || index}-${item.clue.value}`}
+                      type="button"
+                      className={cellClass}
+                      style={{ pointerEvents: 'none' }}
+                      aria-label={ariaLabel}
+                    >
+                      ${item.clue.value}
+                    </button>
+                  )
+                })
+              })()}
+            </>
+          ) : (
+            /* Loading placeholder */
+            <>
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={`loading-category-${i}`} className="category-header">
+                  Loading...
+                </div>
+              ))}
+              {Array.from({ length: 30 }, (_, i) => (
+                <button
+                  key={`loading-clue-${i}`}
+                  type="button"
+                  className="clue-cell"
+                  style={{ pointerEvents: 'none' }}
+                  aria-label="Loading clue"
+                >
+                  ...
+                </button>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
