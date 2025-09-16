@@ -1,0 +1,101 @@
+@use 'variables' as *;
+
+/**
+ * Modular Jeopardy Clue Display Styling
+ * 
+ * This file provides reusable styling for clue displays throughout the app.
+ * Uses CSS custom properties with defaults for flexible sizing and appearance.
+ * 
+ * Usage:
+ * 1. Apply the .jeopardy-clue-display class to your container
+ * 2. Optionally override CSS custom properties in parent context:
+ *    --clue-font-size: 1.5rem;
+ *    --clue-display-width: 400px;
+ *    --clue-text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+ */
+
+.jeopardy-clue-display {
+  // CSS Custom Properties with defaults
+  --clue-font-size: #{$font-size-lg};
+  --clue-display-width: 100%;
+  --clue-text-shadow: #{$shadow-sm};
+  
+  // Container sizing and layout
+  width: var(--clue-display-width);
+  height: calc(var(--clue-display-width) * 9 / 16); // Maintain 16:9 aspect ratio
+  
+  // Background styling with textured clue background
+  background-image: url('/assets/images/bg-clue.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  // Fallback background color in case image doesn't load
+  background-color: $jeopardy-blue;
+  
+  // Layout and positioning
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+  
+  // Visual effects
+  box-shadow: 0 4px 8px rgba($jeopardy-black, 0.3);
+  border-radius: 0; // Authentic Jeopardy has no rounded corners on clues
+  
+  // Text styling
+  color: $jeopardy-white;
+  font-family: $font-family-category;
+  font-size: var(--clue-font-size);
+  font-weight: $font-weight-normal;
+  text-transform: $jeopardy-text-transform;
+  text-shadow: var(--clue-text-shadow);
+  text-align: center;
+  line-height: 1.3;
+  
+  // Pretty text justification and wrapping
+  text-wrap: pretty; // Modern CSS property for better text wrapping
+  word-wrap: break-word; // Fallback for older browsers
+  hyphens: auto;
+  
+  // Content styling
+  .clue-text {
+    width: 100%;
+    word-wrap: break-word;
+    hyphens: auto;
+    text-wrap: pretty;
+  }
+  
+  // State variations
+  &.no-clue-selected {
+    .clue-text {
+      color: rgba($jeopardy-white, 0.6);
+      font-style: italic;
+    }
+  }
+  
+  &.daily-double {
+    // Special styling for Daily Double clues could go here
+    // For now, inherits standard styling
+  }
+  
+  &.final-jeopardy {
+    // Special styling for Final Jeopardy could go here
+    // For now, inherits standard styling
+  }
+}
+
+// Responsive sizing helpers
+@media (max-width: 768px) {
+  .jeopardy-clue-display {
+    --clue-font-size: #{$font-size-base};
+    padding: $spacing-md;
+  }
+}
+
+@media (max-width: 480px) {
+  .jeopardy-clue-display {
+    --clue-font-size: #{$font-size-sm};
+    padding: $spacing-sm;
+  }
+}

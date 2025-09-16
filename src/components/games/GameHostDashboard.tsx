@@ -940,13 +940,13 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
             {/* Focused Clue Display */}
             <div className="focused-clue-display">
               <div className="clue-display-row">
-                <div className="clue-prompt-container">
+                <div className={`jeopardy-clue-display ${!focusedClue ? 'no-clue-selected' : ''}`}>
                   {focusedClue ? (
                     <div className="clue-text">
                       {focusedClue.prompt}
                     </div>
                   ) : (
-                    <div className="clue-text text-muted">
+                    <div className="clue-text">
                       No clue selected
                     </div>
                   )}

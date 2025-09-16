@@ -444,22 +444,22 @@
   }
 
   .categories-row {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: $spacing-sm;
-    margin-bottom: $spacing-md;
+    // display: grid;
+    // grid-template-columns: repeat(6, 1fr);
+    // gap: $spacing-sm;
+    // margin-bottom: $spacing-md;
 
     .category-header {
-      @extend .jeopardy-category;
-      background-color: $jeopardy-blue;
-      border: 2px solid $jeopardy-gold;
-      padding: $spacing-md;
-      text-align: center;
-      min-height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-shadow: 2px 2px 4px $jeopardy-black;
+      // @extend .jeopardy-category;
+      // background-color: $jeopardy-blue;
+      // border: 2px solid $jeopardy-gold;
+      // padding: $spacing-md;
+      // text-align: center;
+      // min-height: 80px;
+      // display: flex;
+      // align-items: center;
+      // justify-content: center;
+      // text-shadow: 2px 2px 4px $jeopardy-black;
     }
   }
 
