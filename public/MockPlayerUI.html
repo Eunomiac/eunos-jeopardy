@@ -1,22 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mock Player UI</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock Player UI</title>
 </head>
+
 <body>
-    <!-- This is a placeholder HTML file for testing player UI styling -->
-    <!-- Add your HTML content here for styling and layout testing -->
-    
-    <div class="player-interface">
-        <h1>Player Dashboard Mock</h1>
-        <p>Add your HTML content here to test styling and layout.</p>
-        
-        <!-- Example elements you can style -->
-        <div class="player-name">Player Name</div>
-        <div class="score-display">$1,200</div>
-        <button class="buzzer-button">BUZZ IN</button>
+  <!-- This is a placeholder HTML file for testing player UI styling -->
+  <!-- Add your HTML content here for styling and layout testing -->
+
+  <!-- Mocked PlayerDashboard component -->
+  <!-- All changes to what is displayed to the player should be handled by state
+     changes in the PlayerDashboard component, with live updates handled by real-time subscriptions, so
+     that a player who logs back in or reloads is shown everything they'd see if they hadn't disconnected,
+     all the way down to buzzer status. -->
+  <div class="player-interface">
+    <div class="jeopardy-board-header">
+      <h2>The Jeopardy Round</h2> <!-- Should dynamically update when host advances rounds -->
     </div>
+    <div class="jeopardy-board-container">
+      <div class="jeopardy-board">
+        <div class="category-header">Renaissance Rebels</div>
+        <div class="category-header">Symphonies of Nature</div>
+        <div class="category-header">Books That Changed Laws</div>
+        <div class="category-header">Letters from the Past</div>
+        <div class="category-header">Stagecraft Secrets</div>
+        <div class="category-header">Banished &amp; Exiled</div>
+        <!-- Using buttons just to use same styles in _jeopardy-board.scss; pointer-events: none prevents interaction -->
+        <button type="button" class="clue-cell" aria-label="Clue for $200" style="pointer-events: none;">$200</button>
+        <button type="button" class="clue-cell revealed" aria-label="Clue for $200 - Revealed" style="pointer-events: none;">$200</button> <!-- Revealed clues get the 'revealed' class -->
+        <button type="button" class="clue-cell" aria-label="Clue for $200" style="pointer-events: none;">$200</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $200" style="pointer-events: none;">$200</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $200" style="pointer-events: none;">$200</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $200" style="pointer-events: none;">$200</button>
+        <button type="button" class="clue-cell focused" aria-label="Clue for $200" style="pointer-events: none;">$200</button> <!-- The currently-focused clue -->
+        <button type="button" class="clue-cell" aria-label="Clue for $400" style="pointer-events: none;">$400</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $400" style="pointer-events: none;">$400</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $400" style="pointer-events: none;">$400</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $400" style="pointer-events: none;">$400</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $400" style="pointer-events: none;">$400</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $400" style="pointer-events: none;">$400</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $600" style="pointer-events: none;">$600</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $600" style="pointer-events: none;">$600</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $600" style="pointer-events: none;">$600</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $600" style="pointer-events: none;">$600</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $600" style="pointer-events: none;">$600</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $600" style="pointer-events: none;">$600</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $800" style="pointer-events: none;">$800</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $800" style="pointer-events: none;">$800</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $800" style="pointer-events: none;">$800</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $800" style="pointer-events: none;">$800</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $800" style="pointer-events: none;">$800</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $800" style="pointer-events: none;">$800</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $1000" style="pointer-events: none;">$1000</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $1000" style="pointer-events: none;">$1000</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $1000" style="pointer-events: none;">$1000</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $1000" style="pointer-events: none;">$1000</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $1000" style="pointer-events: none;">$1000</button>
+        <button type="button" class="clue-cell" aria-label="Clue for $1000" style="pointer-events: none;">$1000</button>
+      </div>
+    </div>
+
+    <!-- Hidden by default, revealed when Host clicks "Reveal Clue"; contains buzzer controls -->
+    <div class="clue-reveal-modal">
+      <div class="jeopardy-clue-display">
+        <div class="clue-text">What is the capital of France?</div>
+      </div>
+      <!-- React component should generate only one of these of course -->
+      <button class="player-buzzer jeopardy-button locked">🔒</button>
+      <button class="player-buzzer jeopardy-button unlocked">Buzz!</button>
+      <button class="player-buzzer jeopardy-button buzzed">Buzzed!<br/>+0.125ms</button> <!-- Should show duration calculated on client end and sent to host -->
+      <button class="player-buzzer jeopardy-button frozen">Too Soon!</button>
+    </div>
+
+    <div class="player-podium-row">
+      <!-- Iterate through connected players, generating a podium for each one -->
+      <!-- The main/connected player's podium goes into the central .player-podium-center container -->
+      <!-- The other competitors should be evenly distributed between the .player-podium-left and .player-podium-right containers -->
+
+      <div class="player-podium-section player-podium-left">
+        <div class="player-podium competitor">
+          <!-- For player name:
+            Randomly assign one of the 8 fonts in `assets/fonts/handwritten/handwritten-<#>.otf`
+            Will need to dynamically detect the width of the player's name written in the assigned font
+            Then scaleX (not scaleY) the name to fit within the width of its parent .player-name-container element
+        -->
+          <div class="player-name-container"> <!-- Can dynamically measure this to get target max width for the name; I'll style it to fill available space; if name is shorter, simply center it -->
+            <div class="player-name-text" style="font-family: 'handwritten-7', cursive;">One</div> <!-- ScaleX this to match width of parent, with ellipsis overflow once scaleX reaches a lower limit of ~0.5 -->
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+        <div class="player-podium competitor">
+          <div class="player-name-container">
+            <div class="player-name-text" style="font-family: 'handwritten-1', cursive;">Two</div>
+          </div>
+          <div class="player-score negative">-$100</div> <!-- Negative scores use the "negative" class -->
+        </div>
+        <div class="player-podium competitor">
+          <div class="player-name-container">
+            <div class="player-name-text" style="font-family: 'handwritten-4', cursive;">Three</div>
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+        <div class="player-podium competitor">
+          <div class="player-name-container">
+            <div class="player-name-text" style="font-family: 'handwritten-2', cursive;">Four</div>
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+      </div>
+
+      <div class="player-podium-section player-podium-center">  <!-- Main player centered, the 'main' class makes their podium larger -->
+        <div class="player-podium main">
+          <div class="player-name-container">
+            <div class="player-name" style="font-family: 'handwritten-3', cursive;">ME</div>
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+      </div>
+
+      <div class="player-podium-section player-podium-right">
+        <div class="player-podium competitor">
+          <div class="player-name-container">
+            <div class="player-name-text" style="font-family: 'handwritten-8', cursive;">Five</div>
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+        <div class="player-podium competitor">
+          <div class="player-name-container">
+            <div class="player-name-text" style="font-family: 'handwritten-5', cursive;">Six</div>
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+        <div class="player-podium competitor">
+          <div class="player-name-container">
+            <div class="player-name-text" style="font-family: 'handwritten-6', cursive;">Seven</div>
+          </div>
+          <div class="player-score">$1000</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>

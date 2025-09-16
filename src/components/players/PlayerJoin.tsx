@@ -38,22 +38,23 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
     if (!user) {
       setAvailableGame(null)
       setCheckingForGame(false)
-      return
+      return undefined
     }
+
     const checkForAvailableGame = async () => {
       try {
         setCheckingForGame(true)
         setError('')
 
         // Look for games in lobby status
-        const { data: games, error } = await supabase
+        const { data: games, error: gameError } = await supabase
           .from('games')
           .select('id, host_id')
           .eq('status', 'lobby')
           .limit(1)
 
-        if (error) {
-          console.error('❌ Error checking for games:', error)
+        if (gameError) {
+          console.error('❌ Error checking for games:', gameError)
           setError('Failed to check for available games')
           setAvailableGame(null)
         } else {
@@ -86,9 +87,9 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
         })
         checkForAvailableGame()
       })
-      .subscribe((status, err) => {
-        if (err) {
-          console.error('📡 Subscription error:', err)
+      .subscribe((status, subscriptionErr) => {
+        if (subscriptionErr) {
+          console.error('📡 Subscription error:', subscriptionErr)
         }
         if (status === 'SUBSCRIBED') {
           console.log('✅ Real-time subscription active')

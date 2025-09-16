@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { SimpleLogin } from '../components/auth/SimpleLogin'
 import { ClueSetSelector } from '../components/clueSets/ClueSetSelector'
 import { ClueSetSummary } from '../components/clueSets/ClueSetSummary'
@@ -143,6 +143,88 @@ export function App() {
   }, [user])
 
   /**
+   * Gets the user's role from their profile.
+   */
+  const getUserRole = useCallback(async (): Promise<'host' | 'player'> => {
+    if (!user) {
+      return 'player'
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    console.log('📊 Profile query result:', { profile, error: profileError })
+
+    if (profileError) {
+      console.error('❌ Error fetching user profile:', profileError)
+      console.log('🎮 Set to player mode (error fallback)')
+      return 'player'
+    }
+
+    const role = (profile?.role as 'host' | 'player') || 'player'
+    console.log('👤 Detected role:', role)
+    return role
+  }, [user])
+
+  /**
+   * Handles setup for player role users.
+   */
+  const handlePlayerRoleSetup = useCallback(async () => {
+    if (!user) {
+      return
+    }
+
+    try {
+      const activeGame = await GameService.getActiveGame()
+
+      if (!activeGame) {
+        console.log('🎮 No active game, going to join screen')
+        setMode('player-join')
+        return
+      }
+
+      const players = await GameService.getPlayers(activeGame.id)
+      const playerInGame = players.find((p) => p.user_id === user.id)
+
+      if (playerInGame) {
+        console.log('🎯 Player already in active game, redirecting to lobby:', activeGame.id)
+        setPlayerGameId(activeGame.id)
+        setMode(activeGame.status === 'lobby' ? 'player-lobby' : 'player-game')
+      } else {
+        console.log('🎮 Active game exists but player not joined, going to join screen')
+        setMode('player-join')
+      }
+    } catch (gameError) {
+      console.error('❌ Error checking player game status:', gameError)
+      setMode('player-join')
+    }
+  }, [user])
+
+  /**
+   * Handles setup for host role users.
+   */
+  const handleHostRoleSetup = useCallback(async () => {
+    try {
+      const activeGame = await GameService.getActiveGame()
+
+      if (activeGame) {
+        console.log('🎯 Active game found, redirecting to dashboard:', activeGame.id)
+        setCurrentGameId(activeGame.id)
+        setMode('dashboard')
+      } else {
+        console.log('🎮 No active game, going to game creation')
+        setMode('clue-sets')
+      }
+    } catch (gameError) {
+      console.error('❌ Error checking for active game:', gameError)
+      setMode('clue-sets')
+    }
+  }, [])
+
+  /**
    * Effect to detect user role (host vs player) from the database profile.
    *
    * Fetches the user's role from their profile to determine if they should see
@@ -160,79 +242,16 @@ export function App() {
       console.log('🔍 Starting role detection for user:', user.id)
 
       try {
-        // Get user's role from their profile
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
+        const role = await getUserRole()
+        setUserRole(role)
 
-        console.log('📊 Profile query result:', { profile, error })
-
-        if (error) {
-          console.error('❌ Error fetching user profile:', error)
-          // Default to player interface on error
-          setUserRole('player')
-          setMode('player-join')
-          console.log('🎮 Set to player mode (error fallback)')
+        if (role === 'player') {
+          await handlePlayerRoleSetup()
         } else {
-          const role = profile?.role as 'host' | 'player' || 'player'
-          console.log('👤 Detected role:', role)
-          setUserRole(role)
-
-          // Set default mode based on role
-          if (role === 'player') {
-            // For players, check if they've already joined an active game
-            try {
-              const { GameService } = await import('../services/games/GameService')
-              const activeGame = await GameService.getActiveGame()
-
-              if (activeGame) {
-                // Check if this player has already joined the active game
-                const players = await GameService.getPlayers(activeGame.id)
-                const playerInGame = players.find(p => p.user_id === user.id)
-
-                if (playerInGame) {
-                  console.log('🎯 Player already in active game, redirecting to lobby:', activeGame.id)
-                  setPlayerGameId(activeGame.id)
-                  setMode(activeGame.status === 'lobby' ? 'player-lobby' : 'player-game')
-                } else {
-                  console.log('🎮 Active game exists but player not joined, going to join screen')
-                  setMode('player-join')
-                }
-              } else {
-                console.log('🎮 No active game, going to join screen')
-                setMode('player-join')
-              }
-            } catch (error) {
-              console.error('❌ Error checking player game status:', error)
-              // Fallback to join screen on error
-              setMode('player-join')
-            }
-          } else {
-            // For hosts, check if there's an active game first
-            try {
-              const { GameService } = await import('../services/games/GameService')
-              const activeGame = await GameService.getActiveGame()
-
-              if (activeGame) {
-                console.log('🎯 Active game found, redirecting to dashboard:', activeGame.id)
-                setCurrentGameId(activeGame.id)
-                setMode('dashboard')
-              } else {
-                console.log('🎮 No active game, going to game creation')
-                setMode('clue-sets')
-              }
-            } catch (error) {
-              console.error('❌ Error checking for active game:', error)
-              // Fallback to game creation on error
-              setMode('clue-sets')
-            }
-          }
+          await handleHostRoleSetup()
         }
-      } catch (error) {
-        console.error('Error in detectUserRole:', error)
-        // Default to player interface on error
+      } catch (roleError) {
+        console.error('Error in detectUserRole:', roleError)
         setUserRole('player')
         setMode('player-join')
       } finally {
@@ -241,7 +260,9 @@ export function App() {
     }
 
     detectUserRole()
-  }, [user]) // Remove mode dependency to prevent flickering
+  }, [user, getUserRole, handlePlayerRoleSetup, handleHostRoleSetup])
+
+
 
   /**
    * Effect to monitor player game state changes.

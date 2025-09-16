@@ -32,13 +32,13 @@
   }
 
   &.green {
-    background-color: #134d20;
-    border-color: #28a745;
+    background-color: $jeopardy-dark-green;
+    border-color: $jeopardy-green;
     color: $jeopardy-white;
 
     &:hover:not(:disabled) {
-      background-color: #218838;
-      border-color: #1e7e34;
+      background-color: color.adjust($jeopardy-green, $lightness: 25%);
+      border-color: color.adjust($jeopardy-green, $lightness: 10%);
     }
   }
 

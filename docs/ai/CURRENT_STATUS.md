@@ -74,8 +74,9 @@
 - **Buzzer Display**: Integrated with clue display as unified modal/overlay over central podium area
 - **Animation**: Bounce-scale animation for buzzer button entrance when host clicks "Reveal Prompt"
 - **Visual Theme**: Authentic TV show aesthetic using actual Jeopardy set screenshots
+- **Buzzer Timing**: Client-side timing calculation eliminates latency compensation complexity
 
-**Next Steps**: Implement PlayerGame component with integrated clue+buzzer display concept
+**Next Steps**: Implement PlayerGame component with client-side buzzer timing system
 
 **Remote Agent Completed (PR #6 - Merged but Broken)**:
 - ✅ **ClueService**: Complete service layer (277 lines) with clue lifecycle management

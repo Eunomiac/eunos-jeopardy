@@ -10,13 +10,17 @@
 /**
  * PlayerDashboard Styling
  *
- * Base styles for the player dashboard component.
- * This file will be used to style the HTML content from MockPlayerUI.html
- * during the design and layout phase.
+ * Styles for the player dashboard component.
  */
 
 .player-dashboard {
+  --jeopardy-board-width: 60vw;
+  --jeopardy-board-height: calc(var(--jeopardy-board-width) * 9 / 16);
+
   // Full viewport coverage with authentic Jeopardy background
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
   background-image: url('/assets/images/bg-stage.webp');
@@ -29,7 +33,6 @@
   background-color: $jeopardy-background-blue;
 
   // Ensure content is positioned properly
-  position: relative;
   overflow: hidden;
 
   // Base typography for player interface
@@ -88,63 +91,102 @@
       opacity: 0.5;
     }
   }
-}
 
-// Styles that will be available for the HTML content in MockPlayerUI.html
-// Add your custom styling here as you work on the layout
+  // Jeopardy Board
+  .jeopardy-board-container {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    width: var(--jeopardy-board-width);
+    height: var(--jeopardy-board-height);
+    box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
 
-/* Example styles you can use in MockPlayerUI.html:
+    .jeopardy-board {
 
-.player-name {
-  // Use one of the 8 handwritten fonts (handwritten-1.otf through handwritten-8.otf)
-  font-family: 'handwritten-1', cursive; // Change number 1-8 for different fonts
-  color: $jeopardy-gold;
-  font-size: 2rem;
-  transform: scaleX(0.8); // Horizontally squashed as requested
+      .category-header {
+        padding: 10%;
+        font-size: 1.25rem;
+      }
 
-  // To randomly select a font, you could use different classes:
-  // .player-name-1 { font-family: 'handwritten-1', cursive; }
-  // .player-name-2 { font-family: 'handwritten-2', cursive; }
-  // etc.
-}
+      .clue-cell {
 
-.buzzer-button {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: $jeopardy-green;
-  border: 4px solid $jeopardy-white;
-  color: $jeopardy-white;
-  font-size: $font-size-xl;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba($jeopardy-gold, 0.6);
+        &.revealed {
+          color: $jeopardy-background-blue;
+          background: $jeopardy-background-blue;
+          text-shadow: none;
+        }
+      }
+    }
   }
 
-  &.buzzed {
-    background: $jeopardy-gold;
-    color: $jeopardy-black;
+  // Player Podiums
+  .player-podium-row {
+    position: absolute;
+    width: 100vw;
+    height: 20vh;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: stretch;
+    align-items: stretch;
+    padding: 0 1rem;
+    gap: 1rem;
+
+    .player-podium {
+      background: url("assets/images/player-podium.webp");
+      flex: 1;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
+
+      &.main {
+        margin: 0 2%;
+        transform-origin: bottom center;
+        transform: scale(1.5);
+      }
+    }
   }
 
-  &.locked {
-    background: $jeopardy-red;
-    cursor: not-allowed;
-    opacity: 0.7;
+  // Clue Display Modal
+  .clue-reveal-modal {
+    --clue-display-width: 20vw;
+    position: absolute;
+    top: 5%;
+    left: 75%;
+    transform: translate(-50%, 0%);
+    width: 30vw;
+    max-width: 1000px;
+    height: auto;
+    background: rgba($jeopardy-background-blue, 1);
+    border-radius: $border-radius-lg;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
+    padding: 5vh;
+
+    .player-buzzer {
+      height: 10vw;
+      width: 10vw;
+      border-radius: 10vw;
+      font-size: 3rem;
+      text-align: center;
+      font-family: $font-family-daily-double;
+      text-transform: uppercase;
+      border: 0.5vw solid transparent;
+      margin-top: 1vw;
+
+      &.locked {
+        pointer-events: none;
+      }
+    }
   }
 }
-
-.score-display {
-  background: rgba($jeopardy-black, 0.8);
-  border: 2px solid $jeopardy-gold;
-  border-radius: $border-radius-md;
-  padding: $spacing-md;
-  color: $jeopardy-gold;
-  font-size: $font-size-lg;
-  font-weight: bold;
-}
-
-*/

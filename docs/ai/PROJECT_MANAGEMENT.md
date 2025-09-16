@@ -262,14 +262,15 @@ __for public release__
 **Assignee**: Development Team
 **Epic**: Game Mechanics
 
-**Description**: Implement low-latency buzzer system with proper race condition handling.
+**Description**: Implement client-side timing buzzer system with true fairness and no latency compensation.
 
 **Acceptance Criteria**:
-- [ ] Real-time buzz detection
-- [ ] Proper buzz ordering
-- [ ] Buzzer lock/unlock states
+- [ ] Real-time buzz detection with client-side timing calculation
+- [ ] Proper buzz ordering based on reaction time (not server timestamps)
+- [ ] Buzzer lock/unlock states with real-time synchronization
 - [ ] Visual feedback for all players
-- [ ] Handle network latency fairly
+- [ ] Database schema enhancement for timing data (unlock_received_at, buzz_clicked_at, reaction_time_ms)
+- [ ] Eliminate server-side latency compensation complexity
 
 ---
 
