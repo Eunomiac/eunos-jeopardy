@@ -53,7 +53,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const { user } = useAuth()
 
   // Game state
-  const [gameData, setGameData] = useState<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [gameData, setGameData] = useState<GameUpdatePayload | null>(null) // Will be used for game state updates
   const [players, setPlayers] = useState<PlayerInfo[]>([])
   const [currentClue, setCurrentClue] = useState<ClueInfo | null>(null)
   const [buzzerState, setBuzzerState] = useState<BuzzerState>(BuzzerState.LOCKED)
@@ -65,7 +66,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const [showClueModal, setShowClueModal] = useState(false)
 
   // Font assignment
-  const [playerFont, setPlayerFont] = useState<string>('handwritten-1')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [playerFont, setPlayerFont] = useState<string>('handwritten-1') // Will be used for font assignment logic
 
   /**
    * Loads initial game data and player information.
@@ -223,9 +225,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }, [loadGameData])
 
   // Set up real-time subscriptions
-  useEffect(() => {
-    return setupRealtimeSubscriptions()
-  }, [setupRealtimeSubscriptions])
+  useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions])
 
   // Loading state
   if (loading) {

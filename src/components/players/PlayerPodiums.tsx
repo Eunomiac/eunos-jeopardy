@@ -60,21 +60,21 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
    * Separates players into main player and competitors.
    */
   const separatePlayers = () => {
-    const mainPlayer = players.find((player) => player.id === currentUserId)
-    const competitors = players.filter((player) => player.id !== currentUserId)
+    const foundMainPlayer = players.find((player) => player.id === currentUserId)
+    const foundCompetitors = players.filter((player) => player.id !== currentUserId)
 
-    return { mainPlayer, competitors }
+    return { mainPlayer: foundMainPlayer, competitors: foundCompetitors }
   }
 
   /**
    * Distributes competitors between left and right sections.
    * Left gets up to 3, right gets the rest (up to 4).
    */
-  const distributeCompetitors = (competitors: PlayerInfo[]) => {
-    const leftCompetitors = competitors.slice(0, 3)
-    const rightCompetitors = competitors.slice(3, 7) // Max 4 on right
+  const distributeCompetitors = (competitorList: PlayerInfo[]) => {
+    const leftSection = competitorList.slice(0, 3)
+    const rightSection = competitorList.slice(3, 7) // Max 4 on right
 
-    return { leftCompetitors, rightCompetitors }
+    return { leftCompetitors: leftSection, rightCompetitors: rightSection }
   }
 
   /**

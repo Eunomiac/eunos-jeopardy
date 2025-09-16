@@ -167,13 +167,17 @@ export function ClueRevealModal({
   ].filter(Boolean).join(' ')
 
   return (
-    <div className="clue-reveal-overlay" onClick={onClose}>
+    <button
+      className="clue-reveal-overlay"
+      onClick={onClose}
+      onKeyDown={handleClose}
+      aria-label="Close modal"
+      type="button"
+    >
       <dialog
         className={modalClasses}
         open={isVisible}
         aria-labelledby="clue-prompt"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleClose}
       >
         {/* Daily Double Indicator */}
         {clue.isDailyDouble && (
@@ -205,6 +209,6 @@ export function ClueRevealModal({
           />
         </div>
       </dialog>
-    </div>
+    </button>
   )
 }
