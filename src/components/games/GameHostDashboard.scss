@@ -285,6 +285,18 @@
             font-size: $font-size-xs;
             color: $jeopardy-white;
             border: 1px solid rgba($jeopardy-gold, 0.3);
+
+            .status-label {
+              margin-right: 5px;
+            }
+
+            .jeopardy-button-small {
+              height: 20px;
+              padding: 0 4px;
+              min-width: 65px;
+              max-width: 65px;
+
+            }
           }
 
           .clear-queue-container {
@@ -368,18 +380,8 @@
 
                 .jeopardy-button {
                   min-width: 120px;
+                  max-width: 120px;
                   white-space: nowrap;
-
-                  &.buzzer-unlock {
-                    background-color: #dc3545;
-                    border-color: #dc3545;
-                    color: $jeopardy-white;
-
-                    &:hover:not(:disabled) {
-                      background-color: #c82333;
-                      border-color: #bd2130;
-                    }
-                  }
                 }
               }
             }

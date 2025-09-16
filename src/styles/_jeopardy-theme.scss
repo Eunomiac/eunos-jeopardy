@@ -20,6 +20,28 @@
   cursor: pointer;
   transition: all $transition-fast;
 
+  &.red {
+    background-color: #701b23;
+    border-color: #dc3545;
+    color: $jeopardy-white;
+
+    &:hover:not(:disabled) {
+      background-color: #c82333;
+      border-color: #bd2130;
+    }
+  }
+
+  &.green {
+    background-color: #134d20;
+    border-color: #28a745;
+    color: $jeopardy-white;
+
+    &:hover:not(:disabled) {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+  }
+
 
   &:hover:not(:disabled) {
     filter: brightness(1.1);

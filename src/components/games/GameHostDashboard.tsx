@@ -294,13 +294,19 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
    * Determines the current state of the multi-state reveal/buzzer button
    */
   const getRevealBuzzerButtonState = () => {
-    if (!focusedClue || !game) return 'disabled'
+    if (!focusedClue || !game) {
+      return 'disabled'
+    }
 
     const clueState = clueStates.find((state) => state.clue_id === focusedClue.id)
     const isRevealed = clueState?.revealed || false
 
-    if (!isRevealed) return 'reveal'
-    if (game.is_buzzer_locked) return 'unlock'
+    if (!isRevealed) {
+      return 'reveal'
+    }
+    if (game.is_buzzer_locked) {
+      return 'unlock'
+    }
     return 'lock'
   }
 
@@ -317,6 +323,12 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
       case 'unlock':
       case 'lock':
         await handleToggleBuzzer()
+        break
+      case 'disabled':
+        // No action when disabled
+        break
+      default:
+        console.warn('Unknown button state:', state)
         break
     }
   }
@@ -341,8 +353,8 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
         setMessage('Unfocusing clue...')
 
         // Clear focused clue in game state
-        const updatedGame = await GameService.setFocusedClue(gameId, null, user.id)
-        setGame(updatedGame)
+        const clearedGame = await GameService.setFocusedClue(gameId, null, user.id)
+        setGame(clearedGame)
         setFocusedClue(null)
 
         setMessage('Clue unfocused')
@@ -946,15 +958,16 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
           <div className="panel-content">
             {/* Connection & Latency Status - moved from Buzzer Control Panel */}
             <div className="connection-status">
-              <span>Connection Status: <span className={`${
-                connectionStatus === 'ACTIVE' ? 'text-success' :
-                connectionStatus === 'SLOW' ? 'text-warning' :
-                'text-danger'
-              }`}>{connectionStatus}</span></span>
-              <span>Latency Compensation:
+              <span><span className="status-label">Connection Status:</span>
+              <span className={(() => {
+                if (connectionStatus === 'ACTIVE') { return 'text-success' }
+                if (connectionStatus === 'SLOW') { return 'text-warning' }
+                return 'text-danger'
+              })()}>{connectionStatus}</span></span>
+              <span><span className="status-label">Latency Compensation:</span>
                 <button
                   type="button"
-                  className={`btn btn-sm ms-1 ${latencyCompensationEnabled ? 'btn-success' : 'btn-outline-secondary'}`}
+                  className={`jeopardy-button-small ${latencyCompensationEnabled ? 'green' : 'red'}`}
                   onClick={handleLatencyCompensationToggle}
                   aria-label={`Latency compensation is ${latencyCompensationEnabled ? 'enabled' : 'disabled'}. Click to ${latencyCompensationEnabled ? 'disable' : 'enable'}.`}
                 >
@@ -1039,17 +1052,22 @@ export function GameHostDashboard({ gameId, onBackToCreator }: Readonly<GameHost
                   {(() => {
                     const buttonState = getRevealBuzzerButtonState()
                     const isDisabled = buttonState === 'disabled'
-                    const isUnlockState = buttonState === 'unlock'
                     const buttonText = {
                       disabled: 'Select Clue',
                       reveal: 'Reveal Prompt',
                       unlock: 'Unlock Buzzer',
                       lock: 'Lock Buzzer'
                     }[buttonState]
+                    const buttonClass = {
+                      disabled: '',
+                      reveal: '',
+                      unlock: 'red',
+                      lock: 'green'
+                    }[buttonState]
 
                     return (
                       <button
-                        className={`jeopardy-button ${isUnlockState ? 'buzzer-unlock' : ''}`}
+                        className={`jeopardy-button ${buttonClass}`}
                         onClick={handleRevealBuzzerButton}
                         disabled={isDisabled}
                       >
