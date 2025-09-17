@@ -247,6 +247,7 @@ export type Database = {
         Row: {
           category_id: string
           id: string
+          locked_out_player_ids: string[] | null
           position: number
           prompt: string
           response: string
@@ -255,6 +256,7 @@ export type Database = {
         Insert: {
           category_id: string
           id?: string
+          locked_out_player_ids?: string[] | null
           position: number
           prompt: string
           response: string
@@ -263,6 +265,7 @@ export type Database = {
         Update: {
           category_id?: string
           id?: string
+          locked_out_player_ids?: string[] | null
           position?: number
           prompt?: string
           response?: string

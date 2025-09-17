@@ -114,7 +114,8 @@ describe('GameHostDashboard', () => {
       response: 'Test response',
       value: 200,
       category_id: 'cat-1',
-      position: 1
+      position: 1,
+      locked_out_player_ids: null
     })
 
     // Mock ClueSetService to prevent "Clue set not found" error

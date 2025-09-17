@@ -6,8 +6,9 @@ import { PlayerPodiums, type PlayerInfo } from './PlayerPodiums'
 import { ClueRevealModal, type ClueInfo } from './ClueRevealModal'
 import { BuzzerState } from '../../types/BuzzerState'
 import { supabase } from '../../services/supabase/client'
+import type { ClueState } from '../../services/clues/ClueService'
 
-import type { ClueSetData, ClueData } from '../../services/clueSets/loader'
+import type { ClueData, ClueSetData } from '../../services/clueSets/loader'
 import './PlayerDashboard.scss'
 
 interface PlayerDashboardProps {
@@ -73,8 +74,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const [reactionTime, setReactionTime] = useState<number | null>(null)
 
   // Game board data
-  const [clueSetData, setClueSetData] = useState<any>(null)
-  const [clueStates, setClueStates] = useState<any[]>([])
+  const [clueSetData, setClueSetData] = useState<ClueSetData | null>(null)
+  const [clueStates, setClueStates] = useState<ClueState[]>([])
   // Note: Players don't need Daily Double positions - they discover them when clues are revealed
 
   // UI state
@@ -83,9 +84,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const [showClueModal, setShowClueModal] = useState(false)
   const [modalAnimatingOut, setModalAnimatingOut] = useState(false)
 
-  // Font assignment
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [playerFont, setPlayerFont] = useState<string>('handwritten-1') // Will be used for font assignment logic
+  // Font assignment (will be used for font assignment logic in future)
+  const [, setPlayerFont] = useState<string>('handwritten-1')
 
   // Buzzer timing
   const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null)
@@ -167,7 +167,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         .select('*')
         .eq('game_id', gameId)
 
-      if (statesError) throw statesError
+      if (statesError) {
+        throw statesError
+      }
       setClueStates(states || [])
 
       // Load boards and categories for the game's clue set
@@ -178,7 +180,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         .eq('id', gameId)
         .single()
 
-      if (gameError) throw gameError
+      if (gameError) {
+        throw gameError
+      }
 
       if (!gameData?.clue_set_id) {
         throw new Error('Game does not have a clue set assigned')
@@ -206,30 +210,34 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         .eq('clue_set_id', gameData.clue_set_id)
         .order('round')
 
-      if (boardsError) throw boardsError
+      if (boardsError) {
+        throw boardsError
+      }
 
       // Transform boards into clue set structure
-      const jeopardyBoard = boards?.find(board => board.round === 'jeopardy')
-      const doubleBoard = boards?.find(board => board.round === 'double')
+      const jeopardyBoard = boards?.find((board) => board.round === 'jeopardy')
+      const doubleBoard = boards?.find((board) => board.round === 'double')
 
       setClueSetData({
+        name: 'Game Board', // Players don't need the actual clue set name
+        filename: 'game-board.csv', // Players don't need the actual filename
         rounds: {
-          jeopardy: jeopardyBoard?.categories?.sort((a, b) => a.position - b.position).map(cat => ({
+          jeopardy: jeopardyBoard?.categories?.sort((a, b) => a.position - b.position).map((cat) => ({
             name: cat.name,
             clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
           })) || [],
-          double: doubleBoard?.categories?.sort((a, b) => a.position - b.position).map(cat => ({
+          double: doubleBoard?.categories?.sort((a, b) => a.position - b.position).map((cat) => ({
             name: cat.name,
             clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
           })) || [],
-          final: [] // TODO: Handle final jeopardy
+          final: { name: 'Final Jeopardy', clues: [] } // TODO: Handle final jeopardy
         }
       })
 
       // Players don't need Daily Double positions - they discover them when clues are revealed
 
-    } catch (error) {
-      console.error('Failed to load game board data:', error)
+    } catch (loadError) {
+      console.error('Failed to load game board data:', loadError)
       setError('Failed to load game data')
     }
   }, [gameId])
@@ -259,11 +267,19 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
       setCurrentClue(clueInfo)
       return clueInfo
-    } catch (error) {
-      console.error('Failed to load clue:', error)
+    } catch (clueError) {
+      console.error('Failed to load clue:', clueError)
       setCurrentClue(null)
       return null
     }
+  }, [])
+
+  // Helper function to update clue states
+  const updateClueState = useCallback((clueState: ClueState) => {
+    setClueStates((prev) => {
+      const updated = prev.filter((s) => s.clue_id !== clueState.clue_id)
+      return [...updated, clueState]
+    })
   }, [])
 
   /**
@@ -369,8 +385,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
             })
           )
           setPlayers(playersWithFonts)
-        } catch (error) {
-          console.error('Failed to update player data:', error)
+        } catch (playerError) {
+          console.error('Failed to update player data:', playerError)
         }
       })
       .subscribe()
@@ -386,12 +402,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       }, (payload) => {
         console.log('🔔 Clue state update:', payload)
         if (payload.new) {
-          const clueState = payload.new as { clue_id: string; revealed: boolean; completed: boolean }
+          const clueState = payload.new as ClueState
           // Update clue states for board display
-          setClueStates(prev => {
-            const updated = prev.filter(s => s.clue_id !== clueState.clue_id)
-            return [...updated, clueState]
-          })
+          updateClueState(clueState)
 
           // Show modal when clue is revealed and it's the focused clue (Reveal Prompt action)
           if (clueState.revealed && focusedClue && clueState.clue_id === focusedClue.id) {
@@ -435,7 +448,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       clueStatesSubscription.unsubscribe()
       buzzesSubscription.unsubscribe()
     }
-  }, [gameId, user, loadClueData, focusedClue, modalAnimatingOut])
+  }, [gameId, user, loadClueData, focusedClue, modalAnimatingOut, updateClueState])
 
   /**
    * Handles player buzzer click.
@@ -455,13 +468,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         }
 
         // Send buzz event to server with reaction time
-        const { GameService } = await import('../../services/games/GameService')
         await GameService.recordBuzz(gameId, currentClue.id, user.id, reactionTimeMs)
 
         console.log('⚡ Player buzzed in successfully!')
 
-      } catch (error) {
-        console.error('Failed to record buzz:', error)
+      } catch (buzzError) {
+        console.error('Failed to record buzz:', buzzError)
         // Reset buzzer state on error
         setBuzzerState(BuzzerState.UNLOCKED)
       }
@@ -520,12 +532,15 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       {/* Round Header */}
       <div className="jeopardy-board-header">
         <h2>
-          {game?.current_round === 'final'
-            ? 'Final Jeopardy'
-            : game?.current_round === 'double'
-              ? 'Double Jeopardy Round'
-              : 'The Jeopardy Round'
-          }
+          {(() => {
+            if (game?.current_round === 'final') {
+              return 'Final Jeopardy'
+            }
+            if (game?.current_round === 'double') {
+              return 'Double Jeopardy Round'
+            }
+            return 'The Jeopardy Round'
+          })()}
         </h2>
       </div>
 

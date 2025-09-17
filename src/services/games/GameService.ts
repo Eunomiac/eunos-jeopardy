@@ -362,8 +362,8 @@ export class GameService {
 
       if (boardError) {
         console.warn(`Could not check Daily Double positions for ${round} round:`, boardError.message)
-        continue
-      }
+        // Skip this round and continue with the next one
+      } else {
 
       // Check if Daily Doubles are missing or empty
       const needsGeneration = !board.daily_double_cells ||
@@ -385,6 +385,7 @@ export class GameService {
         } else {
           console.log(`✅ Successfully added Daily Double positions to ${round} round`)
         }
+      }
       }
     }
   }
@@ -912,19 +913,17 @@ export class GameService {
       .from('players')
       .select('user_id, nickname')
       .eq('game_id', gameId)
-      .in('user_id', buzzes.map(buzz => buzz.user_id))
+      .in('user_id', buzzes.map((buzz) => buzz.user_id))
 
     if (playersError) {
       console.warn('Could not load player nicknames:', playersError)
     }
 
     // Enhance buzz records with player nicknames
-    const buzzesWithPlayerData = buzzes.map(buzz => ({
+    return buzzes.map((buzz) => ({
       ...buzz,
-      playerNickname: players?.find(p => p.user_id === buzz.user_id)?.nickname || null
+      playerNickname: players?.find((p) => p.user_id === buzz.user_id)?.nickname || null
     }))
-
-    return buzzesWithPlayerData
   }
 
   /**
@@ -1097,43 +1096,42 @@ export class GameService {
   }
 
   /**
-   * Completes the answer adjudication workflow for a clue.
+   * Marks a player's answer as correct and completes the clue.
    *
-   * This method handles the complete process of adjudicating a player's answer:
-   * 1. Records the answer in the answers table
-   * 2. Updates the player's score based on the result
-   * 3. Marks the clue as completed if answer is correct
-   * 4. Clears focused clue/player state
+   * This method handles the complete workflow when a player answers correctly:
+   * 1. Records the correct answer in the answers table
+   * 2. Updates the player's score (adds clue value)
+   * 3. Marks the clue as completed
+   * 4. Clears focused clue/player state and locks buzzer
+   * 5. Clears all buzzes for this clue
    *
    * @param gameId - UUID of the game
    * @param clueId - UUID of the clue being adjudicated
-   * @param playerId - UUID of the player who answered
+   * @param playerId - UUID of the player who answered correctly
    * @param playerResponse - The player's response text
-   * @param isCorrect - Whether the answer is correct
-   * @param scoreValue - Point value to add/subtract (clue value or wager amount)
+   * @param scoreValue - Point value to add (clue value or wager amount)
    * @param hostId - UUID of the game host (for authorization)
    * @returns Promise resolving to updated game object
    * @throws {Error} When unauthorized, game not found, or database error
    */
-  static async adjudicateAnswer(
+  static async markPlayerCorrect(
     gameId: string,
     clueId: string,
     playerId: string,
     playerResponse: string,
-    isCorrect: boolean,
     scoreValue: number,
     hostId: string
   ): Promise<Game> {
     // Authorization check
     await this.getGame(gameId, hostId)
 
-    // Record the answer
+    // Record the correct answer
     const answerData: AnswerInsert = {
       game_id: gameId,
       clue_id: clueId,
       user_id: playerId,
       response: playerResponse,
-      is_correct: isCorrect,
+      is_correct: true,
       adjudicated_by: hostId
     }
 
@@ -1145,11 +1143,10 @@ export class GameService {
       throw new Error(`Failed to record answer: ${answerError.message}`)
     }
 
-    // Update player score
-    const scoreChange = isCorrect ? scoreValue : -scoreValue
-    await this.updatePlayerScore(gameId, playerId, scoreChange, hostId)
+    // Update player score (add points)
+    await this.updatePlayerScore(gameId, playerId, scoreValue, hostId)
 
-    // Clear buzzer queue for this clue (both correct and incorrect answers)
+    // Clear buzzer queue for this clue
     const { error: buzzClearError } = await supabase
       .from('buzzes')
       .delete()
@@ -1161,9 +1158,130 @@ export class GameService {
       // Don't throw - this is not critical to the adjudication process
     }
 
-    // If answer is correct, mark clue as completed and clear focus
-    if (isCorrect) {
-      // Mark clue as completed
+    // Mark clue as completed
+    const { error: clueStateError } = await supabase
+      .from('clue_states')
+      .update({ completed: true })
+      .eq('game_id', gameId)
+      .eq('clue_id', clueId)
+
+    if (clueStateError) {
+      throw new Error(`Failed to mark clue completed: ${clueStateError.message}`)
+    }
+
+    // Clear focused clue and player, lock buzzer
+    return this.updateGame(gameId, {
+      focused_clue_id: null,
+      focused_player_id: null,
+      is_buzzer_locked: true
+    }, hostId)
+  }
+
+  /**
+   * Marks a player's answer as wrong and continues the clue for other players.
+   *
+   * This method handles the workflow when a player answers incorrectly:
+   * 1. Records the wrong answer in the answers table
+   * 2. Updates the player's score (subtracts clue value)
+   * 3. Adds player to locked-out list for this clue
+   * 4. Clears focused player but keeps clue active
+   * 5. Unlocks buzzer for remaining players
+   * 6. Clears buzzer queue for new round of buzzing
+   * 7. Checks if all players are locked out and completes clue if so
+   *
+   * @param gameId - UUID of the game
+   * @param clueId - UUID of the clue being adjudicated
+   * @param playerId - UUID of the player who answered incorrectly
+   * @param playerResponse - The player's response text
+   * @param scoreValue - Point value to subtract (clue value or wager amount)
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async markPlayerWrong(
+    gameId: string,
+    clueId: string,
+    playerId: string,
+    playerResponse: string,
+    scoreValue: number,
+    hostId: string
+  ): Promise<Game> {
+    // Authorization check
+    await this.getGame(gameId, hostId)
+
+    // Record the wrong answer
+    const answerData: AnswerInsert = {
+      game_id: gameId,
+      clue_id: clueId,
+      user_id: playerId,
+      response: playerResponse,
+      is_correct: false,
+      adjudicated_by: hostId
+    }
+
+    const { error: answerError } = await supabase
+      .from('answers')
+      .insert(answerData)
+
+    if (answerError) {
+      throw new Error(`Failed to record answer: ${answerError.message}`)
+    }
+
+    // Update player score (subtract points)
+    await this.updatePlayerScore(gameId, playerId, -scoreValue, hostId)
+
+    // Get current locked-out players for this clue
+    const { data: currentClue, error: clueError } = await supabase
+      .from('clues')
+      .select('locked_out_player_ids')
+      .eq('id', clueId)
+      .single()
+
+    if (clueError) {
+      throw new Error(`Failed to get clue data: ${clueError.message}`)
+    }
+
+    // Add this player to the locked-out list
+    const currentLockedOut = currentClue.locked_out_player_ids || []
+    const updatedLockedOut = [...currentLockedOut, playerId]
+
+    // Update clue with new locked-out player
+    const { error: updateClueError } = await supabase
+      .from('clues')
+      .update({ locked_out_player_ids: updatedLockedOut })
+      .eq('id', clueId)
+
+    if (updateClueError) {
+      throw new Error(`Failed to update locked-out players: ${updateClueError.message}`)
+    }
+
+    // Clear buzzer queue for this clue (reset for new round of buzzing)
+    const { error: buzzClearError } = await supabase
+      .from('buzzes')
+      .delete()
+      .eq('game_id', gameId)
+      .eq('clue_id', clueId)
+
+    if (buzzClearError) {
+      console.warn(`Failed to clear buzzer queue: ${buzzClearError.message}`)
+      // Don't throw - this is not critical to the adjudication process
+    }
+
+    // Check if all players are now locked out
+    const { data: allPlayers, error: playersError } = await supabase
+      .from('players')
+      .select('user_id')
+      .eq('game_id', gameId)
+
+    if (playersError) {
+      throw new Error(`Failed to get players: ${playersError.message}`)
+    }
+
+    const allPlayerIds = allPlayers.map((p) => p.user_id)
+    const allPlayersLockedOut = allPlayerIds.every((id) => updatedLockedOut.includes(id))
+
+    if (allPlayersLockedOut) {
+      // All players have been marked wrong - complete the clue
       const { error: clueStateError } = await supabase
         .from('clue_states')
         .update({ completed: true })
@@ -1182,11 +1300,32 @@ export class GameService {
       }, hostId)
     }
 
-    // If incorrect, clear focused player and lock buzzer (keep clue focused for re-buzzing)
+    // Not all players locked out - clear focused player and unlock buzzer for others
     return this.updateGame(gameId, {
       focused_player_id: null,
-      is_buzzer_locked: true
+      is_buzzer_locked: false
     }, hostId)
+  }
+
+  /**
+   * Legacy method for backward compatibility.
+   *
+   * @deprecated Use markPlayerCorrect() or markPlayerWrong() instead
+   */
+  static async adjudicateAnswer(
+    gameId: string,
+    clueId: string,
+    playerId: string,
+    playerResponse: string,
+    isCorrect: boolean,
+    scoreValue: number,
+    hostId: string
+  ): Promise<Game> {
+    if (isCorrect) {
+      return this.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
+    } else {
+      return this.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
+    }
   }
 
   /**

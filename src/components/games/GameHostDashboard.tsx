@@ -250,6 +250,15 @@ export function GameHostDashboard({
   const [latencyCompensationEnabled, setLatencyCompensationEnabled] =
     useState(true);
 
+  /** Clue timeout timer reference */
+  const [clueTimeoutId, setClueTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  /** Remaining time for current clue (in seconds) */
+  const [clueTimeRemaining, setClueTimeRemaining] = useState<number | null>(null);
+
+  /** Clue timeout duration in seconds */
+  const CLUE_TIMEOUT_SECONDS = 5;
+
   /**
    * Effect to monitor connection status with periodic health checks.
    *
@@ -570,6 +579,108 @@ export function GameHostDashboard({
   };
 
   /**
+   * Starts the clue timeout timer.
+   *
+   * Initiates a countdown timer that will automatically complete the clue
+   * if no player buzzes in within the timeout period. Updates the remaining
+   * time display and handles timeout completion.
+   */
+  const handleClueTimeout = useCallback(async () => {
+    if (!user || !game || !focusedClue) {
+      return;
+    }
+
+    try {
+      setMessage("Time expired - completing clue...");
+
+      // Mark clue as completed
+      const { error: clueStateError } = await supabase
+        .from('clue_states')
+        .update({ completed: true })
+        .eq('game_id', gameId)
+        .eq('clue_id', focusedClue.id);
+
+      if (clueStateError) {
+        throw new Error(`Failed to mark clue completed: ${clueStateError.message}`);
+      }
+
+      // Clear focused clue and player, lock buzzer
+      const updatedGame = await GameService.updateGame(gameId, {
+        focused_clue_id: null,
+        focused_player_id: null,
+        is_buzzer_locked: true
+      }, user.id);
+
+      setGame(updatedGame);
+      setFocusedClue(null);
+
+      // Update clue states
+      const updatedClueStates = await ClueService.getGameClueStates(gameId);
+      setClueStates(updatedClueStates);
+
+      // Show correct answer to host
+      alert(`Time expired! The correct answer was: ${focusedClue.response}`);
+
+      setMessage("Clue completed due to timeout");
+      setMessageType("success");
+    } catch (error) {
+      console.error("Failed to handle clue timeout:", error);
+      setMessage(
+        `Failed to handle timeout: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  }, [user, game, focusedClue, gameId]);
+
+  const startClueTimeout = useCallback(() => {
+    // Clear any existing timeout
+    if (clueTimeoutId) {
+      clearTimeout(clueTimeoutId);
+    }
+
+    // Start countdown display
+    setClueTimeRemaining(CLUE_TIMEOUT_SECONDS);
+
+    // Update countdown every second
+    const countdownInterval = setInterval(() => {
+      setClueTimeRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdownInterval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Set main timeout
+    const timeoutId = setTimeout(async () => {
+      clearInterval(countdownInterval);
+      setClueTimeRemaining(null);
+      await handleClueTimeout();
+    }, CLUE_TIMEOUT_SECONDS * 1000);
+
+    setClueTimeoutId(timeoutId);
+  }, [clueTimeoutId, CLUE_TIMEOUT_SECONDS, handleClueTimeout]);
+
+  /**
+   * Clears the clue timeout timer.
+   *
+   * Cancels any active timeout and resets the countdown display.
+   * Called when a player buzzes in or when the clue is completed.
+   */
+  const clearClueTimeout = useCallback(() => {
+    if (clueTimeoutId) {
+      clearTimeout(clueTimeoutId);
+      setClueTimeoutId(null);
+    }
+    setClueTimeRemaining(null);
+  }, [clueTimeoutId]);
+
+
+
+  /**
    * Handles clue selection from the game board.
    *
    * Toggles the focused clue state - if the same clue is clicked again, it unfocuses.
@@ -722,44 +833,45 @@ export function GameHostDashboard({
   };
 
   /**
-   * Handles marking an answer as correct or incorrect.
+   * Handles marking a player's answer as correct.
    *
-   * Completes the adjudication workflow by recording the answer, updating
-   * the player's score, and managing clue completion state.
-   *
-   * @param isCorrect - Whether the player's answer is correct
+   * This function manages the complete workflow when a player answers correctly:
+   * 1. Records the correct answer in the database
+   * 2. Updates the player's score (adds points)
+   * 3. Completes the clue and clears focus
+   * 4. Refreshes UI state to reflect changes
    */
-  const handleAdjudication = async (isCorrect: boolean) => {
+  const handleMarkCorrect = async () => {
     if (!user || !game || !focusedClue || !game.focused_player_id) {
       return;
     }
 
     try {
-      setMessage(`Marking answer ${isCorrect ? "correct" : "incorrect"}...`);
+      // Clear timeout since player answered
+      clearClueTimeout();
+
+      setMessage("Marking answer correct...");
 
       // For now, use a placeholder response - in a real implementation,
       // this would come from the player's actual response
-      const playerResponse = isCorrect
-        ? "Correct response"
-        : "Incorrect response";
+      const playerResponse = "Correct response";
 
       // Use clue value for scoring (Daily Double wagers would be handled separately)
       const scoreValue = focusedClue.value;
 
-      // Complete adjudication workflow
-      const updatedGame = await GameService.adjudicateAnswer(
+      // Mark player correct - this will complete the clue
+      const updatedGame = await GameService.markPlayerCorrect(
         gameId,
         focusedClue.id,
         game.focused_player_id,
         playerResponse,
-        isCorrect,
         scoreValue,
         user.id
       );
 
       setGame(updatedGame);
 
-      // Clear focused clue for both correct and incorrect answers
+      // Clear focused clue since it's now completed
       setFocusedClue(null);
 
       // Update clue states and player scores
@@ -771,20 +883,92 @@ export function GameHostDashboard({
       setClueStates(updatedClueStates);
       setPlayers(updatedPlayers);
 
-      setMessage(
-        `Answer marked ${isCorrect ? "correct" : "incorrect"}, score updated`
-      );
+      setMessage("Answer marked correct, score updated");
       setMessageType("success");
     } catch (error) {
-      console.error("Failed to adjudicate answer:", error);
+      console.error("Failed to mark answer correct:", error);
       setMessage(
-        `Failed to adjudicate answer: ${
+        `Failed to mark answer correct: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
       setMessageType("error");
     }
   };
+
+  /**
+   * Handles marking a player's answer as wrong.
+   *
+   * This function manages the workflow when a player answers incorrectly:
+   * 1. Records the wrong answer in the database
+   * 2. Updates the player's score (subtracts points)
+   * 3. Keeps clue active for other players or completes if all are wrong
+   * 4. Refreshes UI state to reflect changes
+   */
+  const handleMarkWrong = async () => {
+    if (!user || !game || !focusedClue || !game.focused_player_id) {
+      return;
+    }
+
+    try {
+      // Clear timeout since player answered
+      clearClueTimeout();
+
+      setMessage("Marking answer incorrect...");
+
+      // For now, use a placeholder response - in a real implementation,
+      // this would come from the player's actual response
+      const playerResponse = "Incorrect response";
+
+      // Use clue value for scoring (Daily Double wagers would be handled separately)
+      const scoreValue = focusedClue.value;
+
+      // Mark player wrong - this may keep clue active or complete it
+      const updatedGame = await GameService.markPlayerWrong(
+        gameId,
+        focusedClue.id,
+        game.focused_player_id,
+        playerResponse,
+        scoreValue,
+        user.id
+      );
+
+      setGame(updatedGame);
+
+      // Only clear focused clue if it was completed (all players wrong)
+      if (updatedGame.focused_clue_id === null) {
+        setFocusedClue(null);
+        setMessage("Answer marked incorrect, all players have attempted - clue completed");
+        // Show correct answer when all players are wrong
+        alert(`All players answered incorrectly. The correct answer was: ${focusedClue.response}`);
+      } else {
+        setMessage("Answer marked incorrect, buzzer unlocked for other players");
+        // Restart timeout for remaining players
+        startClueTimeout();
+      }
+
+      // Update clue states and player scores
+      const [updatedClueStates, updatedPlayers] = await Promise.all([
+        ClueService.getGameClueStates(gameId),
+        GameService.getPlayers(gameId),
+      ]);
+
+      setClueStates(updatedClueStates);
+      setPlayers(updatedPlayers);
+
+      setMessageType("success");
+    } catch (error) {
+      console.error("Failed to mark answer wrong:", error);
+      setMessage(
+        `Failed to mark answer wrong: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+
 
   /**
    * Handles toggling the buzzer lock state for the current game.
@@ -850,10 +1034,20 @@ export function GameHostDashboard({
       // Update local state with new game data
       setGame(updatedGame);
 
-      // Show success message with new state
-      setMessage(
-        `Buzzer ${updatedGame.is_buzzer_locked ? "locked" : "unlocked"}`
-      );
+      // If buzzer was unlocked and there's a focused clue, start timeout
+      if (!updatedGame.is_buzzer_locked && focusedClue) {
+        startClueTimeout();
+        setMessage("Buzzer unlocked - players have 5 seconds to buzz in");
+      } else if (updatedGame.is_buzzer_locked) {
+        // If buzzer was locked, clear any active timeout
+        clearClueTimeout();
+        setMessage("Buzzer locked");
+      } else {
+        setMessage(
+          `Buzzer ${updatedGame.is_buzzer_locked ? "locked" : "unlocked"}`
+        );
+      }
+
       setMessageType("success");
     } catch (error) {
       // Log error for debugging
@@ -1351,12 +1545,9 @@ export function GameHostDashboard({
                   }
 
                   // Priority: game-specific nickname > profile display_name > profile username > fallback
-                  const playerName =
-                    buzzWithPlayerData.playerNickname ||
-                    player?.nickname ||
-                    buzzWithPlayerData.profiles?.display_name ||
-                    buzzWithPlayerData.profiles?.username ||
-                    "Unknown Player";
+                  const gameNickname = buzzWithPlayerData.playerNickname || player?.nickname;
+                  const profileName = buzzWithPlayerData.profiles?.display_name || buzzWithPlayerData.profiles?.username;
+                  const playerName = gameNickname || profileName || "Unknown Player";
                   // Use stored reaction time if available, otherwise fall back to timestamp difference
                   const reactionTime = buzz.reaction_time;
                   let timingText: string;
@@ -1455,6 +1646,15 @@ export function GameHostDashboard({
                 </div>
               </div>
 
+              {/* Timeout Display */}
+              {clueTimeRemaining !== null && (
+                <div className="clue-timeout-display">
+                  <div className="timeout-message">
+                    ⏱️ Time remaining: <strong>{clueTimeRemaining}s</strong>
+                  </div>
+                </div>
+              )}
+
               <div className={`clue-response-row ${!focusedClue ? 'no-clue-focused' : ''}`}>
                 <span className="response-label">Correct Response:</span>
                 <span className="response-text">
@@ -1468,14 +1668,14 @@ export function GameHostDashboard({
               <div className="d-flex gap-2">
                 <button
                   className="jeopardy-button flex-1"
-                  onClick={() => handleAdjudication(true)}
+                  onClick={handleMarkCorrect}
                   disabled={!focusedClue || !game.focused_player_id}
                 >
                   Mark Correct
                 </button>
                 <button
                   className="jeopardy-button flex-1"
-                  onClick={() => handleAdjudication(false)}
+                  onClick={handleMarkWrong}
                   disabled={!focusedClue || !game.focused_player_id}
                 >
                   Mark Wrong
