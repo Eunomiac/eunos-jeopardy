@@ -902,13 +902,14 @@ export class GameService {
    * @since 0.1.0
    * @author Euno's Jeopardy Team
    */
-  static async recordBuzz(gameId: string, clueId: string, userId: string): Promise<Buzz> {
-    // Create buzz record with precise timing
+  static async recordBuzz(gameId: string, clueId: string, userId: string, reactionTime?: number): Promise<Buzz> {
+    // Create buzz record with precise timing and client-calculated reaction time
     // Database will automatically set created_at timestamp for fair ordering
     const buzzData: BuzzInsert = {
       game_id: gameId,
       clue_id: clueId,
-      user_id: userId
+      user_id: userId,
+      reaction_time: reactionTime || null
     }
 
     // Insert buzz with immediate return of created record

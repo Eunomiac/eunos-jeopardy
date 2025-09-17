@@ -313,6 +313,13 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
             setBuzzerState(BuzzerState.LOCKED)
             setReactionTime(null)
           }
+
+          // Handle player selection - hide modal when host selects a player from buzzer queue
+          if (gameUpdate.focused_player_id) {
+            // Host has selected a player for adjudication - hide the modal
+            setShowClueModal(false)
+            setBuzzerState(BuzzerState.FROZEN) // Freeze buzzer while host adjudicates
+          }
         }
       })
       .subscribe()
@@ -402,18 +409,19 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       setBuzzerState(BuzzerState.BUZZED)
 
       try {
-        // Send buzz event to server
-        const { GameService } = await import('../../services/games/GameService')
-        await GameService.recordBuzz(gameId, currentClue.id, user.id)
-
-        console.log('⚡ Player buzzed in successfully!')
-
-        // Calculate and display reaction time using client-side timing
+        // Calculate reaction time using client-side timing
+        let reactionTimeMs: number | undefined
         if (buzzerUnlockTime) {
-          const reactionTimeMs = Date.now() - buzzerUnlockTime
+          reactionTimeMs = Date.now() - buzzerUnlockTime
           setReactionTime(reactionTimeMs)
           console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`)
         }
+
+        // Send buzz event to server with reaction time
+        const { GameService } = await import('../../services/games/GameService')
+        await GameService.recordBuzz(gameId, currentClue.id, user.id, reactionTimeMs)
+
+        console.log('⚡ Player buzzed in successfully!')
 
       } catch (error) {
         console.error('Failed to record buzz:', error)

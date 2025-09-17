@@ -1353,13 +1353,20 @@ export function GameHostDashboard({
                     buzzWithPlayerData.profiles?.display_name ||
                     buzzWithPlayerData.profiles?.username ||
                     "Unknown Player";
-                  const buzzTime = new Date(buzz.created_at);
-                  const firstBuzzTime = new Date(buzzerQueue[0].created_at);
-                  const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime();
+                  // Use stored reaction time if available, otherwise fall back to timestamp difference
+                  const reactionTime = buzz.reaction_time;
+                  let timingText: string;
 
-                  // Build timing text without nested template literals
-                  const timingText =
-                    timeDiff === 0 ? "0 ms" : `+${timeDiff} ms`;
+                  if (reactionTime !== null && reactionTime !== undefined) {
+                    // Use client-calculated reaction time (most accurate)
+                    timingText = index === 0 ? `${reactionTime} ms` : `+${reactionTime} ms`;
+                  } else {
+                    // Fallback to timestamp difference (less accurate)
+                    const buzzTime = new Date(buzz.created_at);
+                    const firstBuzzTime = new Date(buzzerQueue[0].created_at);
+                    const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime();
+                    timingText = timeDiff === 0 ? "0 ms" : `+${timeDiff} ms`;
+                  }
                   const ariaLabel = `Select player ${playerName} (position ${
                     index + 1
                   }, ${timingText})`;
