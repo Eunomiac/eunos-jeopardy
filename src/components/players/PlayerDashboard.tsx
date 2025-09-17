@@ -316,9 +316,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
           // Handle player selection - hide modal when host selects a player from buzzer queue
           if (gameUpdate.focused_player_id) {
-            // Host has selected a player for adjudication - hide the modal
+            // Host has selected a player for adjudication - hide the modal immediately
             setShowClueModal(false)
-            setBuzzerState(BuzzerState.FROZEN) // Freeze buzzer while host adjudicates
+            // Don't change buzzer state while modal is visible to avoid flash
+            // The buzzer will be managed by the buzzer lock state instead
           }
         }
       })

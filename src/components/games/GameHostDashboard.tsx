@@ -659,6 +659,12 @@ export function GameHostDashboard({
       // Mark clue as revealed
       await ClueService.revealClue(gameId, focusedClue.id);
 
+      // Lock the buzzer when revealing clue (host must unlock it manually)
+      if (!game.is_buzzer_locked) {
+        const updatedGame = await GameService.toggleBuzzerLock(gameId, user.id);
+        setGame(updatedGame);
+      }
+
       // Update clue states
       const updatedClueStates = await ClueService.getGameClueStates(gameId);
       setClueStates(updatedClueStates);
