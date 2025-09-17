@@ -18,6 +18,7 @@ This folder contains documentation specifically designed for AI code assistants 
 
 ## 🌟 **Extended Feature Descriptions**
 - **[DAILY_DOUBLE_ALGORITHM.md](./features/DAILY_DOUBLE_ALGORITHM.md)** - Automatic Daily Double placement specification
+- **[BUZZER_SYSTEM.md](./features/BUZZER_SYSTEM.md)** - Real-time buzzer system architecture and implementation
 
 ## 🎯 **Current Focus & Active Development**
 - **[/issues/](./issues/)** - Issue-specific documentation for active development
@@ -63,5 +64,6 @@ This folder contains documentation specifically designed for AI code assistants 
 
 **Implementation Details:**
 - **DAILY_DOUBLE_ALGORITHM.md** - CSV parsing and automatic Daily Double placement
+- **BUZZER_SYSTEM.md** - Real-time buzzer system architecture and implementation
 - **reference/strategy/TESTING_STRATEGY.md** - Testing approach and best practices
 - **SCSS_STYLING_GUIDELINES.md** - SCSS styling conventions and best practices

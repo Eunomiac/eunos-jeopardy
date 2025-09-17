@@ -366,7 +366,6 @@ export function GameHostDashboard({
           gameData.clue_set_id,
           gameData.current_round
         );
-        console.log('🎯 Daily Double positions loaded:', dailyDoubleData);
         setDailyDoublePositions(dailyDoubleData);
 
         // Load focused clue if one is set
@@ -1122,18 +1121,6 @@ export function GameHostDashboard({
                             position.category === item.categoryIndex + 1 &&
                             position.row === item.clue.position
                         );
-
-                        // Debug Daily Double detection
-                        if (isDailyDouble) {
-                          console.log('🎯 Daily Double detected:', {
-                            clueId: item.clue.id,
-                            categoryIndex: item.categoryIndex + 1,
-                            row: item.clue.position,
-                            matchedPosition: dailyDoublePositions.find(p =>
-                              p.category === item.categoryIndex + 1 && p.row === item.clue.position
-                            )
-                          });
-                        }
 
                         let cellClass = "clue-cell";
                         if (isCompleted) {

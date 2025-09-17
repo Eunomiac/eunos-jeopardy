@@ -4,6 +4,8 @@
 
 The Daily Double placement system automatically assigns Daily Double positions during CSV parsing, eliminating the need for manual specification in CSV files. This approach uses authentic Jeopardy! probability data to create realistic Daily Double placement.
 
+**NEW**: Added failsafe system that automatically generates missing Daily Double positions during game creation for legacy clue sets.
+
 ## CSV Format Change
 
 **Old Format** (manual specification):
@@ -83,6 +85,29 @@ Daily Double positions stored in `boards.daily_double_cells` as JSONB:
 - **Jeopardy Round**: Exactly 1 Daily Double
 - **Double Jeopardy Round**: Exactly 2 Daily Doubles in different categories
 - **Final Jeopardy**: No Daily Doubles
+
+## Failsafe System
+
+### Legacy Clue Set Support
+
+A failsafe system automatically generates missing Daily Double positions during game creation:
+
+**Implementation**: `GameService.ensureDailyDoublePositions()`
+- **Trigger**: Called during `GameService.createGame()` after clue state initialization
+- **Detection**: Checks for `null` or empty array in `daily_double_cells`
+- **Generation**: Uses same authentic algorithm as CSV upload process
+- **Non-blocking**: Logs warnings but doesn't fail game creation
+
+**Supported Scenarios**:
+- Clue sets uploaded before Daily Double generation was implemented
+- Manually modified or corrupted Daily Double data
+- Database migration or data recovery scenarios
+
+**Console Output**:
+```
+🎯 Generated missing Daily Double positions for jeopardy round: [{"category": 3, "row": 4}]
+✅ Successfully added Daily Double positions to jeopardy round
+```
 - **Structure**: Each round must have exactly 6 categories with 5 clues each
 
 ## Error Handling
