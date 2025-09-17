@@ -81,6 +81,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showClueModal, setShowClueModal] = useState(false)
+  const [modalAnimatingOut, setModalAnimatingOut] = useState(false)
 
   // Font assignment
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -288,13 +289,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           const gameUpdate = payload.new as GameUpdatePayload
           setGame(gameUpdate)
 
-          // Update buzzer state based on game state
-          if (gameUpdate.is_buzzer_locked) {
-            setBuzzerState(BuzzerState.LOCKED)
-            setBuzzerUnlockTime(null)
-          } else {
-            setBuzzerState(BuzzerState.UNLOCKED)
-            setBuzzerUnlockTime(Date.now()) // Record when buzzer was unlocked
+          // Update buzzer state based on game state (but not during modal animation)
+          if (!modalAnimatingOut) {
+            if (gameUpdate.is_buzzer_locked) {
+              setBuzzerState(BuzzerState.LOCKED)
+              setBuzzerUnlockTime(null)
+              setReactionTime(null)
+            } else {
+              setBuzzerState(BuzzerState.UNLOCKED)
+              setBuzzerUnlockTime(Date.now()) // Record when buzzer was unlocked
+            }
           }
 
           // Handle focused clue (just highlight on board, don't show modal)
@@ -313,9 +317,14 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
           // Handle player selection - hide modal when host selects a player from buzzer queue
           if (gameUpdate.focused_player_id) {
-            // Host has selected a player for adjudication - hide the modal immediately
+            // Host has selected a player for adjudication - start modal animation
+            setModalAnimatingOut(true)
             setShowClueModal(false)
-            // Buzzer will be locked when clue is marked complete (in clue states subscription)
+
+            // Delay buzzer state changes until modal animation completes (300ms)
+            setTimeout(() => {
+              setModalAnimatingOut(false)
+            }, 300)
           }
         }
       })
@@ -426,7 +435,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       clueStatesSubscription.unsubscribe()
       buzzesSubscription.unsubscribe()
     }
-  }, [gameId, user, loadClueData, focusedClue])
+  }, [gameId, user, loadClueData, focusedClue, modalAnimatingOut])
 
   /**
    * Handles player buzzer click.
