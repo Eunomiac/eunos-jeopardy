@@ -318,8 +318,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           if (gameUpdate.focused_player_id) {
             // Host has selected a player for adjudication - hide the modal immediately
             setShowClueModal(false)
-            // Don't change buzzer state while modal is visible to avoid flash
-            // The buzzer will be managed by the buzzer lock state instead
+            // Buzzer will be locked when clue is marked complete (in clue states subscription)
           }
         }
       })
@@ -333,9 +332,40 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         schema: 'public',
         table: 'players',
         filter: `game_id=eq.${gameId}`
-      }, () => {
+      }, async () => {
         console.log('🔔 Players update')
-        loadGameData() // Reload player data
+        // Update player data incrementally without full reload
+        try {
+          const gamePlayers = await GameService.getPlayers(gameId)
+          const playersWithFonts = await Promise.all(
+            gamePlayers.map(async (player) => {
+              let font = 'handwritten-1'
+
+              if (player.user_id === user.id) {
+                font = await FontAssignmentService.getPlayerFont(user.id, gameId)
+                setPlayerFont(font)
+              } else {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('handwritten_font, temp_handwritten_font')
+                  .eq('id', player.user_id)
+                  .single()
+                font = profile?.temp_handwritten_font || profile?.handwritten_font || 'handwritten-1'
+              }
+
+              return {
+                id: player.user_id,
+                name: player.nickname || 'Player',
+                score: player.score,
+                fontFamily: font,
+                isMainPlayer: player.user_id === user.id
+              }
+            })
+          )
+          setPlayers(playersWithFonts)
+        } catch (error) {
+          console.error('Failed to update player data:', error)
+        }
       })
       .subscribe()
 
@@ -399,7 +429,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       clueStatesSubscription.unsubscribe()
       buzzesSubscription.unsubscribe()
     }
-  }, [gameId, user, loadGameData, loadClueData, focusedClue])
+  }, [gameId, user, loadClueData, focusedClue])
 
   /**
    * Handles player buzzer click.

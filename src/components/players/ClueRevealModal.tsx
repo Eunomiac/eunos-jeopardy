@@ -203,10 +203,8 @@ export function ClueRevealModal({
         </div>
 
         {/* Clue Prompt */}
-        <div className="clue-content">
-          <div id="clue-prompt" className="clue-prompt">
+        <div className="jeopardy-clue-display">
             {clue.prompt}
-          </div>
         </div>
 
         {/* Integrated Buzzer */}
