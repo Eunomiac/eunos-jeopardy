@@ -448,6 +448,9 @@ export function GameHostDashboard({
         },
         async () => {
           console.log("Buzz change detected");
+          // Clear timeout when any player buzzes in
+          clearClueTimeout();
+
           // Refresh buzzer queue when new buzzes arrive
           // Only refresh if we have a focused clue
           if (focusedClue) {
@@ -490,7 +493,7 @@ export function GameHostDashboard({
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameId, user, focusedClue]);
+  }, [gameId, user, focusedClue, clearClueTimeout]);
 
   // Effect to manage full-screen layout classes
   useEffect(() => {

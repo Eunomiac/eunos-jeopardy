@@ -624,7 +624,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
                   let cellClass = "clue-cell"
                   if (isCompleted) {
-                    cellClass += " completed"
+                    cellClass += " completed revealed" // Completed clues should also be styled as revealed
                   } else if (isRevealed) {
                     cellClass += " revealed"
                   }
