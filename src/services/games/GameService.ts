@@ -1,5 +1,5 @@
 import { supabase } from '../supabase/client'
-import type { Tables, TablesInsert, TablesUpdate } from '../supabase/types'
+import type { Tables, TablesInsert, TablesUpdate, Json } from '../supabase/types'
 import { ClueService } from '../clues/ClueService'
 
 /** Game entity type from database schema */
@@ -315,7 +315,78 @@ export class GameService {
       console.warn('Failed to initialize clue states for new game:', clueError)
     }
 
+    // Failsafe: Ensure Daily Double positions exist for legacy clue sets
+    try {
+      await this.ensureDailyDoublePositions(clueSetId)
+    } catch (ddError) {
+      // Log error but don't fail game creation - Daily Doubles can be added manually
+      console.warn('Failed to ensure Daily Double positions:', ddError)
+    }
+
     return data
+  }
+
+  /**
+   * Ensures Daily Double positions exist for a clue set, generating them if missing.
+   *
+   * This failsafe method checks if Daily Double positions are assigned to the
+   * jeopardy and double rounds of a clue set. If any are missing (empty arrays),
+   * it generates and saves new Daily Double positions using the authentic algorithm.
+   *
+   * **Use Cases:**
+   * - Legacy clue sets uploaded before Daily Double generation was implemented
+   * - Corrupted or manually modified clue sets with missing Daily Doubles
+   * - Ensuring consistent game experience regardless of clue set age
+   *
+   * @param clueSetId - UUID of the clue set to check and fix
+   * @throws {Error} When database operations fail
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  private static async ensureDailyDoublePositions(clueSetId: string): Promise<void> {
+    // Import Daily Double generation function
+    const { generateDailyDoublePositions } = await import('../../utils/dailyDoubleAlgorithm')
+
+    // Check both jeopardy and double rounds
+    const rounds: ('jeopardy' | 'double')[] = ['jeopardy', 'double']
+
+    for (const round of rounds) {
+      // Get current Daily Double positions for this round
+      const { data: board, error: boardError } = await supabase
+        .from('boards')
+        .select('id, daily_double_cells')
+        .eq('clue_set_id', clueSetId)
+        .eq('round', round)
+        .single()
+
+      if (boardError) {
+        console.warn(`Could not check Daily Double positions for ${round} round:`, boardError.message)
+        continue
+      }
+
+      // Check if Daily Doubles are missing or empty
+      const needsGeneration = !board.daily_double_cells ||
+        (Array.isArray(board.daily_double_cells) && board.daily_double_cells.length === 0)
+
+      if (needsGeneration) {
+        // Generate new Daily Double positions
+        const newPositions = generateDailyDoublePositions(round)
+        console.log(`🎯 Generated missing Daily Double positions for ${round} round:`, newPositions)
+
+        // Update the board with new positions
+        const { error: updateError } = await supabase
+          .from('boards')
+          .update({ daily_double_cells: newPositions as unknown as Json })
+          .eq('id', board.id)
+
+        if (updateError) {
+          console.error(`Failed to save Daily Double positions for ${round} round:`, updateError.message)
+        } else {
+          console.log(`✅ Successfully added Daily Double positions to ${round} round`)
+        }
+      }
+    }
   }
 
   /**
