@@ -1078,6 +1078,18 @@ export class GameService {
     const scoreChange = isCorrect ? scoreValue : -scoreValue
     await this.updatePlayerScore(gameId, playerId, scoreChange, hostId)
 
+    // Clear buzzer queue for this clue (both correct and incorrect answers)
+    const { error: buzzClearError } = await supabase
+      .from('buzzes')
+      .delete()
+      .eq('game_id', gameId)
+      .eq('clue_id', clueId)
+
+    if (buzzClearError) {
+      console.warn(`Failed to clear buzzer queue: ${buzzClearError.message}`)
+      // Don't throw - this is not critical to the adjudication process
+    }
+
     // If answer is correct, mark clue as completed and clear focus
     if (isCorrect) {
       // Mark clue as completed
@@ -1091,15 +1103,19 @@ export class GameService {
         throw new Error(`Failed to mark clue completed: ${clueStateError.message}`)
       }
 
-      // Clear focused clue and player
+      // Clear focused clue and player, lock buzzer
       return this.updateGame(gameId, {
         focused_clue_id: null,
-        focused_player_id: null
+        focused_player_id: null,
+        is_buzzer_locked: true
       }, hostId)
     }
 
-    // If incorrect, just clear focused player (keep clue focused for re-buzzing)
-    return this.updateGame(gameId, { focused_player_id: null }, hostId)
+    // If incorrect, clear focused player and lock buzzer (keep clue focused for re-buzzing)
+    return this.updateGame(gameId, {
+      focused_player_id: null,
+      is_buzzer_locked: true
+    }, hostId)
   }
 
   /**

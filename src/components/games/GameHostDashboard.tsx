@@ -366,6 +366,7 @@ export function GameHostDashboard({
           gameData.clue_set_id,
           gameData.current_round
         );
+        console.log('🎯 Daily Double positions loaded:', dailyDoubleData);
         setDailyDoublePositions(dailyDoubleData);
 
         // Load focused clue if one is set
@@ -759,10 +760,8 @@ export function GameHostDashboard({
 
       setGame(updatedGame);
 
-      // If answer was correct, clear focused clue
-      if (isCorrect) {
-        setFocusedClue(null);
-      }
+      // Clear focused clue for both correct and incorrect answers
+      setFocusedClue(null);
 
       // Update clue states and player scores
       const [updatedClueStates, updatedPlayers] = await Promise.all([
@@ -1124,6 +1123,18 @@ export function GameHostDashboard({
                             position.row === item.clue.position
                         );
 
+                        // Debug Daily Double detection
+                        if (isDailyDouble) {
+                          console.log('🎯 Daily Double detected:', {
+                            clueId: item.clue.id,
+                            categoryIndex: item.categoryIndex + 1,
+                            row: item.clue.position,
+                            matchedPosition: dailyDoublePositions.find(p =>
+                              p.category === item.categoryIndex + 1 && p.row === item.clue.position
+                            )
+                          });
+                        }
+
                         let cellClass = "clue-cell";
                         if (isCompleted) {
                           cellClass += " completed";
@@ -1248,7 +1259,7 @@ export function GameHostDashboard({
                           {new Date(player.joined_at).toLocaleTimeString()}
                         </small>
                       </div>
-                      <div className="player-score">${player.score}</div>
+                      <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>${player.score}</div>
                     </div>
                     <div className="player-score-adjustment">
                       <input
