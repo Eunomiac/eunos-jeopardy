@@ -812,23 +812,19 @@ export class GameService {
    * @author Euno's Jeopardy Team
    */
   static async getBuzzesForClue(gameId: string, clueId: string): Promise<Buzz[]> {
-    // Query buzzes with both player game data and profile data for complete buzz information
-    // Ordered by creation time to determine proper buzz sequence
-    const { data, error } = await supabase
+    // Query buzzes with profile data for complete buzz information
+    // We'll get player nicknames separately since there's no direct relationship
+    const { data: buzzes, error } = await supabase
       .from('buzzes')
       .select(`
         *,
         profiles:user_id (
           display_name,
           username
-        ),
-        players!inner (
-          nickname
         )
       `)
       .eq('game_id', gameId)
       .eq('clue_id', clueId)
-      .eq('players.game_id', gameId) // Ensure we get the right player record for this game
       .order('created_at', { ascending: true }) // First buzz wins
 
     if (error) {
@@ -836,8 +832,28 @@ export class GameService {
       throw new Error(`Failed to fetch buzzes: ${error.message}`)
     }
 
-    // Return empty array instead of null for easier array operations
-    return data || []
+    if (!buzzes || buzzes.length === 0) {
+      return []
+    }
+
+    // Get player nicknames for this game
+    const { data: players, error: playersError } = await supabase
+      .from('players')
+      .select('user_id, nickname')
+      .eq('game_id', gameId)
+      .in('user_id', buzzes.map(buzz => buzz.user_id))
+
+    if (playersError) {
+      console.warn('Could not load player nicknames:', playersError)
+    }
+
+    // Enhance buzz records with player nicknames
+    const buzzesWithPlayerData = buzzes.map(buzz => ({
+      ...buzz,
+      playerNickname: players?.find(p => p.user_id === buzz.user_id)?.nickname || null
+    }))
+
+    return buzzesWithPlayerData
   }
 
   /**

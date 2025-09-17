@@ -1340,15 +1340,15 @@ export function GameHostDashboard({
                     (p) => p.user_id === buzz.user_id
                   );
 
-                  // Use player data from buzz record (includes game-specific nickname)
+                  // Use enhanced buzz data with player nickname
                   const buzzWithPlayerData = buzz as Buzz & {
                     profiles?: { display_name?: string; username?: string }
-                    players?: Array<{ nickname?: string }>
+                    playerNickname?: string | null
                   }
 
                   // Priority: game-specific nickname > profile display_name > profile username > fallback
                   const playerName =
-                    buzzWithPlayerData.players?.[0]?.nickname ||
+                    buzzWithPlayerData.playerNickname ||
                     player?.nickname ||
                     buzzWithPlayerData.profiles?.display_name ||
                     buzzWithPlayerData.profiles?.username ||
