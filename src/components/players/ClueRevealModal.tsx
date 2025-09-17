@@ -115,30 +115,8 @@ export function ClueRevealModal({
     }
   }, [isVisible])
 
-  /**
-   * Handles buzzer click with client-side timing calculation.
-   */
-  const handleBuzz = () => {
-    if (buzzerState === BuzzerState.UNLOCKED && unlockTimestamp) {
-      const buzzTimestamp = Date.now()
-      const calculatedReactionTime = buzzTimestamp - unlockTimestamp
-
-      console.log('⚡ Player buzzed!', {
-        unlockTime: unlockTimestamp,
-        buzzTime: buzzTimestamp,
-        reactionTime: calculatedReactionTime
-      })
-
-      // Call parent callback with timing information
-      onBuzz()
-
-      // TODO: Send timing data to server via real-time subscription
-      // This will be implemented when integrating with GameService
-    } else {
-      // Player tried to buzz when not unlocked (should trigger frozen state)
-      onBuzz()
-    }
-  }
+  // Note: Buzzer logic is handled by parent PlayerDashboard component
+  // This modal just displays the buzzer interface and passes events up
 
   /**
    * Handles modal close (ESC key only - prevent accidental closing)
@@ -211,7 +189,7 @@ export function ClueRevealModal({
         <div className="buzzer-section">
           <PlayerBuzzer
             state={buzzerState}
-            onBuzz={handleBuzz}
+            onBuzz={onBuzz}
             reactionTime={reactionTime}
             showReactionTime={showReactionTime}
           />

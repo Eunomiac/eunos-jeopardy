@@ -75,7 +75,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   // Game board data
   const [clueSetData, setClueSetData] = useState<any>(null)
   const [clueStates, setClueStates] = useState<any[]>([])
-  const [dailyDoublePositions, setDailyDoublePositions] = useState<any[]>([])
+  // Note: Players don't need Daily Double positions - they discover them when clues are revealed
 
   // UI state
   const [loading, setLoading] = useState(true)
@@ -225,8 +225,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         }
       })
 
-      // TODO: Load daily double positions when table is available
-      setDailyDoublePositions([])
+      // Players don't need Daily Double positions - they discover them when clues are revealed
 
     } catch (error) {
       console.error('Failed to load game board data:', error)
@@ -254,9 +253,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         prompt: clue.prompt,
         value: clue.value,
         category: category?.name || 'Unknown Category',
-        isDailyDouble: dailyDoublePositions.some(dd =>
-          dd.clue_id === clue.id
-        )
+        isDailyDouble: false // Players discover Daily Doubles when they encounter them
       }
 
       setCurrentClue(clueInfo)
@@ -266,7 +263,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       setCurrentClue(null)
       return null
     }
-  }, [dailyDoublePositions])
+  }, [])
 
   /**
    * Sets up real-time subscriptions for game state updates.
@@ -598,12 +595,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
                   const isCompleted = clueState?.completed || false
                   const isFocused = focusedClue && focusedClue.id === item.clue.id
 
-                  // Check if this clue is a Daily Double
-                  const isDailyDouble = dailyDoublePositions.some(
-                    (position) =>
-                      position.category === item.categoryIndex + 1 &&
-                      position.row === item.clue.position
-                  )
+                  // Players don't see Daily Double indicators until they encounter them
+                  const isDailyDouble = false
 
                   let cellClass = "clue-cell"
                   if (isCompleted) {
