@@ -155,13 +155,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }, [gameId, user])
 
   /**
-   * Loads game board data for players (simplified approach).
-   * Players don't need full game access - they get board structure from real-time updates.
+   * Loads game board data for players.
+   * Gets actual category names and clue data from the database.
    */
   const loadGameBoardData = useCallback(async () => {
     try {
-      // For players, we only load clue states to show board progress
-      // The actual game data and clue content comes through real-time subscriptions
+      // Load clue states to show board progress
       const { data: states, error: statesError } = await supabase
         .from('clue_states')
         .select('*')
@@ -170,36 +169,64 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       if (statesError) throw statesError
       setClueStates(states || [])
 
-      // TODO: Load daily double positions when table is available
-      setDailyDoublePositions([])
+      // Load boards and categories for the game's clue set
+      // First get the game to find the clue set ID
+      const { data: gameData, error: gameError } = await supabase
+        .from('games')
+        .select('clue_set_id')
+        .eq('id', gameId)
+        .single()
 
-      // Set a placeholder clue set structure - this will be populated by real-time updates
-      // We don't need the actual clue content for the board display
+      if (gameError) throw gameError
+
+      if (!gameData?.clue_set_id) {
+        throw new Error('Game does not have a clue set assigned')
+      }
+
+      // Load boards for this clue set
+      const { data: boards, error: boardsError } = await supabase
+        .from('boards')
+        .select(`
+          id,
+          round,
+          categories (
+            id,
+            name,
+            position,
+            clues (
+              id,
+              prompt,
+              response,
+              value,
+              position
+            )
+          )
+        `)
+        .eq('clue_set_id', gameData.clue_set_id)
+        .order('round')
+
+      if (boardsError) throw boardsError
+
+      // Transform boards into clue set structure
+      const jeopardyBoard = boards?.find(board => board.round === 'jeopardy')
+      const doubleBoard = boards?.find(board => board.round === 'double')
+
       setClueSetData({
         rounds: {
-          jeopardy: Array(6).fill(null).map((_, catIndex) => ({
-            name: 'Loading...',
-            clues: Array(5).fill(null).map((_, clueIndex) => ({
-              id: `placeholder-jeopardy-${catIndex}-${clueIndex}`,
-              prompt: 'Loading...',
-              response: 'Loading...',
-              value: (clueIndex + 1) * 200,
-              position: clueIndex + 1
-            }))
-          })),
-          double: Array(6).fill(null).map((_, catIndex) => ({
-            name: 'Loading...',
-            clues: Array(5).fill(null).map((_, clueIndex) => ({
-              id: `placeholder-double-${catIndex}-${clueIndex}`,
-              prompt: 'Loading...',
-              response: 'Loading...',
-              value: (clueIndex + 1) * 400,
-              position: clueIndex + 1
-            }))
-          })),
-          final: []
+          jeopardy: jeopardyBoard?.categories?.sort((a, b) => a.position - b.position).map(cat => ({
+            name: cat.name,
+            clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
+          })) || [],
+          double: doubleBoard?.categories?.sort((a, b) => a.position - b.position).map(cat => ({
+            name: cat.name,
+            clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
+          })) || [],
+          final: [] // TODO: Handle final jeopardy
         }
       })
+
+      // TODO: Load daily double positions when table is available
+      setDailyDoublePositions([])
 
     } catch (error) {
       console.error('Failed to load game board data:', error)
@@ -277,8 +304,14 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           if (gameUpdate.focused_clue_id) {
             const clueInfo = await loadClueData(gameUpdate.focused_clue_id)
             setFocusedClue(clueInfo)
+            // Note: Modal will only show when clue becomes revealed (via clue states subscription)
           } else {
             setFocusedClue(null)
+            // Hide modal when clue is unfocused
+            setShowClueModal(false)
+            setCurrentClue(null)
+            setBuzzerState(BuzzerState.LOCKED)
+            setReactionTime(null)
           }
         }
       })
@@ -298,7 +331,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       })
       .subscribe()
 
-    // Subscribe to clue state changes (for revealed clues)
+    // Subscribe to clue state changes (for board display updates)
     const clueStatesSubscription = supabase
       .channel(`clue-states-${gameId}`)
       .on('postgres_changes', {
@@ -310,20 +343,21 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         console.log('🔔 Clue state update:', payload)
         if (payload.new) {
           const clueState = payload.new as { clue_id: string; revealed: boolean; completed: boolean }
-          // Update clue states
+          // Update clue states for board display
           setClueStates(prev => {
             const updated = prev.filter(s => s.clue_id !== clueState.clue_id)
             return [...updated, clueState]
           })
 
-          // Show modal when clue is revealed and it's the focused clue
+          // Show modal when clue is revealed and it's the focused clue (Reveal Prompt action)
           if (clueState.revealed && focusedClue && clueState.clue_id === focusedClue.id) {
             setCurrentClue(focusedClue)
             setShowClueModal(true)
+            setBuzzerState(BuzzerState.LOCKED) // Lock buzzer when clue is revealed
           }
 
-          // Hide modal when clue is completed or unfocused
-          if (clueState.completed || !clueState.revealed) {
+          // Hide modal and lock buzzer when clue is completed
+          if (clueState.completed) {
             setShowClueModal(false)
             setCurrentClue(null)
             setBuzzerState(BuzzerState.LOCKED)

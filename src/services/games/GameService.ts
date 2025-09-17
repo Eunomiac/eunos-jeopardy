@@ -812,7 +812,7 @@ export class GameService {
    * @author Euno's Jeopardy Team
    */
   static async getBuzzesForClue(gameId: string, clueId: string): Promise<Buzz[]> {
-    // Query buzzes with player profile data for complete buzz information
+    // Query buzzes with both player game data and profile data for complete buzz information
     // Ordered by creation time to determine proper buzz sequence
     const { data, error } = await supabase
       .from('buzzes')
@@ -821,10 +821,14 @@ export class GameService {
         profiles:user_id (
           display_name,
           username
+        ),
+        players!inner (
+          nickname
         )
       `)
       .eq('game_id', gameId)
       .eq('clue_id', clueId)
+      .eq('players.game_id', gameId) // Ensure we get the right player record for this game
       .order('created_at', { ascending: true }) // First buzz wins
 
     if (error) {

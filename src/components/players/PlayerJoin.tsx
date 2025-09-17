@@ -21,6 +21,15 @@ interface PlayerJoinProps {
  * @param props - Component props
  * @returns JSX element for player join interface
  */
+/**
+ * Extracts the username portion from an email address to use as default nickname.
+ * @param email - The email address
+ * @returns The username portion (everything before @)
+ */
+const getDefaultNicknameFromEmail = (email: string): string => {
+  return email.split('@')[0] || 'Player'
+}
+
 export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
   const { user } = useAuth()
   const [nickname, setNickname] = useState('')
@@ -30,7 +39,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
   const [checkingForGame, setCheckingForGame] = useState(true)
 
   /**
-   * Effect to check for available lobby games and set up real-time monitoring.
+   * Effect to load user's current nickname and check for available games.
    * Re-runs when user changes (i.e., when someone logs in).
    */
   useEffect(() => {
@@ -40,6 +49,31 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
       setCheckingForGame(false)
       return undefined
     }
+
+    // Load user's current nickname from profile to pre-populate field
+    const loadUserNickname = async () => {
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user.id)
+          .single()
+
+        if (profileError) {
+          console.warn('Could not load user profile:', profileError)
+        }
+
+        // Set nickname to profile display_name or default to email prefix
+        const currentNickname = profile?.display_name || getDefaultNicknameFromEmail(user.email || '')
+        setNickname(currentNickname)
+      } catch (err) {
+        console.warn('Error loading user nickname:', err)
+        // Fallback to email prefix
+        setNickname(getDefaultNicknameFromEmail(user.email || ''))
+      }
+    }
+
+    loadUserNickname()
 
     const checkForAvailableGame = async () => {
       try {
@@ -119,8 +153,21 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
     setError('')
 
     try {
-      // Add player to the available game
-      await GameService.addPlayer(availableGame.id, user.id, nickname.trim() || undefined)
+      const finalNickname = nickname.trim() || getDefaultNicknameFromEmail(user.email || '')
+
+      // Save nickname to user profile for future games
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ display_name: finalNickname })
+        .eq('id', user.id)
+
+      if (profileError) {
+        console.warn('Could not update user profile nickname:', profileError)
+        // Continue anyway - this is not a critical failure
+      }
+
+      // Add player to the available game (this saves to players table)
+      await GameService.addPlayer(availableGame.id, user.id, finalNickname)
 
       // Notify parent component that player joined
       onGameJoined(availableGame.id)
@@ -169,7 +216,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
 
         <form onSubmit={handleSubmit} className="join-form">
           <div className="form-group">
-            <label htmlFor="nickname">Nickname (Optional)</label>
+            <label htmlFor="nickname">Nickname</label>
             <input
               id="nickname"
               type="text"
@@ -181,7 +228,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
               maxLength={50}
             />
             <small className="form-text text-muted">
-              Leave blank to use your profile name
+              This will be your display name in the game
             </small>
           </div>
 
