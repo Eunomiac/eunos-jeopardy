@@ -673,7 +673,7 @@ export class GameService {
     }
 
     // Get all user IDs to fetch profiles
-    const userIds = players.map(player => player.user_id)
+    const userIds = players.map((player) => player.user_id)
 
     // Fetch profiles for all players
     const { data: profiles, error: profilesError } = await supabase

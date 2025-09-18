@@ -1,13 +1,12 @@
 /**
  * GSAP Animation Usage Examples for Euno's Jeopardy
- * 
+ *
  * This file demonstrates how to use GSAP animations in React components.
  * These are examples you can reference when implementing animations.
  */
 
 import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
-import { ANIMATION_CONFIG } from './animations';
 
 /**
  * Example: Clue Reveal Animation
@@ -19,8 +18,8 @@ export function ClueRevealExample() {
   const handleRevealClue = () => {
     if (clueRef.current) {
       // Use the custom jeopardyReveal effect
-      gsap.effects.jeopardyReveal(clueRef.current, { 
-        duration: ANIMATION_CONFIG.SLOW 
+      gsap.effects.jeopardyReveal(clueRef.current, {
+        duration: 1
       });
     }
   };
@@ -28,7 +27,7 @@ export function ClueRevealExample() {
   return (
     <div>
       <button onClick={handleRevealClue}>Reveal Clue</button>
-      <div 
+      <div
         ref={clueRef}
         className="clue-display"
         style={{ opacity: 0 }}
@@ -54,7 +53,7 @@ export function BuzzerExample() {
   };
 
   return (
-    <button 
+    <button
       ref={buzzerRef}
       onClick={handleBuzz}
       className="buzzer-button"
@@ -78,15 +77,15 @@ export function ScoreAnimationExample() {
 
     if (scoreRef.current) {
       // Animate the score change
-      gsap.effects.scoreChange(scoreRef.current, { 
-        positive: points > 0 
+      gsap.effects.scoreChange(scoreRef.current, {
+        positive: points > 0
       });
 
       // Also animate the number counting up/down
       gsap.effects.countMoney(scoreRef.current, {
         from: score,
         to: newScore,
-        duration: ANIMATION_CONFIG.NORMAL
+        duration: 1
       });
     }
   };
@@ -113,7 +112,7 @@ export function ComplexAnimationExample() {
   const clue3Ref = useRef<HTMLDivElement>(null);
 
   const playSequence = () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {return};
 
     // Create a master timeline
     const tl = gsap.timeline();
@@ -124,11 +123,11 @@ export function ComplexAnimationExample() {
       .effects.jeopardyReveal(clue2Ref.current, { duration: 0.5 }, "-=0.3")
       .effects.jeopardyReveal(clue3Ref.current, { duration: 0.5 }, "-=0.3")
       .to(containerRef.current, {
-        backgroundColor: ANIMATION_CONFIG.JEOPARDY_GOLD,
+        backgroundColor: "#ffd700",
         duration: 0.3
       })
       .to(containerRef.current, {
-        backgroundColor: ANIMATION_CONFIG.JEOPARDY_BLUE,
+        backgroundColor: "#0000ff",
         duration: 0.3
       });
   };
@@ -149,11 +148,11 @@ export function ComplexAnimationExample() {
  * Example: useEffect Animation Hook
  * Use this pattern for animations that trigger on component mount/state changes
  */
-export function AutoAnimationExample({ isVisible }: { isVisible: boolean }) {
+export function AutoAnimationExample({ isVisible }: { readonly isVisible: boolean }) {
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!elementRef.current) return;
+    if (!elementRef.current) {return};
 
     if (isVisible) {
       // Animate in
@@ -163,14 +162,14 @@ export function AutoAnimationExample({ isVisible }: { isVisible: boolean }) {
       gsap.to(elementRef.current, {
         opacity: 0,
         scale: 0.7,
-        duration: ANIMATION_CONFIG.FAST,
-        ease: ANIMATION_CONFIG.EASE_OUT
+        duration: 1,
+        ease: "power2.out"
       });
     }
   }, [isVisible]);
 
   return (
-    <div 
+    <div
       ref={elementRef}
       className="auto-animated-element"
       style={{ opacity: 0 }}
@@ -198,8 +197,8 @@ export function useGSAPAnimation() {
       gsap.to(elementRef.current, {
         x: "-100%",
         opacity: 0,
-        duration: ANIMATION_CONFIG.NORMAL,
-        ease: ANIMATION_CONFIG.EASE_OUT
+        duration: 1,
+        ease: "power2.out"
       });
     }
   };
@@ -211,7 +210,7 @@ export function useGSAPAnimation() {
         duration: 0.2,
         yoyo: true,
         repeat: 1,
-        ease: ANIMATION_CONFIG.EASE_ELASTIC
+        ease: "elastic.out"
       });
     }
   };
@@ -235,8 +234,8 @@ export function CustomHookExample() {
       <button onClick={animateIn}>Animate In</button>
       <button onClick={animateOut}>Animate Out</button>
       <button onClick={pulse}>Pulse</button>
-      
-      <div 
+
+      <div
         ref={elementRef as React.RefObject<HTMLDivElement>}
         className="custom-hook-element"
       >

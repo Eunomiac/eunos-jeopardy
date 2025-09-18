@@ -241,42 +241,16 @@
               color: $jeopardy-white;
               line-height: 1;
               text-shadow: 1px 1px 2px $jeopardy-black;
+
+              &.negative {
+                color: $jeopardy-red;
+              }
             }
             .player-score-adjustment {
               display: flex;
               gap: $spacing-sm;
               align-items: center;
               margin-left: $spacing-lg;
-
-              .form-control {
-                background: rgba($jeopardy-black, 0.3);
-                border: 1px solid rgba($jeopardy-gold, 0.5);
-                color: $jeopardy-white;
-                height: 25px;
-                max-height: 25px;
-
-                &:focus {
-                  background: rgba($jeopardy-black, 0.5);
-                  border-color: $jeopardy-gold;
-                  box-shadow: 0 0 0 2px rgba($jeopardy-gold, 0.3);
-                  color: $jeopardy-white;
-                }
-
-                &::placeholder {
-                  color: rgba($jeopardy-white, 0.6);
-                }
-
-                // Remove number input spinner controls
-                &[type="number"] {
-                  -moz-appearance: textfield; // Firefox
-
-                  &::-webkit-outer-spin-button,
-                  &::-webkit-inner-spin-button {
-                    -webkit-appearance: none; // Chrome, Safari, Edge
-                    margin: 0;
-                  }
-                }
-              }
 
               .btn {
                 @include jeopardy-button-small;

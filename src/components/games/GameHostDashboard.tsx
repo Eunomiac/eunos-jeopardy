@@ -1659,7 +1659,7 @@ export function GameHostDashboard({
                       <input
                         type="number"
                         className="form-control form-control-sm"
-                        placeholder="±"
+                        placeholder=""
                         value={scoreAdjustments[player.user_id] || ""}
                         onChange={(e) =>
                           handleScoreAdjustmentChange(

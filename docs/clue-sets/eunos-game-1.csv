@@ -1,0 +1,62 @@
+round,category,value,prompt,response
+jeopardy,Tiny Terrors,200,,
+jeopardy,Tiny Terrors,400,,
+jeopardy,Tiny Terrors,600,,
+jeopardy,Tiny Terrors,800,This small creature is responsible for more human deaths each year than any other animal.,What is a mosquito?
+jeopardy,Tiny Terrors,1000,Thousands of these stinging insects are sewn into gloves worn by young tribesmen during a rite of passage.,What are bullet ants?
+jeopardy,Heroes Without Capes,200,,
+jeopardy,Heroes Without Capes,400,His imprisonment caused a global pandemic of sleeping sickness.,Who is the Sandman?
+jeopardy,Heroes Without Capes,600,,Who is Invincible?
+jeopardy,Heroes Without Capes,800,,Who is Daredevil?
+jeopardy,Heroes Without Capes,1000,"Chris Evans returned to play this unexpected hero in ""Deadpool vs. Wolverine"".",Who is the Torch?
+jeopardy,Not-So-Recent Television,200,These robots hunted humanity nearly to extinction in Battlestar Galactica.,What are Cylons?
+jeopardy,Not-So-Recent Television,400,,
+jeopardy,Not-So-Recent Television,600,"Driven to madness by the murder of her girlfriend, this friend of Buffy became the season's Big Bad.",Who is Willow?
+jeopardy,Not-So-Recent Television,800,,
+jeopardy,Not-So-Recent Television,1000,,
+jeopardy,Five Syllable Words,200,How Sherlock Holmes would describe a simple task.,What is Elementary?
+jeopardy,Five Syllable Words,400,Only the British pronunciation of this element qualifies for this category.,What is Al-u-min-i-um?
+jeopardy,Five Syllable Words,600,,What Is a Bicentennial?
+jeopardy,Five Syllable Words,800,,
+jeopardy,Five Syllable Words,1000,,
+jeopardy,Astronomy / Astrology,200,This water sign is represented by a crab.,What is Cancer?
+jeopardy,Astronomy / Astrology,400,"If this asteroid were named by the Ancient Greeks, it would have been called ""Demeter"".",What is Ceres?
+jeopardy,Astronomy / Astrology,600,,What is the Age of Aquarius?
+jeopardy,Astronomy / Astrology,800,"The names of this planet's moons were drawn from Shakespeare, not myth.",What is Uranus?
+jeopardy,Astronomy / Astrology,1000,,
+jeopardy,Before & After,200,,
+jeopardy,Before & After,400,,
+jeopardy,Before & After,600,,
+jeopardy,Before & After,800,,
+jeopardy,Before & After,1000,,
+double,Quantum Physics,400,The Double-Slit experiment proves that photons behave as both particles and these.,What are waves?
+double,Quantum Physics,800,,
+double,Quantum Physics,1200,"Einstein once dismissed this phenomenon as ""spooky action at a distance"".",What is entanglement?
+double,Quantum Physics,1600,This elementary particle is the most recent addition to the Standard Model.,What is the Higgs Boson?
+double,Quantum Physics,2000,This scientist's Uncertainty Principle defines hard limits to our ability to understand reality.,Who is Heisenberg?
+double,Goes To 11,400,,
+double,Goes To 11,800,This science experiment is the largest engineering project in human history.,What is the Large Hadron Collider?
+double,Goes To 11,1200,"This bomb, detonated by the Soviet Union in <X>, is the largest man-made explosion in history.",What is the Tsar Bomba?
+double,Goes To 11,1600,,
+double,Goes To 11,2000,"Currently in close orbit around the Sun, this is the fastest object humanity has ever built.",What is the Parker Solar Probe?
+double,Middle Earth Geography,400,This pastoral region is the homeland of hobbitfolk.,What is the Shire?
+double,Middle Earth Geography,800,This dark fortress in the Mountains of Mordor opposes Minas Tirith in more than just name.,What is Minas Morgul?
+double,Middle Earth Geography,1200,Gandalf was imprisoned atop this tower at the heart of Isengard by Saruman the White.,What is Orthanc?
+double,Middle Earth Geography,1600,,What are the Dead Marshes?
+double,Middle Earth Geography,2000,Gandalf the Grey met his demise facing a Balrog in this abandoned mine.,What is Moria?
+double,Invented Languages,400,,
+double,Invented Languages,800,,
+double,Invented Languages,1200,,
+double,Invented Languages,1600,,
+double,Invented Languages,2000,,
+double,Finish The Painting,400,,Who is Jesus?
+double,Finish The Painting,800,,What is a sea shell?
+double,Finish The Painting,1200,,What is a pitch fork?
+double,Finish The Painting,1600,,What is a baby?
+double,Finish The Painting,2000,,What are angels?
+double,"Crossword Clues ""Y""",400,This American national park harbors a dormant supervolcano.,What is Yellowstone?
+double,"Crossword Clues ""Y""",800,,
+double,"Crossword Clues ""Y""",1200,,
+double,"Crossword Clues ""Y""",1600,The alleged discovery of this form of Uranium served as pretense for the US invasion of Iraq in (2003?),What is yellowcake?
+double,"Crossword Clues ""Y""",2000,,
+final,The Afterlife,0,,

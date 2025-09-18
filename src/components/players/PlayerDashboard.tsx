@@ -340,6 +340,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
             setTimeout(() => {
               setModalAnimatingOut(false)
             }, 300)
+          } else if (gameUpdate.focused_clue_id && !gameUpdate.is_buzzer_locked && focusedClue) {
+            // Player was marked wrong: focused_player_id is null, buzzer unlocked, clue still active
+            // Check if current player is locked out before showing modal
+            checkPlayerLockoutAndShowModal(gameUpdate.focused_clue_id, focusedClue)
           }
         }
       })
@@ -440,11 +444,37 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       })
       .subscribe()
 
+    // Subscribe to clue changes (for locked_out_player_ids updates)
+    const cluesSubscription = supabase
+      .channel(`clues-${gameId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'clues'
+      }, (payload) => {
+        console.log('🔔 Clue lockout update:', payload)
+        if (payload.new && user?.id) {
+          const clueData = payload.new as any
+          const lockedOutPlayers = clueData.locked_out_player_ids || []
+
+          // If current player was just locked out and modal is showing, hide it
+          if (lockedOutPlayers.includes(user.id) && showClueModal && focusedClue && clueData.id === focusedClue.id) {
+            console.log('🚫 Current player locked out - hiding modal')
+            setShowClueModal(false)
+            setCurrentClue(null)
+            setBuzzerState(BuzzerState.LOCKED)
+            setReactionTime(null)
+          }
+        }
+      })
+      .subscribe()
+
     return () => {
       gameSubscription.unsubscribe()
       playersSubscription.unsubscribe()
       clueStatesSubscription.unsubscribe()
       buzzesSubscription.unsubscribe()
+      cluesSubscription.unsubscribe()
     }
   }, [gameId, user, loadClueData, focusedClue, modalAnimatingOut, updateClueState])
 
@@ -481,6 +511,43 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       console.log('❄️ Player buzzed too early - frozen!')
     }
   }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime])
+
+  /**
+   * Checks if current player is locked out and shows modal if they can still buzz.
+   */
+  const checkPlayerLockoutAndShowModal = useCallback(async (clueId: string, clueInfo: ClueInfo) => {
+    if (!user?.id) return
+
+    try {
+      // Get the clue data to check locked_out_player_ids
+      const { data: clueData, error } = await supabase
+        .from('clues')
+        .select('locked_out_player_ids')
+        .eq('id', clueId)
+        .single()
+
+      if (error) {
+        console.error('Failed to check player lockout status:', error)
+        return
+      }
+
+      const lockedOutPlayers = clueData.locked_out_player_ids || []
+      const isPlayerLockedOut = lockedOutPlayers.includes(user.id)
+
+      if (!isPlayerLockedOut) {
+        // Player can still buzz - show modal
+        console.log('🔄 Re-showing modal for remaining player after wrong answer')
+        setCurrentClue(clueInfo)
+        setShowClueModal(true)
+        setBuzzerState(BuzzerState.UNLOCKED) // Buzzer should be unlocked for remaining players
+      } else {
+        // Player is locked out - keep modal hidden
+        console.log('🚫 Player is locked out from this clue')
+      }
+    } catch (error) {
+      console.error('Error checking player lockout status:', error)
+    }
+  }, [user])
 
   /**
    * Handles clue modal close.

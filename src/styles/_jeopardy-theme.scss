@@ -190,6 +190,8 @@
 
 .game-creator-section {
   position: relative;
+  flex-direction: column;
+  align-items: center;
   transition: all $transition-normal;
 
   &.uploading {
@@ -264,6 +266,8 @@
   margin-bottom: $spacing-lg;
   width: 100%;
   max-width: 1000px;
+  display: flex;
+  justify-content: center;
 }
 
 .dashboard-indicator {
