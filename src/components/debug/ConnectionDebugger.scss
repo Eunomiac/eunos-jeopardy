@@ -1,0 +1,37 @@
+/**
+ * Connection Debugger Styles
+ * 
+ * Compact debugging component positioned at bottom-left corner
+ */
+
+.connection-debugger {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.9);
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  z-index: 9999;
+  min-width: 140px;
+  backdrop-filter: blur(4px);
+
+  .debug-header {
+    font-weight: bold;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 2px;
+  }
+
+  .debug-line {
+    margin-bottom: 2px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}

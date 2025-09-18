@@ -7,6 +7,7 @@ import { GameHostDashboard } from '../components/games/GameHostDashboard'
 import { PlayerJoin } from '../components/players/PlayerJoin'
 import { PlayerLobby } from '../components/players/PlayerLobby'
 import PlayerDashboard from '../components/players/PlayerDashboard'
+import { ConnectionDebugger } from '../components/debug/ConnectionDebugger'
 import { useAuth } from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { supabase } from '../services/supabase/client'
@@ -750,6 +751,9 @@ export function App() {
           &copy; 2025 Euno's Jeopardy. Built with React + TypeScript + Vite.
         </p>
       </footer>
+
+      {/* Debug connection status (only in development) */}
+      {process.env.NODE_ENV === 'development' && <ConnectionDebugger />}
     </div>
   )
 }

@@ -14,6 +14,7 @@ import {
 import { ClueSetService } from "../../services/clueSets/clueSetService";
 import type { ClueSetData, ClueData } from "../../services/clueSets/loader";
 import { SupabaseConnection } from "../../services/supabase/connection";
+import { SimplePlayerConnectionStatus } from "../debug/PlayerConnectionStatus";
 import { supabase } from "../../services/supabase/client";
 import "./GameHostDashboard.scss";
 
@@ -1583,6 +1584,7 @@ export function GameHostDashboard({
                   <div key={player.user_id} className="player-score-item">
                     <div className="player-main-info">
                       <div className="player-details">
+                        <SimplePlayerConnectionStatus playerId={player.user_id} />
                         <strong>
                           {player.nickname || `Player ${index + 1}`}
                         </strong>
