@@ -34,7 +34,7 @@
   align-items: stretch;
 
   &.player-podium-left {
-    flex: 3; // Up to 3 podiums
+    flex: 4; // Up to 4 podiums
     justify-content: flex-end;
   }
 
@@ -52,7 +52,7 @@
 // Individual player podium
 .player-podium {
   background: url("assets/images/player-podium.webp");
-  flex: 1;
+  aspect-ratio: 5/4;
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
@@ -60,9 +60,6 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
-  box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
-  min-width: 120px; // Ensure podiums don't get too narrow
 
   // Main player podium (current user)
   &.main {
@@ -80,120 +77,53 @@
 
 // Player name container with dynamic scaling support
 .player-name-container {
-  width: 100%;
+  width: 40%;
   max-width: 200px;
   padding: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 2rem; // Ensure consistent height
-}
+  height: 35%;
+  position: absolute;
+  top: 40%;
 
-// Player name text with font family and scaling
-.player-name-text {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: $jeopardy-white;
-  text-align: center;
-  line-height: 1.2;
-  transition: transform 0.2s ease;
-
-  // For main player, make text slightly larger
-  .player-podium.main & {
+  // Player name text with font family and scaling
+  .player-name-text {
     font-size: 1.4rem;
-  }
+    font-weight: bold;
+    color: $jeopardy-white;
+    text-align: center;
+    line-height: 1.2;
+    transition: transform 0.2s ease;
+    text-shadow: none;
 
-  // Ensure text doesn't break awkwardly
-  word-break: break-word;
-  hyphens: auto;
+    // For main player, make text slightly larger
+    .player-podium.main & {
+      font-size: 1.4rem;
+    }
+
+    // Ensure text doesn't break awkwardly
+    word-break: break-word;
+    hyphens: auto;
+  }
 }
 
 // Player score display
 .player-score {
-  font-family: $font-family-base;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: $jeopardy-gold;
+  font-family: $font-family-money;
+  font-size: 1.5rem;
+  color: $jeopardy-white;
   text-align: center;
-  margin-top: 0.5rem;
+  width: 50%;
+  position: absolute;
+  top: 9%;
+
+  &.negative {
+    color: $jeopardy-red;
+  }
 
   // For main player, make score slightly larger
   .player-podium.main & {
-    font-size: 1.3rem;
-  }
-}
-
-// Responsive adjustments
-@media (max-width: 1200px) {
-  .player-podiums-layout {
-    padding: 0 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .player-podium {
-    padding: 1.5rem;
-    min-width: 100px;
-
-    &.main {
-      min-width: 140px;
-    }
-  }
-
-  .player-name-text {
-    font-size: 1rem;
-
-    .player-podium.main & {
-      font-size: 1.2rem;
-    }
-  }
-
-  .player-score {
-    font-size: 1rem;
-
-    .player-podium.main & {
-      font-size: 1.1rem;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .player-podiums-container {
-    height: 15vh; // Reduce height on mobile
-  }
-
-  .player-podiums-layout {
-    padding: 0 0.25rem;
-    gap: 0.25rem;
-  }
-
-  .player-podium {
-    padding: 1rem;
-    min-width: 80px;
-
-    &.main {
-      transform: scale(1.3); // Reduce scaling on mobile
-      min-width: 100px;
-    }
-  }
-
-  .player-name-container {
-    max-width: 150px;
-    padding: 0.25rem;
-  }
-
-  .player-name-text {
-    font-size: 0.875rem;
-
-    .player-podium.main & {
-      font-size: 1rem;
-    }
-  }
-
-  .player-score {
-    font-size: 0.875rem;
-
-    .player-podium.main & {
-      font-size: 1rem;
-    }
+    font-size: 1.5rem;
   }
 }

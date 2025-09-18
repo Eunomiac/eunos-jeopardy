@@ -92,10 +92,28 @@
     }
   }
 
+  // Jeopardy Round Header
+  .jeopardy-board-header {
+    position: absolute;
+    top: 0px;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    width: 90vw;
+
+    h2 {
+    // line-height: 1.2;
+    text-align: center;
+    font-family: $font-family-title;
+    font-size: 3rem;
+    color: $jeopardy-white;
+    text-shadow: 2px 2px 4px rgba($jeopardy-black, 0.8);
+    }
+  }
+
   // Jeopardy Board
   .jeopardy-board-container {
     position: absolute;
-    top: 20px;
+    top: 50px;
     left: 50%;
     transform: translate(-50%, 0%);
     width: var(--jeopardy-board-width);
@@ -103,6 +121,7 @@
     box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
 
     .jeopardy-board {
+      overflow: visible;
 
       .category-header {
         padding: 10%;
