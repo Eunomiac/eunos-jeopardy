@@ -256,6 +256,9 @@ export function GameHostDashboard({
   /** Buzzer resolution timeout ID */
   const [buzzerResolutionTimeoutId, setBuzzerResolutionTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
+  /** ID of the player that was auto-selected by the buzzer timeout */
+  const [autoSelectedPlayerId, setAutoSelectedPlayerId] = useState<string | null>(null);
+
   /** Remaining time for current clue (in seconds) */
   const [clueTimeRemaining, setClueTimeRemaining] = useState<number | null>(null);
 
@@ -476,10 +479,18 @@ export function GameHostDashboard({
                 gameId,
                 focusedClue.id
               );
-              setBuzzerQueue(updatedBuzzes);
+
+              // Sort by reaction time (fastest first), with null times at the end
+              const sortedBuzzes = updatedBuzzes.sort((a, b) => {
+                const timeA = a.reaction_time ?? Infinity;
+                const timeB = b.reaction_time ?? Infinity;
+                return timeA - timeB;
+              });
+
+              setBuzzerQueue(sortedBuzzes);
 
               // Start auto-selection timeout when first player buzzes
-              if (updatedBuzzes.length === 1) {
+              if (sortedBuzzes.length === 1) {
                 // Clear any existing timeout
                 if (buzzerResolutionTimeoutId) {
                   clearTimeout(buzzerResolutionTimeoutId);
@@ -487,19 +498,21 @@ export function GameHostDashboard({
 
                 // Start new timeout
                 const timeoutId = setTimeout(() => {
-                  // Find fastest player
-                  const fastestBuzz = updatedBuzzes.reduce((fastest, current) => {
-                    const fastestTime = fastest.reaction_time || Infinity;
-                    const currentTime = current.reaction_time || Infinity;
-                    return currentTime < fastestTime ? current : fastest;
-                  }, updatedBuzzes[0]);
+                  // Use the sorted buzzes from when timeout was set
+                  if (sortedBuzzes.length > 0) {
+                    // The fastest player is at index 0 (since we sorted)
+                    const fastestBuzz = sortedBuzzes[0];
 
-                  // Click the fastest player's button
-                  const fastestPlayerButton = document.querySelector(`[data-player-id="${fastestBuzz.user_id}"]`) as HTMLElement;
-                  if (fastestPlayerButton) {
-                    fastestPlayerButton.click();
-                    setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
-                    setMessageType("success");
+                    // Mark this player as auto-selected
+                    setAutoSelectedPlayerId(fastestBuzz.user_id);
+
+                    // Click the fastest player's button
+                    const fastestPlayerButton = document.querySelector(`[data-player-id="${fastestBuzz.user_id}"]`) as HTMLElement;
+                    if (fastestPlayerButton) {
+                      fastestPlayerButton.click();
+                      setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
+                      setMessageType("success");
+                    }
                   }
                 }, buzzerTimeoutMs);
 
@@ -564,12 +577,21 @@ export function GameHostDashboard({
   const loadBuzzerQueue = useCallback(async () => {
     if (!focusedClue) {
       setBuzzerQueue([]);
+      setAutoSelectedPlayerId(null); // Clear auto-selection when no focused clue
       return;
     }
 
     try {
       const buzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id);
-      setBuzzerQueue(buzzes);
+
+      // Sort by reaction time (fastest first), with null times at the end
+      const sortedBuzzes = buzzes.sort((a, b) => {
+        const timeA = a.reaction_time ?? Infinity;
+        const timeB = b.reaction_time ?? Infinity;
+        return timeA - timeB;
+      });
+
+      setBuzzerQueue(sortedBuzzes);
     } catch (error) {
       console.error("Failed to load buzzer queue:", error);
       setBuzzerQueue([]);
@@ -1708,6 +1730,10 @@ export function GameHostDashboard({
                       className={`queue-item ${
                         game?.focused_player_id === buzz.user_id
                           ? "selected"
+                          : ""
+                      } ${
+                        autoSelectedPlayerId === buzz.user_id
+                          ? "auto-selected"
                           : ""
                       }`}
                       onClick={() => handlePlayerSelection(buzz.user_id)}
