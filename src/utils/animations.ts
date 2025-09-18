@@ -1,16 +1,16 @@
 /**
  * GSAP Animation Effects for Euno's Jeopardy
- * 
+ *
  * This file contains all custom GSAP effects used throughout the application.
  * Effects are registered globally and can be used anywhere in the app.
- * 
+ *
  * Usage:
  * ```typescript
  * import { initializeAnimations } from '@/utils/animations';
- * 
+ *
  * // Initialize once in main.tsx or App.tsx
  * initializeAnimations();
- * 
+ *
  * // Use anywhere in components
  * gsap.effects.jeopardyReveal(element, { duration: 1.5 });
  * ```
@@ -28,6 +28,14 @@ export function initializeAnimations(): void {
   registerBuzzerEffects();
   registerScoreEffects();
   registerTransitionEffects();
+
+  // Expose GSAP globally for console debugging
+  if (typeof window !== 'undefined') {
+    (window as any).gsap = gsap;
+    console.log('🎬 GSAP animations initialized and exposed globally');
+  } else {
+    console.log('🎬 GSAP animations initialized');
+  }
 }
 
 /**
@@ -39,15 +47,15 @@ function registerJeopardyEffects(): void {
     name: "jeopardyReveal",
     effect: (targets: gsap.TweenTarget, config: any) => {
       const tl = gsap.timeline();
-      
+
       return tl
-        .set(targets, { 
-          opacity: 0, 
+        .set(targets, {
+          opacity: 0,
           scale: 0.8,
-          rotationY: -90 
+          rotationY: -90
         })
-        .to(targets, { 
-          opacity: 1, 
+        .to(targets, {
+          opacity: 1,
           scale: 1,
           rotationY: 0,
           duration: config.duration || 0.8,
@@ -85,7 +93,7 @@ function registerBuzzerEffects(): void {
     name: "buzzerActivate",
     effect: (targets: gsap.TweenTarget, config: any) => {
       const tl = gsap.timeline();
-      
+
       return tl
         .to(targets, {
           scale: 1.2,
@@ -127,7 +135,7 @@ function registerScoreEffects(): void {
     name: "scoreChange",
     effect: (targets: gsap.TweenTarget, config: any) => {
       const tl = gsap.timeline();
-      
+
       return tl
         .to(targets, {
           scale: 1.3,
@@ -152,7 +160,7 @@ function registerScoreEffects(): void {
       const element = targets as HTMLElement;
       const startValue = config.from || 0;
       const endValue = config.to || 0;
-      
+
       return gsap.to({ value: startValue }, {
         value: endValue,
         duration: config.duration || 1,
@@ -176,13 +184,13 @@ function registerTransitionEffects(): void {
   gsap.registerEffect({
     name: "slideInRight",
     effect: (targets: gsap.TweenTarget, config: any) => {
-      return gsap.fromTo(targets, 
-        { 
-          x: "100%", 
-          opacity: 0 
+      return gsap.fromTo(targets,
+        {
+          x: "100%",
+          opacity: 0
         },
-        { 
-          x: "0%", 
+        {
+          x: "0%",
           opacity: 1,
           duration: config.duration || 0.6,
           ease: "power3.out"
@@ -236,12 +244,12 @@ export const ANIMATION_CONFIG = {
   FAST: 0.2,
   NORMAL: 0.5,
   SLOW: 1.0,
-  
+
   // Easing
   EASE_OUT: "power2.out",
   EASE_ELASTIC: "elastic.out(1, 0.3)",
   EASE_BACK: "back.out(1.7)",
-  
+
   // Colors
   JEOPARDY_GOLD: "#FFD700",
   JEOPARDY_BLUE: "#0066CC",

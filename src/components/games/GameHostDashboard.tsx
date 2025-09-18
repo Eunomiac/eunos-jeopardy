@@ -14,7 +14,7 @@ import {
 import { ClueSetService } from "../../services/clueSets/clueSetService";
 import type { ClueSetData, ClueData } from "../../services/clueSets/loader";
 import { SupabaseConnection } from "../../services/supabase/connection";
-import { SimplePlayerConnectionStatus } from "../debug/PlayerConnectionStatus";
+// import { SimplePlayerConnectionStatus } from "../debug/PlayerConnectionStatus";
 import { supabase } from "../../services/supabase/client";
 import "./GameHostDashboard.scss";
 
@@ -66,16 +66,16 @@ const calculateClueProgress = (
     totalClues,
     percentage: Math.round(percentage),
   };
-}
+};
 
 /**
  * Helper function to format game status for display.
  */
 const formatGameStatus = (status: string): string => {
   return status
-    .split('_')
+    .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
+    .join(" ");
 };
 
 /**
@@ -119,8 +119,8 @@ const renderGameStatusInfo = (game: Game, clueStates: ClueState[]) => {
             }
             max={100}
           >
-            {calculateClueProgress(clueStates, game.current_round).percentage}
-            % Complete
+            {calculateClueProgress(clueStates, game.current_round).percentage}%
+            Complete
           </progress>
         </div>
       </div>
@@ -246,22 +246,31 @@ export function GameHostDashboard({
   >("ACTIVE");
 
   /** Score adjustment input values for each player */
-  const [scoreAdjustments, setScoreAdjustments] = useState<Record<string, string>>({});
+  const [scoreAdjustments, setScoreAdjustments] = useState<
+    Record<string, string>
+  >({});
 
   /** Buzzer timeout in milliseconds for automatic resolution */
   const [buzzerTimeoutMs, setBuzzerTimeoutMs] = useState(500);
 
   /** Clue timeout timer reference */
-  const [clueTimeoutId, setClueTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [clueTimeoutId, setClueTimeoutId] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   /** Buzzer resolution timeout ID */
-  const [buzzerResolutionTimeoutId, setBuzzerResolutionTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [buzzerResolutionTimeoutId, setBuzzerResolutionTimeoutId] =
+    useState<NodeJS.Timeout | null>(null);
 
   /** ID of the player that was auto-selected by the buzzer timeout */
-  const [autoSelectedPlayerId, setAutoSelectedPlayerId] = useState<string | null>(null);
+  const [autoSelectedPlayerId, setAutoSelectedPlayerId] = useState<
+    string | null
+  >(null);
 
   /** Remaining time for current clue (in seconds) */
-  const [clueTimeRemaining, setClueTimeRemaining] = useState<number | null>(null);
+  const [clueTimeRemaining, setClueTimeRemaining] = useState<number | null>(
+    null
+  );
 
   /** Clue timeout duration in seconds */
   const CLUE_TIMEOUT_SECONDS = 5;
@@ -359,7 +368,7 @@ export function GameHostDashboard({
         // This provides all categories and clues needed for the dashboard
         // Validate that game has a clue set assigned
         if (!gameData.clue_set_id) {
-          throw new Error('Game does not have a clue set assigned');
+          throw new Error("Game does not have a clue set assigned");
         }
 
         const loadedClueSetData = await ClueSetService.loadClueSetFromDatabase(
@@ -370,7 +379,7 @@ export function GameHostDashboard({
         // Fetch current player list for the game
         // This provides real-time player information for the dashboard
         const playersData = await GameService.getPlayers(gameId);
-        console.log('🎮 Initial players loaded:', playersData);
+        console.log("🎮 Initial players loaded:", playersData);
         setPlayers(playersData);
 
         // Load clue states for the game
@@ -452,7 +461,7 @@ export function GameHostDashboard({
           // Refresh player list when players join/leave
           try {
             const updatedPlayers = await GameService.getPlayers(gameId);
-            console.log('🎮 Updated players:', updatedPlayers);
+            console.log("🎮 Updated players:", updatedPlayers);
             setPlayers(updatedPlayers);
           } catch (error) {
             console.error("❌ Failed to refresh players:", error);
@@ -511,10 +520,14 @@ export function GameHostDashboard({
                     setAutoSelectedPlayerId(fastestBuzz.user_id);
 
                     // Click the fastest player's button
-                    const fastestPlayerButton = document.querySelector(`[data-player-id="${fastestBuzz.user_id}"]`) as HTMLElement;
+                    const fastestPlayerButton = document.querySelector(
+                      `[data-player-id="${fastestBuzz.user_id}"]`
+                    ) as HTMLElement;
                     if (fastestPlayerButton) {
                       fastestPlayerButton.click();
-                      setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
+                      setMessage(
+                        `Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`
+                      );
                       setMessageType("success");
                     }
                   }
@@ -555,7 +568,14 @@ export function GameHostDashboard({
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameId, user, focusedClue, clearClueTimeout, buzzerResolutionTimeoutId, buzzerTimeoutMs]);
+  }, [
+    gameId,
+    user,
+    focusedClue,
+    clearClueTimeout,
+    buzzerResolutionTimeoutId,
+    buzzerTimeoutMs,
+  ]);
 
   // Effect to manage full-screen layout classes
   useEffect(() => {
@@ -606,8 +626,6 @@ export function GameHostDashboard({
   useEffect(() => {
     loadBuzzerQueue();
   }, [loadBuzzerQueue]);
-
-
 
   /**
    * Determines the current state of the multi-state reveal/buzzer button
@@ -671,21 +689,27 @@ export function GameHostDashboard({
 
       // Mark clue as completed
       const { error: clueStateError } = await supabase
-        .from('clue_states')
+        .from("clue_states")
         .update({ completed: true })
-        .eq('game_id', gameId)
-        .eq('clue_id', focusedClue.id);
+        .eq("game_id", gameId)
+        .eq("clue_id", focusedClue.id);
 
       if (clueStateError) {
-        throw new Error(`Failed to mark clue completed: ${clueStateError.message}`);
+        throw new Error(
+          `Failed to mark clue completed: ${clueStateError.message}`
+        );
       }
 
       // Clear focused clue and player, lock buzzer
-      const updatedGame = await GameService.updateGame(gameId, {
-        focused_clue_id: null,
-        focused_player_id: null,
-        is_buzzer_locked: true
-      }, user.id);
+      const updatedGame = await GameService.updateGame(
+        gameId,
+        {
+          focused_clue_id: null,
+          focused_player_id: null,
+          is_buzzer_locked: true,
+        },
+        user.id
+      );
 
       setGame(updatedGame);
       setFocusedClue(null);
@@ -744,7 +768,6 @@ export function GameHostDashboard({
       setClueTimeoutId(timeoutId);
     }, 100); // 100ms delay to ensure state stability
   }, [clueTimeoutId, CLUE_TIMEOUT_SECONDS, handleClueTimeout]);
-
 
   /**
    * Handles clue selection from the game board.
@@ -866,48 +889,49 @@ export function GameHostDashboard({
    *
    * @param playerId - UUID of the player to select
    */
-  const handlePlayerSelection = useCallback(async (playerId: string) => {
-    if (!user || !game) {
-      return;
-    }
+  const handlePlayerSelection = useCallback(
+    async (playerId: string) => {
+      if (!user || !game) {
+        return;
+      }
 
-    // Clear clue timeout (safety measure - should already be cleared when first player buzzed)
-    clearClueTimeout();
+      // Clear clue timeout (safety measure - should already be cleared when first player buzzed)
+      clearClueTimeout();
 
-    // Clear buzzer resolution timeout if it exists
-    if (buzzerResolutionTimeoutId) {
-      clearTimeout(buzzerResolutionTimeoutId);
-      setBuzzerResolutionTimeoutId(null);
-    }
+      // Clear buzzer resolution timeout if it exists
+      if (buzzerResolutionTimeoutId) {
+        clearTimeout(buzzerResolutionTimeoutId);
+        setBuzzerResolutionTimeoutId(null);
+      }
 
-    try {
-      setMessage("Selecting player...");
+      try {
+        setMessage("Selecting player...");
 
-      const updatedGame = await GameService.setFocusedPlayer(
-        gameId,
-        playerId,
-        user.id
-      );
-      setGame(updatedGame);
+        const updatedGame = await GameService.setFocusedPlayer(
+          gameId,
+          playerId,
+          user.id
+        );
+        setGame(updatedGame);
 
-      // Find player name for feedback
-      const player = players.find((p) => p.user_id === playerId);
-      const playerName = player?.nickname || "Unknown Player";
+        // Find player name for feedback
+        const player = players.find((p) => p.user_id === playerId);
+        const playerName = player?.nickname || "Unknown Player";
 
-      setMessage(`Selected player: ${playerName}`);
-      setMessageType("success");
-    } catch (error) {
-      console.error("Failed to select player:", error);
-      setMessage(
-        `Failed to select player: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-      setMessageType("error");
-    }
-  }, [user, game, gameId, players, clearClueTimeout, buzzerResolutionTimeoutId]);
-
-
+        setMessage(`Selected player: ${playerName}`);
+        setMessageType("success");
+      } catch (error) {
+        console.error("Failed to select player:", error);
+        setMessage(
+          `Failed to select player: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+        setMessageType("error");
+      }
+    },
+    [user, game, gameId, players, clearClueTimeout, buzzerResolutionTimeoutId]
+  );
 
   /**
    * Handles marking a player's answer as correct.
@@ -1015,11 +1039,17 @@ export function GameHostDashboard({
       // Only clear focused clue if it was completed (all players wrong)
       if (updatedGame.focused_clue_id === null) {
         setFocusedClue(null);
-        setMessage("Answer marked incorrect, all players have attempted - clue completed");
+        setMessage(
+          "Answer marked incorrect, all players have attempted - clue completed"
+        );
         // Show correct answer when all players are wrong
-        alert(`All players answered incorrectly. The correct answer was: ${focusedClue.response}`);
+        alert(
+          `All players answered incorrectly. The correct answer was: ${focusedClue.response}`
+        );
       } else {
-        setMessage("Answer marked incorrect, buzzer unlocked for other players");
+        setMessage(
+          "Answer marked incorrect, buzzer unlocked for other players"
+        );
         // Restart timeout for remaining players
         startClueTimeout();
       }
@@ -1044,8 +1074,6 @@ export function GameHostDashboard({
       setMessageType("error");
     }
   };
-
-
 
   /**
    * Handles toggling the buzzer lock state for the current game.
@@ -1073,8 +1101,6 @@ export function GameHostDashboard({
    * - Could add keyboard shortcut (SPACE) for quick toggling
    * - Could integrate with game board clue selection
    */
-
-
 
   const handleToggleBuzzer = async () => {
     // Validate prerequisites
@@ -1222,9 +1248,9 @@ export function GameHostDashboard({
    * Handles score adjustment input changes for players.
    */
   const handleScoreAdjustmentChange = (playerId: string, value: string) => {
-    setScoreAdjustments(prev => ({
+    setScoreAdjustments((prev) => ({
       ...prev,
-      [playerId]: value
+      [playerId]: value,
     }));
   };
 
@@ -1235,23 +1261,28 @@ export function GameHostDashboard({
     if (!user || !game) return;
 
     const adjustmentValue = scoreAdjustments[playerId];
-    if (!adjustmentValue || adjustmentValue.trim() === '') return;
+    if (!adjustmentValue || adjustmentValue.trim() === "") return;
 
     const scoreChange = parseInt(adjustmentValue, 10);
     if (isNaN(scoreChange)) return;
 
     try {
       setMessage("Adjusting player score...");
-      await GameService.updatePlayerScore(gameId, playerId, scoreChange, user.id);
+      await GameService.updatePlayerScore(
+        gameId,
+        playerId,
+        scoreChange,
+        user.id
+      );
 
       // Refresh players list
       const updatedPlayers = await GameService.getPlayers(gameId);
       setPlayers(updatedPlayers);
 
       // Clear the input
-      setScoreAdjustments(prev => ({
+      setScoreAdjustments((prev) => ({
         ...prev,
-        [playerId]: ''
+        [playerId]: "",
       }));
 
       setMessage(`Added ${scoreChange} points to player score`);
@@ -1263,7 +1294,11 @@ export function GameHostDashboard({
       }, 2000);
     } catch (error) {
       console.error("Failed to adjust score:", error);
-      setMessage(`Failed to adjust score: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setMessage(
+        `Failed to adjust score: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       setMessageType("error");
     }
   };
@@ -1275,7 +1310,7 @@ export function GameHostDashboard({
     if (!user || !game) return;
 
     const adjustmentValue = scoreAdjustments[playerId];
-    if (!adjustmentValue || adjustmentValue.trim() === '') return;
+    if (!adjustmentValue || adjustmentValue.trim() === "") return;
 
     const scoreChange = parseInt(adjustmentValue, 10);
     if (isNaN(scoreChange)) return;
@@ -1285,16 +1320,21 @@ export function GameHostDashboard({
 
     try {
       setMessage("Adjusting player score...");
-      await GameService.updatePlayerScore(gameId, playerId, -absoluteScoreChange, user.id);
+      await GameService.updatePlayerScore(
+        gameId,
+        playerId,
+        -absoluteScoreChange,
+        user.id
+      );
 
       // Refresh players list
       const updatedPlayers = await GameService.getPlayers(gameId);
       setPlayers(updatedPlayers);
 
       // Clear the input
-      setScoreAdjustments(prev => ({
+      setScoreAdjustments((prev) => ({
         ...prev,
-        [playerId]: ''
+        [playerId]: "",
       }));
 
       setMessage(`Subtracted ${absoluteScoreChange} points from player score`);
@@ -1306,7 +1346,11 @@ export function GameHostDashboard({
       }, 2000);
     } catch (error) {
       console.error("Failed to adjust score:", error);
-      setMessage(`Failed to adjust score: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setMessage(
+        `Failed to adjust score: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       setMessageType("error");
     }
   };
@@ -1582,38 +1626,57 @@ export function GameHostDashboard({
               <div className="player-scores-list">
                 {players.map((player, index) => (
                   <div key={player.user_id} className="player-score-item">
-                    <div className="player-main-info">
-                      <div className="player-details">
-                        <SimplePlayerConnectionStatus playerId={player.user_id} />
-                        <strong>
-                          {player.nickname || `Player ${index + 1}`}
-                        </strong>
-                        <small className="player-email">
-                          {(() => {
-                            // Use enhanced player data with profile information
-                            const playerWithProfile = player as Player & {
-                              profiles?: { display_name?: string; username?: string; email?: string }
+                    <div className="player-details">
+                      {/* <SimplePlayerConnectionStatus playerId={player.user_id} /> */}
+                      <strong>
+                        {player.nickname || `Player ${index + 1}`}
+                      </strong>
+                      <small className="player-email">
+                        {(() => {
+                          // Use enhanced player data with profile information
+                          const playerWithProfile = player as Player & {
+                            profiles?: {
+                              display_name?: string;
+                              username?: string;
+                              email?: string;
                             };
-                            return playerWithProfile.profiles?.email || 'No email available';
-                          })()}
-                        </small>
-                      </div>
-                      <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>${player.score}</div>
+                          };
+                          return (
+                            playerWithProfile.profiles?.email ||
+                            "No email available"
+                          );
+                        })()}
+                      </small>
+                    </div>
+                    <div
+                      className={`player-score ${
+                        player.score < 0 ? "negative" : ""
+                      }`}
+                    >
+                      ${player.score}
                     </div>
                     <div className="player-score-adjustment">
                       <input
                         type="number"
                         className="form-control form-control-sm"
                         placeholder="±"
-                        value={scoreAdjustments[player.user_id] || ''}
-                        onChange={(e) => handleScoreAdjustmentChange(player.user_id, e.target.value)}
-                        disabled={game?.status !== 'in_progress'}
+                        value={scoreAdjustments[player.user_id] || ""}
+                        onChange={(e) =>
+                          handleScoreAdjustmentChange(
+                            player.user_id,
+                            e.target.value
+                          )
+                        }
+                        disabled={game?.status !== "in_progress"}
                         style={{ width: "60px" }}
                       />
                       <button
                         className="btn btn-success btn-sm"
                         onClick={() => handleAddScore(player.user_id)}
-                        disabled={game?.status !== 'in_progress' || !scoreAdjustments[player.user_id]?.trim()}
+                        disabled={
+                          game?.status !== "in_progress" ||
+                          !scoreAdjustments[player.user_id]?.trim()
+                        }
                         title="Add points"
                       >
                         +
@@ -1621,7 +1684,10 @@ export function GameHostDashboard({
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleSubtractScore(player.user_id)}
-                        disabled={game?.status !== 'in_progress' || !scoreAdjustments[player.user_id]?.trim()}
+                        disabled={
+                          game?.status !== "in_progress" ||
+                          !scoreAdjustments[player.user_id]?.trim()
+                        }
                         title="Subtract points"
                       >
                         −
@@ -1683,9 +1749,21 @@ export function GameHostDashboard({
                   min="100"
                   max="5000"
                   step="50"
-                  style={{ width: "80px", display: "inline-block", marginLeft: "8px" }}
+                  style={{
+                    width: "80px",
+                    display: "inline-block",
+                    marginLeft: "8px",
+                  }}
                 />
-                <span style={{ marginLeft: "4px", fontSize: "0.8em", color: "#ccc" }}>ms</span>
+                <span
+                  style={{
+                    marginLeft: "4px",
+                    fontSize: "0.8em",
+                    color: "#ccc",
+                  }}
+                >
+                  ms
+                </span>
               </span>
             </div>
 
@@ -1702,26 +1780,34 @@ export function GameHostDashboard({
 
                   // Use enhanced buzz data with player nickname
                   const buzzWithPlayerData = buzz as Buzz & {
-                    profiles?: { display_name?: string; username?: string }
-                    playerNickname?: string | null
-                  }
+                    profiles?: { display_name?: string; username?: string };
+                    playerNickname?: string | null;
+                  };
 
                   // Priority: game-specific nickname > profile display_name > profile username > fallback
-                  const gameNickname = buzzWithPlayerData.playerNickname || player?.nickname;
-                  const profileName = buzzWithPlayerData.profiles?.display_name || buzzWithPlayerData.profiles?.username;
-                  const playerName = gameNickname || profileName || "Unknown Player";
+                  const gameNickname =
+                    buzzWithPlayerData.playerNickname || player?.nickname;
+                  const profileName =
+                    buzzWithPlayerData.profiles?.display_name ||
+                    buzzWithPlayerData.profiles?.username;
+                  const playerName =
+                    gameNickname || profileName || "Unknown Player";
                   // Use stored reaction time if available, otherwise fall back to timestamp difference
                   const reactionTime = buzz.reaction_time;
                   let timingText: string;
 
                   if (reactionTime !== null && reactionTime !== undefined) {
                     // Use client-calculated reaction time (most accurate)
-                    timingText = index === 0 ? `${reactionTime} ms` : `+${reactionTime} ms`;
+                    timingText =
+                      index === 0
+                        ? `${reactionTime} ms`
+                        : `+${reactionTime} ms`;
                   } else {
                     // Fallback to timestamp difference (less accurate)
                     const buzzTime = new Date(buzz.created_at);
                     const firstBuzzTime = new Date(buzzerQueue[0].created_at);
-                    const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime();
+                    const timeDiff =
+                      buzzTime.getTime() - firstBuzzTime.getTime();
                     timingText = timeDiff === 0 ? "0 ms" : `+${timeDiff} ms`;
                   }
                   const ariaLabel = `Select player ${playerName} (position ${
@@ -1836,7 +1922,11 @@ export function GameHostDashboard({
 
             {/* Bottom section with Correct Response and Mark buttons */}
             <div className="clue-control-bottom">
-              <div className={`clue-response-row ${!focusedClue ? 'no-clue-focused' : ''}`}>
+              <div
+                className={`clue-response-row ${
+                  !focusedClue ? "no-clue-focused" : ""
+                }`}
+              >
                 <span className="response-label">Correct Response:</span>
                 <span className="response-text">
                   {focusedClue ? focusedClue.response : "No Clue Selected"}

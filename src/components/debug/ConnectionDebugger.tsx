@@ -176,16 +176,43 @@ export function ConnectionDebugger() {
       })
       .subscribe();
 
-    // Track subscription count (rough estimate)
+    // Track subscription count (creation AND cleanup)
     const originalChannel = supabase.channel;
-    supabase.channel = function(...args) {
-      subscriptionCount++;
+    const activeChannels = new Set<string>();
+
+    supabase.channel = function(name: string, ...args: any[]) {
+      const channel = originalChannel.call(this, name, ...args);
+
+      // Track channel creation
+      activeChannels.add(name);
+      subscriptionCount = activeChannels.size;
+
+      console.log(`📡 Channel created: ${name} (Total: ${subscriptionCount})`);
+
       setConnectionStatus(prev => ({
         ...prev,
         subscriptionCount,
         lastUpdate: new Date()
       }));
-      return originalChannel.apply(this, args);
+
+      // Override unsubscribe to track cleanup
+      const originalUnsubscribe = channel.unsubscribe;
+      channel.unsubscribe = function() {
+        activeChannels.delete(name);
+        subscriptionCount = activeChannels.size;
+
+        console.log(`📡 Channel cleaned up: ${name} (Total: ${subscriptionCount})`);
+
+        setConnectionStatus(prev => ({
+          ...prev,
+          subscriptionCount,
+          lastUpdate: new Date()
+        }));
+
+        return originalUnsubscribe.call(this);
+      };
+
+      return channel;
     };
 
     return () => {

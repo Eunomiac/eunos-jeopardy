@@ -142,6 +142,7 @@
           .game-status-info {
             margin-bottom: $spacing-lg;
             margin-left: -1 * $spacing-lg;
+            width: calc(100% + 2 * #{$spacing-lg});
 
             .status-row {
               display: flex;
@@ -195,7 +196,6 @@
 
           .player-scores-list {
             flex: 1;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
           }
@@ -210,38 +210,50 @@
             color: $jeopardy-white;
             font-family: $font-family-ui;
 
-            .player-main-info {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
+            display: flex;
+            gap: 5px;
 
-              .player-details {
-                display: flex;
-                flex-direction: column;
+            .player-details {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+
+              .simple-player-connection-status {
+                position: absolute;
+                top: 0;
+                right: -5px;
               }
 
-              .player-score {
-                font-family: $font-family-money;
-                font-size: $font-size-lg;
-                font-weight: $font-weight-bold;
-                color: $success-color;
-                text-shadow: 1px 1px 2px $jeopardy-black;
+              strong {
+                font-weight: normal;
+                letter-spacing: 0.5px;
+              }
+
+              .player-email {
+                color: $text-muted;
+                font-size: $font-size-xs;
               }
             }
 
+            .player-score {
+              font-family: $font-family-money;
+              font-size: $font-size-4xl;
+              color: $jeopardy-white;
+              line-height: 1;
+              text-shadow: 1px 1px 2px $jeopardy-black;
+            }
             .player-score-adjustment {
-              position: absolute;
-              top: 50%;
-              right: $spacing-lg;
-              transform: translateY(-50%);
               display: flex;
               gap: $spacing-sm;
               align-items: center;
+              margin-left: $spacing-lg;
 
               .form-control {
                 background: rgba($jeopardy-black, 0.3);
                 border: 1px solid rgba($jeopardy-gold, 0.5);
                 color: $jeopardy-white;
+                height: 25px;
+                max-height: 25px;
 
                 &:focus {
                   background: rgba($jeopardy-black, 0.5);
@@ -268,8 +280,8 @@
 
               .btn {
                 @include jeopardy-button-small;
-                min-width: 32px;
-                padding: 0.25rem 0.5rem;
+                max-height: 20px;
+                max-width: 20px;
                 font-weight: bold;
 
                 &.btn-success {
@@ -295,11 +307,6 @@
             }
           }
 
-          .player-email {
-            color: $text-muted;
-            font-size: $font-size-xs;
-          }
-
           .player-count {
             text-align: center;
             margin-top: $spacing-lg;
@@ -307,9 +314,8 @@
             border-top: 1px solid rgba($jeopardy-gold, 0.5);
             color: $jeopardy-white;
             font-family: $font-family-ui;
+            overflow: hidden;
           }
-
-
         }
 
         // Buzzer Queue Panel
@@ -358,7 +364,6 @@
 
           .queue-list {
             flex: 1;
-            overflow-y: auto;
           }
 
           .clear-queue-container {
@@ -536,7 +541,10 @@
                   border-color: color.adjust($error-color, $lightness: -10%);
 
                   &:hover {
-                    background-color: color.adjust($error-color, $lightness: -5%);
+                    background-color: color.adjust(
+                      $error-color,
+                      $lightness: -5%
+                    );
                   }
                 }
 
@@ -545,7 +553,10 @@
                   border-color: color.adjust($success-color, $lightness: -10%);
 
                   &:hover {
-                    background-color: color.adjust($success-color, $lightness: -5%);
+                    background-color: color.adjust(
+                      $success-color,
+                      $lightness: -5%
+                    );
                   }
                 }
               }
@@ -558,8 +569,6 @@
           pointer-events: none;
           opacity: 0.6;
         }
-
-
 
         .panel-header {
           background: linear-gradient(
@@ -589,7 +598,6 @@
         .panel-content {
           flex: 1;
           padding: $spacing-lg;
-          overflow-y: auto;
           font-size: $font-size-sm;
           font-family: $font-family-ui;
           position: relative;
@@ -655,7 +663,7 @@
 
       // Daily Double indicator - red dot in upper right corner
       &.daily-double::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 4px;
         right: 4px;
@@ -670,7 +678,8 @@
     }
 
     @keyframes pulse-gold {
-      0%, 100% {
+      0%,
+      100% {
         box-shadow: 0 0 15px rgba($jeopardy-gold, 0.6);
       }
       50% {
@@ -699,7 +708,7 @@
 
     // Ensure disabled state is visually clear
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
