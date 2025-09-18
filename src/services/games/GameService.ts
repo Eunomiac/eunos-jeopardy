@@ -1308,27 +1308,6 @@ export class GameService {
   }
 
   /**
-   * Legacy method for backward compatibility.
-   *
-   * @deprecated Use markPlayerCorrect() or markPlayerWrong() instead
-   */
-  static async adjudicateAnswer(
-    gameId: string,
-    clueId: string,
-    playerId: string,
-    playerResponse: string,
-    isCorrect: boolean,
-    scoreValue: number,
-    hostId: string
-  ): Promise<Game> {
-    if (isCorrect) {
-      return this.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
-    } else {
-      return this.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
-    }
-  }
-
-  /**
    * Updates a player's score with host authorization and atomic operations.
    *
    * Modifies a player's score by the specified amount (positive or negative)
