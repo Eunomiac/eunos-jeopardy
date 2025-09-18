@@ -477,6 +477,34 @@ export function GameHostDashboard({
                 focusedClue.id
               );
               setBuzzerQueue(updatedBuzzes);
+
+              // Start auto-selection timeout when first player buzzes
+              if (updatedBuzzes.length === 1) {
+                // Clear any existing timeout
+                if (buzzerResolutionTimeoutId) {
+                  clearTimeout(buzzerResolutionTimeoutId);
+                }
+
+                // Start new timeout
+                const timeoutId = setTimeout(() => {
+                  // Find fastest player
+                  const fastestBuzz = updatedBuzzes.reduce((fastest, current) => {
+                    const fastestTime = fastest.reaction_time || Infinity;
+                    const currentTime = current.reaction_time || Infinity;
+                    return currentTime < fastestTime ? current : fastest;
+                  }, updatedBuzzes[0]);
+
+                  // Click the fastest player's button
+                  const fastestPlayerButton = document.querySelector(`[data-player-id="${fastestBuzz.user_id}"]`) as HTMLElement;
+                  if (fastestPlayerButton) {
+                    fastestPlayerButton.click();
+                    setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
+                    setMessageType("success");
+                  }
+                }, buzzerTimeoutMs);
+
+                setBuzzerResolutionTimeoutId(timeoutId);
+              }
             } catch (error) {
               console.error("Failed to refresh buzzes:", error);
             }
@@ -510,7 +538,7 @@ export function GameHostDashboard({
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameId, user, focusedClue, clearClueTimeout]);
+  }, [gameId, user, focusedClue, clearClueTimeout, buzzerResolutionTimeoutId, buzzerTimeoutMs]);
 
   // Effect to manage full-screen layout classes
   useEffect(() => {
@@ -853,43 +881,7 @@ export function GameHostDashboard({
     }
   }, [user, game, gameId, players, clearClueTimeout, buzzerResolutionTimeoutId]);
 
-  // Simple buzzer resolution timeout effect
-  useEffect(() => {
-    // Only start timeout when first player buzzes
-    if (buzzerQueue.length === 1) {
-      const timeoutId = setTimeout(async () => {
-        // Find fastest player from current buzzer queue
-        const fastestBuzz = buzzerQueue.reduce((fastest, current) => {
-          const fastestTime = fastest.reaction_time || Infinity;
-          const currentTime = current.reaction_time || Infinity;
-          return currentTime < fastestTime ? current : fastest;
-        }, buzzerQueue[0]); // Provide initial value
 
-        // Auto-select the fastest player
-        try {
-          await handlePlayerSelection(fastestBuzz.user_id);
-          setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
-          setMessageType("success");
-        } catch (error) {
-          console.error("Failed to auto-select player:", error);
-        }
-      }, buzzerTimeoutMs);
-
-      setBuzzerResolutionTimeoutId(timeoutId);
-
-      // Cleanup function
-      return () => {
-        clearTimeout(timeoutId);
-        setBuzzerResolutionTimeoutId(null);
-      };
-    } else {
-      // Clear timeout if queue is empty or has multiple players
-      if (buzzerResolutionTimeoutId) {
-        clearTimeout(buzzerResolutionTimeoutId);
-        setBuzzerResolutionTimeoutId(null);
-      }
-    }
-  }, [buzzerQueue, buzzerTimeoutMs, handlePlayerSelection, buzzerResolutionTimeoutId]);
 
   /**
    * Handles marking a player's answer as correct.
@@ -1719,6 +1711,7 @@ export function GameHostDashboard({
                           : ""
                       }`}
                       onClick={() => handlePlayerSelection(buzz.user_id)}
+                      data-player-id={buzz.user_id}
                       aria-label={ariaLabel}
                       style={{ cursor: "pointer" }}
                     >
