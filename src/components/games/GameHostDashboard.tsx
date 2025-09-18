@@ -253,7 +253,7 @@ export function GameHostDashboard({
   /** Clue timeout timer reference */
   const [clueTimeoutId, setClueTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
-  /** Buzzer resolution timeout timer reference */
+  /** Buzzer resolution timeout ID */
   const [buzzerResolutionTimeoutId, setBuzzerResolutionTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   /** Remaining time for current clue (in seconds) */
@@ -465,8 +465,8 @@ export function GameHostDashboard({
         },
         async () => {
           console.log("Buzz change detected");
-          // Clear timeout when any player buzzes in
-          clearClueTimeout();
+          // Don't clear clue timeout here - let it continue running
+          // The timeout will be cleared when a player is actually selected
 
           // Refresh buzzer queue when new buzzes arrive
           // Only refresh if we have a focused clue
@@ -548,78 +548,50 @@ export function GameHostDashboard({
     }
   }, [focusedClue, gameId]);
 
-  /**
-   * Clears the buzzer resolution timeout.
-   */
-  const clearBuzzerResolutionTimeout = useCallback(() => {
-    if (buzzerResolutionTimeoutId) {
-      clearTimeout(buzzerResolutionTimeoutId);
-      setBuzzerResolutionTimeoutId(null);
-    }
-  }, [buzzerResolutionTimeoutId]);
-
-  /**
-   * Starts the buzzer resolution timeout when first player buzzes.
-   */
-  const startBuzzerResolutionTimeout = useCallback(() => {
-    // Clear any existing timeout
-    if (buzzerResolutionTimeoutId) {
-      clearTimeout(buzzerResolutionTimeoutId);
-    }
-
-    // Start new timeout
-    const timeoutId = setTimeout(async () => {
-      // Automatically select the fastest player
-      if (buzzerQueue.length > 0 && user && game) {
-        // Find player with fastest reaction time
+  // Simple buzzer resolution timeout effect
+  useEffect(() => {
+    // Only start timeout when first player buzzes
+    if (buzzerQueue.length === 1) {
+      const timeoutId = setTimeout(async () => {
+        // Find fastest player from current buzzer queue
         const fastestBuzz = buzzerQueue.reduce((fastest, current) => {
           const fastestTime = fastest.reaction_time || Infinity;
           const currentTime = current.reaction_time || Infinity;
           return currentTime < fastestTime ? current : fastest;
-        });
+        }, buzzerQueue[0]); // Provide initial value
 
+        // Auto-select the fastest player
         try {
-          // Select the fastest player directly using GameService
-          const updatedGame = await GameService.setFocusedPlayer(
-            gameId,
-            fastestBuzz.user_id,
-            user.id
-          );
-          setGame(updatedGame);
-
-          // Find player name for feedback
-          const player = players.find((p) => p.user_id === fastestBuzz.user_id);
-          const playerName = player?.nickname || "Unknown Player";
-
-          setMessage(`Auto-selected fastest player: ${playerName} (${fastestBuzz.reaction_time}ms)`);
+          await handlePlayerSelection(fastestBuzz.user_id);
+          setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
           setMessageType("success");
         } catch (error) {
           console.error("Failed to auto-select player:", error);
-          setMessage("Failed to auto-select player");
-          setMessageType("error");
         }
-      }
-    }, buzzerTimeoutMs);
+      }, buzzerTimeoutMs);
 
-    setBuzzerResolutionTimeoutId(timeoutId);
-  }, [buzzerQueue, buzzerTimeoutMs, buzzerResolutionTimeoutId, user, game, gameId, players]);
+      setBuzzerResolutionTimeoutId(timeoutId);
+
+      // Cleanup function
+      return () => {
+        clearTimeout(timeoutId);
+        setBuzzerResolutionTimeoutId(null);
+      };
+    } else {
+      // Clear timeout if queue is empty or has multiple players
+      if (buzzerResolutionTimeoutId) {
+        clearTimeout(buzzerResolutionTimeoutId);
+        setBuzzerResolutionTimeoutId(null);
+      }
+    }
+  }, [buzzerQueue, buzzerTimeoutMs, handlePlayerSelection, buzzerResolutionTimeoutId]);
 
   // Load buzzer queue when focused clue changes
   useEffect(() => {
     loadBuzzerQueue();
   }, [loadBuzzerQueue]);
 
-  // Handle buzzer resolution timeout when queue changes
-  useEffect(() => {
-    if (buzzerQueue.length === 1) {
-      // First player just buzzed - start the timeout
-      startBuzzerResolutionTimeout();
-    } else if (buzzerQueue.length === 0) {
-      // Queue cleared - clear the timeout
-      clearBuzzerResolutionTimeout();
-    }
-    // If more players buzz in, keep the existing timeout running
-  }, [buzzerQueue.length, startBuzzerResolutionTimeout, clearBuzzerResolutionTimeout]);
+
 
   /**
    * Determines the current state of the multi-state reveal/buzzer button
@@ -883,8 +855,14 @@ export function GameHostDashboard({
       return;
     }
 
-    // Clear the buzzer resolution timeout since a player was manually selected
-    clearBuzzerResolutionTimeout();
+    // Clear clue timeout since a player was selected
+    clearClueTimeout();
+
+    // Clear buzzer resolution timeout if it exists
+    if (buzzerResolutionTimeoutId) {
+      clearTimeout(buzzerResolutionTimeoutId);
+      setBuzzerResolutionTimeoutId(null);
+    }
 
     try {
       setMessage("Selecting player...");
@@ -911,7 +889,7 @@ export function GameHostDashboard({
       );
       setMessageType("error");
     }
-  }, [user, game, gameId, players, clearBuzzerResolutionTimeout]);
+  }, [user, game, gameId, players, clearClueTimeout, buzzerResolutionTimeoutId]);
 
   /**
    * Handles marking a player's answer as correct.
