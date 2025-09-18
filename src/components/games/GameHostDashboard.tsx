@@ -468,8 +468,6 @@ export function GameHostDashboard({
         },
         async () => {
           console.log("Buzz change detected");
-          // Don't clear clue timeout here - let it continue running
-          // The timeout will be cleared when a player is actually selected
 
           // Refresh buzzer queue when new buzzes arrive
           // Only refresh if we have a focused clue
@@ -488,6 +486,11 @@ export function GameHostDashboard({
               });
 
               setBuzzerQueue(sortedBuzzes);
+
+              // Clear clue timeout when first player buzzes (prevents timeout during latency period)
+              if (sortedBuzzes.length === 1) {
+                clearClueTimeout();
+              }
 
               // Start auto-selection timeout when first player buzzes
               if (sortedBuzzes.length === 1) {
@@ -867,7 +870,7 @@ export function GameHostDashboard({
       return;
     }
 
-    // Clear clue timeout since a player was selected
+    // Clear clue timeout (safety measure - should already be cleared when first player buzzed)
     clearClueTimeout();
 
     // Clear buzzer resolution timeout if it exists
