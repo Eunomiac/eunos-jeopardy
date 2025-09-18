@@ -657,27 +657,42 @@ export class GameService {
    * @author Euno's Jeopardy Team
    */
   static async getPlayers(gameId: string): Promise<Player[]> {
-    // Query players with joined profile data for complete player information
-    // Using nested select to get display names and usernames in single query
-    const { data, error } = await supabase
+    // First, get all players for the game
+    const { data: players, error: playersError } = await supabase
       .from('players')
-      .select(`
-        *,
-        profiles:user_id (
-          display_name,
-          username
-        )
-      `)
+      .select('*')
       .eq('game_id', gameId)
       .order('joined_at', { ascending: true }) // Consistent join order for UI
 
-    if (error) {
-      // Provide context for debugging player fetch failures
-      throw new Error(`Failed to fetch players: ${error.message}`)
+    if (playersError) {
+      throw new Error(`Failed to fetch players: ${playersError.message}`)
     }
 
-    // Return empty array instead of null for easier array operations
-    return data || []
+    if (!players || players.length === 0) {
+      return []
+    }
+
+    // Get all user IDs to fetch profiles
+    const userIds = players.map(player => player.user_id)
+
+    // Fetch profiles for all players
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, display_name, username, email')
+      .in('id', userIds)
+
+    if (profilesError) {
+      console.warn('Failed to fetch player profiles:', profilesError)
+      // Continue without profiles rather than failing completely
+    }
+
+    // Merge player data with profile data
+    const playersWithProfiles = players.map(player => ({
+      ...player,
+      profiles: profiles?.find(profile => profile.id === player.user_id) || null
+    }))
+
+    return playersWithProfiles
   }
 
   /**
@@ -890,9 +905,10 @@ export class GameService {
       .from('buzzes')
       .select(`
         *,
-        profiles:user_id (
+        profiles!buzzes_user_id_fkey (
           display_name,
-          username
+          username,
+          email
         )
       `)
       .eq('game_id', gameId)

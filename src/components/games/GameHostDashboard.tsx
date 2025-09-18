@@ -83,46 +83,44 @@ const formatGameStatus = (status: string): string => {
 const renderGameStatusInfo = (game: Game, clueStates: ClueState[]) => {
   return (
     <div className="game-status-info">
-      <div className="game-status-info">
-        <div className="status-row">
-          <div className="status-item">
-            <span className="text-uppercase jeopardy-gold">Round:</span>
-            <span className="text-capitalize">{game.current_round}</span>
-          </div>
-          <div className="status-item">
-            <span className="text-uppercase jeopardy-gold">Status:</span>
-            <span>{formatGameStatus(game.status)}</span>
-          </div>
-          <div className="status-item">
-            <span className="text-uppercase jeopardy-gold">Clues Left:</span>
-            <span>
-              {(() => {
-                const progress = calculateClueProgress(
-                  clueStates,
-                  game.current_round
-                );
-                return progress.totalClues - progress.completedCount;
-              })()}
-            </span>
-          </div>
+      <div className="status-row">
+        <div className="status-item">
+          <span className="text-uppercase jeopardy-gold">Round:</span>
+          <span className="text-capitalize">{game.current_round}</span>
         </div>
-        <div className="round-progress">
-          <div className="progress-container">
-            <label htmlFor="round-progress-bar" className="progress-label">
-              Round Progress
-            </label>
-            <progress
-              id="round-progress-bar"
-              className="progress-bar w-100"
-              value={
-                calculateClueProgress(clueStates, game.current_round).percentage
-              }
-              max={100}
-            >
-              {calculateClueProgress(clueStates, game.current_round).percentage}
-              % Complete
-            </progress>
-          </div>
+        <div className="status-item">
+          <span className="text-uppercase jeopardy-gold">Status:</span>
+          <span>{formatGameStatus(game.status)}</span>
+        </div>
+        <div className="status-item">
+          <span className="text-uppercase jeopardy-gold">Clues Left:</span>
+          <span>
+            {(() => {
+              const progress = calculateClueProgress(
+                clueStates,
+                game.current_round
+              );
+              return progress.totalClues - progress.completedCount;
+            })()}
+          </span>
+        </div>
+      </div>
+      <div className="round-progress">
+        <div className="progress-container">
+          <label htmlFor="round-progress-bar" className="progress-label">
+            Round Progress
+          </label>
+          <progress
+            id="round-progress-bar"
+            className="progress-bar w-100"
+            value={
+              calculateClueProgress(clueStates, game.current_round).percentage
+            }
+            max={100}
+          >
+            {calculateClueProgress(clueStates, game.current_round).percentage}
+            % Complete
+          </progress>
         </div>
       </div>
     </div>
@@ -1403,13 +1401,6 @@ export function GameHostDashboard({
             <div className="game-control-buttons d-flex gap-2 mb-3">
               <button
                 className="jeopardy-button flex-1"
-                disabled
-                title="Round progression controls"
-              >
-                Next Round
-              </button>
-              <button
-                className="jeopardy-button flex-1"
                 onClick={() => {
                   const buttonConfig = getGameControlButton(game);
                   if (buttonConfig.handler === "start") {
@@ -1421,6 +1412,13 @@ export function GameHostDashboard({
                 disabled={getGameControlButton(game).disabled}
               >
                 {getGameControlButton(game).text}
+              </button>
+              <button
+                className="jeopardy-button flex-1"
+                disabled
+                title="Round progression controls"
+              >
+                Next Round
               </button>
             </div>
 
@@ -1438,8 +1436,14 @@ export function GameHostDashboard({
                         <strong>
                           {player.nickname || `Player ${index + 1}`}
                         </strong>
-                        <small className="join-time">
-                          {new Date(player.joined_at).toLocaleTimeString()}
+                        <small className="player-email">
+                          {(() => {
+                            // Use enhanced player data with profile information
+                            const playerWithProfile = player as Player & {
+                              profiles?: { display_name?: string; username?: string; email?: string }
+                            };
+                            return playerWithProfile.profiles?.email || 'No email available';
+                          })()}
                         </small>
                       </div>
                       <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>${player.score}</div>
@@ -1518,17 +1522,6 @@ export function GameHostDashboard({
               </span>
             </div>
 
-            {/* Clear Queue Button - positioned below connection status */}
-            <div className="clear-queue-container">
-              <button
-                className="jeopardy-button-small"
-                onClick={() => setBuzzerQueue([])}
-                disabled={buzzerQueue.length === 0}
-              >
-                Clear Queue
-              </button>
-            </div>
-
             {buzzerQueue.length === 0 ? (
               <div className="queue-status">
                 <p className="text-muted">No active buzzes</p>
@@ -1589,6 +1582,17 @@ export function GameHostDashboard({
                 })}
               </div>
             )}
+
+            {/* Clear Queue Button - positioned at bottom center */}
+            <div className="clear-queue-container">
+              <button
+                className="jeopardy-button-small"
+                onClick={() => setBuzzerQueue([])}
+                disabled={buzzerQueue.length === 0}
+              >
+                Clear Queue
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1656,32 +1660,35 @@ export function GameHostDashboard({
                   </div>
                 </div>
               )}
+            </div>
 
+            {/* Bottom section with Correct Response and Mark buttons */}
+            <div className="clue-control-bottom">
               <div className={`clue-response-row ${!focusedClue ? 'no-clue-focused' : ''}`}>
                 <span className="response-label">Correct Response:</span>
                 <span className="response-text">
                   {focusedClue ? focusedClue.response : "No Clue Selected"}
                 </span>
               </div>
-            </div>
 
-            {/* Adjudication Control Buttons */}
-            <div className="clue-control-buttons">
-              <div className="d-flex gap-2">
-                <button
-                  className="jeopardy-button flex-1"
-                  onClick={handleMarkCorrect}
-                  disabled={!focusedClue || !game.focused_player_id}
-                >
-                  Mark Correct
-                </button>
-                <button
-                  className="jeopardy-button flex-1"
-                  onClick={handleMarkWrong}
-                  disabled={!focusedClue || !game.focused_player_id}
-                >
-                  Mark Wrong
-                </button>
+              {/* Adjudication Control Buttons */}
+              <div className="clue-control-buttons">
+                <div className="d-flex gap-2">
+                  <button
+                    className="jeopardy-button flex-1"
+                    onClick={handleMarkCorrect}
+                    disabled={!focusedClue || !game.focused_player_id}
+                  >
+                    Mark Correct
+                  </button>
+                  <button
+                    className="jeopardy-button flex-1"
+                    onClick={handleMarkWrong}
+                    disabled={!focusedClue || !game.focused_player_id}
+                  >
+                    Mark Wrong
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -120,13 +120,19 @@ async function ensureProfileExists(user: User): Promise<void> {
       return
     }
 
+    // Validate that authenticated user has required email
+    if (!user.email) {
+      throw new Error('Authenticated user missing required email address')
+    }
+
     // Create new profile with sensible defaults from auth metadata
     const { error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: user.id, // Use Supabase Auth user ID as primary key
-        username: user.email?.split('@')[0] || null, // Extract username from email
+        username: user.email.split('@')[0], // Extract username from email (email is guaranteed to exist)
         display_name: user.user_metadata?.full_name || null, // Use full name if provided
+        email: user.email, // Store email for display purposes (required field)
         role: 'player' // Default new users to player role
       })
 

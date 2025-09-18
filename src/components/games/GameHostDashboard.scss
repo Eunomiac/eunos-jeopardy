@@ -130,6 +130,14 @@
         // Player Scores Panel
         &.player-scores-panel {
           grid-area: player-control;
+          display: flex;
+          flex-direction: column;
+
+          .panel-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+          }
 
           .game-status-info {
             margin-bottom: $spacing-lg;
@@ -189,11 +197,14 @@
           }
 
           .player-scores-list {
-            max-height: 200px;
+            flex: 1;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
           }
 
           .player-score-item {
+            position: relative;
             padding: $spacing-md $spacing-lg;
             margin-bottom: $spacing-sm;
             background: rgba($jeopardy-gold, 0.1);
@@ -201,9 +212,6 @@
             border-left: 3px solid $jeopardy-gold;
             color: $jeopardy-white;
             font-family: $font-family-ui;
-            display: flex;
-            flex-direction: column;
-            gap: $spacing-sm;
 
             .player-main-info {
               display: flex;
@@ -225,10 +233,13 @@
             }
 
             .player-score-adjustment {
+              position: absolute;
+              top: 50%;
+              right: $spacing-lg;
+              transform: translateY(-50%);
               display: flex;
               gap: $spacing-sm;
               align-items: center;
-              justify-content: flex-end;
 
               .form-control {
                 background: rgba($jeopardy-black, 0.3);
@@ -254,7 +265,7 @@
             }
           }
 
-          .join-time {
+          .player-email {
             color: $text-muted;
             font-size: $font-size-xs;
           }
@@ -274,6 +285,14 @@
         // Buzzer Queue Panel
         &.buzzer-queue-panel {
           grid-area: buzzer-queue;
+          display: flex;
+          flex-direction: column;
+
+          .panel-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+          }
 
           .connection-status {
             display: flex;
@@ -296,19 +315,28 @@
               padding: 0 4px;
               min-width: 65px;
               max-width: 65px;
-
             }
+          }
+
+          .queue-status {
+            text-align: center;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .queue-list {
+            flex: 1;
+            overflow-y: auto;
           }
 
           .clear-queue-container {
             display: flex;
             justify-content: center;
-            margin-bottom: $spacing-lg;
-          }
-
-          .queue-status {
-            text-align: center;
-            margin-bottom: $spacing-lg;
+            margin-top: auto;
+            padding-top: $spacing-lg;
+            border-top: 1px solid rgba($jeopardy-gold, 0.3);
           }
 
           .queue-item {
@@ -358,9 +386,17 @@
         // Clue Control Panel
         &.clue-control-panel {
           grid-area: clue-control;
+          display: flex;
+          flex-direction: column;
+
+          .panel-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+          }
 
           .focused-clue-display {
-            margin-bottom: $spacing-xl;
+            flex: 0 0 auto;
 
             .clue-display-row {
               display: flex;
@@ -387,6 +423,25 @@
               }
             }
 
+            .clue-timeout-display {
+              margin-bottom: $spacing-lg;
+              text-align: center;
+
+              .timeout-message {
+                padding: $spacing-sm;
+                background: rgba($jeopardy-gold, 0.2);
+                border-radius: $border-radius-sm;
+                color: $jeopardy-white;
+                font-weight: bold;
+              }
+            }
+          }
+
+          .clue-control-bottom {
+            margin-top: auto;
+            padding-top: $spacing-lg;
+            border-top: 1px solid rgba($jeopardy-gold, 0.3);
+
             .clue-response-row {
               display: flex;
               align-items: center;
@@ -395,6 +450,7 @@
               background: rgba($jeopardy-gold, 0.1);
               border-radius: $border-radius-sm;
               border: 1px solid rgba($jeopardy-gold, 0.3);
+              margin-bottom: $spacing-lg;
 
               .response-label {
                 font-weight: bold;
@@ -418,45 +474,27 @@
               }
             }
 
-            .clue-prompt,
-            .clue-response {
-              margin-bottom: $spacing-lg;
+            .clue-control-buttons {
+              .buzzer-toggle-button {
+                &.locked {
+                  background-color: $error-color;
+                  border-color: color.adjust($error-color, $lightness: -10%);
 
-              .clue-text,
-              .response-text {
-                font-size: $font-size-xs;
-              }
-            }
-          }
-
-          .clue-control-buttons {
-            margin-bottom: $spacing-lg;
-
-            .buzzer-toggle-button {
-              &.locked {
-                background-color: $error-color;
-                border-color: color.adjust($error-color, $lightness: -10%);
-
-                &:hover {
-                  background-color: color.adjust($error-color, $lightness: -5%);
+                  &:hover {
+                    background-color: color.adjust($error-color, $lightness: -5%);
+                  }
                 }
-              }
 
-              &.unlocked {
-                background-color: $success-color;
-                border-color: color.adjust($success-color, $lightness: -10%);
+                &.unlocked {
+                  background-color: $success-color;
+                  border-color: color.adjust($success-color, $lightness: -10%);
 
-                &:hover {
-                  background-color: color.adjust($success-color, $lightness: -5%);
+                  &:hover {
+                    background-color: color.adjust($success-color, $lightness: -5%);
+                  }
                 }
               }
             }
-          }
-
-          .game-control-buttons {
-            margin: $spacing-xl 0;
-            padding-top: $spacing-lg;
-            border-top: 1px solid rgba($jeopardy-gold, 0.5);
           }
         }
 
