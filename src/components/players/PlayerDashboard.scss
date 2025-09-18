@@ -123,18 +123,18 @@
     .jeopardy-board {
       overflow: visible;
 
-      .category-header {
+      > .category-header {
         padding: 10%;
         font-size: 1.25rem;
       }
+    }
 
-      .clue-cell {
-        &.revealed {
-          color: $jeopardy-background-blue;
-          background: $jeopardy-background-blue;
-          text-shadow: none;
-        }
-      }
+    .dynamic-display-window {
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      top: 0;
+      left: 0;
     }
   }
 

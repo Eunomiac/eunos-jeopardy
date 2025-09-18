@@ -74,11 +74,9 @@
       }
 
       &.revealed {
-        background: $jeopardy-background-blue;
-        color: $text-muted;
-        cursor: not-allowed;
+        color: transparent;
+        pointer-events: none;
         text-shadow: none;
-        opacity: 0.5;
 
         &:hover {
           filter: none;
@@ -87,11 +85,10 @@
       }
 
       &.focused {
-        outline: 2px solid $jeopardy-gold;
         transform: scale(1.05); // Reduced scale for smaller containers
         position: relative;
         z-index: 1;
-        filter: brightness(1.5);
+        filter: brightness(2);
       }
     }
 }
