@@ -526,7 +526,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }
 
   return (
-    <div className="player-dashboard">
+    <div className="player-dashboard" data-game-id={gameId}>
       {/* Round Header */}
       <div className="jeopardy-board-header">
         <h2>

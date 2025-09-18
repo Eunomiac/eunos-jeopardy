@@ -1,6 +1,6 @@
 /**
  * Connection Debugger Styles
- * 
+ *
  * Compact debugging component positioned at bottom-left corner
  */
 
@@ -29,9 +29,37 @@
 
   .debug-line {
     margin-bottom: 2px;
-    
+
     &:last-child {
       margin-bottom: 0;
+    }
+  }
+
+  .debug-actions {
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px solid #333;
+  }
+
+  .copy-channel-btn {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(0, 255, 0, 0.2);
+      transform: scale(1.02);
+    }
+
+    &:active {
+      transform: scale(0.98);
     }
   }
 }

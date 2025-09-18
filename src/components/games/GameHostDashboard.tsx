@@ -1350,7 +1350,7 @@ export function GameHostDashboard({
 
   // Main dashboard render: Display full host interface with 6-panel layout
   return (
-    <div className="game-host-dashboard">
+    <div className="game-host-dashboard" data-game-id={gameId}>
       {/* Dashboard header with title and navigation */}
       <header className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center">

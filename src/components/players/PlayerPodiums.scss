@@ -78,8 +78,6 @@
 // Player name container with dynamic scaling support
 .player-name-container {
   width: 40%;
-  max-width: 200px;
-  padding: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -96,6 +94,7 @@
     line-height: 1.2;
     transition: transform 0.2s ease;
     text-shadow: none;
+    white-space: nowrap;
 
     // For main player, make text slightly larger
     .player-podium.main & {
