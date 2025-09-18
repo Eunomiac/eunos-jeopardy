@@ -1206,7 +1206,7 @@ export function GameHostDashboard({
       <header className="dashboard-header">
         <div className="d-flex justify-content-between align-items-center">
           <h1 className="jeopardy-logo">Game Host Dashboard</h1>
-          <button className="jeopardy-button" onClick={handleEndGame}>
+          <button className="jeopardy-button" onClick={onBackToCreator}>
             Back to Creator
           </button>
         </div>

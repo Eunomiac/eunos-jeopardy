@@ -10,6 +10,13 @@
 
 import type { Database } from '../../../services/supabase/types'
 
+interface ChainableMethods {
+  eq: jest.MockedFunction<(column: string, value: unknown) => ChainableMethods>
+  in: jest.MockedFunction<(column: string, values: unknown[]) => ChainableMethods>
+  single: jest.MockedFunction<() => Promise<{ data: unknown; error: unknown }>>
+  limit: jest.MockedFunction<(count: number) => ChainableMethods>
+}
+
 /**
  * Comprehensive mock of the Supabase client with proper TypeScript typing.
  * Provides smart defaults for common operations while maintaining type safety.
@@ -57,28 +64,33 @@ const mockSupabaseClient = {
         if (options?.head) {
           return Promise.resolve({ data: null, error: null, count: 0 })
         }
-        return {
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: getDefaultData(),
-              error: null
-            }),
-            limit: jest.fn().mockResolvedValue({
-              data: Array.isArray(getDefaultData()) ? getDefaultData() : [],
-              error: null
-            }),
-          }),
-          limit: jest.fn().mockResolvedValue({
+
+        const createChainableMethods = (): ChainableMethods & Promise<{ data: unknown; error: null }> => {
+          const methods: ChainableMethods = {} as ChainableMethods
+
+          // Create a promise-like object that can be chained or awaited
+          const promiseResult = Promise.resolve({
+            data: getDefaultData(),
+            error: null
+          })
+
+          // Add chainable methods that return the same structure
+          methods.eq = jest.fn().mockReturnValue(promiseResult)
+          methods.in = jest.fn().mockReturnValue(promiseResult)
+          methods.single = jest.fn().mockResolvedValue({
+            data: getDefaultData(),
+            error: null
+          })
+          methods.limit = jest.fn().mockResolvedValue({
             data: Array.isArray(getDefaultData()) ? getDefaultData() : [],
             error: null
-          }),
-          in: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: getDefaultData(),
-              error: null
-            }),
-          }),
+          })
+
+          // Merge the promise with the methods so it can be both chained and awaited
+          return Object.assign(promiseResult, methods)
         }
+
+        return createChainableMethods()
       }),
       insert: jest.fn().mockResolvedValue({ data: getDefaultData(), error: null }),
       update: jest.fn().mockResolvedValue({ data: getDefaultData(), error: null }),

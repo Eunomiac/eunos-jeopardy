@@ -376,8 +376,10 @@ describe('App', () => {
     it('should clear state when user logs out', async () => {
       const { rerender } = renderWithAuth(<App />)
 
-      // First render with authenticated user
-      expect(screen.getByText('Host Game')).toBeInTheDocument()
+      // Wait for app to load and show Host Game button
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
 
       // Mock user logout
       jest.spyOn(AuthContext, 'useAuth').mockReturnValue({

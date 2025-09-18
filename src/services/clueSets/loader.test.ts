@@ -92,26 +92,23 @@ final,Geography,0,Largest country?,Russia`
     })
 
     it('should structure round data correctly with multiple categories', async () => {
-      // Create CSV content that will produce the expected structure
-      const multiCategoryCSV = `round,category,value,prompt,response
-jeopardy,Science,200,Q1,A1
-jeopardy,Science,400,Q2,A2
-jeopardy,History,200,Q3,A3
-jeopardy,History,400,Q4,A4
-final,Geography,0,Final Q,Final A`
+      // Use the valid CSV file that passes real validation
+      const validCSV = readFileSync(join(process.cwd(), testCSVFiles.validBasic), 'utf-8')
 
       ;(global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
-        text: () => Promise.resolve(multiCategoryCSV)
+        text: () => Promise.resolve(validCSV)
       })
 
-      const result = await loadClueSetFromCSV('test-game-1.csv')
+      const result = await loadClueSetFromCSV('test-valid-basic.csv')
 
-      expect(result.rounds.jeopardy).toHaveLength(2)
-      expect(result.rounds.jeopardy[0].name).toBe('Science')
-      expect(result.rounds.jeopardy[0].clues).toHaveLength(2)
-      expect(result.rounds.jeopardy[1].name).toBe('History')
-      expect(result.rounds.jeopardy[1].clues).toHaveLength(2)
+      // Verify the structure with real validation
+      expect(result.rounds.jeopardy).toHaveLength(6) // 6 categories as per real validation
+      expect(result.rounds.jeopardy[0]).toHaveProperty('name')
+      expect(result.rounds.jeopardy[0]).toHaveProperty('clues')
+      expect(result.rounds.jeopardy[0].clues).toHaveLength(5) // 5 clues per category
+      expect(result.rounds.jeopardy[1]).toHaveProperty('name')
+      expect(result.rounds.jeopardy[1].clues).toHaveLength(5) // 5 clues per category
     })
   })
 

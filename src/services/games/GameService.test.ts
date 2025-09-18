@@ -1,11 +1,7 @@
 import { GameService } from './GameService'
 
-// Mock Supabase client with proper typing
-jest.mock('../supabase/client', () => ({
-  supabase: {
-    from: jest.fn()
-  }
-}))
+// Explicitly mock the supabase client
+jest.mock('../supabase/client')
 
 import { supabase } from '../supabase/client'
 
@@ -628,63 +624,100 @@ describe('GameService', () => {
         }
       ]
 
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({ data: mockBuzzes, error: null })
-          })
-        })
-      })
+      // Mock players data for the second query
+      const mockPlayers = [
+        { user_id: 'user-789', nickname: 'Player1' },
+        { user_id: 'user-101', nickname: 'Player2' }
+      ]
 
-      mockSupabase.from.mockReturnValue({
-        select: mockSelect
-      } as MockSupabaseQueryBuilder)
+      // Mock the Supabase query chains - this method makes TWO queries
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'buzzes') {
+          // First query: buzzes with profiles
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({ data: mockBuzzes, error: null })
+                })
+              })
+            })
+          } as MockSupabaseQueryBuilder
+        } else if (table === 'players') {
+          // Second query: player nicknames
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockPlayers, error: null })
+              })
+            })
+          } as MockSupabaseQueryBuilder
+        }
+        return {} as MockSupabaseQueryBuilder
+      })
 
       const result = await GameService.getBuzzesForClue('game-123', 'clue-456')
 
       expect(mockSupabase.from).toHaveBeenCalledWith('buzzes')
-      expect(mockSelect).toHaveBeenCalledWith(`
-        *,
-        profiles:user_id (
-          display_name,
-          username
-        )
-      `)
-      expect(result).toEqual(mockBuzzes)
+      expect(mockSupabase.from).toHaveBeenCalledWith('players')
+
+      // Expect the enhanced buzzes with player nicknames
+      const expectedBuzzes = [
+        {
+          ...mockBuzzes[0],
+          playerNickname: 'Player1'
+        },
+        {
+          ...mockBuzzes[1],
+          playerNickname: 'Player2'
+        }
+      ]
+      expect(result).toEqual(expectedBuzzes)
     })
 
     it('should handle buzzes fetch error', async () => {
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Fetch failed' }
+      // Mock the global supabase to return an error for this test
+      const mockFromWithError = jest.fn()
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: 'Fetch failed' }
+                })
+              })
             })
           })
         })
-      })
+        .mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: [], error: null })
+            })
+          })
+        })
 
-      mockSupabase.from.mockReturnValue({
-        select: mockSelect
-      } as MockSupabaseQueryBuilder)
+      mockSupabase.from = mockFromWithError
 
       await expect(GameService.getBuzzesForClue('game-123', 'clue-456'))
         .rejects.toThrow('Failed to fetch buzzes: Fetch failed')
     })
 
     it('should return empty array when no buzzes', async () => {
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({ data: null, error: null })
+      // Mock to return empty data for buzzes query
+      const mockFromWithEmpty = jest.fn()
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockResolvedValue({ data: null, error: null })
+              })
+            })
           })
         })
-      })
 
-      mockSupabase.from.mockReturnValue({
-        select: mockSelect
-      } as MockSupabaseQueryBuilder)
+      mockSupabase.from = mockFromWithEmpty
 
       const result = await GameService.getBuzzesForClue('game-123', 'clue-456')
 
@@ -718,7 +751,8 @@ describe('GameService', () => {
       expect(mockInsert).toHaveBeenCalledWith({
         game_id: 'game-123',
         clue_id: 'clue-456',
-        user_id: 'user-789'
+        user_id: 'user-789',
+        reaction_time: null
       })
       expect(result).toEqual(mockBuzz)
     })

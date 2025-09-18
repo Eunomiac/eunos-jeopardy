@@ -76,16 +76,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   // Game board data
   const [clueSetData, setClueSetData] = useState<ClueSetData | null>(null)
   const [clueStates, setClueStates] = useState<ClueState[]>([])
-  // Note: Players don't need Daily Double positions - they discover them when clues are revealed
 
   // UI state
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showClueModal, setShowClueModal] = useState(false)
   const [modalAnimatingOut, setModalAnimatingOut] = useState(false)
-
-  // Font assignment (will be used for font assignment logic in future)
-  const [, setPlayerFont] = useState<string>('handwritten-1')
 
   // Buzzer timing
   const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null)
@@ -118,12 +114,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       // Assign fonts and create player info
       const playersWithFonts = await Promise.all(
         gamePlayers.map(async (player) => {
-          let font = 'handwritten-1'
+          let font: string
 
           if (player.user_id === user.id) {
             // Get or assign font for current user
             font = await FontAssignmentService.getPlayerFont(user.id, gameId)
-            setPlayerFont(font)
           } else {
             // For other players, get their assigned font from profile
             const { data: profile } = await supabase
@@ -361,11 +356,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           const gamePlayers = await GameService.getPlayers(gameId)
           const playersWithFonts = await Promise.all(
             gamePlayers.map(async (player) => {
-              let font = 'handwritten-1'
+              let font: string
 
               if (player.user_id === user.id) {
                 font = await FontAssignmentService.getPlayerFont(user.id, gameId)
-                setPlayerFont(font)
               } else {
                 const { data: profile } = await supabase
                   .from('profiles')

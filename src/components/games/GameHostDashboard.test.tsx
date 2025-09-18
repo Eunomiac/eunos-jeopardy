@@ -282,14 +282,14 @@ describe('GameHostDashboard', () => {
 
     it('should end game successfully with confirmation', async () => {
       mockConfirm.mockReturnValue(true)
-      mockGameService.updateGame.mockResolvedValue({ ...mockGame, status: 'completed' })
+      mockGameService.endGame.mockResolvedValue({ ...mockGame, status: 'completed' })
 
       const endGameButton = screen.getByText('End Game')
       fireEvent.click(endGameButton)
 
       await waitFor(() => {
         expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to end this game?')
-        expect(mockGameService.updateGame).toHaveBeenCalledWith('game-123', { status: 'completed' }, 'user-123')
+        expect(mockGameService.endGame).toHaveBeenCalledWith('game-123', 'user-123')
         expect(screen.getByText('Game ended successfully')).toBeInTheDocument()
       })
 
@@ -305,13 +305,13 @@ describe('GameHostDashboard', () => {
       fireEvent.click(endGameButton)
 
       expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to end this game?')
-      expect(mockGameService.updateGame).not.toHaveBeenCalled()
+      expect(mockGameService.endGame).not.toHaveBeenCalled()
     })
 
     it('should handle end game error', async () => {
       mockConfirm.mockReturnValue(true)
       const error = new Error('Database error')
-      mockGameService.updateGame.mockRejectedValue(error)
+      mockGameService.endGame.mockRejectedValue(error)
 
       const endGameButton = screen.getByText('End Game')
       fireEvent.click(endGameButton)
@@ -348,7 +348,7 @@ describe('GameHostDashboard', () => {
     it('should display players with nicknames and scores', () => {
       expect(screen.getByText('PLAYER CONTROL')).toBeInTheDocument()
       expect(screen.getByText('Player One')).toBeInTheDocument()
-      expect(screen.getByText('Player 2')).toBeInTheDocument() // No nickname, uses default
+      expect(screen.getByText('Player Two')).toBeInTheDocument() // Uses nickname from mock data
       // Check for player scores specifically in the player score context
       const playerScores = screen.getAllByText('$1000')
       expect(playerScores.length).toBeGreaterThan(0) // Should appear in both game board and player scores

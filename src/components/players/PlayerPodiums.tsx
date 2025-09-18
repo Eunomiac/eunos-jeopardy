@@ -157,6 +157,9 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
           }
         }}
       >
+        <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>
+          {formatScore(player.score)}
+        </div>
         <div className="player-name-container">
           <div
             className="player-name-text"
@@ -164,9 +167,6 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
           >
             {player.name}
           </div>
-        </div>
-        <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>
-          {formatScore(player.score)}
         </div>
       </div>
     )

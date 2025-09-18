@@ -143,7 +143,7 @@ describe('ClueSetSelector', () => {
       expect(screen.queryByText('Loading your clue sets...')).not.toBeInTheDocument()
     })
 
-    expect(mockGetUserClueSets).toHaveBeenCalledWith('123')
+    expect(mockGetUserClueSets).toHaveBeenCalledWith('user-123')
     expect(screen.getByText('Test Game 1')).toBeInTheDocument()
     expect(screen.getByText('Test Game 2')).toBeInTheDocument()
   })
