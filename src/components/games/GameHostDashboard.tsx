@@ -408,6 +408,20 @@ export function GameHostDashboard({
   }, [user, gameId]);
 
   /**
+   * Clears the clue timeout timer.
+   *
+   * Cancels any active timeout and resets the countdown display.
+   * Called when a player buzzes in or when the clue is completed.
+   */
+  const clearClueTimeout = useCallback(() => {
+    if (clueTimeoutId) {
+      clearTimeout(clueTimeoutId);
+      setClueTimeoutId(null);
+    }
+    setClueTimeRemaining(null);
+  }, [clueTimeoutId]);
+
+  /**
    * Effect to set up real-time subscriptions for game state changes.
    */
   useEffect(() => {
@@ -666,21 +680,6 @@ export function GameHostDashboard({
 
     setClueTimeoutId(timeoutId);
   }, [clueTimeoutId, CLUE_TIMEOUT_SECONDS, handleClueTimeout]);
-
-  /**
-   * Clears the clue timeout timer.
-   *
-   * Cancels any active timeout and resets the countdown display.
-   * Called when a player buzzes in or when the clue is completed.
-   */
-  const clearClueTimeout = useCallback(() => {
-    if (clueTimeoutId) {
-      clearTimeout(clueTimeoutId);
-      setClueTimeoutId(null);
-    }
-    setClueTimeRemaining(null);
-  }, [clueTimeoutId]);
-
 
 
   /**
