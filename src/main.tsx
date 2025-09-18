@@ -34,6 +34,7 @@ import './styles/main.scss'
 
 // Initialize global utilities before React rendering
 import { initializeGlobals } from './shared/utils/setup'
+import { initializeAnimations } from './utils/animations'
 
 /**
  * Initialize global utilities required by the application.
@@ -43,9 +44,11 @@ import { initializeGlobals } from './shared/utils/setup'
  *
  * **Global Utilities Initialized:**
  * - assert: Runtime validation and type narrowing function
+ * - GSAP animation effects: Custom Jeopardy-themed animations
  * - Future utilities can be added to the setup module
  */
 initializeGlobals()
+initializeAnimations()
 
 /**
  * Create React root and render the application component tree.
