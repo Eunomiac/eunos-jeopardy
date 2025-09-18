@@ -1,6 +1,6 @@
 import { GameService } from './GameService'
 
-// Mock Supabase client
+// Mock Supabase client with proper typing
 jest.mock('../supabase/client', () => ({
   supabase: {
     from: jest.fn()
@@ -9,7 +9,7 @@ jest.mock('../supabase/client', () => ({
 
 import { supabase } from '../supabase/client'
 
-// Type definitions for Supabase mock objects
+// Enhanced type definitions for Supabase mock objects with schema awareness
 type MockSupabaseQueryBuilder = {
   insert: jest.Mock
   select: jest.Mock
@@ -18,8 +18,10 @@ type MockSupabaseQueryBuilder = {
   eq: jest.Mock
   single: jest.Mock
   limit: jest.Mock
+  in: jest.Mock // Add missing 'in' method that's used in some tests
 }
 
+// Type the mock with proper Supabase client structure
 const mockSupabase = supabase as jest.Mocked<typeof supabase>
 
 describe('GameService', () => {

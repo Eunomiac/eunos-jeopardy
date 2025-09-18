@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import type { User, Session } from '@supabase/supabase-js'
 import { SimpleLogin } from './SimpleLogin'
 import { useAuth } from '../../contexts/AuthContext'
+import { mockUser, mockSession } from '../../test/__mocks__/commonTestData'
 
 // Mock the useAuth hook
 jest.mock('../../contexts/AuthContext', () => ({
@@ -13,30 +13,7 @@ const mockLogin = jest.fn()
 const mockLogout = jest.fn()
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
-// Create properly typed mock user and session
-const mockUser: User = {
-  id: '123',
-  email: 'test@example.com',
-  aud: 'authenticated',
-  role: 'authenticated',
-  email_confirmed_at: '2023-01-01T00:00:00Z',
-  phone: '',
-  confirmed_at: '2023-01-01T00:00:00Z',
-  last_sign_in_at: '2023-01-01T00:00:00Z',
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: '2023-01-01T00:00:00Z',
-  updated_at: '2023-01-01T00:00:00Z'
-}
-
-const mockSession: Session = {
-  access_token: 'mock-access-token',
-  refresh_token: 'mock-refresh-token',
-  expires_in: 3600,
-  token_type: 'bearer',
-  user: mockUser
-}
+// Using consolidated mock data from commonTestData
 
 // Mock the useAuth hook with jest.fn() for dynamic mocking
 jest.mock('../../contexts/AuthContext', () => ({

@@ -6,10 +6,13 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 # Project Context
 - **Repository**: Euno's Jeopardy - Online Jeopardy game platform
 - **Tech Stack**: React + TypeScript + Vite + Jest + Supabase
-- **Current Status**: Issue #3 Phase 1 foundation complete, Phase 2 in development
-- **Recent Work**: Game Host Dashboard foundation complete, comprehensive documentation streamlining
 - **Test Framework**: Jest with React Testing Library
 - **Coverage Tool**: Built into Jest, reported via SonarQube integration
+
+# Key References
+- **[Testing Mocks Reference](../reference/TESTING_MOCKS_REFERENCE.md)** - Mock registry and anti-over-mocking guidelines
+- **[Testing Strategy](../reference/strategy/TESTING_STRATEGY.md)** - Testing approach and architecture
+- **[Testing Reference](../reference/TESTING_REFERENCE.md)** - Technical setup and configuration
 
 ## Current State
 - **Authentication system**: Working with Supabase Auth + profile creation + session management

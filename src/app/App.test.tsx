@@ -1,16 +1,71 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import type { User, Session } from '@supabase/supabase-js'
 import { App } from './App'
 import { AuthProvider } from '../contexts/AuthContext'
 import * as AuthContext from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { loadClueSetFromCSV, saveClueSetToDatabase } from '../services/clueSets/loader'
-import { ClueSetService } from '../services/clueSets/clueSetService'
+import { ClueSetService, type UserClueSet } from '../services/clueSets/clueSetService'
+import type { Database } from '../services/supabase/types'
+import { mockUser, mockSession, createMockGame } from '../test/__mocks__/commonTestData'
 
 // Mock the services
 jest.mock('../services/games/GameService')
 jest.mock('../services/clueSets/loader')
 jest.mock('../services/clueSets/clueSetService')
+
+// Mock Supabase client with smart defaults and proper typing for data
+jest.mock('../services/supabase/client', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      signInWithPassword: jest.fn().mockResolvedValue({ data: { user: null, session: null }, error: null }),
+      signOut: jest.fn().mockResolvedValue({ error: null }),
+      onAuthStateChange: jest.fn().mockReturnValue({ data: { subscription: { unsubscribe: jest.fn() } } })
+    },
+    from: jest.fn().mockImplementation((table: keyof Database['public']['Tables']) => {
+      // Smart defaults based on table schema - now with proper typing!
+      if (table === 'profiles') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { role: 'host' } as Database['public']['Tables']['profiles']['Row'],
+                error: null
+              })
+            })
+          })
+        }
+      }
+      if (table === 'games') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { code: 'PGRST116' } // No active game by default
+              })
+            })
+          })
+        }
+      }
+      // Default mock for other tables
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
+        }),
+        insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+        update: jest.fn().mockResolvedValue({ data: null, error: null }),
+        delete: jest.fn().mockResolvedValue({ data: null, error: null })
+      }
+    }),
+    channel: jest.fn().mockReturnValue({
+      on: jest.fn().mockReturnThis(),
+      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() })
+    })
+  }
+}))
 
 const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockLoadClueSetFromCSV = loadClueSetFromCSV as jest.MockedFunction<typeof loadClueSetFromCSV>
@@ -24,31 +79,11 @@ const renderWithAuth = (ui: React.ReactElement) => {
   )
 }
 
-const mockUser: User = {
-  id: 'user-123',
-  email: 'test@example.com',
-  aud: 'authenticated',
-  role: 'authenticated',
-  email_confirmed_at: '2023-01-01T00:00:00Z',
-  phone: '',
-  confirmed_at: '2023-01-01T00:00:00Z',
-  last_sign_in_at: '2023-01-01T00:00:00Z',
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: '2023-01-01T00:00:00Z',
-  updated_at: '2023-01-01T00:00:00Z'
-}
 
-const mockSession: Session = {
-  access_token: 'mock-access-token',
-  refresh_token: 'mock-refresh-token',
-  expires_in: 3600,
-  token_type: 'bearer',
-  user: mockUser
-}
 
-const mockUserClueSets = [
+// Using consolidated mocks from commonTestData
+
+const mockUserClueSets: UserClueSet[] = [
   {
     id: 'clue-set-1',
     name: 'Test Game 1',
@@ -92,26 +127,20 @@ const mockClueSetData = {
   }
 }
 
-const mockGame = {
-  id: 'game-123',
-  host_id: 'user-123',
-  clue_set_id: 'clue-set-123',
-  status: 'in_progress' as const,
-  current_round: 'jeopardy' as const,
-  is_buzzer_locked: false,
-  focused_clue_id: null,
-  focused_player_id: null,
-  created_at: '2023-01-01T00:00:00Z'
-}
+// Using consolidated mock data from commonTestData
+const mockGameInProgress = createMockGame({
+  status: 'in_progress',
+  is_buzzer_locked: false
+})
 
 describe('App', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockLoadClueSetFromCSV.mockResolvedValue(mockClueSetData)
     mockSaveClueSetToDatabase.mockResolvedValue('clue-set-123')
-    mockGameService.createGame.mockResolvedValue(mockGame)
+    mockGameService.createGame.mockResolvedValue(mockGameInProgress)
     // Mock GameService methods used by GameHostDashboard
-    mockGameService.getGame.mockResolvedValue(mockGame)
+    mockGameService.getGame.mockResolvedValue(mockGameInProgress)
     mockGameService.getPlayers.mockResolvedValue([])
     // Mock ClueSetService methods used by ClueSetSelector
     mockClueSetService.getUserClueSets.mockResolvedValue(mockUserClueSets)
@@ -137,8 +166,8 @@ describe('App', () => {
     expect(screen.getByPlaceholderText('Password')).toBeInTheDocument()
   })
 
-  it('displays clue set selector when authenticated', () => {
-    // Mock authenticated user
+  it('displays clue set selector when authenticated', async () => {
+    // Mock authenticated user (defaults to host role)
     jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
       session: mockSession,
@@ -149,7 +178,10 @@ describe('App', () => {
 
     renderWithAuth(<App />)
 
-    expect(screen.getByText('Clue Sets')).toBeInTheDocument()
+    // Wait for role detection to complete
+    await waitFor(() => {
+      expect(screen.getByText('Clue Sets')).toBeInTheDocument()
+    })
     expect(screen.getByText('Host Game')).toBeInTheDocument()
   })
 
@@ -161,8 +193,8 @@ describe('App', () => {
     expect(screen.getByText(/© 2025.*Built with React/)).toBeInTheDocument()
   })
 
-  it('shows user email when authenticated', () => {
-    // Mock authenticated user
+  it('shows user email when authenticated', async () => {
+    // Mock authenticated user (defaults to host role)
     jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
       user: mockUser,
       session: mockSession,
@@ -173,7 +205,10 @@ describe('App', () => {
 
     renderWithAuth(<App />)
 
-    expect(screen.getByText('Currently logged in as')).toBeInTheDocument()
+    // Wait for role detection to complete
+    await waitFor(() => {
+      expect(screen.getByText('Currently logged in as')).toBeInTheDocument()
+    })
     expect(screen.getByText('test@example.com')).toBeInTheDocument()
   })
 

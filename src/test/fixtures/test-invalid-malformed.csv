@@ -1,0 +1,11 @@
+round,category,value,prompt,response
+jeopardy,Science,200,What is H2O?,Water
+jeopardy,Science,400,What is CO2?
+jeopardy,Science,600,What is NaCl?,Salt,Extra Column
+jeopardy,History,not-a-number,Who was the first president?,Washington
+jeopardy,History,400,What year was the Declaration signed?,1776
+jeopardy,,400,Missing category,Answer
+jeopardy,Geography,200,,Missing prompt
+jeopardy,Geography,400,What is the capital of France?,
+round-typo,Literature,200,Wrong round name,Shakespeare
+jeopardy,Literature,400,What is the first Harry Potter book?,Philosopher's Stone

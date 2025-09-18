@@ -4,6 +4,18 @@
 
 > **Coverage Management**: Test coverage goals are handled by remote agents using the `REMOTE_AGENT_TEST_COVERAGE_PROMPT.md`. Main development documentation does not track coverage metrics.
 
+## Key Testing Documentation
+- **[Testing Mocks Reference](./TESTING_MOCKS_REFERENCE.md)** - Complete mock registry and anti-over-mocking guidelines
+- **[Testing Strategy](./strategy/TESTING_STRATEGY.md)** - High-level testing approach and architecture
+- **Test Fixtures**: `src/test/fixtures/` - Comprehensive CSV test files for validation testing
+
+## Mock Management
+**⚠️ IMPORTANT**: Before creating any new mock, consult the [Testing Mocks Reference](./TESTING_MOCKS_REFERENCE.md) to:
+1. Check if a real function exists that should be used directly instead
+2. Verify the function requires mocking (external dependency, side effect, etc.)
+3. Add proper TypeScript typing to the mock
+4. Register the new mock in the reference file with justification
+
 ## Jest Configuration
 
 ### Test Commands

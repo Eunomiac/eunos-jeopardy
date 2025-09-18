@@ -1,9 +1,11 @@
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 import { supabase } from '../services/supabase/client'
-import type { Session, User } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
+import type { Database } from '../services/supabase/types'
+import { mockUser, mockSession } from '../test/__mocks__/commonTestData'
 
-// Mock Supabase client
+// Mock Supabase client with proper typing (simplified approach)
 jest.mock('../services/supabase/client', () => ({
   supabase: {
     auth: {
@@ -12,7 +14,31 @@ jest.mock('../services/supabase/client', () => ({
       signOut: jest.fn(),
       onAuthStateChange: jest.fn()
     },
-    from: jest.fn()
+    from: jest.fn().mockImplementation((table: keyof Database['public']['Tables']) => {
+      // Table-specific defaults for AuthContext tests
+      if (table === 'profiles') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { code: 'PGRST116' } // No profile found by default
+              })
+            })
+          }),
+          insert: jest.fn().mockResolvedValue({ data: null, error: null })
+        }
+      }
+      // Default mock for other tables
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
+        }),
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      }
+    })
   }
 }))
 
@@ -48,22 +74,7 @@ function TestComponent() {
 }
 
 describe('AuthContext', () => {
-  const mockUser: User = {
-    id: '123',
-    email: 'test@example.com',
-    user_metadata: { full_name: 'Test User' },
-    app_metadata: {},
-    aud: 'authenticated',
-    created_at: '2025-01-01T00:00:00Z'
-  } as User
-
-  const mockSession: Session = {
-    user: mockUser,
-    access_token: 'mock-token',
-    refresh_token: 'mock-refresh-token',
-    expires_in: 3600,
-    token_type: 'bearer'
-  } as Session
+  // Using consolidated mock data from commonTestData
 
   beforeEach(() => {
     jest.clearAllMocks()

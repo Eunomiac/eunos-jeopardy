@@ -1,0 +1,61 @@
+round,category,value,prompt,response
+jeopardy,Science,200,What is H2O?,Water
+jeopardy,Science,400,What is CO2?,Carbon Dioxide
+jeopardy,Science,600,What is NaCl?,Salt
+jeopardy,Science,800,What is O2?,Oxygen
+jeopardy,Science,1000,What is CH4?,Methane
+jeopardy,History,200,Who was the first president?,Washington
+jeopardy,History,400,What year was the Declaration signed?,1776
+jeopardy,History,600,Who wrote the Constitution?,Madison
+jeopardy,History,800,What war ended in 1865?,Civil War
+jeopardy,History,1000,Who was president during WWI?,Wilson
+jeopardy,Geography,200,What is the largest country?,Russia
+jeopardy,Geography,400,What is the capital of France?,Paris
+jeopardy,Geography,600,What mountain range separates Europe and Asia?,Urals
+jeopardy,Geography,800,What is the longest river?,Nile
+jeopardy,Geography,1000,What is the smallest country?,Vatican
+jeopardy,Literature,200,Who wrote Romeo and Juliet?,Shakespeare
+jeopardy,Literature,400,What is the first Harry Potter book?,Philosopher's Stone
+jeopardy,Literature,600,Who wrote 1984?,Orwell
+jeopardy,Literature,800,What is Moby Dick?,A whale
+jeopardy,Literature,1000,Who wrote Pride and Prejudice?,Austen
+jeopardy,Sports,200,How many players on a basketball team?,Five
+jeopardy,Sports,400,What sport uses a puck?,Hockey
+jeopardy,Sports,600,How many holes in golf?,18
+jeopardy,Sports,800,What is a perfect bowling score?,300
+jeopardy,Sports,1000,How long is a marathon?,26.2 miles
+jeopardy,Entertainment,200,Who played Luke Skywalker?,Mark Hamill
+jeopardy,Entertainment,400,What movie features a shark?,Jaws
+jeopardy,Entertainment,600,Who directed Titanic?,Cameron
+jeopardy,Entertainment,800,What TV show features dragons?,Game of Thrones
+jeopardy,Entertainment,1000,Who composed The Magic Flute?,Mozart
+double,Advanced Science,400,What is the speed of light?,299792458 m/s
+double,Advanced Science,800,What is Avogadro's number?,6.022 x 10^23
+double,Advanced Science,1200,What particle has no charge?,Neutron
+double,Advanced Science,1600,What is the hardest natural substance?,Diamond
+double,Advanced Science,2000,What gas makes up 78% of atmosphere?,Nitrogen
+double,World History,400,What empire did Caesar rule?,Roman
+double,World History,800,What year did WWII end?,1945
+double,World History,1200,Who was the first man on the moon?,Armstrong
+double,World History,1600,What wall fell in 1989?,Berlin Wall
+double,World History,2000,What ship sank in 1912?,Titanic
+double,World Geography,400,What is the capital of Australia?,Canberra
+double,World Geography,800,What desert is in Africa?,Sahara
+double,World Geography,1200,What strait separates Europe and Africa?,Gibraltar
+double,World Geography,1600,What is the highest mountain?,Everest
+double,World Geography,2000,What is the deepest ocean trench?,Mariana
+double,Classic Literature,400,Who wrote The Odyssey?,Homer
+double,Classic Literature,800,What is Dante's epic poem?,Divine Comedy
+double,Classic Literature,1200,Who wrote War and Peace?,Tolstoy
+double,Classic Literature,1600,What is Cervantes' famous work?,Don Quixote
+double,Classic Literature,2000,Who wrote The Canterbury Tales?,Chaucer
+double,Professional Sports,400,How many Super Bowls have there been?,Over 50
+double,Professional Sports,800,What sport is played at Wimbledon?,Tennis
+double,Professional Sports,1200,How many teams in the NFL?,32
+double,Professional Sports,1600,What is the maximum score in bowling?,300
+double,Professional Sports,2000,How many minutes in a hockey period?,20
+double,Film & Television,400,Who directed Star Wars?,Lucas
+double,Film & Television,800,What show features a chemistry teacher?,Breaking Bad
+double,Film & Television,1200,Who played Forrest Gump?,Tom Hanks
+double,Film & Television,1600,What movie won Best Picture in 1994?,Forrest Gump
+double,Film & Television,2000,Who created The Simpsons?,Matt Groening

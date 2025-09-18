@@ -4,6 +4,10 @@
 
 This document outlines our comprehensive testing strategy for this project, including coverage requirements, exclusions, and rationale for different testing approaches.
 
+## Key References
+- **[Testing Mocks Reference](../TESTING_MOCKS_REFERENCE.md)** - Complete mock registry and anti-over-mocking guidelines
+- **[Testing Reference](../TESTING_REFERENCE.md)** - Technical setup and configuration details
+
 ## Coverage Requirements
 
 - **Target Coverage**: 90% overall, 80% for new code
@@ -42,6 +46,15 @@ This document outlines our comprehensive testing strategy for this project, incl
 - [ ] Coverage meets minimum threshold (90% target)
 - [ ] SonarQube quality gate passes
 - [ ] No critical code smells or security issues
+
+## Mock Management Strategy
+
+### Anti-Over-Mocking Approach
+- **✔️ Mock**: External dependencies (APIs, databases, file system), side effects, callback props
+- **❌ Use Directly**: Pure functions, simple utilities, deterministic functions
+
+### Mock Registration
+**⚠️ REQUIRED**: All new mocks must be registered in [TESTING_MOCKS_REFERENCE.md](../TESTING_MOCKS_REFERENCE.md) with proper justification.
 
 ## Common Pitfalls to Be Aware Of
 

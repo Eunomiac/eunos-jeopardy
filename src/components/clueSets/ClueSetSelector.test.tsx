@@ -1,20 +1,24 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import type { User, Session } from '@supabase/supabase-js'
 import { ClueSetSelector } from './ClueSetSelector'
 import { AuthProvider } from '../../contexts/AuthContext'
 import * as AuthContext from '../../contexts/AuthContext'
 import * as clueSetUtils from '../../utils/clueSetUtils'
+import type { Database } from '../../services/supabase/types'
+import { mockUser, mockSession, mockClueSets } from '../../test/__mocks__/commonTestData'
 
-// Mock the dependencies
+// Type definitions for better mock typing
+type ClueSetRow = Database['public']['Tables']['clue_sets']['Row']
+
+// Mock the dependencies with proper typing
 jest.mock('../../utils/clueSetUtils', () => ({
-  getAvailableClueSets: jest.fn(),
-  filenameToDisplayName: jest.fn()
+  getAvailableClueSets: jest.fn() as jest.MockedFunction<() => string[]>,
+  filenameToDisplayName: jest.fn() as jest.MockedFunction<(filename: string) => string>
 }))
 
-// Mock clue set service
+// Mock clue set service with proper typing
 jest.mock('../../services/clueSets/clueSetService', () => ({
   ClueSetService: {
-    getUserClueSets: jest.fn()
+    getUserClueSets: jest.fn() as jest.MockedFunction<() => Promise<ClueSetRow[]>>
   }
 }))
 
@@ -22,40 +26,10 @@ import { ClueSetService } from '../../services/clueSets/clueSetService'
 
 describe('ClueSetSelector', () => {
   const mockGetAvailableClueSets = clueSetUtils.getAvailableClueSets as jest.Mock
-  const mockFilenameToDisplayName = clueSetUtils.filenameToDisplayName as jest.Mock
   const mockOnClueSetSelected = jest.fn()
   const mockGetUserClueSets = ClueSetService.getUserClueSets as jest.Mock
 
-  // Create mock user and session like in App.test.tsx
-  const mockUser: User = {
-    id: '123',
-    email: 'test@example.com',
-    aud: 'authenticated',
-    role: 'authenticated',
-    email_confirmed_at: '2023-01-01T00:00:00Z',
-    phone: '',
-    confirmed_at: '2023-01-01T00:00:00Z',
-    last_sign_in_at: '2023-01-01T00:00:00Z',
-    app_metadata: {},
-    user_metadata: {},
-    identities: [],
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  }
-
-  const mockSession: Session = {
-    access_token: 'mock-access-token',
-    refresh_token: 'mock-refresh-token',
-    expires_in: 3600,
-    token_type: 'bearer',
-    user: mockUser
-  }
-
-  // Mock clue sets data
-  const mockClueSets = [
-    { id: 'clue-set-1', name: 'Test Game 1', created_at: '2023-01-01T00:00:00Z' },
-    { id: 'clue-set-2', name: 'Test Game 2', created_at: '2023-01-01T00:00:00Z' }
-  ]
+  // Using consolidated mock data from commonTestData
 
   // Helper function to render with AuthProvider
   const renderWithAuth = (component: React.ReactElement) => {
@@ -79,9 +53,7 @@ describe('ClueSetSelector', () => {
 
     // Default mock implementations (these are for legacy file-based clue sets)
     mockGetAvailableClueSets.mockReturnValue(['test-game-1.csv', 'test-game-2.csv'])
-    mockFilenameToDisplayName.mockImplementation((filename: string) =>
-      filename.replace('.csv', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-    )
+    // Note: filenameToDisplayName is now used directly (no mocking needed)
   })
 
   const defaultProps = {

@@ -3,6 +3,7 @@ import { GameHostDashboard } from './GameHostDashboard'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { ClueService } from '../../services/clues/ClueService'
+import { mockUser, mockPlayers, createMockGame } from '../../test/__mocks__/commonTestData'
 
 // Mock services
 jest.mock('../../services/games/GameService')
@@ -26,52 +27,11 @@ Object.defineProperty(window, 'confirm', {
 // Mock setTimeout
 jest.useFakeTimers()
 
-const mockUser = {
-  id: 'user-123',
-  email: 'test@example.com',
-  aud: 'authenticated',
-  role: 'authenticated',
-  email_confirmed_at: '2023-01-01T00:00:00Z',
-  phone: '',
-  confirmed_at: '2023-01-01T00:00:00Z',
-  last_sign_in_at: '2023-01-01T00:00:00Z',
-  app_metadata: {},
-  user_metadata: {},
-  identities: [],
-  created_at: '2023-01-01T00:00:00Z',
-  updated_at: '2023-01-01T00:00:00Z'
-}
-
-const mockGame = {
-  id: 'game-123',
-  host_id: 'user-123',
-  clue_set_id: 'clue-set-123',
-  status: 'in_progress' as const,
-  current_round: 'jeopardy' as const,
-  is_buzzer_locked: false,
-  focused_clue_id: null,
-  focused_player_id: null,
-  created_at: '2023-01-01T00:00:00Z'
-}
-
-const mockPlayers = [
-  {
-    id: 'player-1',
-    game_id: 'game-123',
-    user_id: 'user-456',
-    nickname: 'Player One',
-    score: 1000,
-    joined_at: '2023-01-01T00:00:00Z'
-  },
-  {
-    id: 'player-2',
-    game_id: 'game-123',
-    user_id: 'user-789',
-    nickname: null,
-    score: 500,
-    joined_at: '2023-01-01T00:01:00Z'
-  }
-]
+// Using consolidated mock data from commonTestData
+const mockGame = createMockGame({
+  status: 'in_progress',
+  is_buzzer_locked: false
+})
 
 const renderWithAuth = (ui: React.ReactElement) => {
   return render(

@@ -1,12 +1,11 @@
 import { loadClueSetFromCSV, saveClueSetToDatabase } from './loader'
 import { supabase } from '../supabase/client'
-import * as csvParser from '../../utils/csvParser'
-import * as clueSetUtils from '../../utils/clueSetUtils'
+import { testCSVFiles } from '../../test/__mocks__/commonTestData'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-// Mock dependencies
+// Mock dependencies - only mock Supabase, use real utility functions
 jest.mock('../supabase/client')
-jest.mock('../../utils/csvParser')
-jest.mock('../../utils/clueSetUtils')
 
 // Mock fetch globally
 global.fetch = jest.fn()
@@ -17,71 +16,32 @@ describe('clueSetLoader', () => {
   })
 
   describe('loadClueSetFromCSV', () => {
-    const mockCSVText = `round,category,value,prompt,response
-jeopardy,Science,200,What is H2O?,Water
-jeopardy,Science,400,What is CO2?,Carbon Dioxide
-double,History,400,Who was first president?,Washington
-final,Geography,0,Largest country?,Russia`
-
-    const mockParsedRows = [
-      { round: 'jeopardy', category: 'Science', value: 200, prompt: 'What is H2O?', response: 'Water' },
-      { round: 'jeopardy', category: 'Science', value: 400, prompt: 'What is CO2?', response: 'Carbon Dioxide' },
-      { round: 'double', category: 'History', value: 400, prompt: 'Who was first president?', response: 'Washington' },
-      { round: 'final', category: 'Geography', value: 0, prompt: 'Largest country?', response: 'Russia' }
-    ]
+    // Using consolidated mock data from commonTestData
 
     beforeEach(() => {
-      // Mock the CSV parser
-      const mockParseCSV = csvParser.parseCSV as jest.Mock
-      const mockValidateJeopardyStructure = csvParser.validateJeopardyStructure as jest.Mock
-      mockParseCSV.mockReturnValue(mockParsedRows)
-      mockValidateJeopardyStructure.mockImplementation(() => {}) // No error
-
-      // Mock clue set utils
-      const mockFilenameToDisplayName = clueSetUtils.filenameToDisplayName as jest.Mock
-      const mockGetClueSetURL = clueSetUtils.getClueSetURL as jest.Mock
-      mockFilenameToDisplayName.mockReturnValue('Test Game 1')
-      mockGetClueSetURL.mockReturnValue('/clue-sets/test-game-1.csv')
-
-      // Mock fetch
+      // Default: Mock fetch to return valid CSV content
+      const validCSV = readFileSync(join(process.cwd(), testCSVFiles.validBasic), 'utf-8')
       ;(global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
-        text: () => Promise.resolve(mockCSVText)
+        text: () => Promise.resolve(validCSV)
       })
     })
 
-    it('should successfully load and parse CSV file', async () => {
-      const result = await loadClueSetFromCSV('test-game-1.csv')
+    it('should successfully load and parse valid CSV file', async () => {
+      const result = await loadClueSetFromCSV('test-valid-basic.csv')
 
-      expect(result).toEqual({
-        name: 'Test Game 1',
-        filename: 'test-game-1.csv',
-        rounds: {
-          jeopardy: [
-            {
-              name: 'Science',
-              clues: [
-                { value: 200, prompt: 'What is H2O?', response: 'Water', position: 1 },
-                { value: 400, prompt: 'What is CO2?', response: 'Carbon Dioxide', position: 2 }
-              ]
-            }
-          ],
-          double: [
-            {
-              name: 'History',
-              clues: [
-                { value: 400, prompt: 'Who was first president?', response: 'Washington', position: 1 }
-              ]
-            }
-          ],
-          final: {
-            name: 'Geography',
-            clues: [
-              { value: 0, prompt: 'Largest country?', response: 'Russia', position: 1 }
-            ]
-          }
-        }
-      })
+      // Verify basic structure - using real validation means we get real results!
+      expect(result).toHaveProperty('name', 'Test Valid Basic')
+      expect(result).toHaveProperty('filename', 'test-valid-basic.csv')
+      expect(result.rounds).toHaveProperty('jeopardy')
+      expect(result.rounds).toHaveProperty('double')
+      expect(result.rounds).toHaveProperty('final')
+
+      // Verify proper Jeopardy structure (real validation ensures this)
+      expect(result.rounds.jeopardy).toHaveLength(6) // 6 categories
+      expect(result.rounds.double).toHaveLength(6) // 6 categories
+      expect(result.rounds.final).toHaveProperty('name') // Final is a single category object
+      expect(result.rounds.final).toHaveProperty('clues')
     })
 
     it('should handle fetch error', async () => {
@@ -100,43 +60,50 @@ final,Geography,0,Largest country?,Russia`
       await expect(loadClueSetFromCSV('test-game-1.csv')).rejects.toThrow('Network error')
     })
 
-    it('should handle CSV parsing error', async () => {
-      const mockParseCSV = csvParser.parseCSV as jest.Mock
-      mockParseCSV.mockImplementation(() => {
-        throw new Error('Invalid CSV format')
+    it('should handle CSV parsing error with malformed CSV', async () => {
+      // Mock fetch to return malformed CSV that will cause parseCSV to fail
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('invalid,csv,format\nno,proper,structure')
       })
 
-      await expect(loadClueSetFromCSV('test-game-1.csv')).rejects.toThrow('Invalid CSV format')
+      await expect(loadClueSetFromCSV('test-game-1.csv')).rejects.toThrow()
     })
 
-    it('should handle validation error', async () => {
-      const mockValidateJeopardyStructure = csvParser.validateJeopardyStructure as jest.Mock
-      mockValidateJeopardyStructure.mockImplementation(() => {
-        throw new Error('Invalid Jeopardy structure')
+    it('should handle validation error with invalid structure', async () => {
+      // Mock fetch to return CSV with invalid Jeopardy structure (too few clues)
+      const invalidCSV = `round,category,value,prompt,response
+jeopardy,Science,200,What is H2O?,Water
+final,Geography,0,Largest country?,Russia`
+
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(invalidCSV)
       })
 
-      await expect(loadClueSetFromCSV('test-game-1.csv')).rejects.toThrow('Invalid Jeopardy structure')
+      await expect(loadClueSetFromCSV('test-game-1.csv')).rejects.toThrow('Jeopardy round should have 30 clues')
     })
 
     it('should call correct URL for CSV file', async () => {
       await loadClueSetFromCSV('test-game-1.csv')
 
-      const mockGetClueSetURL = clueSetUtils.getClueSetURL as jest.Mock
-      expect(mockGetClueSetURL).toHaveBeenCalledWith('test-game-1.csv')
+      // Verify fetch was called with the correct URL (using real getClueSetURL function)
       expect(global.fetch).toHaveBeenCalledWith('/clue-sets/test-game-1.csv')
     })
 
     it('should structure round data correctly with multiple categories', async () => {
-      const multiCategoryRows = [
-        { round: 'jeopardy', category: 'Science', value: 200, prompt: 'Q1', response: 'A1' },
-        { round: 'jeopardy', category: 'Science', value: 400, prompt: 'Q2', response: 'A2' },
-        { round: 'jeopardy', category: 'History', value: 200, prompt: 'Q3', response: 'A3' },
-        { round: 'jeopardy', category: 'History', value: 400, prompt: 'Q4', response: 'A4' },
-        { round: 'final', category: 'Geography', value: 0, prompt: 'Final Q', response: 'Final A' }
-      ]
+      // Create CSV content that will produce the expected structure
+      const multiCategoryCSV = `round,category,value,prompt,response
+jeopardy,Science,200,Q1,A1
+jeopardy,Science,400,Q2,A2
+jeopardy,History,200,Q3,A3
+jeopardy,History,400,Q4,A4
+final,Geography,0,Final Q,Final A`
 
-      const mockParseCSV = csvParser.parseCSV as jest.Mock
-      mockParseCSV.mockReturnValue(multiCategoryRows)
+      ;(global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(multiCategoryCSV)
+      })
 
       const result = await loadClueSetFromCSV('test-game-1.csv')
 
