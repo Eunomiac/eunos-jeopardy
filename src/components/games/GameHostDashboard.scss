@@ -256,11 +256,44 @@
                 &::placeholder {
                   color: rgba($jeopardy-white, 0.6);
                 }
+
+                // Remove number input spinner controls
+                &[type="number"] {
+                  -moz-appearance: textfield; // Firefox
+
+                  &::-webkit-outer-spin-button,
+                  &::-webkit-inner-spin-button {
+                    -webkit-appearance: none; // Chrome, Safari, Edge
+                    margin: 0;
+                  }
+                }
               }
 
               .btn {
                 @include jeopardy-button-small;
-                min-width: 60px;
+                min-width: 32px;
+                padding: 0.25rem 0.5rem;
+                font-weight: bold;
+
+                &.btn-success {
+                  background-color: rgba(40, 167, 69, 0.8);
+                  border-color: rgba(40, 167, 69, 0.8);
+
+                  &:hover:not(:disabled) {
+                    background-color: rgba(40, 167, 69, 1);
+                    border-color: rgba(40, 167, 69, 1);
+                  }
+                }
+
+                &.btn-danger {
+                  background-color: rgba(220, 53, 69, 0.8);
+                  border-color: rgba(220, 53, 69, 0.8);
+
+                  &:hover:not(:disabled) {
+                    background-color: rgba(220, 53, 69, 1);
+                    border-color: rgba(220, 53, 69, 1);
+                  }
+                }
               }
             }
           }

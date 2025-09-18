@@ -244,12 +244,17 @@ export function GameHostDashboard({
     "ACTIVE" | "DISCONNECTED" | "SLOW"
   >("ACTIVE");
 
-  /** Latency compensation toggle state */
-  const [latencyCompensationEnabled, setLatencyCompensationEnabled] =
-    useState(true);
+  /** Score adjustment input values for each player */
+  const [scoreAdjustments, setScoreAdjustments] = useState<Record<string, string>>({});
+
+  /** Buzzer timeout in milliseconds for automatic resolution */
+  const [buzzerTimeoutMs, setBuzzerTimeoutMs] = useState(500);
 
   /** Clue timeout timer reference */
   const [clueTimeoutId, setClueTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  /** Buzzer resolution timeout timer reference */
+  const [buzzerResolutionTimeoutId, setBuzzerResolutionTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   /** Remaining time for current clue (in seconds) */
   const [clueTimeRemaining, setClueTimeRemaining] = useState<number | null>(null);
@@ -543,10 +548,78 @@ export function GameHostDashboard({
     }
   }, [focusedClue, gameId]);
 
+  /**
+   * Clears the buzzer resolution timeout.
+   */
+  const clearBuzzerResolutionTimeout = useCallback(() => {
+    if (buzzerResolutionTimeoutId) {
+      clearTimeout(buzzerResolutionTimeoutId);
+      setBuzzerResolutionTimeoutId(null);
+    }
+  }, [buzzerResolutionTimeoutId]);
+
+  /**
+   * Starts the buzzer resolution timeout when first player buzzes.
+   */
+  const startBuzzerResolutionTimeout = useCallback(() => {
+    // Clear any existing timeout
+    if (buzzerResolutionTimeoutId) {
+      clearTimeout(buzzerResolutionTimeoutId);
+    }
+
+    // Start new timeout
+    const timeoutId = setTimeout(async () => {
+      // Automatically select the fastest player
+      if (buzzerQueue.length > 0 && user && game) {
+        // Find player with fastest reaction time
+        const fastestBuzz = buzzerQueue.reduce((fastest, current) => {
+          const fastestTime = fastest.reaction_time || Infinity;
+          const currentTime = current.reaction_time || Infinity;
+          return currentTime < fastestTime ? current : fastest;
+        });
+
+        try {
+          // Select the fastest player directly using GameService
+          const updatedGame = await GameService.setFocusedPlayer(
+            gameId,
+            fastestBuzz.user_id,
+            user.id
+          );
+          setGame(updatedGame);
+
+          // Find player name for feedback
+          const player = players.find((p) => p.user_id === fastestBuzz.user_id);
+          const playerName = player?.nickname || "Unknown Player";
+
+          setMessage(`Auto-selected fastest player: ${playerName} (${fastestBuzz.reaction_time}ms)`);
+          setMessageType("success");
+        } catch (error) {
+          console.error("Failed to auto-select player:", error);
+          setMessage("Failed to auto-select player");
+          setMessageType("error");
+        }
+      }
+    }, buzzerTimeoutMs);
+
+    setBuzzerResolutionTimeoutId(timeoutId);
+  }, [buzzerQueue, buzzerTimeoutMs, buzzerResolutionTimeoutId, user, game, gameId, players]);
+
   // Load buzzer queue when focused clue changes
   useEffect(() => {
     loadBuzzerQueue();
   }, [loadBuzzerQueue]);
+
+  // Handle buzzer resolution timeout when queue changes
+  useEffect(() => {
+    if (buzzerQueue.length === 1) {
+      // First player just buzzed - start the timeout
+      startBuzzerResolutionTimeout();
+    } else if (buzzerQueue.length === 0) {
+      // Queue cleared - clear the timeout
+      clearBuzzerResolutionTimeout();
+    }
+    // If more players buzz in, keep the existing timeout running
+  }, [buzzerQueue.length, startBuzzerResolutionTimeout, clearBuzzerResolutionTimeout]);
 
   /**
    * Determines the current state of the multi-state reveal/buzzer button
@@ -653,30 +726,35 @@ export function GameHostDashboard({
     // Clear any existing timeout
     if (clueTimeoutId) {
       clearTimeout(clueTimeoutId);
+      setClueTimeoutId(null);
     }
 
-    // Start countdown display
-    setClueTimeRemaining(CLUE_TIMEOUT_SECONDS);
+    // Add a small delay to ensure state has settled before starting timeout
+    // This prevents the timeout from being cancelled immediately if called too quickly
+    setTimeout(() => {
+      // Start countdown display
+      setClueTimeRemaining(CLUE_TIMEOUT_SECONDS);
 
-    // Update countdown every second
-    const countdownInterval = setInterval(() => {
-      setClueTimeRemaining((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(countdownInterval);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      // Update countdown every second
+      const countdownInterval = setInterval(() => {
+        setClueTimeRemaining((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(countdownInterval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
-    // Set main timeout
-    const timeoutId = setTimeout(async () => {
-      clearInterval(countdownInterval);
-      setClueTimeRemaining(null);
-      await handleClueTimeout();
-    }, CLUE_TIMEOUT_SECONDS * 1000);
+      // Set main timeout
+      const timeoutId = setTimeout(async () => {
+        clearInterval(countdownInterval);
+        setClueTimeRemaining(null);
+        await handleClueTimeout();
+      }, CLUE_TIMEOUT_SECONDS * 1000);
 
-    setClueTimeoutId(timeoutId);
+      setClueTimeoutId(timeoutId);
+    }, 100); // 100ms delay to ensure state stability
   }, [clueTimeoutId, CLUE_TIMEOUT_SECONDS, handleClueTimeout]);
 
 
@@ -800,10 +878,13 @@ export function GameHostDashboard({
    *
    * @param playerId - UUID of the player to select
    */
-  const handlePlayerSelection = async (playerId: string) => {
+  const handlePlayerSelection = useCallback(async (playerId: string) => {
     if (!user || !game) {
       return;
     }
+
+    // Clear the buzzer resolution timeout since a player was manually selected
+    clearBuzzerResolutionTimeout();
 
     try {
       setMessage("Selecting player...");
@@ -830,7 +911,7 @@ export function GameHostDashboard({
       );
       setMessageType("error");
     }
-  };
+  }, [user, game, gameId, players, clearBuzzerResolutionTimeout]);
 
   /**
    * Handles marking a player's answer as correct.
@@ -997,26 +1078,7 @@ export function GameHostDashboard({
    * - Could integrate with game board clue selection
    */
 
-  /**
-   * Handles latency compensation toggle for buzzer timing fairness.
-   *
-   * Toggles the latency compensation feature on/off. When enabled, the system
-   * accounts for network latency differences between players to ensure fair
-   * buzzer timing. When disabled, raw timing is used.
-   *
-   * **Latency Compensation Effects:**
-   * - Enabled: Adjusts buzzer queue ordering based on connection latency
-   * - Disabled: Uses raw timestamp ordering for buzzer queue
-   * - Default: Enabled for fairness in online gameplay
-   */
-  const handleLatencyCompensationToggle = () => {
-    setLatencyCompensationEnabled(!latencyCompensationEnabled);
 
-    // Provide user feedback
-    const newState = !latencyCompensationEnabled;
-    setMessage(`Latency compensation ${newState ? "enabled" : "disabled"}`);
-    setMessageType("success");
-  };
 
   const handleToggleBuzzer = async () => {
     // Validate prerequisites
@@ -1156,6 +1218,99 @@ export function GameHostDashboard({
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Handles score adjustment input changes for players.
+   */
+  const handleScoreAdjustmentChange = (playerId: string, value: string) => {
+    setScoreAdjustments(prev => ({
+      ...prev,
+      [playerId]: value
+    }));
+  };
+
+  /**
+   * Handles adding points to a player's score.
+   */
+  const handleAddScore = async (playerId: string) => {
+    if (!user || !game) return;
+
+    const adjustmentValue = scoreAdjustments[playerId];
+    if (!adjustmentValue || adjustmentValue.trim() === '') return;
+
+    const scoreChange = parseInt(adjustmentValue, 10);
+    if (isNaN(scoreChange)) return;
+
+    try {
+      setMessage("Adjusting player score...");
+      await GameService.updatePlayerScore(gameId, playerId, scoreChange, user.id);
+
+      // Refresh players list
+      const updatedPlayers = await GameService.getPlayers(gameId);
+      setPlayers(updatedPlayers);
+
+      // Clear the input
+      setScoreAdjustments(prev => ({
+        ...prev,
+        [playerId]: ''
+      }));
+
+      setMessage(`Added ${scoreChange} points to player score`);
+      setMessageType("success");
+
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to adjust score:", error);
+      setMessage(`Failed to adjust score: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Handles subtracting points from a player's score.
+   */
+  const handleSubtractScore = async (playerId: string) => {
+    if (!user || !game) return;
+
+    const adjustmentValue = scoreAdjustments[playerId];
+    if (!adjustmentValue || adjustmentValue.trim() === '') return;
+
+    const scoreChange = parseInt(adjustmentValue, 10);
+    if (isNaN(scoreChange)) return;
+
+    // Use absolute value to ensure we always subtract
+    const absoluteScoreChange = Math.abs(scoreChange);
+
+    try {
+      setMessage("Adjusting player score...");
+      await GameService.updatePlayerScore(gameId, playerId, -absoluteScoreChange, user.id);
+
+      // Refresh players list
+      const updatedPlayers = await GameService.getPlayers(gameId);
+      setPlayers(updatedPlayers);
+
+      // Clear the input
+      setScoreAdjustments(prev => ({
+        ...prev,
+        [playerId]: ''
+      }));
+
+      setMessage(`Subtracted ${absoluteScoreChange} points from player score`);
+      setMessageType("success");
+
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to adjust score:", error);
+      setMessage(`Failed to adjust score: ${error instanceof Error ? error.message : "Unknown error"}`);
       setMessageType("error");
     }
   };
@@ -1453,14 +1608,26 @@ export function GameHostDashboard({
                         type="number"
                         className="form-control form-control-sm"
                         placeholder="±"
-                        disabled
+                        value={scoreAdjustments[player.user_id] || ''}
+                        onChange={(e) => handleScoreAdjustmentChange(player.user_id, e.target.value)}
+                        disabled={game?.status !== 'in_progress'}
                         style={{ width: "60px" }}
                       />
                       <button
-                        className="btn btn-outline-secondary btn-sm"
-                        disabled
+                        className="btn btn-success btn-sm"
+                        onClick={() => handleAddScore(player.user_id)}
+                        disabled={game?.status !== 'in_progress' || !scoreAdjustments[player.user_id]?.trim()}
+                        title="Add points"
                       >
-                        Adjust
+                        +
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleSubtractScore(player.user_id)}
+                        disabled={game?.status !== 'in_progress' || !scoreAdjustments[player.user_id]?.trim()}
+                        title="Subtract points"
+                      >
+                        −
                       </button>
                     </div>
                   </div>
@@ -1504,21 +1671,24 @@ export function GameHostDashboard({
                 </span>
               </span>
               <span>
-                <span className="status-label">Latency Compensation:</span>
-                <button
-                  type="button"
-                  className={`jeopardy-button-small ${
-                    latencyCompensationEnabled ? "green" : "red"
-                  }`}
-                  onClick={handleLatencyCompensationToggle}
-                  aria-label={`Latency compensation is ${
-                    latencyCompensationEnabled ? "enabled" : "disabled"
-                  }. Click to ${
-                    latencyCompensationEnabled ? "disable" : "enable"
-                  }.`}
-                >
-                  {latencyCompensationEnabled ? "ENABLED" : "DISABLED"}
-                </button>
+                <span className="status-label">Auto-Resolution Timeout:</span>
+                <input
+                  type="number"
+                  className="form-control form-control-sm"
+                  value={buzzerTimeoutMs}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value) && value >= 100 && value <= 5000) {
+                      setBuzzerTimeoutMs(value);
+                      // TODO: Save to database when implemented
+                    }
+                  }}
+                  min="100"
+                  max="5000"
+                  step="50"
+                  style={{ width: "80px", display: "inline-block", marginLeft: "8px" }}
+                />
+                <span style={{ marginLeft: "4px", fontSize: "0.8em", color: "#ccc" }}>ms</span>
               </span>
             </div>
 
