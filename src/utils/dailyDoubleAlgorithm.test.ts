@@ -8,7 +8,7 @@ describe('dailyDoubleAlgorithm', () => {
   describe('generateDailyDoublePositions', () => {
     it('should generate 1 Daily Double for Jeopardy round', () => {
       const positions = generateDailyDoublePositions('jeopardy')
-      
+
       expect(positions).toHaveLength(1)
       expect(positions[0]).toHaveProperty('category')
       expect(positions[0]).toHaveProperty('row')
@@ -20,9 +20,9 @@ describe('dailyDoubleAlgorithm', () => {
 
     it('should generate 2 Daily Doubles for Double Jeopardy round', () => {
       const positions = generateDailyDoublePositions('double')
-      
+
       expect(positions).toHaveLength(2)
-      
+
       // Check that both positions are valid
       positions.forEach(position => {
         expect(position.category).toBeGreaterThanOrEqual(1)
@@ -30,7 +30,7 @@ describe('dailyDoubleAlgorithm', () => {
         expect(position.row).toBeGreaterThanOrEqual(1)
         expect(position.row).toBeLessThanOrEqual(5)
       })
-      
+
       // Check that Daily Doubles are in different categories
       expect(positions[0].category).not.toBe(positions[1].category)
     })
@@ -47,7 +47,7 @@ describe('dailyDoubleAlgorithm', () => {
       const positions1 = generateDailyDoublePositions('jeopardy')
       const positions2 = generateDailyDoublePositions('jeopardy')
       const positions3 = generateDailyDoublePositions('jeopardy')
-      
+
       // With randomness, at least one should be different
       const allSame = (
         positions1[0].category === positions2[0].category &&
@@ -55,24 +55,24 @@ describe('dailyDoubleAlgorithm', () => {
         positions2[0].category === positions3[0].category &&
         positions2[0].row === positions3[0].row
       )
-      
+
       expect(allSame).toBe(false)
     })
 
     it('should respect probability distribution over many runs', () => {
       const rowCounts = { 2: 0, 3: 0, 4: 0, 5: 0 }
       const runs = 1000
-      
+
       for (let i = 0; i < runs; i++) {
         const positions = generateDailyDoublePositions('jeopardy')
         rowCounts[positions[0].row as keyof typeof rowCounts]++
       }
-      
+
       // Row 4 should be most common (39% probability)
       expect(rowCounts[4]).toBeGreaterThan(rowCounts[2])
       expect(rowCounts[4]).toBeGreaterThan(rowCounts[3])
       expect(rowCounts[4]).toBeGreaterThan(rowCounts[5])
-      
+
       // Row 2 should be least common (9% probability)
       expect(rowCounts[2]).toBeLessThan(rowCounts[3])
       expect(rowCounts[2]).toBeLessThan(rowCounts[4])
@@ -95,9 +95,9 @@ describe('dailyDoubleAlgorithm', () => {
 
     it('should successfully process valid Jeopardy round', () => {
       const roundData = createValidRoundData('jeopardy')
-      
+
       const result = processDailyDoubles(roundData)
-      
+
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
       expect(result.data?.dailyDoublePositions).toHaveLength(1)
@@ -106,9 +106,9 @@ describe('dailyDoubleAlgorithm', () => {
 
     it('should successfully process valid Double Jeopardy round', () => {
       const roundData = createValidRoundData('double')
-      
+
       const result = processDailyDoubles(roundData)
-      
+
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
       expect(result.data?.dailyDoublePositions).toHaveLength(2)
@@ -117,12 +117,12 @@ describe('dailyDoubleAlgorithm', () => {
 
     it('should mark correct clues as Daily Doubles', () => {
       const roundData = createValidRoundData('jeopardy')
-      
+
       const result = processDailyDoubles(roundData)
-      
+
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
-      
+
       if (result.data) {
         const position = result.data.dailyDoublePositions[0]
 
@@ -155,9 +155,9 @@ describe('dailyDoubleAlgorithm', () => {
           response: `Response ${Math.floor(i / 5) + 1}-${(i % 5) + 1}`
         }))
       }
-      
+
       const result = processDailyDoubles(invalidRoundData)
-      
+
       expect(result.success).toBe(false)
       expect(result.errors).toBeDefined()
       expect(result.errors?.[0]).toContain('Expected 6 categories, found 5')
@@ -176,9 +176,9 @@ describe('dailyDoubleAlgorithm', () => {
           response: `Response ${Math.floor(i / 4) + 1}-${(i % 4) + 1}`
         }))
       }
-      
+
       const result = processDailyDoubles(invalidRoundData)
-      
+
       expect(result.success).toBe(false)
       expect(result.errors).toBeDefined()
       expect(result.errors?.[0]).toContain('Expected 30 clues, found 24')
@@ -188,12 +188,12 @@ describe('dailyDoubleAlgorithm', () => {
     it('should preserve original round data structure', () => {
       const roundData = createValidRoundData('jeopardy')
       const originalData = JSON.parse(JSON.stringify(roundData)) // Deep copy
-      
+
       const result = processDailyDoubles(roundData)
-      
+
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
-      
+
       if (result.data) {
         // Check that all original data is preserved
         expect(result.data.round).toBe(originalData.round)

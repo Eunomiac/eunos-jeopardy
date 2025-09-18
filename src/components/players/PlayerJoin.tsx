@@ -26,9 +26,7 @@ interface PlayerJoinProps {
  * @param email - The email address
  * @returns The username portion (everything before @)
  */
-const getDefaultNicknameFromEmail = (email: string): string => {
-  return email.split('@')[0] || 'Player'
-}
+const getDefaultNicknameFromEmail = (email: string): string => email.split('@')[0] || 'Player'
 
 export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
   const { user } = useAuth()
@@ -214,7 +212,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
           }
         </p>
 
-        <form onSubmit={handleSubmit} className="join-form">
+        <form onSubmit={handleSubmit} className="join-form" data-testid="join-form">
           <div className="form-group">
             <label htmlFor="nickname">Nickname</label>
             <input

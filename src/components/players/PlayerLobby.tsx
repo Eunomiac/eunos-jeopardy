@@ -85,7 +85,7 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
    * Handles leaving the game.
    */
   const handleLeaveGame = async () => {
-    if (!user) return
+    if (!user) { return }
 
     try {
       setLoading(true)

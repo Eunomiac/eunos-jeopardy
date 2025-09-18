@@ -23,7 +23,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-image: url('/assets/images/bg-stage.webp');
+  background-image: url("/assets/images/bg-stage.webp");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -84,7 +84,8 @@
 
   // Animation for loading state
   @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
     }
     50% {
@@ -101,12 +102,11 @@
     width: 90vw;
 
     h2 {
-    // line-height: 1.2;
-    text-align: center;
-    font-family: $font-family-title;
-    font-size: 3rem;
-    color: $jeopardy-white;
-    text-shadow: 2px 2px 4px rgba($jeopardy-black, 0.8);
+      text-align: center;
+      font-family: $font-family-title;
+      font-size: 3rem;
+      color: $jeopardy-white;
+      text-shadow: 2px 2px 4px rgba($jeopardy-black, 0.8);
     }
   }
 
@@ -129,7 +129,6 @@
       }
 
       .clue-cell {
-
         &.revealed {
           color: $jeopardy-background-blue;
           background: $jeopardy-background-blue;

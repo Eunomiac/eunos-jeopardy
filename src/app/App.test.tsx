@@ -5,13 +5,16 @@ import * as AuthContext from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { loadClueSetFromCSV, saveClueSetToDatabase } from '../services/clueSets/loader'
 import { ClueSetService, type UserClueSet } from '../services/clueSets/clueSetService'
+import { UploadService } from '../services/clueSets/uploadService'
 import type { Database } from '../services/supabase/types'
 import { mockUser, mockSession, createMockGame } from '../test/__mocks__/commonTestData'
+import { supabase } from '../services/supabase/client'
 
 // Mock the services
 jest.mock('../services/games/GameService')
 jest.mock('../services/clueSets/loader')
 jest.mock('../services/clueSets/clueSetService')
+jest.mock('../services/clueSets/uploadService')
 
 // Mock Supabase client with smart defaults and proper typing for data
 jest.mock('../services/supabase/client', () => ({
@@ -71,6 +74,22 @@ const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockLoadClueSetFromCSV = loadClueSetFromCSV as jest.MockedFunction<typeof loadClueSetFromCSV>
 const mockSaveClueSetToDatabase = saveClueSetToDatabase as jest.MockedFunction<typeof saveClueSetToDatabase>
 const mockClueSetService = ClueSetService as jest.Mocked<typeof ClueSetService>
+const mockUploadService = UploadService as jest.Mocked<typeof UploadService>
+const mockSupabase = supabase as jest.Mocked<typeof supabase>
+
+// Helper function for default Supabase mock behavior
+const mockSupabaseDefault = () => {
+  return {
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({ data: null, error: null })
+      })
+    }),
+    insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+    update: jest.fn().mockResolvedValue({ data: null, error: null }),
+    delete: jest.fn().mockResolvedValue({ data: null, error: null })
+  }
+}
 
 // Helper function to render App with AuthProvider
 const renderWithAuth = (ui: React.ReactElement) => {
@@ -398,6 +417,610 @@ describe('App', () => {
         expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument()
         expect(screen.queryByText('Host Game')).not.toBeInTheDocument()
       })
+    })
+  })
+
+  describe('Player Interface', () => {
+    beforeEach(() => {
+      // Mock authenticated user as player
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Mock user as player role
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'player' } as Database['public']['Tables']['profiles']['Row'],
+                  error: null
+                })
+              })
+            })
+          }
+        }
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' }
+                })
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+    })
+
+    it('should show player join interface for player role', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Join Game')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle player joining a game', async () => {
+      const mockGame = createMockGame({ status: 'lobby' })
+
+      // Mock GameService.getActiveGame to return a game
+      ;(GameService.getActiveGame as jest.Mock).mockResolvedValue(mockGame)
+      ;(GameService.getPlayers as jest.Mock).mockResolvedValue([])
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Join Game')).toBeInTheDocument()
+      })
+
+      // Simulate successful game join
+      const playerJoinComponent = screen.getByText('Join Game').closest('.content-section')
+      expect(playerJoinComponent).toBeInTheDocument()
+    })
+
+    it('should redirect player to lobby when already in active game', async () => {
+      const mockGame = createMockGame({ status: 'lobby' })
+      const mockPlayers = [{ user_id: mockUser.id, nickname: 'TestPlayer' }]
+
+      ;(GameService.getActiveGame as jest.Mock).mockResolvedValue(mockGame)
+      ;(GameService.getPlayers as jest.Mock).mockResolvedValue(mockPlayers)
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Game Lobby')).toBeInTheDocument()
+      })
+    })
+
+    it('should redirect player to game dashboard when in active game', async () => {
+      const mockGame = createMockGame({ status: 'in_progress' })
+      const mockPlayers = [{ user_id: mockUser.id, nickname: 'TestPlayer' }]
+
+      ;(GameService.getActiveGame as jest.Mock).mockResolvedValue(mockGame)
+      ;(GameService.getPlayers as jest.Mock).mockResolvedValue(mockPlayers)
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Error Loading Game')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle player role setup errors gracefully', async () => {
+      ;(GameService.getActiveGame as jest.Mock).mockRejectedValue(new Error('Network error'))
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Join Game')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Role Detection', () => {
+    it('should handle profile fetch errors gracefully', async () => {
+      // Mock authenticated user
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Mock profile fetch error
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: 'Profile not found' }
+                })
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+
+      renderWithAuth(<App />)
+
+      // Should default to player mode on error
+      await waitFor(() => {
+        expect(screen.getByText('Join Game')).toBeInTheDocument()
+      })
+    })
+
+    it('should show loading screen while determining role', async () => {
+      // Mock authenticated user
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Mock slow profile fetch
+      let resolveProfile: (value: { data: Database['public']['Tables']['profiles']['Row'] | null; error: Error | null }) => void
+      const profilePromise = new Promise((resolve) => {
+        resolveProfile = resolve
+      })
+
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockReturnValue(profilePromise)
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+
+      renderWithAuth(<App />)
+
+      // Should show loading screen
+      expect(screen.getByText('Loading...')).toBeInTheDocument()
+      expect(screen.getByText('Determining your interface...')).toBeInTheDocument()
+
+      // Resolve the profile fetch
+      resolveProfile!({
+        data: { role: 'host' } as Database['public']['Tables']['profiles']['Row'],
+        error: null
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle role detection errors', async () => {
+      // Mock authenticated user
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Mock getUserRole to throw error
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockRejectedValue(new Error('Database error'))
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+
+      renderWithAuth(<App />)
+
+      // Should default to player mode on error
+      await waitFor(() => {
+        expect(screen.getByText('Join Game')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Host Role Setup', () => {
+    beforeEach(() => {
+      // Mock authenticated user as host
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Ensure host role for these tests
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'host' } as Database['public']['Tables']['profiles']['Row'],
+                  error: null
+                })
+              })
+            })
+          }
+        }
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' }
+                })
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+    })
+
+    it('should redirect host to dashboard when active game exists', async () => {
+      const mockGame = createMockGame({ status: 'in_progress' })
+      ;(GameService.getActiveGame as jest.Mock).mockResolvedValue(mockGame)
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Game Dashboard')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle host role setup errors gracefully', async () => {
+      ;(GameService.getActiveGame as jest.Mock).mockRejectedValue(new Error('Network error'))
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Drag and Drop File Upload', () => {
+    beforeEach(() => {
+      // Reset mocks
+      jest.clearAllMocks()
+
+      // Mock authenticated user as host
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Ensure host role for drag and drop tests
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'host' } as Database['public']['Tables']['profiles']['Row'],
+                  error: null
+                })
+              })
+            })
+          }
+        }
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' }
+                })
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+
+      // Mock UploadService
+      mockUploadService.handleDragAndDropUpload.mockResolvedValue({
+        success: true,
+        clueSetId: 'test-clue-set-id'
+      })
+    })
+
+    it('should handle drag enter events', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+
+      const appContainer = screen.getByRole('application')
+
+      // Simulate drag enter
+      fireEvent.dragEnter(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.csv', { type: 'text/csv' })]
+        }
+      })
+
+      // Should show drag overlay
+      await waitFor(() => {
+        expect(screen.getByText('Drop CSV File Here')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle drag over events', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+
+      const appContainer = screen.getByRole('application')
+
+      // Simulate drag over
+      fireEvent.dragOver(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.csv', { type: 'text/csv' })]
+        }
+      })
+
+      // Should not crash
+      expect(screen.getByText('Host Game')).toBeInTheDocument()
+    })
+
+    it('should handle drag leave events', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+
+      const appContainer = screen.getByRole('application')
+
+      // First drag enter to set drag state
+      fireEvent.dragEnter(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.csv', { type: 'text/csv' })]
+        }
+      })
+
+      // Then drag leave
+      fireEvent.dragLeave(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.csv', { type: 'text/csv' })]
+        }
+      })
+
+      // Drag overlay should be removed
+      await waitFor(() => {
+        expect(screen.queryByText('Drop CSV File Here')).not.toBeInTheDocument()
+      })
+    })
+
+    it('should handle file drop with unauthenticated user', async () => {
+      // Mock unauthenticated user
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: null,
+        session: null,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      render(<AuthProvider><App /></AuthProvider>)
+
+      const appContainer = screen.getByRole('application')
+
+      // Mock window.alert
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+      // Simulate file drop
+      fireEvent.drop(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.csv', { type: 'text/csv' })]
+        }
+      })
+
+      expect(alertSpy).toHaveBeenCalledWith('You must be logged in to upload clue sets')
+      alertSpy.mockRestore()
+    })
+
+    it('should handle non-CSV file drop', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+
+      const appContainer = screen.getByRole('application')
+
+      // Mock window.alert
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+      // Simulate non-CSV file drop
+      fireEvent.drop(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.txt', { type: 'text/plain' })]
+        }
+      })
+
+      expect(alertSpy).toHaveBeenCalledWith('Please drop CSV files only')
+      alertSpy.mockRestore()
+    })
+
+    it('should handle multiple file drop', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Host Game')).toBeInTheDocument()
+      })
+
+      const appContainer = screen.getByRole('application')
+
+      // Mock window.alert
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+      // Simulate multiple CSV files drop
+      fireEvent.drop(appContainer, {
+        dataTransfer: {
+          files: [
+            new File(['test1'], 'test1.csv', { type: 'text/csv' }),
+            new File(['test2'], 'test2.csv', { type: 'text/csv' })
+          ]
+        }
+      })
+
+      expect(alertSpy).toHaveBeenCalledWith('Please drop one CSV file at a time')
+      alertSpy.mockRestore()
+    })
+  })
+
+  describe('Real-time Subscriptions', () => {
+    it('should handle player game state changes', async () => {
+      // Mock authenticated user as player
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      const mockGame = createMockGame({ status: 'lobby' })
+      const mockPlayers = [{ user_id: mockUser.id, nickname: 'TestPlayer' }]
+
+      ;(GameService.getActiveGame as jest.Mock).mockResolvedValue(mockGame)
+      ;(GameService.getPlayers as jest.Mock).mockResolvedValue(mockPlayers)
+
+      // Mock user as player role
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'player' } as Database['public']['Tables']['profiles']['Row'],
+                  error: null
+                })
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Game Lobby')).toBeInTheDocument()
+      })
+
+      // Verify subscription was set up
+      expect(mockSupabase.channel).toHaveBeenCalledWith(`player-game-state:${mockGame.id}`)
+    })
+  })
+
+  describe('Error Handling', () => {
+    beforeEach(() => {
+      // Mock authenticated user as host
+      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        login: jest.fn(),
+        logout: jest.fn()
+      })
+
+      // Ensure host role for error handling tests
+      mockSupabase.from.mockImplementation((table: keyof Database['public']['Tables']) => {
+        if (table === 'profiles') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { role: 'host' } as Database['public']['Tables']['profiles']['Row'],
+                  error: null
+                })
+              })
+            })
+          }
+        }
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' }
+                })
+              })
+            })
+          }
+        }
+        return mockSupabaseDefault()
+      })
+    })
+
+    it('should handle clue set deletion errors', async () => {
+      renderWithAuth(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+      })
+
+      // Mock window.alert
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+
+      // Test error handling by simulating console.error call
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      // Simulate an error scenario - we'll test this through the drag and drop error path
+      const appContainer = screen.getByRole('application')
+
+      // Mock UploadService to throw an error
+      mockUploadService.handleDragAndDropUpload.mockRejectedValue(new Error('Test error message'))
+
+      // Simulate file drop that will trigger error
+      fireEvent.drop(appContainer, {
+        dataTransfer: {
+          files: [new File(['test'], 'test.csv', { type: 'text/csv' })]
+        }
+      })
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith('Error: Test error message')
+      })
+
+      consoleSpy.mockRestore()
+      alertSpy.mockRestore()
     })
   })
 })

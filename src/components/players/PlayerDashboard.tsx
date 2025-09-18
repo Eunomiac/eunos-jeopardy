@@ -212,6 +212,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       // Transform boards into clue set structure
       const jeopardyBoard = boards?.find((board) => board.round === 'jeopardy')
       const doubleBoard = boards?.find((board) => board.round === 'double')
+      const finalBoard = boards?.find((board) => board.round === 'final')
 
       setClueSetData({
         name: 'Game Board', // Players don't need the actual clue set name
@@ -225,7 +226,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
             name: cat.name,
             clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
           })) || [],
-          final: { name: 'Final Jeopardy', clues: [] } // TODO: Handle final jeopardy
+          final: finalBoard?.categories?.[0] ? {
+            name: finalBoard.categories[0].name,
+            clues: (finalBoard.categories[0].clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
+          } : { name: 'Final Jeopardy', clues: [] }
         }
       })
 

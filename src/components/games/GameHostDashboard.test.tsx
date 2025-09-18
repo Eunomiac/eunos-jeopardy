@@ -63,6 +63,8 @@ describe('GameHostDashboard', () => {
     mockGameService.getGame.mockResolvedValue(mockGame)
     mockGameService.getPlayers.mockResolvedValue(mockPlayers)
     mockGameService.getBuzzesForClue.mockResolvedValue([]) // Mock buzzer queue
+    mockGameService.startGame.mockResolvedValue(mockGame)
+    mockGameService.setFocusedClue.mockResolvedValue(mockGame)
 
     // Mock ClueService methods to prevent "Clue set not found" error
     mockClueService.getGameClueStates.mockResolvedValue([])
@@ -280,6 +282,50 @@ describe('GameHostDashboard', () => {
       })
     })
 
+    it('should start game successfully from lobby state', async () => {
+      const lobbyGame = { ...mockGame, status: 'lobby' as const }
+      const startedGame = { ...lobbyGame, status: 'in_progress' as const }
+      mockGameService.getGame.mockResolvedValue(lobbyGame)
+      mockGameService.startGame.mockResolvedValue(startedGame)
+
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Start Game')).toBeInTheDocument()
+      })
+
+      const startGameButton = screen.getByText('Start Game')
+      fireEvent.click(startGameButton)
+
+      await waitFor(() => {
+        expect(mockGameService.startGame).toHaveBeenCalledWith('game-123', 'user-123')
+        expect(screen.getByText('Game started successfully!')).toBeInTheDocument()
+      })
+
+      // Fast-forward timer to clear message
+      jest.advanceTimersByTime(2000)
+    })
+
+    it('should handle start game error', async () => {
+      const lobbyGame = { ...mockGame, status: 'lobby' as const }
+      mockGameService.getGame.mockResolvedValue(lobbyGame)
+      const error = new Error('Failed to start')
+      mockGameService.startGame.mockRejectedValue(error)
+
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Start Game')).toBeInTheDocument()
+      })
+
+      const startGameButton = screen.getByText('Start Game')
+      fireEvent.click(startGameButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to start game: Failed to start')).toBeInTheDocument()
+      })
+    })
+
     it('should end game successfully with confirmation', async () => {
       mockConfirm.mockReturnValue(true)
       mockGameService.endGame.mockResolvedValue({ ...mockGame, status: 'completed' })
@@ -420,6 +466,43 @@ describe('GameHostDashboard', () => {
 
     it('should display game ID in header', () => {
       expect(screen.getByText('Game ID: game-123')).toBeInTheDocument()
+    })
+  })
+
+  describe('Board Interaction', () => {
+    beforeEach(async () => {
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+      await waitFor(() => {
+        expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
+      })
+    })
+
+    it('should display daily double indicators', async () => {
+      // Mock daily double positions
+      mockClueService.getDailyDoublePositions.mockResolvedValue([
+        { category: 1, row: 3 }
+      ])
+
+      renderWithAuth(<GameHostDashboard {...mockProps} />)
+
+      await waitFor(() => {
+        // Daily double styling should be applied to clues
+        const clueButtons = screen.getAllByRole('button')
+        const dailyDoubleClues = clueButtons.filter(button =>
+          button.className.includes('daily-double')
+        )
+        expect(dailyDoubleClues.length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should display board control panel', async () => {
+      // Test that board control panel is present
+      expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
+
+      // Test that board structure exists
+      const boardElement = document.querySelector('.jeopardy-board')
+      expect(boardElement).toBeInTheDocument()
     })
   })
 
