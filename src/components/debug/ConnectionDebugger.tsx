@@ -7,10 +7,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase/client';
+import { GameService } from '../../services/games/GameService';
 import './ConnectionDebugger.scss';
 
+type ConnectionState = 'CONNECTING' | 'OPEN' | 'CLOSING' | 'CLOSED';
+
 interface ConnectionStatus {
-  status: 'CONNECTING' | 'OPEN' | 'CLOSING' | 'CLOSED';
+  status: ConnectionState;
   lastUpdate: Date;
   subscriptionCount: number;
   userId: string | null;
@@ -30,7 +33,7 @@ export function ConnectionDebugger() {
     let subscriptionCount = 0;
 
     // Monitor auth state
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setConnectionStatus(prev => ({
         ...prev,
         userId: session?.user?.id || null,
@@ -65,18 +68,27 @@ export function ConnectionDebugger() {
         gameId = pathMatch ? pathMatch[1] : null;
       }
 
-      // Method 5: Look for game ID in console logs (last resort)
+      // Method 5: Listen for console logs that contain game IDs
       if (!gameId) {
-        // This is a bit hacky but can work for debugging
-        const scripts = document.querySelectorAll('script');
-        for (const script of scripts) {
-          const content = script.textContent || '';
-          const match = content.match(/gameId["\s]*[:=]["\s]*([a-f0-9-]{36})/i);
-          if (match) {
-            gameId = match[1];
-            break;
+        // Override console.log temporarily to catch game ID logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+          const message = args.join(' ');
+          const gameIdMatch = message.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+          if (gameIdMatch && !connectionStatus.currentGameId) {
+            setConnectionStatus(prev => ({
+              ...prev,
+              currentGameId: gameIdMatch[1],
+              lastUpdate: new Date()
+            }));
           }
-        }
+          return originalLog.apply(console, args);
+        };
+
+        // Restore original console.log after a short delay
+        setTimeout(() => {
+          console.log = originalLog;
+        }, 1000);
       }
 
       if (gameId && gameId !== connectionStatus.currentGameId) {
@@ -91,9 +103,29 @@ export function ConnectionDebugger() {
     // Initial detection
     detectGameId();
 
+    // Also check for active games via GameService
+    const checkActiveGame = async () => {
+      try {
+        const activeGame = await GameService.getActiveGame();
+        if (activeGame && !connectionStatus.currentGameId) {
+          setConnectionStatus(prev => ({
+            ...prev,
+            currentGameId: activeGame.id,
+            lastUpdate: new Date()
+          }));
+        }
+      } catch (error) {
+        // Ignore errors - this is just for debugging
+        console.debug('Debug: Could not check active game:', error);
+      }
+    };
+
+    checkActiveGame();
+
     // Monitor for URL changes
     const handleLocationChange = () => {
       detectGameId();
+      checkActiveGame();
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -121,6 +153,29 @@ export function ConnectionDebugger() {
         }));
       });
 
+    // Subscribe to game table changes to detect active games
+    const gameMonitor = supabase.channel('debug-game-monitor');
+    gameMonitor
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'games'
+      }, (payload) => {
+        console.log('Game change detected in debugger:', payload);
+        // If we see a game event and don't have a current game ID, try to detect it
+        if (!connectionStatus.currentGameId && payload.new) {
+          const gameData = payload.new as any;
+          if (gameData.id && (gameData.status === 'lobby' || gameData.status === 'in_progress')) {
+            setConnectionStatus(prev => ({
+              ...prev,
+              currentGameId: gameData.id,
+              lastUpdate: new Date()
+            }));
+          }
+        }
+      })
+      .subscribe();
+
     // Track subscription count (rough estimate)
     const originalChannel = supabase.channel;
     supabase.channel = function(...args) {
@@ -136,6 +191,7 @@ export function ConnectionDebugger() {
     return () => {
       authSubscription.unsubscribe();
       channel.unsubscribe();
+      gameMonitor.unsubscribe();
       window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('storage', handleLocationChange);
       // Restore original channel function
@@ -143,7 +199,7 @@ export function ConnectionDebugger() {
     };
   }, []);
 
-  const getStatusColor = (status: ConnectionStatus['status']) => {
+  const getStatusColor = (status: ConnectionState) => {
     switch (status) {
       case 'OPEN': return '#00ff00';
       case 'CONNECTING': return '#ffff00';
@@ -153,7 +209,7 @@ export function ConnectionDebugger() {
     }
   };
 
-  const getStatusEmoji = (status: ConnectionStatus['status']) => {
+  const getStatusEmoji = (status: ConnectionState) => {
     switch (status) {
       case 'OPEN': return '🟢';
       case 'CONNECTING': return '🟡';
