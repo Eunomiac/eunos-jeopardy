@@ -1,37 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import { GameService } from '../../services/games/GameService'
-import { FontAssignmentService } from '../../services/fonts/FontAssignmentService'
-import { PlayerPodiums, type PlayerInfo } from './PlayerPodiums'
-import { ClueRevealModal, type ClueInfo } from './ClueRevealModal'
-import { BuzzerState } from '../../types/BuzzerState'
-import { supabase } from '../../services/supabase/client'
-import type { ClueState } from '../../services/clues/ClueService'
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { GameService } from "../../services/games/GameService";
+import { FontAssignmentService } from "../../services/fonts/FontAssignmentService";
+import { PlayerPodiums, type PlayerInfo } from "./PlayerPodiums";
+import { ClueRevealModal, type ClueInfo } from "./ClueRevealModal";
+import { BuzzerState } from "../../types/BuzzerState";
+import { supabase } from "../../services/supabase/client";
+import type { ClueState } from "../../services/clues/ClueService";
 
-import type { ClueData, ClueSetData } from '../../services/clueSets/loader'
-import './PlayerDashboard.scss'
+import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
+import "./PlayerDashboard.scss";
 
 interface PlayerDashboardProps {
-  gameId: string
+  gameId: string;
 }
 
 /**
  * Game update payload from real-time subscriptions.
  */
 interface GameUpdatePayload {
-  is_buzzer_locked?: boolean
-  focused_clue_id?: string | null
-  [key: string]: unknown
+  is_buzzer_locked?: boolean;
+  focused_clue_id?: string | null;
+  [key: string]: unknown;
 }
 
 /**
  * Buzz payload from real-time subscriptions.
  */
 interface BuzzPayload {
-  user_id: string
-  game_id: string
-  clue_id: string
-  created_at: string
+  user_id: string;
+  game_id: string;
+  clue_id: string;
+  created_at: string;
 }
 
 /**
@@ -63,92 +63,96 @@ interface BuzzPayload {
  * @author Euno's Jeopardy Team
  */
 const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   // Game state
-  const [game, setGame] = useState<GameUpdatePayload | null>(null)
-  const [players, setPlayers] = useState<PlayerInfo[]>([])
-  const [currentClue, setCurrentClue] = useState<ClueInfo | null>(null)
-  const [focusedClue, setFocusedClue] = useState<ClueInfo | null>(null)
-  const [buzzerState, setBuzzerState] = useState<BuzzerState>(BuzzerState.LOCKED)
-  const [reactionTime, setReactionTime] = useState<number | null>(null)
+  const [game, setGame] = useState<GameUpdatePayload | null>(null);
+  const [players, setPlayers] = useState<PlayerInfo[]>([]);
+  const [currentClue, setCurrentClue] = useState<ClueInfo | null>(null);
+  const [focusedClue, setFocusedClue] = useState<ClueInfo | null>(null);
+  const [buzzerState, setBuzzerState] = useState<BuzzerState>(
+    BuzzerState.LOCKED
+  );
+  const [reactionTime, setReactionTime] = useState<number | null>(null);
 
   // Game board data
-  const [clueSetData, setClueSetData] = useState<ClueSetData | null>(null)
-  const [clueStates, setClueStates] = useState<ClueState[]>([])
+  const [clueSetData, setClueSetData] = useState<ClueSetData | null>(null);
+  const [clueStates, setClueStates] = useState<ClueState[]>([]);
 
   // UI state
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showClueModal, setShowClueModal] = useState(false)
-  const [modalAnimatingOut, setModalAnimatingOut] = useState(false)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showClueModal, setShowClueModal] = useState(false);
+  const [modalAnimatingOut, setModalAnimatingOut] = useState(false);
 
   // Buzzer timing
-  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null)
+  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
 
   /**
    * Loads initial game data and player information.
    */
   const loadGameData = useCallback(async () => {
     if (!user) {
-      return
+      return;
     }
 
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       // Load game data - set a basic game state that will be updated by real-time subscriptions
       setGame({
         id: gameId,
-        status: 'in_progress',
-        current_round: 'jeopardy',
+        status: "in_progress",
+        current_round: "jeopardy",
         is_buzzer_locked: true,
         focused_clue_id: null,
-        focused_player_id: null
-      } as GameUpdatePayload)
+        focused_player_id: null,
+      } as GameUpdatePayload);
 
       // Load players
-      const gamePlayers = await GameService.getPlayers(gameId)
+      const gamePlayers = await GameService.getPlayers(gameId);
 
       // Assign fonts and create player info
       const playersWithFonts = await Promise.all(
         gamePlayers.map(async (player) => {
-          let font: string
+          let font: string;
 
           if (player.user_id === user.id) {
             // Get or assign font for current user
-            font = await FontAssignmentService.getPlayerFont(user.id, gameId)
+            font = await FontAssignmentService.getPlayerFont(user.id, gameId);
           } else {
             // For other players, get their assigned font from profile
             const { data: profile } = await supabase
-              .from('profiles')
-              .select('handwritten_font, temp_handwritten_font')
-              .eq('id', player.user_id)
-              .single()
+              .from("profiles")
+              .select("handwritten_font, temp_handwritten_font")
+              .eq("id", player.user_id)
+              .single();
 
-            font = profile?.temp_handwritten_font || profile?.handwritten_font || 'handwritten-1'
+            font =
+              profile?.temp_handwritten_font ||
+              profile?.handwritten_font ||
+              "handwritten-1";
           }
 
           return {
             id: player.user_id, // Use user_id as the unique identifier
-            name: player.nickname || 'Player',
+            name: player.nickname || "Player",
             score: player.score,
             fontFamily: font,
-            isMainPlayer: player.user_id === user.id
-          }
+            isMainPlayer: player.user_id === user.id,
+          };
         })
-      )
+      );
 
-      setPlayers(playersWithFonts)
-
+      setPlayers(playersWithFonts);
     } catch (err) {
-      console.error('❌ Error loading game data:', err)
-      setError('Failed to load game data. Please try refreshing.')
+      console.error("❌ Error loading game data:", err);
+      setError("Failed to load game data. Please try refreshing.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [gameId, user])
+  }, [gameId, user]);
 
   /**
    * Loads game board data for players.
@@ -158,35 +162,36 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
     try {
       // Load clue states to show board progress
       const { data: states, error: statesError } = await supabase
-        .from('clue_states')
-        .select('*')
-        .eq('game_id', gameId)
+        .from("clue_states")
+        .select("*")
+        .eq("game_id", gameId);
 
       if (statesError) {
-        throw statesError
+        throw statesError;
       }
-      setClueStates(states || [])
+      setClueStates(states || []);
 
       // Load boards and categories for the game's clue set
       // First get the game to find the clue set ID
       const { data: gameData, error: gameError } = await supabase
-        .from('games')
-        .select('clue_set_id')
-        .eq('id', gameId)
-        .single()
+        .from("games")
+        .select("clue_set_id")
+        .eq("id", gameId)
+        .single();
 
       if (gameError) {
-        throw gameError
+        throw gameError;
       }
 
       if (!gameData?.clue_set_id) {
-        throw new Error('Game does not have a clue set assigned')
+        throw new Error("Game does not have a clue set assigned");
       }
 
       // Load boards for this clue set
       const { data: boards, error: boardsError } = await supabase
-        .from('boards')
-        .select(`
+        .from("boards")
+        .select(
+          `
           id,
           round,
           categories (
@@ -201,282 +206,353 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
               position
             )
           )
-        `)
-        .eq('clue_set_id', gameData.clue_set_id)
-        .order('round')
+        `
+        )
+        .eq("clue_set_id", gameData.clue_set_id)
+        .order("round");
 
       if (boardsError) {
-        throw boardsError
+        throw boardsError;
       }
 
       // Transform boards into clue set structure
-      const jeopardyBoard = boards?.find((board) => board.round === 'jeopardy')
-      const doubleBoard = boards?.find((board) => board.round === 'double')
-      const finalBoard = boards?.find((board) => board.round === 'final')
+      const jeopardyBoard = boards?.find((board) => board.round === "jeopardy");
+      const doubleBoard = boards?.find((board) => board.round === "double");
+      const finalBoard = boards?.find((board) => board.round === "final");
 
       setClueSetData({
-        name: 'Game Board', // Players don't need the actual clue set name
-        filename: 'game-board.csv', // Players don't need the actual filename
+        name: "Game Board", // Players don't need the actual clue set name
+        filename: "game-board.csv", // Players don't need the actual filename
         rounds: {
-          jeopardy: jeopardyBoard?.categories?.sort((a, b) => a.position - b.position).map((cat) => ({
-            name: cat.name,
-            clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
-          })) || [],
-          double: doubleBoard?.categories?.sort((a, b) => a.position - b.position).map((cat) => ({
-            name: cat.name,
-            clues: (cat.clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
-          })) || [],
-          final: finalBoard?.categories?.[0] ? {
-            name: finalBoard.categories[0].name,
-            clues: (finalBoard.categories[0].clues || []).sort((a, b) => (a.position || 0) - (b.position || 0))
-          } : { name: 'Final Jeopardy', clues: [] }
-        }
-      })
+          jeopardy:
+            jeopardyBoard?.categories
+              ?.sort((a, b) => a.position - b.position)
+              .map((cat) => ({
+                name: cat.name,
+                clues: (cat.clues || []).sort(
+                  (a, b) => (a.position || 0) - (b.position || 0)
+                ),
+              })) || [],
+          double:
+            doubleBoard?.categories
+              ?.sort((a, b) => a.position - b.position)
+              .map((cat) => ({
+                name: cat.name,
+                clues: (cat.clues || []).sort(
+                  (a, b) => (a.position || 0) - (b.position || 0)
+                ),
+              })) || [],
+          final: finalBoard?.categories?.[0]
+            ? {
+                name: finalBoard.categories[0].name,
+                clues: (finalBoard.categories[0].clues || []).sort(
+                  (a, b) => (a.position || 0) - (b.position || 0)
+                ),
+              }
+            : { name: "Final Jeopardy", clues: [] },
+        },
+      });
 
       // Players don't need Daily Double positions - they discover them when clues are revealed
-
     } catch (loadError) {
-      console.error('Failed to load game board data:', loadError)
-      setError('Failed to load game data')
+      console.error("Failed to load game board data:", loadError);
+      setError("Failed to load game data");
     }
-  }, [gameId])
+  }, [gameId]);
 
   /**
    * Loads clue data for display in the modal.
    */
-  const loadClueData = useCallback(async (clueId: string): Promise<ClueInfo | null> => {
-    try {
-      const { ClueService } = await import('../../services/clues/ClueService')
-      const clue = await ClueService.getClueById(clueId)
+  const loadClueData = useCallback(
+    async (clueId: string): Promise<ClueInfo | null> => {
+      try {
+        const { ClueService } = await import(
+          "../../services/clues/ClueService"
+        );
+        const clue = await ClueService.getClueById(clueId);
 
-      // Get category name from category_id
-      const { data: category } = await supabase
-        .from('categories')
-        .select('name')
-        .eq('id', clue.category_id)
-        .single()
+        // Get category name from category_id
+        const { data: category } = await supabase
+          .from("categories")
+          .select("name")
+          .eq("id", clue.category_id)
+          .single();
 
-      const clueInfo: ClueInfo = {
-        id: clue.id,
-        prompt: clue.prompt,
-        value: clue.value,
-        category: category?.name || 'Unknown Category',
-        isDailyDouble: false // Players discover Daily Doubles when they encounter them
+        const clueInfo: ClueInfo = {
+          id: clue.id,
+          prompt: clue.prompt,
+          value: clue.value,
+          category: category?.name || "Unknown Category",
+          isDailyDouble: false, // Players discover Daily Doubles when they encounter them
+        };
+
+        setCurrentClue(clueInfo);
+        return clueInfo;
+      } catch (clueError) {
+        console.error("Failed to load clue:", clueError);
+        setCurrentClue(null);
+        return null;
       }
-
-      setCurrentClue(clueInfo)
-      return clueInfo
-    } catch (clueError) {
-      console.error('Failed to load clue:', clueError)
-      setCurrentClue(null)
-      return null
-    }
-  }, [])
+    },
+    []
+  );
 
   // Helper function to update clue states
   const updateClueState = useCallback((clueState: ClueState) => {
     setClueStates((prev) => {
-      const updated = prev.filter((s) => s.clue_id !== clueState.clue_id)
-      return [...updated, clueState]
-    })
-  }, [])
+      const updated = prev.filter((s) => s.clue_id !== clueState.clue_id);
+      return [...updated, clueState];
+    });
+  }, []);
 
   /**
    * Sets up real-time subscriptions for game state updates.
    */
   const setupRealtimeSubscriptions = useCallback(() => {
     if (!user) {
-      return undefined
+      return undefined;
     }
 
     // Subscribe to game state changes
     const gameSubscription = supabase
       .channel(`game-${gameId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'games',
-        filter: `id=eq.${gameId}`
-      }, async (payload) => {
-        console.log('🔔 Game state update:', payload)
-        // Update game data based on changes
-        if (payload.new) {
-          const gameUpdate = payload.new as GameUpdatePayload
-          setGame(gameUpdate)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "games",
+          filter: `id=eq.${gameId}`,
+        },
+        async (payload) => {
+          console.log("🔔 Game state update:", payload);
+          // Update game data based on changes
+          if (payload.new) {
+            const gameUpdate = payload.new as GameUpdatePayload;
+            setGame(gameUpdate);
 
-          // Update buzzer state based on game state (but not during modal animation)
-          if (!modalAnimatingOut) {
-            if (gameUpdate.is_buzzer_locked) {
-              setBuzzerState(BuzzerState.LOCKED)
-              setBuzzerUnlockTime(null)
-              setReactionTime(null)
+            // Update buzzer state based on game state (but not during modal animation)
+            if (!modalAnimatingOut) {
+              if (gameUpdate.is_buzzer_locked) {
+                setBuzzerState(BuzzerState.LOCKED);
+                setBuzzerUnlockTime(null);
+                setReactionTime(null);
+              } else {
+                setBuzzerState(BuzzerState.UNLOCKED);
+                setBuzzerUnlockTime(Date.now()); // Record when buzzer was unlocked
+              }
+            }
+
+            // Handle focused clue (just highlight on board, don't show modal)
+            if (gameUpdate.focused_clue_id) {
+              const clueInfo = await loadClueData(gameUpdate.focused_clue_id);
+              setFocusedClue(clueInfo);
+              // Note: Modal will only show when clue becomes revealed (via clue states subscription)
             } else {
-              setBuzzerState(BuzzerState.UNLOCKED)
-              setBuzzerUnlockTime(Date.now()) // Record when buzzer was unlocked
+              setFocusedClue(null);
+              // Hide modal when clue is unfocused
+              setShowClueModal(false);
+              setCurrentClue(null);
+              setBuzzerState(BuzzerState.LOCKED);
+              setReactionTime(null);
+            }
+
+            // Handle player selection - hide modal when host selects a player from buzzer queue
+            if (gameUpdate.focused_player_id) {
+              // Host has selected a player for adjudication - start modal animation
+              setModalAnimatingOut(true);
+              setShowClueModal(false);
+
+              // Delay buzzer state changes until modal animation completes (300ms)
+              setTimeout(() => {
+                setModalAnimatingOut(false);
+              }, 300);
+            } else if (
+              gameUpdate.focused_clue_id &&
+              !gameUpdate.is_buzzer_locked &&
+              focusedClue
+            ) {
+              // Player was marked wrong: focused_player_id is null, buzzer unlocked, clue still active
+              // Check if current player is locked out before showing modal
+              checkPlayerLockoutAndShowModal(
+                gameUpdate.focused_clue_id,
+                focusedClue
+              );
             }
           }
-
-          // Handle focused clue (just highlight on board, don't show modal)
-          if (gameUpdate.focused_clue_id) {
-            const clueInfo = await loadClueData(gameUpdate.focused_clue_id)
-            setFocusedClue(clueInfo)
-            // Note: Modal will only show when clue becomes revealed (via clue states subscription)
-          } else {
-            setFocusedClue(null)
-            // Hide modal when clue is unfocused
-            setShowClueModal(false)
-            setCurrentClue(null)
-            setBuzzerState(BuzzerState.LOCKED)
-            setReactionTime(null)
-          }
-
-          // Handle player selection - hide modal when host selects a player from buzzer queue
-          if (gameUpdate.focused_player_id) {
-            // Host has selected a player for adjudication - start modal animation
-            setModalAnimatingOut(true)
-            setShowClueModal(false)
-
-            // Delay buzzer state changes until modal animation completes (300ms)
-            setTimeout(() => {
-              setModalAnimatingOut(false)
-            }, 300)
-          } else if (gameUpdate.focused_clue_id && !gameUpdate.is_buzzer_locked && focusedClue) {
-            // Player was marked wrong: focused_player_id is null, buzzer unlocked, clue still active
-            // Check if current player is locked out before showing modal
-            checkPlayerLockoutAndShowModal(gameUpdate.focused_clue_id, focusedClue)
-          }
         }
-      })
-      .subscribe()
+      )
+      .subscribe();
 
     // Subscribe to player changes
     const playersSubscription = supabase
       .channel(`players-${gameId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'players',
-        filter: `game_id=eq.${gameId}`
-      }, async () => {
-        console.log('🔔 Players update')
-        // Update player data incrementally without full reload
-        try {
-          const gamePlayers = await GameService.getPlayers(gameId)
-          const playersWithFonts = await Promise.all(
-            gamePlayers.map(async (player) => {
-              let font: string
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "players",
+          filter: `game_id=eq.${gameId}`,
+        },
+        async () => {
+          console.log("🔔 Players update");
+          // Update player data incrementally without full reload
+          try {
+            const gamePlayers = await GameService.getPlayers(gameId);
+            const playersWithFonts = await Promise.all(
+              gamePlayers.map(async (player) => {
+                let font: string;
 
-              if (player.user_id === user.id) {
-                font = await FontAssignmentService.getPlayerFont(user.id, gameId)
-              } else {
-                const { data: profile } = await supabase
-                  .from('profiles')
-                  .select('handwritten_font, temp_handwritten_font')
-                  .eq('id', player.user_id)
-                  .single()
-                font = profile?.temp_handwritten_font || profile?.handwritten_font || 'handwritten-1'
-              }
+                if (player.user_id === user.id) {
+                  font = await FontAssignmentService.getPlayerFont(
+                    user.id,
+                    gameId
+                  );
+                } else {
+                  const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("handwritten_font, temp_handwritten_font")
+                    .eq("id", player.user_id)
+                    .single();
+                  font =
+                    profile?.temp_handwritten_font ||
+                    profile?.handwritten_font ||
+                    "handwritten-1";
+                }
 
-              return {
-                id: player.user_id,
-                name: player.nickname || 'Player',
-                score: player.score,
-                fontFamily: font,
-                isMainPlayer: player.user_id === user.id
-              }
-            })
-          )
-          setPlayers(playersWithFonts)
-        } catch (playerError) {
-          console.error('Failed to update player data:', playerError)
+                return {
+                  id: player.user_id,
+                  name: player.nickname || "Player",
+                  score: player.score,
+                  fontFamily: font,
+                  isMainPlayer: player.user_id === user.id,
+                };
+              })
+            );
+            setPlayers(playersWithFonts);
+          } catch (playerError) {
+            console.error("Failed to update player data:", playerError);
+          }
         }
-      })
-      .subscribe()
+      )
+      .subscribe();
 
     // Subscribe to clue state changes (for board display updates)
     const clueStatesSubscription = supabase
       .channel(`clue-states-${gameId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'clue_states',
-        filter: `game_id=eq.${gameId}`
-      }, (payload) => {
-        console.log('🔔 Clue state update:', payload)
-        if (payload.new) {
-          const clueState = payload.new as ClueState
-          // Update clue states for board display
-          updateClueState(clueState)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "clue_states",
+          filter: `game_id=eq.${gameId}`,
+        },
+        (payload) => {
+          console.log("🔔 Clue state update:", payload);
+          if (payload.new) {
+            const clueState = payload.new as ClueState;
+            // Update clue states for board display
+            updateClueState(clueState);
 
-          // Show modal when clue is revealed and it's the focused clue (Reveal Prompt action)
-          if (clueState.revealed && focusedClue && clueState.clue_id === focusedClue.id) {
-            setCurrentClue(focusedClue)
-            setShowClueModal(true)
-            setBuzzerState(BuzzerState.LOCKED) // Lock buzzer when clue is revealed
-          }
+            // Show modal when clue is revealed and it's the focused clue (Reveal Prompt action)
+            if (
+              clueState.revealed &&
+              focusedClue &&
+              clueState.clue_id === focusedClue.id
+            ) {
+              setCurrentClue(focusedClue);
+              setShowClueModal(true);
+              setBuzzerState(BuzzerState.LOCKED); // Lock buzzer when clue is revealed
+            }
 
-          // Hide modal and lock buzzer when clue is completed
-          if (clueState.completed) {
-            setShowClueModal(false)
-            setCurrentClue(null)
-            setBuzzerState(BuzzerState.LOCKED)
-            setReactionTime(null)
+            // Hide modal and lock buzzer when clue is completed
+            if (clueState.completed) {
+              setShowClueModal(false);
+              setCurrentClue(null);
+              setBuzzerState(BuzzerState.LOCKED);
+              setReactionTime(null);
+            }
           }
         }
-      })
-      .subscribe()
+      )
+      .subscribe();
 
     // Subscribe to buzzer events
     const buzzesSubscription = supabase
       .channel(`buzzes-${gameId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'buzzes',
-        filter: `game_id=eq.${gameId}`
-      }, (payload) => {
-        console.log('🔔 Buzz event:', payload)
-        // Handle buzzer state changes based on buzz events
-        if (payload.new && (payload.new as BuzzPayload).user_id === user?.id) {
-          // This player's buzz was recorded
-          setBuzzerState(BuzzerState.BUZZED)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "buzzes",
+          filter: `game_id=eq.${gameId}`,
+        },
+        (payload) => {
+          console.log("🔔 Buzz event:", payload);
+          // Handle buzzer state changes based on buzz events
+          if (
+            payload.new &&
+            (payload.new as BuzzPayload).user_id === user?.id
+          ) {
+            // This player's buzz was recorded
+            setBuzzerState(BuzzerState.BUZZED);
+          }
         }
-      })
-      .subscribe()
+      )
+      .subscribe();
 
     // Subscribe to clue changes (for locked_out_player_ids updates)
     const cluesSubscription = supabase
       .channel(`clues-${gameId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'clues'
-      }, (payload) => {
-        console.log('🔔 Clue lockout update:', payload)
-        if (payload.new && user?.id) {
-          const clueData = payload.new as any
-          const lockedOutPlayers = clueData.locked_out_player_ids || []
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "clues",
+        },
+        (payload) => {
+          console.log("🔔 Clue lockout update:", payload);
+          if (payload.new && user?.id) {
+            const clueData = payload.new;
+            const lockedOutPlayers = clueData.locked_out_player_ids || [];
 
-          // If current player was just locked out and modal is showing, hide it
-          if (lockedOutPlayers.includes(user.id) && showClueModal && focusedClue && clueData.id === focusedClue.id) {
-            console.log('🚫 Current player locked out - hiding modal')
-            setShowClueModal(false)
-            setCurrentClue(null)
-            setBuzzerState(BuzzerState.LOCKED)
-            setReactionTime(null)
+            // If current player was just locked out and modal is showing, hide it
+            if (
+              lockedOutPlayers.includes(user.id) &&
+              showClueModal &&
+              focusedClue &&
+              clueData.id === focusedClue.id
+            ) {
+              console.log("🚫 Current player locked out - hiding modal");
+              setShowClueModal(false);
+              setCurrentClue(null);
+              setBuzzerState(BuzzerState.LOCKED);
+              setReactionTime(null);
+            }
           }
         }
-      })
-      .subscribe()
+      )
+      .subscribe();
 
     return () => {
-      gameSubscription.unsubscribe()
-      playersSubscription.unsubscribe()
-      clueStatesSubscription.unsubscribe()
-      buzzesSubscription.unsubscribe()
-      cluesSubscription.unsubscribe()
-    }
-  }, [gameId, user, loadClueData, focusedClue, modalAnimatingOut, updateClueState])
+      gameSubscription.unsubscribe();
+      playersSubscription.unsubscribe();
+      clueStatesSubscription.unsubscribe();
+      buzzesSubscription.unsubscribe();
+      cluesSubscription.unsubscribe();
+    };
+  }, [
+    gameId,
+    user,
+    loadClueData,
+    focusedClue,
+    modalAnimatingOut,
+    updateClueState,
+  ]);
 
   /**
    * Handles player buzzer click.
@@ -484,99 +560,106 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const handleBuzz = useCallback(async () => {
     if (buzzerState === BuzzerState.UNLOCKED && user && currentClue) {
       // Record buzz timestamp for client-side timing (will be implemented later)
-      setBuzzerState(BuzzerState.BUZZED)
+      setBuzzerState(BuzzerState.BUZZED);
 
       try {
         // Calculate reaction time using client-side timing
-        let reactionTimeMs: number | undefined
+        let reactionTimeMs: number | undefined;
         if (buzzerUnlockTime) {
-          reactionTimeMs = Date.now() - buzzerUnlockTime
-          setReactionTime(reactionTimeMs)
-          console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`)
+          reactionTimeMs = Date.now() - buzzerUnlockTime;
+          setReactionTime(reactionTimeMs);
+          console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`);
         }
 
         // Send buzz event to server with reaction time
-        await GameService.recordBuzz(gameId, currentClue.id, user.id, reactionTimeMs)
+        await GameService.recordBuzz(
+          gameId,
+          currentClue.id,
+          user.id,
+          reactionTimeMs
+        );
 
-        console.log('⚡ Player buzzed in successfully!')
-
+        console.log("⚡ Player buzzed in successfully!");
       } catch (buzzError) {
-        console.error('Failed to record buzz:', buzzError)
+        console.error("Failed to record buzz:", buzzError);
         // Reset buzzer state on error
-        setBuzzerState(BuzzerState.UNLOCKED)
+        setBuzzerState(BuzzerState.UNLOCKED);
       }
     } else if (buzzerState === BuzzerState.LOCKED) {
       // Player buzzed too early - set frozen state
-      setBuzzerState(BuzzerState.FROZEN)
-      console.log('❄️ Player buzzed too early - frozen!')
+      setBuzzerState(BuzzerState.FROZEN);
+      console.log("❄️ Player buzzed too early - frozen!");
     }
-  }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime])
+  }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime]);
 
   /**
    * Checks if current player is locked out and shows modal if they can still buzz.
    */
-  const checkPlayerLockoutAndShowModal = useCallback(async (clueId: string, clueInfo: ClueInfo) => {
-    if (!user?.id) return
+  const checkPlayerLockoutAndShowModal = useCallback(
+    async (clueId: string, clueInfo: ClueInfo) => {
+    if (!user?.id) {return};
 
-    try {
-      // Get the clue data to check locked_out_player_ids
-      const { data: clueData, error } = await supabase
-        .from('clues')
-        .select('locked_out_player_ids')
-        .eq('id', clueId)
-        .single()
+      try {
+        // Get the clue data to check locked_out_player_ids
+        const { data: clueData, error: err } = await supabase
+          .from("clues")
+          .select("locked_out_player_ids")
+          .eq("id", clueId)
+          .single();
 
-      if (error) {
-        console.error('Failed to check player lockout status:', error)
-        return
+        if (err) {
+          console.error("Failed to check player lockout status:", err);
+          return;
+        }
+
+        const lockedOutPlayers = clueData.locked_out_player_ids || [];
+        const isPlayerLockedOut = lockedOutPlayers.includes(user.id);
+
+        if (!isPlayerLockedOut) {
+          // Player can still buzz - show modal
+          console.log(
+            "🔄 Re-showing modal for remaining player after wrong answer"
+          );
+          setCurrentClue(clueInfo);
+          setShowClueModal(true);
+          setBuzzerState(BuzzerState.UNLOCKED); // Buzzer should be unlocked for remaining players
+        } else {
+          // Player is locked out - keep modal hidden
+          console.log("🚫 Player is locked out from this clue");
+        }
+      } catch (err) {
+        console.error("Error checking player lockout status:", err);
       }
-
-      const lockedOutPlayers = clueData.locked_out_player_ids || []
-      const isPlayerLockedOut = lockedOutPlayers.includes(user.id)
-
-      if (!isPlayerLockedOut) {
-        // Player can still buzz - show modal
-        console.log('🔄 Re-showing modal for remaining player after wrong answer')
-        setCurrentClue(clueInfo)
-        setShowClueModal(true)
-        setBuzzerState(BuzzerState.UNLOCKED) // Buzzer should be unlocked for remaining players
-      } else {
-        // Player is locked out - keep modal hidden
-        console.log('🚫 Player is locked out from this clue')
-      }
-    } catch (error) {
-      console.error('Error checking player lockout status:', error)
-    }
-  }, [user])
+    },
+    [user]
+  );
 
   /**
    * Handles clue modal close.
    */
   const handleClueModalClose = useCallback(() => {
-    setShowClueModal(false)
-    setCurrentClue(null)
-    setBuzzerState(BuzzerState.LOCKED)
-    setReactionTime(null)
-  }, [])
+    setShowClueModal(false);
+    setCurrentClue(null);
+    setBuzzerState(BuzzerState.LOCKED);
+    setReactionTime(null);
+  }, []);
 
   // Load initial data
   useEffect(() => {
-    loadGameData()
-    loadGameBoardData()
-  }, [loadGameData, loadGameBoardData])
+    loadGameData();
+    loadGameBoardData();
+  }, [loadGameData, loadGameBoardData]);
 
   // Set up real-time subscriptions
-  useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions])
+  useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions]);
 
   // Loading state
   if (loading) {
     return (
       <div className="player-dashboard loading">
-        <div className="loading-message">
-          Loading game...
-        </div>
+        <div className="loading-message">Loading game...</div>
       </div>
-    )
+    );
   }
 
   // Error state
@@ -589,7 +672,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           <p>Game ID: {gameId}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -598,13 +681,13 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       <div className="jeopardy-board-header">
         <h2>
           {(() => {
-            if (game?.current_round === 'final') {
-              return 'Final Jeopardy'
+            if (game?.current_round === "final") {
+              return "Final Jeopardy";
             }
-            if (game?.current_round === 'double') {
-              return 'Double Jeopardy Round'
+            if (game?.current_round === "double") {
+              return "Double Jeopardy Round";
             }
-            return 'The Jeopardy Round'
+            return "The Jeopardy Round";
           })()}
         </h2>
       </div>
@@ -621,96 +704,107 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
                     <div key="final-category" className="category-header">
                       {clueSetData.rounds.final.name}
                     </div>
-                  )
+                  );
                 } else {
-                  const roundKey = game.current_round as 'jeopardy' | 'double'
-                  const currentRoundData = clueSetData.rounds[roundKey] || []
-                  return currentRoundData.map((category: { name: string; clues: ClueData[] }, index: number) => (
-                    <div
-                      key={`category-${index}-${category.name}`}
-                      className="category-header"
-                    >
-                      {category.name}
-                    </div>
-                  ))
+                  const roundKey = game.current_round as "jeopardy" | "double";
+                  const currentRoundData = clueSetData.rounds[roundKey] || [];
+                  return currentRoundData.map(
+                    (
+                      category: { name: string; clues: ClueData[] },
+                      index: number
+                    ) => (
+                      <div
+                        key={`category-${index}-${category.name}`}
+                        className="category-header"
+                      >
+                        {category.name}
+                      </div>
+                    )
+                  );
                 }
               })()}
 
               {/* Clue cells */}
               {(() => {
                 if (game.current_round === "final") {
-                  const finalClue = clueSetData.rounds.final.clues?.[0]
+                  const finalClue = clueSetData.rounds.final.clues?.[0];
                   return finalClue ? (
                     <button
                       type="button"
                       className="clue-cell final-jeopardy"
-                      style={{ pointerEvents: 'none' }}
+                      style={{ pointerEvents: "none" }}
                       aria-label="Final Jeopardy"
                     >
                       Final Jeopardy
                     </button>
-                  ) : null
+                  ) : null;
                 }
 
                 // Regular rounds: create grid of all clues
-                const roundKey = game.current_round as 'jeopardy' | 'double'
-                const currentRoundData = clueSetData.rounds[roundKey] || []
+                const roundKey = game.current_round as "jeopardy" | "double";
+                const currentRoundData = clueSetData.rounds[roundKey] || [];
                 const allClues: Array<{
-                  categoryIndex: number
-                  clue: ClueData
-                }> = []
+                  categoryIndex: number;
+                  clue: ClueData;
+                }> = [];
 
-                currentRoundData.forEach((category: { name: string; clues: ClueData[] }, categoryIndex: number) => {
-                  category.clues.forEach((clue: ClueData) => {
-                    allClues.push({ categoryIndex, clue })
-                  })
-                })
+                currentRoundData.forEach(
+                  (
+                    category: { name: string; clues: ClueData[] },
+                    categoryIndex: number
+                  ) => {
+                    category.clues.forEach((clue: ClueData) => {
+                      allClues.push({ categoryIndex, clue });
+                    });
+                  }
+                );
 
                 // Sort by position to maintain proper board order
                 allClues.sort((a, b) => {
                   if (a.clue.position !== b.clue.position) {
-                    return a.clue.position - b.clue.position
+                    return a.clue.position - b.clue.position;
                   }
-                  return a.categoryIndex - b.categoryIndex
-                })
+                  return a.categoryIndex - b.categoryIndex;
+                });
 
                 return allClues.map((item, index) => {
                   // Find clue state for this clue
                   const clueState = clueStates.find(
                     (state) => state.clue_id === item.clue.id
-                  )
+                  );
 
-                  const isRevealed = clueState?.revealed || false
-                  const isCompleted = clueState?.completed || false
-                  const isFocused = focusedClue && focusedClue.id === item.clue.id
+                  const isRevealed = clueState?.revealed || false;
+                  const isCompleted = clueState?.completed || false;
+                  const isFocused =
+                    focusedClue && focusedClue.id === item.clue.id;
 
                   // Players don't see Daily Double indicators until they encounter them
-                  const isDailyDouble = false
+                  const isDailyDouble = false;
 
-                  let cellClass = "clue-cell"
+                  let cellClass = "clue-cell";
                   if (isCompleted) {
-                    cellClass += " completed revealed" // Completed clues should also be styled as revealed
+                    cellClass += " completed revealed"; // Completed clues should also be styled as revealed
                   } else if (isRevealed) {
-                    cellClass += " revealed"
+                    cellClass += " revealed";
                   }
                   if (isFocused) {
-                    cellClass += " focused"
+                    cellClass += " focused";
                   }
                   if (isDailyDouble) {
-                    cellClass += " daily-double"
+                    cellClass += " daily-double";
                   }
 
-                  let ariaLabel = `Clue for $${item.clue.value}`
+                  let ariaLabel = `Clue for $${item.clue.value}`;
                   if (isDailyDouble) {
-                    ariaLabel += " - Daily Double"
+                    ariaLabel += " - Daily Double";
                   }
                   if (isCompleted) {
-                    ariaLabel += " - Completed"
+                    ariaLabel += " - Completed";
                   } else if (isRevealed) {
-                    ariaLabel += " - Revealed"
+                    ariaLabel += " - Revealed";
                   }
                   if (isFocused) {
-                    ariaLabel += " - Focused"
+                    ariaLabel += " - Focused";
                   }
 
                   return (
@@ -718,13 +812,13 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
                       key={`clue-${item.clue.id || index}-${item.clue.value}`}
                       type="button"
                       className={cellClass}
-                      style={{ pointerEvents: 'none' }}
+                      style={{ pointerEvents: "none" }}
                       aria-label={ariaLabel}
                     >
                       ${item.clue.value}
                     </button>
-                  )
-                })
+                  );
+                });
               })()}
             </>
           ) : (
@@ -740,7 +834,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
                   key={`loading-clue-${i}`}
                   type="button"
                   className="clue-cell"
-                  style={{ pointerEvents: 'none' }}
+                  style={{ pointerEvents: "none" }}
                   aria-label="Loading clue"
                 >
                   ...
@@ -749,13 +843,73 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
             </>
           )}
         </div>
+
+        {/* Dynamic Display Window
+         * - A multipurpose display window that contains multiple elements for display at various times, all initialized to visibility: hidden so they can be properly controlled by GSAP animations.
+         */}
+        <div
+          className="dynamic-display-window"
+          // style={{ visibility: "hidden" }}
+        >
+          {/** Clue Prompt Display
+           * - The contents of "clue-text" should be replaced with the clue prompt when 'Reveal Prompt' is clicked by the host, then should be animated with the "animatePromptIn" registered GSAP effect (which will expand this window to occupy and overlay/cover up the entire board). It should remain visible to all players until the clue is unfocused, at which point "animatePromptOut" should be called to animate it out (this effect will delete the prompt text from "clue-text" when it finishes).
+           * - The two splash images should be conditionally displayed when appropriate (i.e. a Daily Double, or Final Jeopardy). When they are being displayed, they should be absolutely positioned and z-indexed to completely fill the board and cover up the clue prompt text until a (yet-to-be-implemented) control on the GameHostDashboard is clicked to advance to the next step.
+           */}
+          <div
+            className="jeopardy-clue-display"
+            style={{ visibility: "hidden" }}
+          >
+            <img
+              src="assets/images/splash-daily-double.webp"
+              alt="Daily Double Splash Screen"
+            />
+            {/* OR .. */}
+            <img
+              src="assets/images/splash-final-jeopardy.webp"
+              alt="Final Jeopardy Splash Screen"
+            />
+            <div className="clue-text"></div>
+          </div>
+
+          {/** Category Display
+           * - This displays at the start of a round, and lets the host introduce each category sequentially, scrolling each one into view for the players one after the other.  (Yet-to-be-implemented controls on the GameHostDashboard will allow the host to conduct this process.)
+           * - The "-display-viewport" element will expand to fill the entire clue board, and will be overflow: hidden
+           * - The "-display-strip" element will be a horizontal strip of all 6 categories, each one fully visible within the viewport (i.e. the strip will have height: 100%, width: 600% or something). It will be positioned absolutely within the viewport and will be animated to scroll leftward as each category is introduced.
+           * - Each "category-header" contains a category name and a splash image. The image should be visible at the start, then fade out to reveal the category name as part of the GSAP animation as it scrolls into view.
+           */}
+          <div
+            className="jeopardy-category-display-viewport"
+            style={{ visibility: "hidden" }}
+          >
+            <div className="jeopardy-category-display-strip">
+              <div className="category-header">
+                {/** Only one of these images should be shown, depending on current round.
+                 * This image will cover up the catgory until it has scrolled into view, then it will fade away
+                 * via GSAP animation to reveal the category name.
+                 */}
+                <img
+                  src="assets/images/splash-jeopardy.webp"
+                  alt="Jeopardy Splash Screen"
+                />
+                {/* OR .. */}
+                <img
+                  src="assets/images/splash-double-jeopardy.webp"
+                  alt="Double Jeopardy Splash Screen"
+                />
+                <span>Category 1</span>
+              </div>
+              <div className="category-header"></div>
+              <div className="category-header"></div>
+              <div className="category-header"></div>
+              <div className="category-header"></div>
+              <div className="category-header"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Player Podiums */}
-      <PlayerPodiums
-        players={players}
-        currentUserId={user?.id || ''}
-      />
+      <PlayerPodiums players={players} currentUserId={user?.id || ""} />
 
       {/* Clue Reveal Modal */}
       <ClueRevealModal
@@ -768,7 +922,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
         showReactionTime={buzzerState === BuzzerState.BUZZED}
       />
     </div>
-  )
-}
+  );
+};
 
-export default PlayerDashboard
+export default PlayerDashboard;
