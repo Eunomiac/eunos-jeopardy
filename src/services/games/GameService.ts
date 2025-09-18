@@ -687,12 +687,10 @@ export class GameService {
     }
 
     // Merge player data with profile data
-    const playersWithProfiles = players.map(player => ({
+    return players.map((player) => ({
       ...player,
-      profiles: profiles?.find(profile => profile.id === player.user_id) || null
+      profiles: profiles?.find((profile) => profile.id === player.user_id) || null
     }))
-
-    return playersWithProfiles
   }
 
   /**
