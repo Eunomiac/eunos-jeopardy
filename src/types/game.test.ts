@@ -54,6 +54,8 @@ describe('game types', () => {
   describe('isValidGameStatus', () => {
     it('should return true for valid game statuses', () => {
       expect(isValidGameStatus('lobby')).toBe(true)
+      expect(isValidGameStatus('game_intro')).toBe(true)
+      expect(isValidGameStatus('introducing_categories')).toBe(true)
       expect(isValidGameStatus('in_progress')).toBe(true)
       expect(isValidGameStatus('completed')).toBe(true)
       expect(isValidGameStatus('cancelled')).toBe(true)

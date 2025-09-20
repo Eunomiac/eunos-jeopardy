@@ -14,8 +14,9 @@ import {
 import { ClueSetService } from "../../services/clueSets/clueSetService";
 import type { ClueSetData, ClueData } from "../../services/clueSets/loader";
 import { SupabaseConnection } from "../../services/supabase/connection";
-// import { SimplePlayerConnectionStatus } from "../debug/PlayerConnectionStatus";
+
 import { supabase } from "../../services/supabase/client";
+import { gsap } from "gsap";
 import "./GameHostDashboard.scss";
 
 /**
@@ -36,6 +37,22 @@ const getGameControlButton = (game: Game | null) => {
     return {
       text: "Start Game",
       handler: "start" as const,
+      disabled: false,
+    };
+  }
+
+  if ((game.status as string) === "game_intro") {
+    return {
+      text: "End Game",
+      handler: "end" as const,
+      disabled: false,
+    };
+  }
+
+  if ((game.status as string) === "introducing_categories") {
+    return {
+      text: "End Game",
+      handler: "end" as const,
       disabled: false,
     };
   }
@@ -274,6 +291,105 @@ export function GameHostDashboard({
 
   /** Clue timeout duration in seconds */
   const CLUE_TIMEOUT_SECONDS = 5;
+
+  /** Game introduction animation state */
+  const [isPlayingGameIntro, setIsPlayingGameIntro] = useState(false);
+  const [gameIntroComplete, setGameIntroComplete] = useState(false);
+
+  /** Category introduction state */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_isIntroducingCategories, setIsIntroducingCategories] = useState(false);
+
+  /** Current category being introduced (1-6) */
+  const [currentIntroductionCategory, setCurrentIntroductionCategory] = useState(0);
+
+  /** Daily Double wager state */
+  const [dailyDoubleWager, setDailyDoubleWager] = useState<number | null>(null);
+
+  /** Daily Double wager input value */
+  const [wagerInput, setWagerInput] = useState("");
+
+  /**
+   * Effect to sync game state and handle animation triggers via subscription.
+   */
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+
+    const gameStatus = game.status as string;
+
+    // Sync category introduction state
+    const isIntroducing = gameStatus === "introducing_categories";
+    setIsIntroducingCategories(isIntroducing);
+
+    if (isIntroducing) {
+      // Sync current category from database
+      const dbCategory = (game as Game & { current_introduction_category?: number }).current_introduction_category || 1;
+      setCurrentIntroductionCategory(dbCategory);
+    } else {
+      setCurrentIntroductionCategory(0);
+    }
+
+    // Sync game intro state
+    const isGameIntro = gameStatus === "game_intro";
+    if (isGameIntro && !isPlayingGameIntro) {
+      // Game intro status detected but animation not started - this is initial load
+      setGameIntroComplete(true); // Skip animation on reload
+    }
+  }, [game, isPlayingGameIntro]);
+
+  /**
+   * Effect to set up game subscription for animation triggers.
+   */
+  useEffect(() => {
+    if (!gameId) {
+      return;
+    }
+
+    const subscription = supabase
+      .channel('game-status-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'games',
+        filter: `id=eq.${gameId}`
+      }, (payload) => {
+        const oldStatus = payload.old?.status;
+        const newStatus = payload.new?.status;
+
+        // Trigger game introduction animation
+        if (oldStatus === 'lobby' && newStatus === 'game_intro') {
+          console.log('🎬 Starting game introduction animation');
+          setIsPlayingGameIntro(true);
+          setGameIntroComplete(false);
+
+          // Create placeholder GSAP timeline for host
+          const hostIntroTimeline = gsap.timeline({
+            onComplete: () => {
+              console.log('🎬 Host game introduction animation complete');
+              setIsPlayingGameIntro(false);
+              setGameIntroComplete(true);
+            }
+          });
+
+          // Placeholder animation - you'll replace this with detailed animations
+          hostIntroTimeline
+            .set('.game-host-dashboard', { opacity: 0.8 })
+            .to('.game-host-dashboard', { opacity: 1, duration: 5, ease: 'power2.inOut' });
+        }
+
+        // Handle other status transitions
+        if (oldStatus === 'game_intro' && newStatus === 'introducing_categories') {
+          console.log('🎯 Category introductions started');
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [gameId]);
 
   /**
    * Effect to monitor connection status with periodic health checks.
@@ -640,9 +756,48 @@ export function GameHostDashboard({
     );
     const isRevealed = clueState?.revealed || false;
 
+    // Check if this is a Daily Double
+    const isDailyDouble = dailyDoublePositions.some(
+      (position) => {
+        // Find the clue's position in the board
+        const clueData = clueSetData?.rounds[game?.current_round || 'jeopardy'];
+        if (!Array.isArray(clueData)) {
+          return false;
+        }
+
+        for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
+          const categoryData = clueData[categoryIndex];
+          const clueInCategory = categoryData.clues.find((c) => c.id === focusedClue.id);
+          if (clueInCategory) {
+            return position.category === categoryIndex + 1 &&
+                   position.row === clueInCategory.position;
+          }
+        }
+        return false;
+      }
+    );
+
     if (!isRevealed) {
-      return "reveal";
+      if (isDailyDouble) {
+        // For Daily Doubles, check if player is selected and wager is set
+        if (!game.focused_player_id) {
+          return "daily-double"; // Show "Daily Double!" button
+        } else if (!dailyDoubleWager) {
+          return "daily-double-wager"; // Show wager input state
+        } else {
+          return "reveal"; // Show "Reveal Prompt" after wager is set
+        }
+      } else {
+        return "reveal"; // Regular clue
+      }
     }
+
+    // For Daily Doubles, skip buzzer unlock/lock (they're completed after one answer)
+    if (isDailyDouble) {
+      return "disabled";
+    }
+
+    // Regular clue buzzer logic
     if (game.is_buzzer_locked) {
       return "unlock";
     }
@@ -656,6 +811,12 @@ export function GameHostDashboard({
     const state = getRevealBuzzerButtonState();
 
     switch (state) {
+      case "daily-double":
+        await handleDailyDoubleClick();
+        break;
+      case "daily-double-wager":
+        // Do nothing - wager input should be visible
+        break;
       case "reveal":
         await handleRevealClue();
         break;
@@ -822,9 +983,23 @@ export function GameHostDashboard({
       const isDailyDouble = await ClueService.isDailyDouble(clueId);
 
       if (isDailyDouble) {
-        setMessage(
-          `🎯 Daily Double selected! Get player's wager before revealing.`
-        );
+        // Check if there's already a wager for this clue and focused player
+        const existingWager = await GameService.getDailyDoubleWager(gameId, user.id);
+
+        if (existingWager) {
+          // Pre-populate with existing wager and set state
+          setWagerInput(existingWager.toString());
+          setDailyDoubleWager(existingWager);
+          setMessage(
+            `🎯 Daily Double selected! Current wager: $${existingWager.toLocaleString()}`
+          );
+        } else {
+          // Pre-populate wager input with current clue value
+          setWagerInput(fullClueData.value.toString());
+          setMessage(
+            `🎯 Daily Double selected! Get player's wager before revealing.`
+          );
+        }
         setMessageType("success");
       } else {
         setMessage(`Clue selected: ${clueData.prompt.substring(0, 50)}...`);
@@ -957,8 +1132,12 @@ export function GameHostDashboard({
       // this would come from the player's actual response
       const playerResponse = "Correct response";
 
-      // Use clue value for scoring (Daily Double wagers would be handled separately)
-      const scoreValue = focusedClue.value;
+      // Use effective clue value (wager for Daily Doubles, original value for regular clues)
+      const scoreValue = await GameService.getEffectiveClueValue(
+        gameId,
+        focusedClue.id,
+        game.focused_player_id
+      );
 
       // Mark player correct - this will complete the clue
       const updatedGame = await GameService.markPlayerCorrect(
@@ -1021,8 +1200,12 @@ export function GameHostDashboard({
       // this would come from the player's actual response
       const playerResponse = "Incorrect response";
 
-      // Use clue value for scoring (Daily Double wagers would be handled separately)
-      const scoreValue = focusedClue.value;
+      // Use effective clue value (wager for Daily Doubles, original value for regular clues)
+      const scoreValue = await GameService.getEffectiveClueValue(
+        gameId,
+        focusedClue.id,
+        game.focused_player_id
+      );
 
       // Mark player wrong - this may keep clue active or complete it
       const updatedGame = await GameService.markPlayerWrong(
@@ -1148,20 +1331,31 @@ export function GameHostDashboard({
   };
 
   /**
-   * Handles starting the game by transitioning from lobby to in_progress state.
+   * Handles starting the game by beginning the game introduction animation.
    */
   const handleStartGame = async () => {
     if (!user || !game) {
+      console.log('🎬 Cannot start game - missing user or game:', { user: !!user, game: !!game });
       return;
     }
 
+    console.log('🎬 Host starting game introduction for gameId:', gameId);
+
     try {
-      // Transition game from lobby to in_progress
-      const updatedGame = await GameService.startGame(gameId, user.id);
+      // Initialize current player randomly if not already set
+      if (!game.current_player_id) {
+        console.log('🎯 Initializing current player randomly...');
+        await GameService.initializeCurrentPlayerRandomly(gameId, user.id);
+      }
+
+      // Start game introduction animation
+      console.log('🎬 Calling GameService.startGameIntroduction...');
+      const updatedGame = await GameService.startGameIntroduction(gameId, user.id);
+      console.log('🎬 Game introduction started, updated game:', updatedGame);
       setGame(updatedGame);
 
       // Provide user feedback
-      setMessage("Game started successfully!");
+      setMessage("Game introduction started!");
       setMessageType("success");
 
       // Clear message after delay
@@ -1170,9 +1364,233 @@ export function GameHostDashboard({
         setMessageType("");
       }, 2000);
     } catch (error) {
-      console.error("Failed to start game:", error);
+      console.error("Failed to start game introduction:", error);
       setMessage(
         `Failed to start game: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Handles starting category introductions after game intro animation completes.
+   */
+  const handleStartCategoryIntroductions = async () => {
+    if (!user || !game) {
+      return;
+    }
+
+    try {
+      // Start category introductions
+      const updatedGame = await GameService.startCategoryIntroductions(gameId, user.id);
+      setGame(updatedGame);
+      setIsIntroducingCategories(true);
+      setCurrentIntroductionCategory(1);
+
+      // Provide user feedback
+      setMessage("Category introductions started!");
+      setMessageType("success");
+
+      // Clear message after delay
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to start category introductions:", error);
+      setMessage(
+        `Failed to start category introductions: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Advances to the next category in the introduction sequence.
+   */
+  const handleNextCategory = async () => {
+    if (!user || !game) {
+      return;
+    }
+
+    try {
+      const updatedGame = await GameService.advanceToNextCategory(gameId, user.id);
+      setGame(updatedGame);
+
+      // Check if we completed all introductions
+      if (updatedGame.status === 'in_progress') {
+        setIsIntroducingCategories(false);
+        setCurrentIntroductionCategory(0);
+        setMessage("Category introductions complete! Game started!");
+        setMessageType("success");
+      } else {
+        // Move to next category
+        setCurrentIntroductionCategory((prev) => prev + 1);
+      }
+
+      // Clear message after delay
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to advance category:", error);
+      setMessage(
+        `Failed to advance category: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Skips category introductions and starts the game immediately.
+   */
+  const handleSkipIntroductions = async () => {
+    if (!user || !game) {
+      return;
+    }
+
+    try {
+      const updatedGame = await GameService.completeCategoryIntroductions(gameId, user.id);
+      setGame(updatedGame);
+      setIsIntroducingCategories(false);
+      setCurrentIntroductionCategory(0);
+
+      setMessage("Category introductions skipped! Game started!");
+      setMessageType("success");
+
+      // Clear message after delay
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to skip introductions:", error);
+      setMessage(
+        `Failed to skip introductions: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Handles Daily Double button click - automatically selects current player.
+   */
+  const handleDailyDoubleClick = async () => {
+    if (!user || !game || !focusedClue) {
+      return;
+    }
+
+    try {
+      // Get the current player (who gets to answer Daily Doubles)
+      if (!game.current_player_id) {
+        setMessage("No current player set. Please initialize current player first.");
+        setMessageType("error");
+        return;
+      }
+
+      // Automatically focus the current player for the Daily Double
+      const updatedGame = await GameService.updateGame(gameId, {
+        focused_player_id: game.current_player_id
+      }, user.id);
+
+      setGame(updatedGame);
+      setMessage(`Daily Double! Current player automatically selected.`);
+      setMessageType("success");
+
+      // Clear message after delay
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to handle Daily Double:", error);
+      setMessage(
+        `Failed to handle Daily Double: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Handles Daily Double wager submission.
+   */
+  const handleDailyDoubleWager = async () => {
+    if (!user || !game || !wagerInput) {
+      return;
+    }
+
+    const wagerAmount = parseInt(wagerInput, 10);
+    if (isNaN(wagerAmount) || wagerAmount <= 0) {
+      setMessage("Please enter a valid wager amount");
+      setMessageType("error");
+      return;
+    }
+
+    try {
+      await GameService.setDailyDoubleWager(gameId, user.id, wagerAmount);
+      setDailyDoubleWager(wagerAmount);
+      // Keep the wager input showing the current wager amount
+      // setWagerInput(""); // Don't clear - let it show the current wager
+
+      setMessage(`Daily Double wager set: $${wagerAmount.toLocaleString()}`);
+      setMessageType("success");
+
+      // Clear message after delay
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to set Daily Double wager:", error);
+      setMessage(
+        `Failed to set wager: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Clears the Daily Double wager after clue completion.
+   */
+  const handleClearDailyDoubleWager = async () => {
+    if (!user || !game) {
+      return;
+    }
+
+    try {
+      await GameService.clearDailyDoubleWager(gameId, user.id);
+      setDailyDoubleWager(null);
+
+      // Reset wager input to clue value
+      if (focusedClue) {
+        setWagerInput(focusedClue.value.toString());
+      }
+
+      setMessage("Daily Double wager cleared");
+      setMessageType("success");
+
+      // Clear message after delay
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to clear Daily Double wager:", error);
+      setMessage(
+        `Failed to clear wager: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
@@ -1258,13 +1676,19 @@ export function GameHostDashboard({
    * Handles adding points to a player's score.
    */
   const handleAddScore = async (playerId: string) => {
-    if (!user || !game) return;
+    if (!user || !game) {
+      return;
+    }
 
     const adjustmentValue = scoreAdjustments[playerId];
-    if (!adjustmentValue || adjustmentValue.trim() === "") return;
+    if (!adjustmentValue || adjustmentValue.trim() === "") {
+      return;
+    }
 
     const scoreChange = parseInt(adjustmentValue, 10);
-    if (isNaN(scoreChange)) return;
+    if (isNaN(scoreChange)) {
+      return;
+    }
 
     try {
       setMessage("Adjusting player score...");
@@ -1307,13 +1731,19 @@ export function GameHostDashboard({
    * Handles subtracting points from a player's score.
    */
   const handleSubtractScore = async (playerId: string) => {
-    if (!user || !game) return;
+    if (!user || !game) {
+      return;
+    }
 
     const adjustmentValue = scoreAdjustments[playerId];
-    if (!adjustmentValue || adjustmentValue.trim() === "") return;
+    if (!adjustmentValue || adjustmentValue.trim() === "") {
+      return;
+    }
 
     const scoreChange = parseInt(adjustmentValue, 10);
-    if (isNaN(scoreChange)) return;
+    if (isNaN(scoreChange)) {
+      return;
+    }
 
     // Use absolute value to ensure we always subtract
     const absoluteScoreChange = Math.abs(scoreChange);
@@ -1429,10 +1859,76 @@ export function GameHostDashboard({
             <h5>BOARD CONTROL</h5>
           </div>
           <div className="panel-content">
-            <div className="board-scale-wrapper">
-              <div className="jeopardy-board">
-                {/* Game board with real clue set data */}
-                {clueSetData && game ? (
+            {/* Game Introduction UI */}
+            {(game?.status as string) === "game_intro" ? (
+              <div className="game-introduction-panel">
+                <div className="introduction-header">
+                  <h3>Game Introduction</h3>
+                  <p>{isPlayingGameIntro ? "Animation in progress..." : "Ready to introduce categories"}</p>
+                </div>
+
+                <div className="introduction-controls">
+                  <button
+                    className="jeopardy-button"
+                    onClick={handleStartCategoryIntroductions}
+                    disabled={!gameIntroComplete}
+                  >
+                    {gameIntroComplete ? "Introduce Categories" : "Animation Playing..."}
+                  </button>
+                </div>
+              </div>
+            ) : /* Category Introduction UI */
+            (game?.status as string) === "introducing_categories" && clueSetData ? (
+              <div className="category-introduction-panel">
+                <div className="introduction-header">
+                  <h3>Introducing Categories</h3>
+                  <p>Category {currentIntroductionCategory} of 6</p>
+                </div>
+
+                <div className="current-category-display">
+                  {(() => {
+                    const currentRoundData = clueSetData.rounds[game.current_round];
+                    const categoryData = Array.isArray(currentRoundData)
+                      ? currentRoundData[currentIntroductionCategory - 1]
+                      : null;
+
+                    return categoryData ? (
+                      <div className="category-showcase">
+                        <div className="category-name">{categoryData.name}</div>
+                        <div className="category-description">
+                          {/* Optional: Add category description if available */}
+                          Category {currentIntroductionCategory}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="category-showcase">
+                        <div className="category-name">Loading...</div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="introduction-controls">
+                  <button
+                    className="jeopardy-button"
+                    onClick={handleNextCategory}
+                    disabled={currentIntroductionCategory > 6}
+                  >
+                    {currentIntroductionCategory >= 6 ? "Start Game" : "Next Category"}
+                  </button>
+                  <button
+                    className="jeopardy-button-small"
+                    onClick={handleSkipIntroductions}
+                  >
+                    Skip Introductions
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="board-scale-wrapper">
+                <div className="jeopardy-board">
+                  {/* Game board with real clue set data */}
+                  {clueSetData && game ? (
                   <>
                     {/* Category headers from current round - direct children of jeopardy-board */}
                     {(() => {
@@ -1583,6 +2079,7 @@ export function GameHostDashboard({
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
 
@@ -1624,13 +2121,19 @@ export function GameHostDashboard({
               <p className="text-muted">No players joined yet</p>
             ) : (
               <div className="player-scores-list">
-                {players.map((player, index) => (
-                  <div key={player.user_id} className="player-score-item">
-                    <div className="player-details">
-                      {/* <SimplePlayerConnectionStatus playerId={player.user_id} /> */}
-                      <strong>
-                        {player.nickname || `Player ${index + 1}`}
-                      </strong>
+                {players.map((player, index) => {
+                  const isCurrentPlayer = game?.current_player_id === player.user_id;
+                  const playerItemClass = `player-score-item${isCurrentPlayer ? ' current-player' : ''}`;
+
+                  return (
+                    <div key={player.user_id} className={playerItemClass}>
+                      <div className="player-details">
+                        {/* <SimplePlayerConnectionStatus playerId={player.user_id} /> */}
+                        <strong>
+                          {isCurrentPlayer && "👑 "}
+                          {player.nickname || `Player ${index + 1}`}
+                          {isCurrentPlayer && " (Current)"}
+                        </strong>
                       <small className="player-email">
                         {(() => {
                           // Use enhanced player data with profile information
@@ -1694,7 +2197,8 @@ export function GameHostDashboard({
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             <div className="player-count">
@@ -1743,7 +2247,7 @@ export function GameHostDashboard({
                     const value = parseInt(e.target.value, 10);
                     if (!isNaN(value) && value >= 100 && value <= 5000) {
                       setBuzzerTimeoutMs(value);
-                      // TODO: Save to database when implemented
+                      // Note: Buzzer timeout is currently client-side only
                     }
                   }}
                   min="100"
@@ -1886,12 +2390,16 @@ export function GameHostDashboard({
                     const isDisabled = buttonState === "disabled";
                     const buttonText = {
                       disabled: "Select Clue",
+                      "daily-double": "Daily Double!",
+                      "daily-double-wager": "Set Wager First",
                       reveal: "Reveal Prompt",
                       unlock: "Unlock Buzzer",
                       lock: "Lock Buzzer",
                     }[buttonState];
                     const buttonClass = {
                       disabled: "",
+                      "daily-double": "daily-double",
+                      "daily-double-wager": "disabled",
                       reveal: "",
                       unlock: "red",
                       lock: "green",
@@ -1916,6 +2424,64 @@ export function GameHostDashboard({
                   <div className="timeout-message">
                     ⏱️ Time remaining: <strong>{clueTimeRemaining}s</strong>
                   </div>
+                </div>
+              )}
+
+              {/* Daily Double Wager Interface */}
+              {focusedClue && dailyDoublePositions.some(
+                (position) => {
+                  // Find the clue's position in the board
+                  const clueData = clueSetData?.rounds[game?.current_round || 'jeopardy'];
+                  if (!Array.isArray(clueData)) {
+                    return false;
+                  }
+
+                  for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
+                    const category = clueData[categoryIndex];
+                    const clueInCategory = category.clues.find((c) => c.id === focusedClue.id);
+                    if (clueInCategory) {
+                      return position.category === categoryIndex + 1 &&
+                             position.row === clueInCategory.position;
+                    }
+                  }
+                  return false;
+                }
+              ) && (
+                <div className="daily-double-wager-section">
+
+                  {dailyDoubleWager ? (
+                    <div className="wager-display">
+                      <div className="wager-amount">
+                        Wager: <strong>${dailyDoubleWager.toLocaleString()}</strong>
+                      </div>
+                      <button
+                        className="jeopardy-button-small"
+                        onClick={handleClearDailyDoubleWager}
+                      >
+                        Clear Wager
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="wager-display">
+                      <div className="wager-input-row">
+                        <input
+                          type="number"
+                          className="wager-input"
+                          placeholder="Enter wager amount"
+                          value={wagerInput}
+                          onChange={(e) => setWagerInput(e.target.value)}
+                          min="1"
+                        />
+                        <button
+                          className="jeopardy-button-small"
+                          onClick={handleDailyDoubleWager}
+                          disabled={!wagerInput || parseInt(wagerInput, 10) <= 0}
+                        >
+                          Set Wager
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

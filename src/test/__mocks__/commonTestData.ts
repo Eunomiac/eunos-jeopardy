@@ -57,6 +57,7 @@ export const mockGame: GameRow = {
   clue_set_id: 'clue-set-123',
   status: 'lobby',
   current_round: 'jeopardy',
+  current_player_id: null,
   is_buzzer_locked: true,
   focused_clue_id: null,
   focused_player_id: null,

@@ -1,18 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { GameService } from "../../services/games/GameService";
 import { FontAssignmentService } from "../../services/fonts/FontAssignmentService";
 import { PlayerPodiums, type PlayerInfo } from "./PlayerPodiums";
-import { ClueRevealModal, type ClueInfo } from "./ClueRevealModal";
+import type { ClueInfo } from "./ClueRevealModal";
 import { BuzzerState } from "../../types/BuzzerState";
 import { supabase } from "../../services/supabase/client";
 import type { ClueState } from "../../services/clues/ClueService";
+import { AnimationService } from "../../services/animations/AnimationService";
+import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
+import { GameStateClassService } from "../../services/animations/GameStateClassService";
+import { gsap } from "gsap";
 
 import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
 import "./PlayerDashboard.scss";
 
 interface PlayerDashboardProps {
   gameId: string;
+  game?: GameUpdatePayload | null;
 }
 
 /**
@@ -62,11 +67,11 @@ interface BuzzPayload {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
+const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGame }) => {
   const { user } = useAuth();
 
-  // Game state
-  const [game, setGame] = useState<GameUpdatePayload | null>(null);
+  // Use game from props (managed by App.tsx) or fallback to local state for backwards compatibility
+  const game = propGame;
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [currentClue, setCurrentClue] = useState<ClueInfo | null>(null);
   const [focusedClue, setFocusedClue] = useState<ClueInfo | null>(null);
@@ -83,10 +88,36 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showClueModal, setShowClueModal] = useState(false);
-  const [modalAnimatingOut, setModalAnimatingOut] = useState(false);
+  // Buzzer timing - removed unused state variables
 
-  // Buzzer timing
-  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
+  // Animation services and refs
+  const animationService = AnimationService.getInstance();
+  const buzzerStateService = BuzzerStateService.getInstance();
+  GameStateClassService.getInstance();
+  const displayWindowRef = useRef<HTMLDivElement>(null);
+  const clueContentRef = useRef<HTMLDivElement>(null);
+
+  // Game introduction animation state
+  const [isPlayingGameIntro, setIsPlayingGameIntro] = useState(false);
+
+  // Track which game status we've already animated to prevent duplicates
+  const animatedGameStatus = useRef<string | null>(null);
+
+  // Track the last category we animated to distinguish initial render from category advance
+  const lastAnimatedCategory = useRef<number>(0);
+
+  /**
+   * Effect to handle display window animations when content changes.
+   */
+  useEffect(() => {
+    if (clueContentRef.current && showClueModal && currentClue) {
+        // Animate clue reveal
+        animationService.animateClueReveal(clueContentRef.current, currentClue, {
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      }
+  }, [showClueModal, currentClue, animationService]);
 
   /**
    * Loads initial game data and player information.
@@ -100,15 +131,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       setLoading(true);
       setError(null);
 
-      // Load game data - set a basic game state that will be updated by real-time subscriptions
-      setGame({
-        id: gameId,
-        status: "in_progress",
-        current_round: "jeopardy",
-        is_buzzer_locked: true,
-        focused_clue_id: null,
-        focused_player_id: null,
-      } as GameUpdatePayload);
+      // Game data is now managed by App.tsx and passed as props
+      // No need to load game data here
 
       // Load players
       const gamePlayers = await GameService.getPlayers(gameId);
@@ -313,76 +337,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       return undefined;
     }
 
-    // Subscribe to game state changes
-    const gameSubscription = supabase
-      .channel(`game-${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "games",
-          filter: `id=eq.${gameId}`,
-        },
-        async (payload) => {
-          console.log("🔔 Game state update:", payload);
-          // Update game data based on changes
-          if (payload.new) {
-            const gameUpdate = payload.new as GameUpdatePayload;
-            setGame(gameUpdate);
-
-            // Update buzzer state based on game state (but not during modal animation)
-            if (!modalAnimatingOut) {
-              if (gameUpdate.is_buzzer_locked) {
-                setBuzzerState(BuzzerState.LOCKED);
-                setBuzzerUnlockTime(null);
-                setReactionTime(null);
-              } else {
-                setBuzzerState(BuzzerState.UNLOCKED);
-                setBuzzerUnlockTime(Date.now()); // Record when buzzer was unlocked
-              }
-            }
-
-            // Handle focused clue (just highlight on board, don't show modal)
-            if (gameUpdate.focused_clue_id) {
-              const clueInfo = await loadClueData(gameUpdate.focused_clue_id);
-              setFocusedClue(clueInfo);
-              // Note: Modal will only show when clue becomes revealed (via clue states subscription)
-            } else {
-              setFocusedClue(null);
-              // Hide modal when clue is unfocused
-              setShowClueModal(false);
-              setCurrentClue(null);
-              setBuzzerState(BuzzerState.LOCKED);
-              setReactionTime(null);
-            }
-
-            // Handle player selection - hide modal when host selects a player from buzzer queue
-            if (gameUpdate.focused_player_id) {
-              // Host has selected a player for adjudication - start modal animation
-              setModalAnimatingOut(true);
-              setShowClueModal(false);
-
-              // Delay buzzer state changes until modal animation completes (300ms)
-              setTimeout(() => {
-                setModalAnimatingOut(false);
-              }, 300);
-            } else if (
-              gameUpdate.focused_clue_id &&
-              !gameUpdate.is_buzzer_locked &&
-              focusedClue
-            ) {
-              // Player was marked wrong: focused_player_id is null, buzzer unlocked, clue still active
-              // Check if current player is locked out before showing modal
-              checkPlayerLockoutAndShowModal(
-                gameUpdate.focused_clue_id,
-                focusedClue
-              );
-            }
-          }
-        }
-      )
-      .subscribe();
+    // Game state is now managed by App.tsx subscription - no need for separate game subscription
+    // Handle game state changes via useEffect watching the game prop
 
     // Subscribe to player changes
     const playersSubscription = supabase
@@ -539,7 +495,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       .subscribe();
 
     return () => {
-      gameSubscription.unsubscribe();
       playersSubscription.unsubscribe();
       clueStatesSubscription.unsubscribe();
       buzzesSubscription.unsubscribe();
@@ -548,9 +503,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }, [
     gameId,
     user,
-    loadClueData,
     focusedClue,
-    modalAnimatingOut,
+    showClueModal,
     updateClueState,
   ]);
 
@@ -565,11 +519,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       try {
         // Calculate reaction time using client-side timing
         let reactionTimeMs: number | undefined;
-        if (buzzerUnlockTime) {
-          reactionTimeMs = Date.now() - buzzerUnlockTime;
-          setReactionTime(reactionTimeMs);
-          console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`);
-        }
+        // Note: buzzerUnlockTime was removed - reaction time calculation disabled
+        // if (buzzerUnlockTime) {
+        //   reactionTimeMs = Date.now() - buzzerUnlockTime;
+        //   setReactionTime(reactionTimeMs);
+        //   console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`);
+        // }
 
         // Send buzz event to server with reaction time
         await GameService.recordBuzz(
@@ -590,59 +545,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
       setBuzzerState(BuzzerState.FROZEN);
       console.log("❄️ Player buzzed too early - frozen!");
     }
-  }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime]);
+  }, [buzzerState, user, currentClue, gameId]);
 
-  /**
-   * Checks if current player is locked out and shows modal if they can still buzz.
-   */
-  const checkPlayerLockoutAndShowModal = useCallback(
-    async (clueId: string, clueInfo: ClueInfo) => {
-    if (!user?.id) {return};
 
-      try {
-        // Get the clue data to check locked_out_player_ids
-        const { data: clueData, error: err } = await supabase
-          .from("clues")
-          .select("locked_out_player_ids")
-          .eq("id", clueId)
-          .single();
 
-        if (err) {
-          console.error("Failed to check player lockout status:", err);
-          return;
-        }
 
-        const lockedOutPlayers = clueData.locked_out_player_ids || [];
-        const isPlayerLockedOut = lockedOutPlayers.includes(user.id);
-
-        if (!isPlayerLockedOut) {
-          // Player can still buzz - show modal
-          console.log(
-            "🔄 Re-showing modal for remaining player after wrong answer"
-          );
-          setCurrentClue(clueInfo);
-          setShowClueModal(true);
-          setBuzzerState(BuzzerState.UNLOCKED); // Buzzer should be unlocked for remaining players
-        } else {
-          // Player is locked out - keep modal hidden
-          console.log("🚫 Player is locked out from this clue");
-        }
-      } catch (err) {
-        console.error("Error checking player lockout status:", err);
-      }
-    },
-    [user]
-  );
-
-  /**
-   * Handles clue modal close.
-   */
-  const handleClueModalClose = useCallback(() => {
-    setShowClueModal(false);
-    setCurrentClue(null);
-    setBuzzerState(BuzzerState.LOCKED);
-    setReactionTime(null);
-  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -652,6 +559,178 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
   // Set up real-time subscriptions
   useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions]);
+
+  // Watch for game status changes to trigger animations
+  useEffect(() => {
+    // Only trigger animation when status is game_intro and we haven't animated this status yet
+    if (game?.status === 'game_intro' &&
+        !isPlayingGameIntro &&
+        animatedGameStatus.current !== 'game_intro') {
+
+      console.log('🎬 Game status is game_intro, starting animation');
+      setIsPlayingGameIntro(true);
+      animatedGameStatus.current = 'game_intro'; // Mark this status as animated
+
+      // Wait for DOM to be ready with multiple checks
+      const waitForBoard = (attempts = 0) => {
+        const boardElement = document.querySelector('.jeopardy-board');
+        console.log(`🎬 Board element search attempt ${attempts + 1}:`, boardElement);
+
+        if (boardElement) {
+          console.log('🎬 Setting up player intro animation timeline');
+
+          // Create placeholder GSAP timeline for player
+          const playerIntroTimeline = gsap.timeline({
+            onComplete: () => {
+              console.log('🎬 Player game introduction animation complete');
+              setIsPlayingGameIntro(false);
+            }
+          });
+
+          // Use the animateBoardIn effect from utils/animations.ts
+          playerIntroTimeline
+            .add(() => console.log('🎬 Animation started'))
+            .add(gsap.effects.animateBoardIn())
+            .add(() => console.log('🎬 Animation completed'));
+        } else if (attempts < 10) {
+          // Retry up to 10 times with increasing delay
+          setTimeout(() => waitForBoard(attempts + 1), 50 * (attempts + 1));
+        } else {
+          console.error('🎬 Board element not found after 10 attempts - animation skipped');
+          setIsPlayingGameIntro(false);
+          animatedGameStatus.current = null; // Reset so we can try again later
+        }
+      };
+
+      // Start waiting for board element
+      waitForBoard();
+    }
+
+    // Reset animation tracking when game status changes away from game_intro
+    if (game?.status && game.status !== 'game_intro') {
+      animatedGameStatus.current = null;
+    }
+  }, [game?.status, isPlayingGameIntro]);
+
+  // Watch for game state changes to handle buzzer state
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+
+    // Update buzzer state based on game state
+    if (game.is_buzzer_locked) {
+      setBuzzerState(BuzzerState.LOCKED);
+      setReactionTime(null);
+    } else {
+      setBuzzerState(BuzzerState.UNLOCKED);
+    }
+  }, [game]);
+
+  // Watch for focused clue changes
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+
+    const handleFocusedClueChange = async () => {
+      if (game.focused_clue_id) {
+        const clueInfo = await loadClueData(game.focused_clue_id);
+        setFocusedClue(clueInfo);
+      } else {
+        setFocusedClue(null);
+        setShowClueModal(false);
+        setCurrentClue(null);
+        setBuzzerState(BuzzerState.LOCKED);
+        setReactionTime(null);
+      }
+    };
+
+    handleFocusedClueChange();
+  }, [game, loadClueData]);
+
+  // Watch for category introduction changes and animate with GSAP
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+
+    const gameStatus = game.status;
+    const isIntroducingCategories = gameStatus === 'introducing_categories';
+    const gameWithCategory = game as GameUpdatePayload & { current_introduction_category?: number };
+    const currentIntroCategory = gameWithCategory.current_introduction_category || 1;
+
+    if (isIntroducingCategories) {
+      console.log('🎬 Category introduction animation triggered for category:', currentIntroCategory);
+
+      // Wait for DOM to be ready with multiple checks
+      const waitForCategoryStrip = (attempts = 0) => {
+        const stripElement = document.querySelector('.jeopardy-category-display-strip');
+        console.log(`🎬 Category strip search attempt ${attempts + 1}:`, stripElement);
+
+        if (stripElement) {
+        // Calculate the target position (same logic as before)
+        const targetX = -((currentIntroCategory - 1) * 100 / 6);
+
+        // Check if this is initial render (component mounting) vs category advance
+        const isInitialRender = lastAnimatedCategory.current === 0 && currentIntroCategory > 1;
+
+        console.log(`🎬 Category ${currentIntroCategory}: lastAnimated=${lastAnimatedCategory.current}, isInitialRender=${isInitialRender}`);
+
+        if (isInitialRender) {
+          console.log('🎬 Initial render detected - setting up category strip for category', currentIntroCategory);
+
+          // Set strip position immediately without animation
+          gsap.set(stripElement, { x: `${targetX}%` });
+
+          // Hide splash images for all categories from 1 to currentIntroCategory
+          for (let i = 1; i <= currentIntroCategory; i++) {
+            const splashImage = stripElement.querySelector(`.category-header:nth-child(${i}) img.splash-jeopardy`);
+            if (splashImage) {
+              gsap.set(splashImage, { autoAlpha: 0 });
+              console.log(`🎬 Set splash image for category ${i} to hidden`);
+            }
+          }
+
+          // Update tracking
+          lastAnimatedCategory.current = currentIntroCategory;
+        } else {
+          console.log('🎬 Animating category strip to category', currentIntroCategory);
+
+          // Get the proper splash image element based on category number
+          const splashImage = stripElement.querySelector(`.category-header:nth-child(${currentIntroCategory}) img.splash-jeopardy`);
+
+          // Animate with GSAP
+          gsap.timeline()
+            .to(stripElement, {
+              x: `${targetX}%`,
+              duration: 0.8,
+              ease: 'power2.inOut',
+              onStart: () => console.log('🎬 Category animation started'),
+              onComplete: () => {
+                console.log('🎬 Category animation completed');
+                // Update tracking after animation completes
+                lastAnimatedCategory.current = currentIntroCategory;
+              }
+            })
+            .to(splashImage, {
+              autoAlpha: 0,
+              duration: 0.5,
+              ease: 'power2.inOut'
+            }, "-=0.3");
+        }
+        } else if (attempts < 10) {
+          // Retry up to 10 times with increasing delay
+          setTimeout(() => waitForCategoryStrip(attempts + 1), 50 * (attempts + 1));
+        } else {
+          console.error('🎬 Category strip element not found after 10 attempts - animation skipped');
+        }
+      };
+
+      // Start waiting for category strip element
+      waitForCategoryStrip();
+    }
+  }, [game]);
 
   // Loading state
   if (loading) {
@@ -676,7 +755,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
   }
 
   return (
-    <div className="player-dashboard" data-game-id={gameId}>
+    <div className={`player-dashboard ${String(game?.status) || 'loading'}`} data-game-id={gameId}>
       {/* Round Header */}
       <div className="jeopardy-board-header">
         <h2>
@@ -694,7 +773,21 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
 
       {/* Jeopardy Board */}
       <div className="jeopardy-board-container">
-        <div className="jeopardy-board">
+        <div
+          className="jeopardy-board"
+          style={{
+            "--jeopardy-board-bg-image": {
+              jeopardy: "url('/assets/images/splash-jeopardy.webp')",
+              double: "url('/assets/images/splash-double-jeopardy.webp')",
+              final: "url('/assets/images/splash-final-jeopardy.webp')"
+            }[game?.current_round as string ?? 'jeopardy'],
+            "--jeopardy-board-bg-image-small": {
+              jeopardy: "url('/assets/images/splash-jeopardy-small.webp')",
+              double: "url('/assets/images/splash-double-jeopardy-small.webp')",
+              final: "url('/assets/images/splash-final-jeopardy.webp')"
+            }[game?.current_round as string ?? 'jeopardy']
+          } as React.CSSProperties}
+        >
           {clueSetData && game ? (
             <>
               {/* Category headers */}
@@ -717,7 +810,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
                         key={`category-${index}-${category.name}`}
                         className="category-header"
                       >
-                        {category.name}
+                        <span className="category-name">{category.name}</span>
                       </div>
                     )
                   );
@@ -815,7 +908,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
                       style={{ pointerEvents: "none" }}
                       aria-label={ariaLabel}
                     >
-                      ${item.clue.value}
+                      <span className="clue-value">
+                        ${item.clue.value}
+                      </span>
                     </button>
                   );
                 });
@@ -844,83 +939,137 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId }) => {
           )}
         </div>
 
-        {/* Dynamic Display Window
-         * - A multipurpose display window that contains multiple elements for display at various times, all initialized to visibility: hidden so they can be properly controlled by GSAP animations.
-         */}
-        <div
-          className="dynamic-display-window"
-          // style={{ visibility: "hidden" }}
-        >
-          {/** Clue Prompt Display
-           * - The contents of "clue-text" should be replaced with the clue prompt when 'Reveal Prompt' is clicked by the host, then should be animated with the "animatePromptIn" registered GSAP effect (which will expand this window to occupy and overlay/cover up the entire board). It should remain visible to all players until the clue is unfocused, at which point "animatePromptOut" should be called to animate it out (this effect will delete the prompt text from "clue-text" when it finishes).
-           * - The two splash images should be conditionally displayed when appropriate (i.e. a Daily Double, or Final Jeopardy). When they are being displayed, they should be absolutely positioned and z-indexed to completely fill the board and cover up the clue prompt text until a (yet-to-be-implemented) control on the GameHostDashboard is clicked to advance to the next step.
-           */}
-          <div
-            className="jeopardy-clue-display"
-            style={{ visibility: "hidden" }}
-          >
-            <img
-              src="assets/images/splash-daily-double.webp"
-              alt="Daily Double Splash Screen"
-            />
-            {/* OR .. */}
-            <img
-              src="assets/images/splash-final-jeopardy.webp"
-              alt="Final Jeopardy Splash Screen"
-            />
-            <div className="clue-text"></div>
-          </div>
 
-          {/** Category Display
-           * - This displays at the start of a round, and lets the host introduce each category sequentially, scrolling each one into view for the players one after the other.  (Yet-to-be-implemented controls on the GameHostDashboard will allow the host to conduct this process.)
-           * - The "-display-viewport" element will expand to fill the entire clue board, and will be overflow: hidden
-           * - The "-display-strip" element will be a horizontal strip of all 6 categories, each one fully visible within the viewport (i.e. the strip will have height: 100%, width: 600% or something). It will be positioned absolutely within the viewport and will be animated to scroll leftward as each category is introduced.
-           * - Each "category-header" contains a category name and a splash image. The image should be visible at the start, then fade out to reveal the category name as part of the GSAP animation as it scrolls into view.
-           */}
-          <div
-            className="jeopardy-category-display-viewport"
-            style={{ visibility: "hidden" }}
-          >
-            <div className="jeopardy-category-display-strip">
-              <div className="category-header">
-                {/** Only one of these images should be shown, depending on current round.
-                 * This image will cover up the catgory until it has scrolled into view, then it will fade away
-                 * via GSAP animation to reveal the category name.
-                 */}
-                <img
-                  src="assets/images/splash-jeopardy.webp"
-                  alt="Jeopardy Splash Screen"
-                />
-                {/* OR .. */}
-                <img
-                  src="assets/images/splash-double-jeopardy.webp"
-                  alt="Double Jeopardy Splash Screen"
-                />
-                <span>Category 1</span>
-              </div>
-              <div className="category-header"></div>
-              <div className="category-header"></div>
-              <div className="category-header"></div>
-              <div className="category-header"></div>
-              <div className="category-header"></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Player Podiums */}
-      <PlayerPodiums players={players} currentUserId={user?.id || ""} />
-
-      {/* Clue Reveal Modal */}
-      <ClueRevealModal
-        clue={currentClue}
-        buzzerState={buzzerState}
+      <PlayerPodiums
+        players={players.map((player) => ({
+          ...player,
+          buzzerState: player.id === user?.id ? buzzerState : BuzzerState.INACTIVE,
+          isFocused: game?.focused_player_id === player.id,
+          reactionTime: player.id === user?.id ? reactionTime : null,
+          showReactionTime: player.id === user?.id && buzzerState === BuzzerState.BUZZED
+        }))}
+        currentUserId={user?.id || ""}
         onBuzz={handleBuzz}
-        isVisible={showClueModal}
-        onClose={handleClueModalClose}
-        reactionTime={reactionTime}
-        showReactionTime={buzzerState === BuzzerState.BUZZED}
       />
+
+      {/* Dynamic Display Window */}
+      <div className="dynamic-display-window" ref={displayWindowRef}>
+        {(() => {
+          // Check game status for different display modes
+          const gameStatus = (game as GameUpdatePayload & { status?: string })?.status;
+          const isGameIntro = gameStatus === 'game_intro';
+          const isIntroducingCategories = gameStatus === 'introducing_categories';
+
+          if (isGameIntro) {
+            // Show game introduction display
+            return (
+              <div className="game-intro-display">
+                <div className="intro-content">
+                  <h2>Get Ready!</h2>
+                  <p>{isPlayingGameIntro ? "Game starting..." : "Waiting for host..."}</p>
+                </div>
+              </div>
+            );
+          }
+
+          if (isIntroducingCategories && clueSetData && game) {
+            // Show category display strip for introductions
+            return (
+              <div className="jeopardy-category-display-viewport" style={{ visibility: "visible" }}>
+                <div
+                  className="jeopardy-category-display-strip"
+                  // Transform now handled by GSAP animation
+                >
+                  {/* Always populate with current round's categories */}
+                  {(() => {
+                    if (game.current_round === "final") {
+                      // Final Jeopardy - single category
+                      return (
+                        <div key="final-category" className="category-header">
+                          <span>{clueSetData.rounds.final.name}</span>
+                        </div>
+                      );
+                    } else {
+                      // Regular rounds - 6 categories
+                      const roundKey = game.current_round as "jeopardy" | "double";
+                      const currentRoundData = clueSetData.rounds[roundKey] || [];
+
+                      return currentRoundData.map((category: { name: string; clues: ClueData[] }, index: number) => (
+                        <div key={`category-${index}-${category.name}`} className="category-header">
+                          <img
+                            className="splash-jeopardy"
+                            src={{
+                              jeopardy: 'assets/images/splash-jeopardy.webp',
+                              double: 'assets/images/splash-double-jeopardy.webp',
+                              final: 'assets/images/splash-final-jeopardy.webp'
+                            }[roundKey]}
+                            alt="Jeopardy Splash Screen"
+                          />
+                          <span className="category-name">{category.name}</span>
+                        </div>
+                      ));
+                    }
+                  })()}
+                </div>
+              </div>
+            );
+          }
+
+          if (showClueModal && currentClue) {
+            // Show clue content
+            return (
+              <div className="clue-display-content gsap-animation" ref={clueContentRef}>
+                <div className="clue-header">
+                  <div className="clue-category">{currentClue.category}</div>
+                  <div className="clue-value">${currentClue.value.toLocaleString()}</div>
+                </div>
+
+                <div className="clue-prompt">
+                  {currentClue.prompt}
+                </div>
+
+                {currentClue.isDailyDouble && (
+                  <div className="daily-double-indicator">
+                    🎯 DAILY DOUBLE!
+                  </div>
+                )}
+
+                {/* Integrated Buzzer Display */}
+                <div className="integrated-buzzer-display">
+                  <button
+                    className={`integrated-buzzer ${buzzerStateService.getStateClassName(buzzerState)}`}
+                    onClick={handleBuzz}
+                    disabled={!buzzerStateService.isInteractive(buzzerState)}
+                  >
+                    {buzzerStateService.getStateDisplayText(buzzerState)}
+                  </button>
+
+                  {buzzerState === BuzzerState.BUZZED && reactionTime && (
+                    <div className="reaction-time">
+                      ⚡ {reactionTime} ms
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          // Default placeholder
+          return (
+            <div className="display-placeholder" ref={clueContentRef}>
+              <div className="placeholder-content">
+                <div className="placeholder-icon">🎯</div>
+                <div className="placeholder-text">
+                  {gameStatus === 'lobby' ? 'Game starting soon...' : 'Waiting for next clue...'}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
     </div>
   );
 };

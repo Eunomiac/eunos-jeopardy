@@ -1,11 +1,11 @@
 /**
  * Player Connection Status Component
- * 
+ *
  * Shows subscription status indicators for each player.
  * Displays colored emoji circles to indicate connection state.
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase/client';
 
 interface PlayerConnectionStatusProps {
@@ -15,34 +15,37 @@ interface PlayerConnectionStatusProps {
 
 type ConnectionState = 'connected' | 'disconnected' | 'connecting' | 'error';
 
-export function PlayerConnectionStatus({ playerId, playerName }: PlayerConnectionStatusProps) {
+export function PlayerConnectionStatus({ playerId, playerName }: Readonly<PlayerConnectionStatusProps>) {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [lastSeen, setLastSeen] = useState<Date | null>(null);
 
   useEffect(() => {
     // Monitor player's presence/activity
     const presenceChannel = supabase.channel(`player-presence-${playerId}`);
-    
+
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = presenceChannel.presenceState();
-        const isPlayerPresent = Object.keys(presenceState).some(key => 
+        const isPlayerPresent = Object.keys(presenceState).some((key) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           presenceState[key].some((presence: any) => presence.user_id === playerId)
         );
-        
+
         setConnectionState(isPlayerPresent ? 'connected' : 'disconnected');
         if (isPlayerPresent) {
           setLastSeen(new Date());
         }
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const isThisPlayer = newPresences.some((presence: any) => presence.user_id === playerId);
         if (isThisPlayer) {
           setConnectionState('connected');
           setLastSeen(new Date());
         }
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const isThisPlayer = leftPresences.some((presence: any) => presence.user_id === playerId);
         if (isThisPlayer) {
           setConnectionState('disconnected');
@@ -58,15 +61,15 @@ export function PlayerConnectionStatus({ playerId, playerName }: PlayerConnectio
 
     // Track player's game activity (buzzes, etc.)
     const activityChannel = supabase.channel(`player-activity-${playerId}`);
-    
+
     activityChannel
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'buzzes',
           filter: `user_id=eq.${playerId}`
-        }, 
+        },
         () => {
           setConnectionState('connected');
           setLastSeen(new Date());
@@ -104,10 +107,10 @@ export function PlayerConnectionStatus({ playerId, playerName }: PlayerConnectio
   };
 
   return (
-    <span 
+    <span
       className="player-connection-status"
       title={getTooltipText(connectionState)}
-      style={{ 
+      style={{
         marginRight: '4px',
         fontSize: '12px',
         cursor: 'help'
@@ -121,13 +124,13 @@ export function PlayerConnectionStatus({ playerId, playerName }: PlayerConnectio
 /**
  * Simplified version that just monitors basic subscription status
  */
-export function SimplePlayerConnectionStatus({ playerId }: { playerId: string }) {
+export function SimplePlayerConnectionStatus({ playerId }: Readonly<{ playerId: string }>) {
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
     // Simple subscription test
     const testChannel = supabase.channel(`test-${playerId}-${Date.now()}`);
-    
+
     testChannel
       .subscribe((status) => {
         setIsSubscribed(status === 'SUBSCRIBED');
@@ -139,10 +142,10 @@ export function SimplePlayerConnectionStatus({ playerId }: { playerId: string })
   }, [playerId]);
 
   return (
-    <span 
+    <span
       className="simple-player-connection-status"
       title={`Player ${playerId.slice(0, 8)}... - ${isSubscribed ? 'Connected' : 'Disconnected'}`}
-      style={{ 
+      style={{
         marginRight: '4px',
         fontSize: '12px'
       }}

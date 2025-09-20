@@ -184,10 +184,11 @@ describe('GameService', () => {
         is_buzzer_locked: true,
         focused_clue_id: null,
         focused_player_id: null,
+        current_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
-      const updatedGame = { ...mockGame, is_buzzer_locked: false }
+      const updatedGame = { ...mockGame, is_buzzer_locked: false, current_player_id: null }
 
       // Mock the GameService methods directly to avoid complex Supabase mocking
       const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
@@ -266,10 +267,11 @@ describe('GameService', () => {
         is_buzzer_locked: true,
         focused_clue_id: null,
         focused_player_id: null,
+        current_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
-      const updatedGame = { ...mockGame, status: 'in_progress' as const }
+      const updatedGame = { ...mockGame, status: 'in_progress' as const, current_player_id: null }
 
       // Mock getGame call for authorization
       const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
@@ -306,6 +308,7 @@ describe('GameService', () => {
         is_buzzer_locked: true,
         focused_clue_id: null,
         focused_player_id: null,
+        current_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -342,6 +345,7 @@ describe('GameService', () => {
         is_buzzer_locked: true,
         focused_clue_id: null,
         focused_player_id: null,
+        current_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -393,20 +397,24 @@ describe('GameService', () => {
         })
       })
 
-      mockSupabase.from.mockReturnValue({
-        select: mockSelect
-      } as MockSupabaseQueryBuilder)
+      // Mock the profiles query chain
+      const mockProfilesSelect = jest.fn().mockReturnValue({
+        in: jest.fn().mockResolvedValue({ data: [], error: null })
+      })
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'players') {
+          return { select: mockSelect } as MockSupabaseQueryBuilder
+        } else if (table === 'profiles') {
+          return { select: mockProfilesSelect } as MockSupabaseQueryBuilder
+        }
+        return {} as MockSupabaseQueryBuilder
+      })
 
       const result = await GameService.getPlayers('game-123')
 
       expect(mockSupabase.from).toHaveBeenCalledWith('players')
-      expect(mockSelect).toHaveBeenCalledWith(`
-        *,
-        profiles:user_id (
-          display_name,
-          username
-        )
-      `)
+      expect(mockSelect).toHaveBeenCalledWith('*')
       expect(result).toEqual(mockPlayers)
     })
 
@@ -802,6 +810,7 @@ describe('GameService', () => {
         is_buzzer_locked: true,
         focused_clue_id: null,
         focused_player_id: null,
+        current_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -837,6 +846,7 @@ describe('GameService', () => {
         is_buzzer_locked: true,
         focused_clue_id: null,
         focused_player_id: null,
+        current_player_id: null,
         created_at: '2025-01-01T00:00:00Z'
       }
 

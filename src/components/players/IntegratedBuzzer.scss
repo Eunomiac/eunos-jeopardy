@@ -1,0 +1,293 @@
+/**
+ * Integrated Buzzer Component Styles
+ *
+ * Styles for the always-visible buzzer component that integrates into
+ * player podiums, supporting the six-state buzzer system with smooth
+ * transitions and visual feedback.
+ */
+
+@use "../../styles/variables" as *;
+@use "../../styles/jeopardy-theme" as *;
+
+.integrated-buzzer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  position: relative;
+
+  .player-name-display {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $jeopardy-gold;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    min-height: 1.2rem;
+
+    // Player name scaling with 0.5x minimum before ellipsis
+    transform-origin: center;
+    transition: transform 0.2s ease;
+
+    &.scaled {
+      transform: scale(0.5);
+    }
+  }
+
+  .integrated-buzzer {
+    position: relative;
+    width: 80px;
+    height: 60px;
+    border: 2px solid $jeopardy-gold;
+    border-radius: 8px;
+    background: $jeopardy-blue;
+    color: white;
+    font-family: $font-family-ui;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    overflow: hidden;
+
+    &:focus {
+      outline: 2px solid $jeopardy-gold;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .buzzer-state-display {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+
+    .buzzer-state-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .reaction-time-display {
+      position: absolute;
+      bottom: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      color: $jeopardy-gold;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    // State-specific styles
+    &.buzzer-hidden {
+      background: #333;
+      border-color: #666;
+      color: #999;
+
+      .buzzer-state-icon {
+        opacity: 0.5;
+      }
+    }
+
+    &.buzzer-inactive {
+      background: $jeopardy-blue;
+      border-color: $jeopardy-gold;
+      color: white;
+
+      &:hover {
+        background: lighten($jeopardy-blue, 10%);
+      }
+    }
+
+    &.buzzer-locked {
+      background: #8B0000; // Dark red
+      border-color: #FF6B6B;
+      color: white;
+      animation: pulse-locked 2s infinite;
+
+      .buzzer-state-icon {
+        color: #FF6B6B;
+      }
+    }
+
+    &.buzzer-unlocked {
+      background: #228B22; // Forest green
+      border-color: #32CD32;
+      color: white;
+      animation: pulse-unlocked 1s infinite;
+      box-shadow: 0 0 20px rgba(50, 205, 50, 0.5);
+
+      &:hover {
+        background: #32CD32;
+        transform: scale(1.05);
+      }
+
+      .buzzer-state-icon {
+        color: #32CD32;
+        animation: glow 1s infinite alternate;
+      }
+    }
+
+    &.buzzer-buzzed {
+      background: #FFD700; // Gold
+      border-color: #FFA500;
+      color: #000;
+      animation: buzz-flash 0.5s ease-out;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+
+      .buzzer-state-icon {
+        color: #FF4500;
+        animation: lightning 0.3s ease-out;
+      }
+    }
+
+    &.buzzer-frozen {
+      background: #4169E1; // Royal blue
+      border-color: #87CEEB;
+      color: white;
+      animation: shake 0.5s ease-in-out;
+
+      .buzzer-state-icon {
+        color: #87CEEB;
+        animation: freeze 1s infinite;
+      }
+    }
+
+    // User-specific styles
+    &.current-user {
+      border-width: 3px;
+
+      &.buzzer-unlocked {
+        cursor: pointer;
+
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+    }
+
+    &.other-player {
+      opacity: 0.8;
+      cursor: default;
+    }
+
+    &.focused {
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5);
+      z-index: 10;
+    }
+  }
+
+  .focus-indicator {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    pointer-events: none;
+    z-index: 5;
+
+    .focus-ring {
+      width: 100%;
+      height: 100%;
+      border: 2px solid $jeopardy-gold;
+      border-radius: 12px;
+      animation: focus-pulse 1.5s infinite;
+    }
+  }
+}
+
+// Animations
+@keyframes pulse-locked {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes pulse-unlocked {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes glow {
+  0% { text-shadow: 0 0 5px currentColor; }
+  100% { text-shadow: 0 0 15px currentColor; }
+}
+
+@keyframes buzz-flash {
+  0% { background: #FFD700; }
+  50% { background: #FFA500; }
+  100% { background: #FFD700; }
+}
+
+@keyframes lightning {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.3) rotate(-5deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+@keyframes freeze {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+}
+
+@keyframes focus-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .integrated-buzzer-container {
+    .integrated-buzzer {
+      width: 60px;
+      height: 45px;
+      font-size: 0.7rem;
+
+      .buzzer-state-icon {
+        font-size: 1rem;
+      }
+    }
+
+    .player-name-display {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .integrated-buzzer-container {
+    .integrated-buzzer {
+      width: 50px;
+      height: 38px;
+      font-size: 0.6rem;
+
+      .buzzer-state-icon {
+        font-size: 0.9rem;
+      }
+    }
+
+    .player-name-display {
+      font-size: 0.7rem;
+    }
+  }
+}

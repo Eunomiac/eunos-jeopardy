@@ -5,7 +5,7 @@
  * Shows in bottom-left corner with compact black background.
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase/client';
 import { GameService } from '../../services/games/GameService';
 import './ConnectionDebugger.scss';
@@ -165,7 +165,7 @@ export function ConnectionDebugger() {
         // If we see a game event and don't have a current game ID, try to detect it
         if (!connectionStatus.currentGameId && payload.new) {
           const gameData = payload.new as any;
-          if (gameData.id && (gameData.status === 'lobby' || gameData.status === 'in_progress')) {
+          if (gameData.id && (gameData.status === 'lobby' || gameData.status === 'game_intro' || gameData.status === 'introducing_categories' || gameData.status === 'in_progress')) {
             setConnectionStatus(prev => ({
               ...prev,
               currentGameId: gameData.id,

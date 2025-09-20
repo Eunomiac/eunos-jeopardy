@@ -74,35 +74,72 @@
   }
 }
 
-// Player name container with dynamic scaling support
-.player-name-container {
-  width: 40%;
+// Player buzzer container with integrated buzzer
+.player-buzzer-container {
+  width: 60%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 35%;
+  height: 50%;
   position: absolute;
-  top: 40%;
+  top: 35%;
 
-  // Player name text with font family and scaling
-  .player-name-text {
-    font-size: 1.4rem;
+  // Player name display for non-main podiums
+  .player-name-display {
+    font-size: 0.9rem;
     font-weight: bold;
     color: $jeopardy-white;
     text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
     line-height: 1.2;
-    transition: transform 0.2s ease;
-    text-shadow: none;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 
-    // For main player, make text slightly larger
+    // For main player, make name slightly larger (though this shouldn't be used for main)
     .player-podium.main & {
-      font-size: 1.4rem;
+      font-size: 1rem;
+    }
+  }
+
+  // Ensure buzzer is properly sized within podium (main player only)
+  .integrated-buzzer-container {
+    width: 100%;
+    max-width: 120px;
+
+    .player-name-display {
+      font-size: 0.9rem;
+      color: $jeopardy-white;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+
+      // For main player, make name slightly larger
+      .player-podium.main & {
+        font-size: 1rem;
+      }
     }
 
-    // Ensure text doesn't break awkwardly
-    word-break: break-word;
-    hyphens: auto;
+    .integrated-buzzer {
+      // Adjust buzzer size for podium context
+      width: 70px;
+      height: 50px;
+      font-size: 0.7rem;
+
+      .buzzer-state-icon {
+        font-size: 1rem;
+      }
+
+      // For main player, make buzzer slightly larger
+      .player-podium.main & {
+        width: 85px;
+        height: 60px;
+        font-size: 0.8rem;
+
+        .buzzer-state-icon {
+          font-size: 1.2rem;
+        }
+      }
+    }
   }
 }
 

@@ -20,6 +20,7 @@ const GSAP_EFFECTS: Record<string, GSAPEffect> = {
   // New board animation. Run at start of "jeopardy" and "double" rounds when board is first displayed.
   animateBoardIn: () => gsap
     .timeline({})
+      .to(".jeopardy-board", {autoAlpha: 1, duration: 1, ease: "power2.inOut"})
       .fromTo(".clue-cell", {autoAlpha: 0}, {
         duration: 0.15,
         autoAlpha: 1,

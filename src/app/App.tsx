@@ -92,6 +92,9 @@ export function App() {
   /** UUID of the game the player has joined, null when not in a player session */
   const [playerGameId, setPlayerGameId] = useState<string | null>(null)
 
+  /** Current game data for player dashboard, managed by App.tsx subscription */
+  const [playerGameData, setPlayerGameData] = useState<any | null>(null)
+
   /** Identifier of the selected clue set from database, empty string when none selected */
   const [selectedClueSetId, setSelectedClueSetId] = useState<string>('')
 
@@ -277,6 +280,27 @@ export function App() {
       return undefined
     }
 
+    // Load initial game data
+    const loadInitialGameData = async () => {
+      try {
+        const { data: gameData, error } = await supabase
+          .from('games')
+          .select('*')
+          .eq('id', playerGameId)
+          .single()
+
+        if (error) {
+          console.error('Failed to load initial game data:', error)
+        } else {
+          setPlayerGameData(gameData)
+        }
+      } catch (err) {
+        console.error('Error loading initial game data:', err)
+      }
+    }
+
+    loadInitialGameData()
+
     // Set up real-time subscription for game state changes
     const subscription = supabase
       .channel(`player-game-state:${playerGameId}`)
@@ -288,10 +312,15 @@ export function App() {
       }, async (payload) => {
         console.log('Player detected game state change:', payload)
 
+        // Store the updated game data for PlayerDashboard
+        if (payload.new) {
+          setPlayerGameData(payload.new)
+        }
+
         // Check the new game status
         const newStatus = payload.new?.status
 
-        if (newStatus === 'in_progress' && mode === 'player-lobby') {
+        if ((newStatus === 'in_progress' || newStatus === 'introducing_categories' || newStatus === 'game_intro') && mode === 'player-lobby') {
           // Game started - transition to player dashboard
           setMode('player-game')
         } else if (newStatus === 'lobby' && mode === 'player-game') {
@@ -302,6 +331,7 @@ export function App() {
           // Game ended - return to join screen
           console.log('🎮 Game ended, returning to join screen')
           setPlayerGameId(null)
+          setPlayerGameData(null)
           setMode('player-join')
         }
       })
@@ -309,6 +339,7 @@ export function App() {
 
     return () => {
       subscription.unsubscribe()
+      setPlayerGameData(null) // Clean up game data when subscription ends
     }
   }, [playerGameId, user, mode])
 
@@ -435,7 +466,7 @@ export function App() {
     }
 
     if (mode === 'player-game' && playerGameId) {
-      return <PlayerDashboard gameId={playerGameId} />
+      return <PlayerDashboard gameId={playerGameId} game={playerGameData} />
     }
 
     console.log('❌ Player interface returning null - no matching mode')

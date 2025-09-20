@@ -23,6 +23,8 @@ declare global {
    *
    * Defines the progression of a game from creation to completion:
    * - lobby: Game created, waiting for players to join
+   * - game_intro: Game started, playing introduction animation
+   * - introducing_categories: Game started, showing category introductions
    * - in_progress: Game actively being played
    * - completed: Game finished, scores finalized
    * - cancelled: Game ended early before completion
@@ -30,7 +32,7 @@ declare global {
    * @since 0.1.0
    * @author Euno's Jeopardy Team
    */
-  type GameStatus = "lobby" | "in_progress" | "completed" | "cancelled"
+  type GameStatus = "lobby" | "game_intro" | "introducing_categories" | "in_progress" | "completed" | "cancelled"
 
   /**
    * Types of Jeopardy rounds following the traditional game format.
@@ -112,6 +114,6 @@ export function isValidRoundType(value: unknown): value is RoundType {
  * @author Euno's Jeopardy Team
  */
 export function isValidGameStatus(value: unknown): value is GameStatus {
-  const validStatuses: GameStatus[] = ["lobby", "in_progress", "completed", "cancelled"]
+  const validStatuses: GameStatus[] = ["lobby", "game_intro", "introducing_categories", "in_progress", "completed", "cancelled"]
   return typeof value === "string" && validStatuses.includes(value as GameStatus)
 }

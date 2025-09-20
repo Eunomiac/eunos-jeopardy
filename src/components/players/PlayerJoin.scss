@@ -1,3 +1,6 @@
+@use "../../styles/variables" as *;
+@use "../../styles/jeopardy-theme" as *;
+
 .player-join {
   display: flex;
   justify-content: center;
@@ -7,22 +10,22 @@
 
   .player-join-container {
     background: rgba(0, 0, 0, 0.8);
-    border: 2px solid var(--jeopardy-gold);
+    border: 2px solid $jeopardy-gold;
     border-radius: 8px;
     padding: 2rem;
     width: 100%;
     text-align: center;
 
     h2 {
-      color: var(--jeopardy-gold);
-      font-family: var(--jeopardy-font);
+      color: $jeopardy-gold;
+      font-family: $font-family-money;
       font-size: 2rem;
       margin-bottom: 1rem;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     }
 
     .join-description {
-      color: var(--jeopardy-white);
+      color: $jeopardy-white;
       margin-bottom: 2rem;
       font-size: 1.1rem;
     }
@@ -36,7 +39,7 @@
 
       label {
         display: block;
-        color: var(--jeopardy-gold);
+        color: $jeopardy-gold;
         font-weight: bold;
         margin-bottom: 0.5rem;
         font-size: 1rem;
@@ -45,16 +48,16 @@
       .form-control {
         width: 100%;
         padding: 0.75rem;
-        border: 2px solid var(--jeopardy-gold);
+        border: 2px solid $jeopardy-gold;
         border-radius: 4px;
         background: rgba(255, 255, 255, 0.1);
-        color: var(--jeopardy-white);
+        color: $jeopardy-white;
         font-size: 1rem;
         transition: all 0.3s ease;
 
         &:focus {
           outline: none;
-          border-color: var(--jeopardy-white);
+          border-color: $jeopardy-white;
           background: rgba(255, 255, 255, 0.15);
           box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
         }
@@ -109,13 +112,13 @@
     text-align: left;
 
     h3 {
-      color: var(--jeopardy-gold);
+      color: $jeopardy-gold;
       font-size: 1.2rem;
       margin-bottom: 1rem;
     }
 
     ul {
-      color: var(--jeopardy-white);
+      color: $jeopardy-white;
       padding-left: 1.5rem;
 
       li {

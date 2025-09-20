@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
+import { IntegratedBuzzer } from './IntegratedBuzzer'
+import { BuzzerState } from '../../types/BuzzerState'
 import './PlayerPodiums.scss'
 
 /**
@@ -15,6 +17,14 @@ export interface PlayerInfo {
   fontFamily: string
   /** Whether this is the current user (main player) */
   isMainPlayer: boolean
+  /** Current buzzer state for this player */
+  buzzerState?: BuzzerState
+  /** Whether this player is currently focused by the host */
+  isFocused?: boolean
+  /** Player's reaction time if they've buzzed */
+  reactionTime?: number | null
+  /** Whether to show reaction time */
+  showReactionTime?: boolean
 }
 
 /**
@@ -25,6 +35,8 @@ interface PlayerPodiumsProps {
   players: PlayerInfo[]
   /** ID of the current user */
   currentUserId: string
+  /** Callback when a player's buzzer is clicked */
+  onBuzz?: (playerId: string) => void
 }
 
 /**
@@ -53,7 +65,7 @@ interface PlayerPodiumsProps {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiumsProps>) {
+export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<PlayerPodiumsProps>) {
   const podiumRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   /**
@@ -77,56 +89,7 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
     return { leftCompetitors: leftSection, rightCompetitors: rightSection }
   }
 
-  /**
-   * Applies dynamic text scaling to player names.
-   */
-  const applyTextScaling = (playerId: string) => {
-    const podiumElement = podiumRefs.current.get(playerId)
-    if (!podiumElement) {
-      return
-    }
 
-    const nameContainer = podiumElement.querySelector('.player-name-container') as HTMLElement
-    const nameElement = podiumElement.querySelector('.player-name-text') as HTMLElement
-
-    if (!nameContainer || !nameElement) {
-      return
-    }
-
-    // Reset any previous scaling
-    nameElement.style.transform = ''
-    nameElement.style.overflow = ''
-    nameElement.style.textOverflow = ''
-    nameElement.style.whiteSpace = ''
-
-    // Measure container and text dimensions
-    const containerWidth = nameContainer.offsetWidth - 16 // Account for padding
-    const textWidth = nameElement.scrollWidth
-
-    if (textWidth > containerWidth) {
-      const scaleRatio = containerWidth / textWidth
-
-      // If scaling would make text too small, use ellipsis instead
-      if (scaleRatio < 0.6) {
-        nameElement.style.overflow = 'hidden'
-        nameElement.style.textOverflow = 'ellipsis'
-        nameElement.style.whiteSpace = 'nowrap'
-      } else {
-        // Apply scaleX transform
-        nameElement.style.transform = `scaleX(${scaleRatio})`
-        nameElement.style.transformOrigin = 'center'
-      }
-    }
-  }
-
-  /**
-   * Effect to apply text scaling when players change.
-   */
-  useEffect(() => {
-    players.forEach((player) => {
-      applyTextScaling(player.id)
-    })
-  }, [players])
 
   /**
    * Formats score for display with proper currency formatting.
@@ -160,13 +123,24 @@ export function PlayerPodiums({ players, currentUserId }: Readonly<PlayerPodiums
         <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>
           {formatScore(player.score)}
         </div>
-        <div className="player-name-container">
-          <div
-            className="player-name-text"
-            style={{ fontFamily: `'${player.fontFamily}', cursive` }}
-          >
-            {player.name}
-          </div>
+        <div className="player-buzzer-container">
+          {player.id === currentUserId ? (
+            // Show integrated buzzer only for current user (main podium)
+            <IntegratedBuzzer
+              state={player.buzzerState || BuzzerState.INACTIVE}
+              playerNickname={player.name}
+              isCurrentUser={true}
+              isFocused={player.isFocused || false}
+              onBuzz={() => onBuzz?.(player.id)}
+              reactionTime={player.reactionTime}
+              showReactionTime={player.showReactionTime || false}
+            />
+          ) : (
+            // Show just player name for other players
+            <div className="player-name-display" style={{ fontFamily: `'${player.fontFamily}', cursive` }}>
+              {player.name}
+            </div>
+          )}
         </div>
       </div>
     )

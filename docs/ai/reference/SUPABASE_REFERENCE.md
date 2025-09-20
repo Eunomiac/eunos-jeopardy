@@ -97,6 +97,38 @@ order by table_name;
   npx supabase gen types typescript --project-id szinijrajifovetkthcz > src/services/supabase/types.ts
   ```
 
+## Recent Schema Updates
+
+### Daily Double Flow Implementation (2025-01-20)
+
+Added `current_player_id` field to the `games` table to support the Daily Double flow system:
+
+```sql
+-- Run in Supabase SQL Editor
+ALTER TABLE games
+ADD COLUMN current_player_id UUID;
+```
+
+**Purpose**: Tracks which player gets to answer Daily Double clues
+- **Type**: `UUID` (nullable)
+- **References**: User ID from auth system
+- **Usage**:
+  - Randomly assigned at game start
+  - Updated when players answer correctly
+  - Used for Daily Double player selection
+  - Provides visual indication in host interface
+
+**Related Features**:
+- Current player visual indicators (golden glow, crown emoji)
+- Daily Double automatic player selection
+- Wager system integration
+- Game flow control
+
+**TypeScript Integration**:
+- Updated `src/services/supabase/types.ts`
+- Added to Row, Insert, and Update types for games table
+- All test mocks updated to include field
+
 ## Usage
 
 ### Basic Client Usage

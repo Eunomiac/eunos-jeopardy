@@ -75,15 +75,15 @@ export type ClueStateInsert = TablesInsert<'clue_states'>
  */
 export class GameService {
   /**
-   * Gets the currently active game (lobby or in_progress status).
+   * Gets the currently active game (lobby, game_intro, introducing_categories, or in_progress status).
    *
    * This method enforces the "one game at a time" rule by finding any game
-   * that is currently in lobby or in_progress status. Used to prevent multiple
+   * that is currently in lobby, game_intro, introducing_categories, or in_progress status. Used to prevent multiple
    * simultaneous games and to redirect hosts to existing active games.
    *
    * **Business Logic:**
    * - Only one game can be active at any time
-   * - Active games are those with status 'lobby' or 'in_progress'
+   * - Active games are those with status 'lobby', 'game_intro', 'introducing_categories', or 'in_progress'
    * - Completed/cancelled games are not considered active
    *
    * @returns Promise resolving to the active game or null if none exists
@@ -107,7 +107,7 @@ export class GameService {
     const { data, error } = await supabase
       .from('games')
       .select()
-      .in('status', ['lobby', 'in_progress'])
+      .in('status', ['lobby', 'game_intro' as Game['status'], 'introducing_categories' as Game['status'], 'in_progress'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -1183,10 +1183,11 @@ export class GameService {
       throw new Error(`Failed to mark clue completed: ${clueStateError.message}`)
     }
 
-    // Clear focused clue and player, lock buzzer
+    // Clear focused clue and player, lock buzzer, and set current player
     return this.updateGame(gameId, {
       focused_clue_id: null,
       focused_player_id: null,
+      current_player_id: playerId, // Player who answered correctly becomes current player
       is_buzzer_locked: true
     }, hostId)
   }
@@ -1241,7 +1242,33 @@ export class GameService {
       throw new Error(`Failed to record answer: ${answerError.message}`)
     }
 
-    // Update player score (subtract points)
+    // Check if this is a Daily Double - if so, complete immediately (no second chances)
+    const isDailyDouble = await ClueService.isDailyDouble(clueId)
+
+    if (isDailyDouble) {
+      // Update player score (subtract points)
+      await this.updatePlayerScore(gameId, playerId, -scoreValue, hostId)
+
+      // Mark clue as completed immediately for Daily Doubles
+      const { error: clueStateError } = await supabase
+        .from('clue_states')
+        .update({ completed: true })
+        .eq('game_id', gameId)
+        .eq('clue_id', clueId)
+
+      if (clueStateError) {
+        throw new Error(`Failed to mark clue completed: ${clueStateError.message}`)
+      }
+
+      // Clear focused clue and player, lock buzzer
+      return this.updateGame(gameId, {
+        focused_clue_id: null,
+        focused_player_id: null,
+        is_buzzer_locked: true
+      }, hostId)
+    }
+
+    // Regular clue logic - update player score (subtract points)
     await this.updatePlayerScore(gameId, playerId, -scoreValue, hostId)
 
     // Get current locked-out players for this clue
@@ -1413,5 +1440,367 @@ export class GameService {
     }
 
     return data
+  }
+
+  /**
+   * Starts the game introduction animation phase.
+   *
+   * Transitions the game from lobby to game introduction mode, where an introduction
+   * animation plays on both host and player dashboards. After the animation completes,
+   * the host can then begin category introductions.
+   *
+   * **Flow:**
+   * 1. Validates game is in lobby status
+   * 2. Updates status to 'game_intro'
+   * 3. Animation triggers via subscription UPDATE events
+   * 4. Host can proceed to category introductions after animation
+   *
+   * @param gameId - UUID of the game to start introduction for
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game with game_intro status
+   * @throws {Error} When unauthorized, game not found, or not in lobby status
+   *
+   * @example
+   * ```typescript
+   * const game = await GameService.startGameIntroduction(gameId, hostId);
+   * console.log(`Starting game introduction for game: ${game.id}`);
+   * // Animation will trigger via subscription UPDATE event
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async startGameIntroduction(gameId: string, hostId: string): Promise<Game> {
+    console.log('🎬 GameService.startGameIntroduction called:', { gameId, hostId });
+
+    // Verify authorization and get current game
+    const currentGame = await this.getGame(gameId, hostId)
+    console.log('🎬 Current game status:', currentGame.status);
+
+    // Ensure game is in lobby status
+    if (currentGame.status !== 'lobby') {
+      console.error('🎬 Cannot start game introduction - wrong status:', currentGame.status);
+      throw new Error(`Cannot start game introduction: Game is not in lobby status (current: ${currentGame.status})`)
+    }
+
+    // Update game to game introduction state
+    console.log('🎬 Updating game status to game_intro...');
+    // Note: Type assertion needed until database schema is updated
+    const result = await this.updateGame(gameId, {
+      status: 'game_intro' as GameStatus
+    } as GameUpdate, hostId);
+    console.log('🎬 GameService.startGameIntroduction result:', result);
+    return result;
+  }
+
+  /**
+   * Starts the category introduction phase for a game.
+   *
+   * Transitions the game from game_intro to category introduction mode, where categories
+   * are presented one by one before gameplay begins. This should be called after the
+   * game introduction animation has completed.
+   *
+   * **Flow:**
+   * 1. Validates game is in game_intro status
+   * 2. Updates status to 'introducing_categories'
+   * 3. Sets current_introduction_category to 1
+   * 4. Marks introduction_complete as false
+   *
+   * @param gameId - UUID of the game to start category introductions for
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game with introduction state
+   * @throws {Error} When unauthorized, game not found, or not in game_intro status
+   *
+   * @example
+   * ```typescript
+   * const game = await GameService.startCategoryIntroductions(gameId, hostId);
+   * console.log(`Starting category introductions for game: ${game.id}`);
+   * console.log(`Current category: ${game.current_introduction_category}`);
+   * ```
+   *
+   * @since 0.1.0
+   * @author Euno's Jeopardy Team
+   */
+  static async startCategoryIntroductions(gameId: string, hostId: string): Promise<Game> {
+    // Verify authorization and get current game
+    const currentGame = await this.getGame(gameId, hostId)
+
+    // Ensure game is in game_intro status
+    if ((currentGame.status as string) !== 'game_intro') {
+      throw new Error(`Cannot start category introductions: Game is not in game_intro status (current: ${currentGame.status})`)
+    }
+
+    // Update game to category introduction state
+    // Note: Type assertion needed until database schema is updated
+    return this.updateGame(gameId, {
+      status: 'introducing_categories' as GameStatus,
+      current_introduction_category: 1,
+      introduction_complete: false
+    } as GameUpdate, hostId)
+  }
+
+  /**
+   * Advances to the next category in the introduction sequence.
+   *
+   * Increments the current category counter and handles the transition
+   * to the actual game when all categories have been introduced.
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async advanceToNextCategory(gameId: string, hostId: string): Promise<Game> {
+    // Get current game state
+    const currentGame = await this.getGame(gameId, hostId)
+
+    // Type assertion needed until database schema is updated
+    const nextCategory = ((currentGame as Game & { current_introduction_category?: number }).current_introduction_category || 0) + 1
+
+    if (nextCategory > 6) {
+      // All categories introduced - complete the introduction phase
+      return this.completeCategoryIntroductions(gameId, hostId)
+    }
+
+    // Advance to next category
+    return this.updateGame(gameId, {
+      current_introduction_category: nextCategory
+    } as GameUpdate, hostId)
+  }
+
+  /**
+   * Completes the category introduction phase and starts the game proper.
+   *
+   * Transitions from "introducing_categories" to "in_progress" status
+   * and marks the introduction phase as complete.
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async completeCategoryIntroductions(gameId: string, hostId: string): Promise<Game> {
+    // Authorization check
+    await this.getGame(gameId, hostId)
+
+    // Transition to in_progress and mark introduction complete
+    // Note: Type assertion needed until database schema is updated
+    return this.updateGame(gameId, {
+      status: 'in_progress',
+      introduction_complete: true,
+      current_introduction_category: 0 // Reset counter
+    } as GameUpdate, hostId)
+  }
+
+  /**
+   * Sets the Daily Double wager amount for the current game.
+   *
+   * Stores the wager amount in the wagers table for use during clue resolution.
+   * The wager is validated against player's current score and game rules.
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the game host (for authorization)
+   * @param wagerAmount - Amount wagered by the player
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async setDailyDoubleWager(gameId: string, hostId: string, wagerAmount: number): Promise<Game> {
+    // Authorization check
+    const game = await this.getGame(gameId, hostId)
+
+    // Get the currently focused clue (should be the Daily Double)
+    if (!game.focused_clue_id) {
+      throw new Error('No clue is currently focused for Daily Double wager')
+    }
+
+    // Get the focused player (who is making the wager)
+    if (!game.focused_player_id) {
+      throw new Error('No player is currently focused for Daily Double wager')
+    }
+
+    // Check if a wager already exists for this clue and player
+    const { data: existingWagers } = await supabase
+      .from('wagers')
+      .select('id')
+      .eq('game_id', gameId)
+      .eq('clue_id', game.focused_clue_id)
+      .eq('user_id', game.focused_player_id)
+
+    const existingWager = existingWagers && existingWagers.length > 0 ? existingWagers[0] : null
+
+    if (existingWager) {
+      // Update existing wager
+      const { error: updateError } = await supabase
+        .from('wagers')
+        .update({ amount: wagerAmount })
+        .eq('id', existingWager.id)
+
+      if (updateError) {
+        throw new Error(`Failed to update Daily Double wager: ${updateError.message}`)
+      }
+    } else {
+      // Create new wager
+      const { error: insertError } = await supabase
+        .from('wagers')
+        .insert({
+          game_id: gameId,
+          clue_id: game.focused_clue_id,
+          user_id: game.focused_player_id,
+          amount: wagerAmount
+        })
+
+      if (insertError) {
+        throw new Error(`Failed to set Daily Double wager: ${insertError.message}`)
+      }
+    }
+
+    // Return the game (no need to update game record)
+    return game
+  }
+
+  /**
+   * Clears the Daily Double wager amount after clue resolution.
+   *
+   * Removes the wager record from the wagers table after the Daily Double clue
+   * has been answered and scored, preparing for the next potential Daily Double.
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async clearDailyDoubleWager(gameId: string, hostId: string): Promise<Game> {
+    // Authorization check
+    const game = await this.getGame(gameId, hostId)
+
+    // Get the currently focused clue and player
+    if (!game.focused_clue_id || !game.focused_player_id) {
+      return game // Nothing to clear
+    }
+
+    // Delete the wager record
+    const { error } = await supabase
+      .from('wagers')
+      .delete()
+      .eq('game_id', gameId)
+      .eq('clue_id', game.focused_clue_id)
+      .eq('user_id', game.focused_player_id)
+
+    if (error) {
+      throw new Error(`Failed to clear Daily Double wager: ${error.message}`)
+    }
+
+    return game
+  }
+
+  /**
+   * Gets the current Daily Double wager amount for the focused clue and player.
+   *
+   * Retrieves the stored wager amount for use in scoring calculations
+   * and UI display during Daily Double clue resolution.
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to wager amount or null if not set
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async getDailyDoubleWager(gameId: string, hostId: string): Promise<number | null> {
+    const game = await this.getGame(gameId, hostId)
+
+    // Get the currently focused clue and player
+    if (!game.focused_clue_id || !game.focused_player_id) {
+      return null
+    }
+
+    // Get the wager for this clue and player
+    const { data: wagers } = await supabase
+      .from('wagers')
+      .select('amount')
+      .eq('game_id', gameId)
+      .eq('clue_id', game.focused_clue_id)
+      .eq('user_id', game.focused_player_id)
+
+    // Return the first wager amount if found, otherwise null
+    return wagers && wagers.length > 0 ? wagers[0].amount : null
+  }
+
+  /**
+   * Gets the effective value for a clue (original value or Daily Double wager).
+   *
+   * For regular clues, returns the clue's original value.
+   * For Daily Double clues, returns the wager amount if set, otherwise the original value.
+   *
+   * @param gameId - UUID of the game
+   * @param clueId - UUID of the clue
+   * @param playerId - UUID of the player (for Daily Double wager lookup)
+   * @returns Promise resolving to the effective clue value
+   * @throws {Error} When database operation fails
+   */
+  static async getEffectiveClueValue(gameId: string, clueId: string, playerId: string): Promise<number> {
+    // Get the clue's original value
+    const { data: clue, error: clueError } = await supabase
+      .from('clues')
+      .select('value')
+      .eq('id', clueId)
+      .single()
+
+    if (clueError) {
+      throw new Error(`Failed to get clue value: ${clueError.message}`)
+    }
+
+    // Check if there's a wager for this clue and player (Daily Double)
+    const { data: wagers } = await supabase
+      .from('wagers')
+      .select('amount')
+      .eq('game_id', gameId)
+      .eq('clue_id', clueId)
+      .eq('user_id', playerId)
+
+    // Return wager amount if it exists, otherwise original clue value
+    return wagers && wagers.length > 0 ? wagers[0].amount : clue.value
+  }
+
+  /**
+   * Sets the current player for Daily Double selection.
+   *
+   * The current player is the player who gets to answer Daily Double clues.
+   * This is typically the player who last answered a clue correctly.
+   *
+   * @param gameId - UUID of the game
+   * @param playerId - UUID of the player to set as current
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async setCurrentPlayer(gameId: string, playerId: string, hostId: string): Promise<Game> {
+    return this.updateGame(gameId, {
+      current_player_id: playerId
+    }, hostId)
+  }
+
+  /**
+   * Initializes the current player randomly at game start.
+   *
+   * Selects a random player from the game to be the initial current player.
+   * This determines who gets the first Daily Double if one appears early.
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the game host (for authorization)
+   * @returns Promise resolving to updated game object
+   * @throws {Error} When unauthorized, game not found, or database error
+   */
+  static async initializeCurrentPlayerRandomly(gameId: string, hostId: string): Promise<Game> {
+    // Get all players in the game
+    const players = await this.getPlayers(gameId)
+
+    if (players.length === 0) {
+      throw new Error('Cannot initialize current player: no players in game')
+    }
+
+    // Select a random player
+    const randomIndex = Math.floor(Math.random() * players.length)
+    const randomPlayer = players[randomIndex]
+
+    return this.setCurrentPlayer(gameId, randomPlayer.user_id, hostId)
   }
 }
