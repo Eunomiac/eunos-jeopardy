@@ -19,6 +19,9 @@ import { supabase } from "../../services/supabase/client";
 import { gsap } from "gsap";
 import "./GameHostDashboard.scss";
 
+import { BuzzerQueuePanel } from "./panels/BuzzerQueuePanel";
+import { ClueControlPanel } from "./panels/ClueControlPanel";
+
 /**
  * Helper function to determine if panels should be disabled based on game status.
  */
@@ -41,7 +44,7 @@ const getGameControlButton = (game: Game | null) => {
     };
   }
 
-  if ((game.status as string) === "game_intro") {
+  if (String(game.status) === "game_intro") {
     return {
       text: "End Game",
       handler: "end" as const,
@@ -49,7 +52,7 @@ const getGameControlButton = (game: Game | null) => {
     };
   }
 
-  if ((game.status as string) === "introducing_categories") {
+  if (String(game.status) === "introducing_categories") {
     return {
       text: "End Game",
       handler: "end" as const,
@@ -297,8 +300,7 @@ export function GameHostDashboard({
   const [gameIntroComplete, setGameIntroComplete] = useState(false);
 
   /** Category introduction state */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_isIntroducingCategories, setIsIntroducingCategories] = useState(false);
+  const [isIntroducingCategories, setIsIntroducingCategories] = useState(false);
 
   /** Current category being introduced (1-6) */
   const [currentIntroductionCategory, setCurrentIntroductionCategory] = useState(0);
@@ -317,7 +319,7 @@ export function GameHostDashboard({
       return;
     }
 
-    const gameStatus = game.status as string;
+    const gameStatus = String(game.status);
 
     // Sync category introduction state
     const isIntroducing = gameStatus === "introducing_categories";
@@ -344,7 +346,7 @@ export function GameHostDashboard({
    */
   useEffect(() => {
     if (!gameId) {
-      return;
+      return () => {};
     }
 
     const subscription = supabase
@@ -554,11 +556,48 @@ export function GameHostDashboard({
   }, [clueTimeoutId]);
 
   /**
+   * Schedule auto-select of the fastest buzz when exactly one buzz exists.
+   * Flattens nested conditionals in the subscription handler for readability.
+   */
+  const scheduleAutoSelectFastest = useCallback((sortedBuzzes: Buzz[]) => {
+    if (sortedBuzzes.length !== 1) {
+      return;
+    }
+
+    // Clear any existing clue timeout and resolution timeout
+    clearClueTimeout();
+    if (buzzerResolutionTimeoutId) {
+      clearTimeout(buzzerResolutionTimeoutId);
+    }
+
+    const timeoutId = setTimeout(() => {
+      if (sortedBuzzes.length === 0) {
+        return;
+      }
+      const fastestBuzz = sortedBuzzes[0];
+      setAutoSelectedPlayerId(fastestBuzz.user_id);
+
+      const fastestPlayerButton = document.querySelector(
+        `[data-player-id="${fastestBuzz.user_id}"]`
+      );
+      if (!(fastestPlayerButton instanceof HTMLElement)) {
+        return;
+      }
+
+      fastestPlayerButton.click();
+      setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
+      setMessageType("success");
+    }, buzzerTimeoutMs);
+
+    setBuzzerResolutionTimeoutId(timeoutId);
+  }, [clearClueTimeout, buzzerResolutionTimeoutId, buzzerTimeoutMs]);
+
+  /**
    * Effect to set up real-time subscriptions for game state changes.
    */
   useEffect(() => {
     if (!gameId) {
-      return undefined;
+      return () => {};
     }
 
     // Set up real-time subscription for this game
@@ -605,7 +644,7 @@ export function GameHostDashboard({
               );
 
               // Sort by reaction time (fastest first), with null times at the end
-              const sortedBuzzes = updatedBuzzes.sort((a, b) => {
+              const sortedBuzzes = [...updatedBuzzes].sort((a: Buzz, b: Buzz) => {
                 const timeA = a.reaction_time ?? Infinity;
                 const timeB = b.reaction_time ?? Infinity;
                 return timeA - timeB;
@@ -613,44 +652,8 @@ export function GameHostDashboard({
 
               setBuzzerQueue(sortedBuzzes);
 
-              // Clear clue timeout when first player buzzes (prevents timeout during latency period)
-              if (sortedBuzzes.length === 1) {
-                clearClueTimeout();
-              }
-
-              // Start auto-selection timeout when first player buzzes
-              if (sortedBuzzes.length === 1) {
-                // Clear any existing timeout
-                if (buzzerResolutionTimeoutId) {
-                  clearTimeout(buzzerResolutionTimeoutId);
-                }
-
-                // Start new timeout
-                const timeoutId = setTimeout(() => {
-                  // Use the sorted buzzes from when timeout was set
-                  if (sortedBuzzes.length > 0) {
-                    // The fastest player is at index 0 (since we sorted)
-                    const fastestBuzz = sortedBuzzes[0];
-
-                    // Mark this player as auto-selected
-                    setAutoSelectedPlayerId(fastestBuzz.user_id);
-
-                    // Click the fastest player's button
-                    const fastestPlayerButton = document.querySelector(
-                      `[data-player-id="${fastestBuzz.user_id}"]`
-                    ) as HTMLElement;
-                    if (fastestPlayerButton) {
-                      fastestPlayerButton.click();
-                      setMessage(
-                        `Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`
-                      );
-                      setMessageType("success");
-                    }
-                  }
-                }, buzzerTimeoutMs);
-
-                setBuzzerResolutionTimeoutId(timeoutId);
-              }
+              // Flattened: delegate auto-selection logic to helper
+              scheduleAutoSelectFastest(sortedBuzzes);
             } catch (error) {
               console.error("Failed to refresh buzzes:", error);
             }
@@ -691,6 +694,7 @@ export function GameHostDashboard({
     clearClueTimeout,
     buzzerResolutionTimeoutId,
     buzzerTimeoutMs,
+    scheduleAutoSelectFastest,
   ]);
 
   // Effect to manage full-screen layout classes
@@ -725,7 +729,7 @@ export function GameHostDashboard({
       const buzzes = await GameService.getBuzzesForClue(gameId, focusedClue.id);
 
       // Sort by reaction time (fastest first), with null times at the end
-      const sortedBuzzes = buzzes.sort((a, b) => {
+      const sortedBuzzes = [...buzzes].sort((a: Buzz, b: Buzz) => {
         const timeA = a.reaction_time ?? Infinity;
         const timeB = b.reaction_time ?? Infinity;
         return timeA - timeB;
@@ -879,21 +883,47 @@ export function GameHostDashboard({
       const updatedClueStates = await ClueService.getGameClueStates(gameId);
       setClueStates(updatedClueStates);
 
-      // Show correct answer to host
-      alert(`Time expired! The correct answer was: ${focusedClue.response}`);
-
+      // Show correct answer to host (non-blocking): message area handles feedback
       setMessage("Clue completed due to timeout");
       setMessageType("success");
     } catch (error) {
       console.error("Failed to handle clue timeout:", error);
       setMessage(
-        `Failed to handle timeout: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
+        `Failed to handle timeout: ${error instanceof Error ? error.message : "Unknown error"}`
       );
       setMessageType("error");
     }
   }, [user, game, focusedClue, gameId]);
+
+  /**
+   * Creates the countdown interval for the active clue.
+   * Decrements time remaining once per second and clears itself at 0.
+   */
+  const createCountdownInterval = useCallback((): NodeJS.Timeout => {
+    const intervalId = setInterval(() => {
+      setClueTimeRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(intervalId);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return intervalId;
+  }, []);
+
+  /**
+   * Creates the main timeout that fires when the clue time expires.
+   */
+  const createClueResolutionTimeout = useCallback(
+    (countdownInterval: NodeJS.Timeout): NodeJS.Timeout => setTimeout(async () => {
+      clearInterval(countdownInterval);
+      setClueTimeRemaining(null);
+      await handleClueTimeout();
+    }, CLUE_TIMEOUT_SECONDS * 1000),
+    [handleClueTimeout, CLUE_TIMEOUT_SECONDS]
+  );
+
 
   const startClueTimeout = useCallback(() => {
     // Clear any existing timeout
@@ -908,27 +938,13 @@ export function GameHostDashboard({
       // Start countdown display
       setClueTimeRemaining(CLUE_TIMEOUT_SECONDS);
 
-      // Update countdown every second
-      const countdownInterval = setInterval(() => {
-        setClueTimeRemaining((prev) => {
-          if (prev === null || prev <= 1) {
-            clearInterval(countdownInterval);
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      // Set main timeout
-      const timeoutId = setTimeout(async () => {
-        clearInterval(countdownInterval);
-        setClueTimeRemaining(null);
-        await handleClueTimeout();
-      }, CLUE_TIMEOUT_SECONDS * 1000);
+      // Use helpers to avoid deep nesting
+      const intervalId = createCountdownInterval();
+      const timeoutId = createClueResolutionTimeout(intervalId);
 
       setClueTimeoutId(timeoutId);
     }, 100); // 100ms delay to ensure state stability
-  }, [clueTimeoutId, CLUE_TIMEOUT_SECONDS, handleClueTimeout]);
+  }, [clueTimeoutId, CLUE_TIMEOUT_SECONDS, createCountdownInterval, createClueResolutionTimeout]);
 
   /**
    * Handles clue selection from the game board.
@@ -1225,10 +1241,7 @@ export function GameHostDashboard({
         setMessage(
           "Answer marked incorrect, all players have attempted - clue completed"
         );
-        // Show correct answer when all players are wrong
-        alert(
-          `All players answered incorrectly. The correct answer was: ${focusedClue.response}`
-        );
+        // Show correct answer when all players are wrong (non-blocking): message area handles feedback
       } else {
         setMessage(
           "Answer marked incorrect, buzzer unlocked for other players"
@@ -1837,6 +1850,9 @@ export function GameHostDashboard({
       </header>
 
       {/* User feedback messages for operations */}
+      {loading && (
+        <div className="alert alert-info jeopardy-alert">Loading game data...</div>
+      )}
       {message && (
         <div
           className={`alert ${
@@ -1848,7 +1864,7 @@ export function GameHostDashboard({
       )}
 
       {/* 4-panel dashboard grid layout */}
-      <div className="dashboard-grid">
+      <div className="dashboard-grid" data-introducing-categories={isIntroducingCategories ? "true" : "false"}>
         {/* Top Row - Panel 2: Game Board Control */}
         <div
           className={`dashboard-panel game-board-panel ${
@@ -1860,7 +1876,7 @@ export function GameHostDashboard({
           </div>
           <div className="panel-content">
             {/* Game Introduction UI */}
-            {(game?.status as string) === "game_intro" ? (
+            {String(game?.status) === "game_intro" && (
               <div className="game-introduction-panel">
                 <div className="introduction-header">
                   <h3>Game Introduction</h3>
@@ -1877,8 +1893,8 @@ export function GameHostDashboard({
                   </button>
                 </div>
               </div>
-            ) : /* Category Introduction UI */
-            (game?.status as string) === "introducing_categories" && clueSetData ? (
+            )}
+            {String(game?.status) === "introducing_categories" && clueSetData && (
               <div className="category-introduction-panel">
                 <div className="introduction-header">
                   <h3>Introducing Categories</h3>
@@ -1924,7 +1940,8 @@ export function GameHostDashboard({
                   </button>
                 </div>
               </div>
-            ) : (
+            )}
+            {String(game?.status) !== "game_intro" && String(game?.status) !== "introducing_categories" && (
               <div className="board-scale-wrapper">
                 <div className="jeopardy-board">
                   {/* Game board with real clue set data */}
@@ -2210,317 +2227,35 @@ export function GameHostDashboard({
         </div>
 
         {/* Top Row - Panel 2: Buzzer Queue */}
-        <div
-          className={`dashboard-panel buzzer-queue-panel ${
-            isPanelDisabled(game) ? "disabled" : ""
-          }`}
-        >
-          <div className="panel-header">
-            <h5>BUZZER QUEUE</h5>
-          </div>
-          <div className="panel-content">
-            {/* Connection & Latency Status - moved from Buzzer Control Panel */}
-            <div className="connection-status">
-              <span>
-                <span className="status-label">Connection Status:</span>
-                <span
-                  className={(() => {
-                    if (connectionStatus === "ACTIVE") {
-                      return "text-success";
-                    }
-                    if (connectionStatus === "SLOW") {
-                      return "text-warning";
-                    }
-                    return "text-danger";
-                  })()}
-                >
-                  {connectionStatus}
-                </span>
-              </span>
-              <span>
-                <span className="status-label">Auto-Resolution Timeout:</span>
-                <input
-                  type="number"
-                  className="form-control form-control-sm"
-                  value={buzzerTimeoutMs}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value, 10);
-                    if (!isNaN(value) && value >= 100 && value <= 5000) {
-                      setBuzzerTimeoutMs(value);
-                      // Note: Buzzer timeout is currently client-side only
-                    }
-                  }}
-                  min="100"
-                  max="5000"
-                  step="50"
-                  style={{
-                    width: "80px",
-                    display: "inline-block",
-                    marginLeft: "8px",
-                  }}
-                />
-                <span
-                  style={{
-                    marginLeft: "4px",
-                    fontSize: "0.8em",
-                    color: "#ccc",
-                  }}
-                >
-                  ms
-                </span>
-              </span>
-            </div>
-
-            {buzzerQueue.length === 0 ? (
-              <div className="queue-status">
-                <p className="text-muted">No active buzzes</p>
-              </div>
-            ) : (
-              <div className="queue-list">
-                {buzzerQueue.map((buzz, index) => {
-                  const player = players.find(
-                    (p) => p.user_id === buzz.user_id
-                  );
-
-                  // Use enhanced buzz data with player nickname
-                  const buzzWithPlayerData = buzz as Buzz & {
-                    profiles?: { display_name?: string; username?: string };
-                    playerNickname?: string | null;
-                  };
-
-                  // Priority: game-specific nickname > profile display_name > profile username > fallback
-                  const gameNickname =
-                    buzzWithPlayerData.playerNickname || player?.nickname;
-                  const profileName =
-                    buzzWithPlayerData.profiles?.display_name ||
-                    buzzWithPlayerData.profiles?.username;
-                  const playerName =
-                    gameNickname || profileName || "Unknown Player";
-                  // Use stored reaction time if available, otherwise fall back to timestamp difference
-                  const reactionTime = buzz.reaction_time;
-                  let timingText: string;
-
-                  if (reactionTime !== null && reactionTime !== undefined) {
-                    // Use client-calculated reaction time (most accurate)
-                    timingText =
-                      index === 0
-                        ? `${reactionTime} ms`
-                        : `+${reactionTime} ms`;
-                  } else {
-                    // Fallback to timestamp difference (less accurate)
-                    const buzzTime = new Date(buzz.created_at);
-                    const firstBuzzTime = new Date(buzzerQueue[0].created_at);
-                    const timeDiff =
-                      buzzTime.getTime() - firstBuzzTime.getTime();
-                    timingText = timeDiff === 0 ? "0 ms" : `+${timeDiff} ms`;
-                  }
-                  const ariaLabel = `Select player ${playerName} (position ${
-                    index + 1
-                  }, ${timingText})`;
-
-                  return (
-                    <button
-                      key={buzz.id}
-                      type="button"
-                      className={`queue-item ${
-                        game?.focused_player_id === buzz.user_id
-                          ? "selected"
-                          : ""
-                      } ${
-                        autoSelectedPlayerId === buzz.user_id
-                          ? "auto-selected"
-                          : ""
-                      }`}
-                      onClick={() => handlePlayerSelection(buzz.user_id)}
-                      data-player-id={buzz.user_id}
-                      aria-label={ariaLabel}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <span className="queue-position">{index + 1}.</span>
-                      <span className="queue-player">{playerName}</span>
-                      <span className="queue-timing">{timingText}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Clear Queue Button - positioned at bottom center */}
-            <div className="clear-queue-container">
-              <button
-                className="jeopardy-button-small"
-                onClick={() => setBuzzerQueue([])}
-                disabled={buzzerQueue.length === 0}
-              >
-                Clear Queue
-              </button>
-            </div>
-          </div>
-        </div>
+        <BuzzerQueuePanel
+          game={game}
+          players={players}
+          connectionStatus={connectionStatus}
+          buzzerTimeoutMs={buzzerTimeoutMs}
+          setBuzzerTimeoutMs={setBuzzerTimeoutMs}
+          buzzerQueue={buzzerQueue}
+          autoSelectedPlayerId={autoSelectedPlayerId}
+          onSelectPlayer={handlePlayerSelection}
+          onClearQueue={() => setBuzzerQueue([])}
+        />
 
         {/* Bottom Row - Panel 3: Clue Control */}
-        <div
-          className={`dashboard-panel clue-control-panel ${
-            isPanelDisabled(game) ? "disabled" : ""
-          }`}
-        >
-          <div className="panel-header">
-            <h5>CLUE CONTROL</h5>
-          </div>
-          <div className="panel-content">
-            {/* Focused Clue Display */}
-            <div className="focused-clue-display">
-              <div className="clue-display-row">
-                <div
-                  className={`jeopardy-clue-display ${
-                    !focusedClue ? "no-clue-selected" : ""
-                  }`}
-                >
-                  {focusedClue ? (
-                    <div className="clue-text">{focusedClue.prompt}</div>
-                  ) : (
-                    <div className="clue-text">No clue selected</div>
-                  )}
-                </div>
-
-                {/* Multi-state Reveal/Buzzer Button */}
-                <div className="clue-control-button">
-                  {(() => {
-                    const buttonState = getRevealBuzzerButtonState();
-                    const isDisabled = buttonState === "disabled";
-                    const buttonText = {
-                      disabled: "Select Clue",
-                      "daily-double": "Daily Double!",
-                      "daily-double-wager": "Set Wager First",
-                      reveal: "Reveal Prompt",
-                      unlock: "Unlock Buzzer",
-                      lock: "Lock Buzzer",
-                    }[buttonState];
-                    const buttonClass = {
-                      disabled: "",
-                      "daily-double": "daily-double",
-                      "daily-double-wager": "disabled",
-                      reveal: "",
-                      unlock: "red",
-                      lock: "green",
-                    }[buttonState];
-
-                    return (
-                      <button
-                        className={`jeopardy-button ${buttonClass}`}
-                        onClick={handleRevealBuzzerButton}
-                        disabled={isDisabled}
-                      >
-                        {buttonText}
-                      </button>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Timeout Display */}
-              {clueTimeRemaining !== null && (
-                <div className="clue-timeout-display">
-                  <div className="timeout-message">
-                    ⏱️ Time remaining: <strong>{clueTimeRemaining}s</strong>
-                  </div>
-                </div>
-              )}
-
-              {/* Daily Double Wager Interface */}
-              {focusedClue && dailyDoublePositions.some(
-                (position) => {
-                  // Find the clue's position in the board
-                  const clueData = clueSetData?.rounds[game?.current_round || 'jeopardy'];
-                  if (!Array.isArray(clueData)) {
-                    return false;
-                  }
-
-                  for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
-                    const category = clueData[categoryIndex];
-                    const clueInCategory = category.clues.find((c) => c.id === focusedClue.id);
-                    if (clueInCategory) {
-                      return position.category === categoryIndex + 1 &&
-                             position.row === clueInCategory.position;
-                    }
-                  }
-                  return false;
-                }
-              ) && (
-                <div className="daily-double-wager-section">
-
-                  {dailyDoubleWager ? (
-                    <div className="wager-display">
-                      <div className="wager-amount">
-                        Wager: <strong>${dailyDoubleWager.toLocaleString()}</strong>
-                      </div>
-                      <button
-                        className="jeopardy-button-small"
-                        onClick={handleClearDailyDoubleWager}
-                      >
-                        Clear Wager
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="wager-display">
-                      <div className="wager-input-row">
-                        <input
-                          type="number"
-                          className="wager-input"
-                          placeholder="Enter wager amount"
-                          value={wagerInput}
-                          onChange={(e) => setWagerInput(e.target.value)}
-                          min="1"
-                        />
-                        <button
-                          className="jeopardy-button-small"
-                          onClick={handleDailyDoubleWager}
-                          disabled={!wagerInput || parseInt(wagerInput, 10) <= 0}
-                        >
-                          Set Wager
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Bottom section with Correct Response and Mark buttons */}
-            <div className="clue-control-bottom">
-              <div
-                className={`clue-response-row ${
-                  !focusedClue ? "no-clue-focused" : ""
-                }`}
-              >
-                <span className="response-label">Correct Response:</span>
-                <span className="response-text">
-                  {focusedClue ? focusedClue.response : "No Clue Selected"}
-                </span>
-              </div>
-
-              {/* Adjudication Control Buttons */}
-              <div className="clue-control-buttons">
-                <div className="d-flex gap-2">
-                  <button
-                    className="jeopardy-button flex-1"
-                    onClick={handleMarkCorrect}
-                    disabled={!focusedClue || !game.focused_player_id}
-                  >
-                    Mark Correct
-                  </button>
-                  <button
-                    className="jeopardy-button flex-1"
-                    onClick={handleMarkWrong}
-                    disabled={!focusedClue || !game.focused_player_id}
-                  >
-                    Mark Wrong
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ClueControlPanel
+          game={game}
+          focusedClue={focusedClue}
+          clueSetData={clueSetData}
+          dailyDoublePositions={dailyDoublePositions}
+          getRevealBuzzerButtonState={getRevealBuzzerButtonState}
+          handleRevealBuzzerButton={handleRevealBuzzerButton}
+          clueTimeRemaining={clueTimeRemaining}
+          dailyDoubleWager={dailyDoubleWager}
+          handleClearDailyDoubleWager={handleClearDailyDoubleWager}
+          wagerInput={wagerInput}
+          setWagerInput={setWagerInput}
+          handleDailyDoubleWager={handleDailyDoubleWager}
+          handleMarkCorrect={handleMarkCorrect}
+          handleMarkWrong={handleMarkWrong}
+        />
       </div>
     </div>
   );
