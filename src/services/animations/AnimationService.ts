@@ -44,6 +44,7 @@ export interface AnimationConfig {
 export class AnimationService {
   private static instance: AnimationService;
   private activeTimelines: gsap.core.Timeline[] = [];
+  private playedKeys = new Set<string>();
 
   /**
    * Gets the singleton instance of AnimationService.
@@ -53,6 +54,38 @@ export class AnimationService {
       AnimationService.instance = new AnimationService();
     }
     return AnimationService.instance;
+  }
+
+  /** Play an animation exactly once per session for the given key */
+  async playOnce(key: string, fn: () => Promise<void> | void): Promise<void> {
+    if (this.playedKeys.has(key)) return;
+    try {
+      this.playedKeys.add(key);
+      await fn();
+    } catch (err) {
+      // allow retry on failure
+      this.playedKeys.delete(key);
+      throw err;
+    }
+  }
+
+  /** Wait for an element by selector or element reference */
+  async waitForElement(target: string | HTMLElement, timeoutMs = 1000): Promise<HTMLElement> {
+    const start = Date.now();
+    const resolveEl = (): HTMLElement | null => {
+      if (typeof target !== 'string') return target;
+      return (document.querySelector(target) as HTMLElement | null);
+    };
+
+    return new Promise<HTMLElement>((resolve, reject) => {
+      const tryFind = () => {
+        const el = resolveEl();
+        if (el) return resolve(el);
+        if (Date.now() - start >= timeoutMs) return reject(new Error(`Element not found: ${typeof target === 'string' ? target : '[HTMLElement]'} within ${timeoutMs}ms`));
+        setTimeout(tryFind, 50);
+      };
+      tryFind();
+    });
   }
 
   /**

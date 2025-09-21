@@ -8,9 +8,11 @@ import { BuzzerState } from "../../types/BuzzerState";
 import { supabase } from "../../services/supabase/client";
 import type { ClueState } from "../../services/clues/ClueService";
 import { AnimationService } from "../../services/animations/AnimationService";
+import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
 import { gsap } from "gsap";
+import { FEATURE_ANIMATION_EVENTS } from "../../config/featureFlags";
 
 import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
 import "./PlayerDashboard.scss";
@@ -111,13 +113,71 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
    */
   useEffect(() => {
     if (clueContentRef.current && showClueModal && currentClue) {
-        // Animate clue reveal
-        animationService.animateClueReveal(clueContentRef.current, currentClue, {
-          duration: 0.8,
-          ease: "power2.out"
-        });
-      }
+      // Animate clue reveal
+      animationService.animateClueReveal(clueContentRef.current, currentClue, {
+        duration: 0.8,
+        ease: "power2.out"
+      });
+    }
   }, [showClueModal, currentClue, animationService]);
+
+  // Subscribe to centralized animation intents (feature-flagged)
+  useEffect(() => {
+    if (!FEATURE_ANIMATION_EVENTS) return;
+
+    const unsubscribe = AnimationEvents.subscribe(async (intent) => {
+      if (intent.type === "BoardIntro" && intent.gameId === gameId) {
+        await animationService.playOnce(`boardIntro:${gameId}:${String(game?.current_round || '')}`,
+          async () => {
+            await animationService.waitForElement('.jeopardy-board', 1000);
+            // Use the registered GSAP effect for board intro
+            gsap.effects.animateBoardIn();
+          }
+        );
+      }
+
+      if (intent.type === "CategoryIntro" && intent.gameId === gameId) {
+        const category = intent.categoryNumber;
+        try {
+          const stripElement = await animationService.waitForElement('.jeopardy-category-display-strip', 1000);
+          const targetX = -((category - 1) * 100 / 6);
+          const isInitialRender = lastAnimatedCategory.current === 0 && category > 1;
+
+          if (isInitialRender) {
+            // Set initial state without animation
+            gsap.set(stripElement, { x: `${targetX}%` });
+            for (let i = 1; i <= category; i++) {
+              const splashImage = stripElement.querySelector(`.category-header:nth-child(${i}) img.splash-jeopardy`) as HTMLElement | null;
+              if (splashImage) {
+                gsap.set(splashImage, { autoAlpha: 0 });
+              }
+            }
+            lastAnimatedCategory.current = category;
+          } else {
+            const splashImage = stripElement.querySelector(`.category-header:nth-child(${category}) img.splash-jeopardy`) as HTMLElement | null;
+            gsap.timeline()
+              .to(stripElement, {
+                x: `${targetX}%`,
+                duration: 0.8,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                  lastAnimatedCategory.current = category;
+                }
+              })
+              .to(splashImage, {
+                autoAlpha: 0,
+                duration: 0.5,
+                ease: 'power2.inOut'
+              }, "-=0.3");
+          }
+        } catch (e) {
+          console.warn('CategoryIntro: element not ready in time');
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [gameId, game?.current_round, animationService]);
 
   /**
    * Loads initial game data and player information.
@@ -562,6 +622,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
   // Watch for game status changes to trigger animations
   useEffect(() => {
+    if (FEATURE_ANIMATION_EVENTS) return; // centralized intents handle this
     // Only trigger animation when status is game_intro and we haven't animated this status yet
     if (game?.status === 'game_intro' &&
         !isPlayingGameIntro &&
@@ -651,6 +712,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
   // Watch for category introduction changes and animate with GSAP
   useEffect(() => {
+    if (FEATURE_ANIMATION_EVENTS) return; // centralized intents handle this
     if (!game) {
       return;
     }
