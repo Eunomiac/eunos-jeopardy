@@ -188,9 +188,21 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           continue;
         }
 
-        // Skip if intent was recently published (component mounted during transition)
+        // If intent was recently published, run ANIMATED version (not instant)
+        // This handles the case where component mounted during a live transition
         if (AnimationEvents.wasRecentlyPublished(def.id as any, gameId)) {
-          console.log(`🎬 [PlayerDashboard] Skipping instant animation ${def.id} - intent was recently published, waiting for live animation`);
+          console.log(`🎬 [PlayerDashboard] Intent ${def.id} was recently published - running ANIMATED version`);
+          animationService.playOnce(
+            key,
+            async () => {
+              await def.execute(params);  // Animated, not instant
+
+              // Update tracking for category animations
+              if (def.id === 'CategoryIntro') {
+                lastAnimatedCategory.current = params.categoryNumber;
+              }
+            }
+          );
           continue;
         }
 
