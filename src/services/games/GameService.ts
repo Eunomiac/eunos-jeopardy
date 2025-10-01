@@ -23,14 +23,8 @@ export type Buzz = Tables<'buzzes'>
 /** Insert type for recording new buzzes */
 export type BuzzInsert = TablesInsert<'buzzes'>
 
-/** Answer entity type from database schema */
-export type Answer = Tables<'answers'>
-
 /** Insert type for submitting new answers */
 export type AnswerInsert = TablesInsert<'answers'>
-
-/** Wager entity type from database schema */
-export type Wager = Tables<'wagers'>
 
 /** Insert type for placing new wagers */
 export type WagerInsert = TablesInsert<'wagers'>
