@@ -266,3 +266,15 @@ export class AnimationRegistry {
 // Register all animations
 AnimationRegistry.register(BoardIntroAnimation);
 AnimationRegistry.register(CategoryIntroAnimation);
+
+// Expose to window for console testing
+if (typeof window !== 'undefined') {
+  (window as any).AnimationDefinitions = {
+    BoardIntroAnimation,
+    CategoryIntroAnimation,
+    AnimationRegistry,
+    AnimationService
+  };
+  console.log('🎬 AnimationDefinitions exposed to window for console testing');
+  console.log('🎬 Try: AnimationDefinitions.BoardIntroAnimation.execute({ round: "jeopardy", gameId: "test" })');
+}

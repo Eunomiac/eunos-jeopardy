@@ -188,6 +188,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           continue;
         }
 
+        // Skip if intent was recently published (component mounted during transition)
+        if (AnimationEvents.wasRecentlyPublished(def.id as any, gameId)) {
+          console.log(`🎬 [PlayerDashboard] Skipping instant animation ${def.id} - intent was recently published, waiting for live animation`);
+          continue;
+        }
+
         console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
 
         // Use playOnce to ensure we don't re-run if already executed

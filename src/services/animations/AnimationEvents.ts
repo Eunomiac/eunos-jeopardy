@@ -10,6 +10,8 @@ export type AnimationSubscriber = (intent: AnimationIntent) => void | Promise<vo
 
 export class AnimationEvents {
   private static readonly subscribers: Set<AnimationSubscriber> = new Set();
+  private static readonly recentIntents: Map<string, { intent: AnimationIntent; timestamp: number }> = new Map();
+  private static readonly INTENT_CACHE_DURATION = 2000; // Keep intents for 2 seconds
 
   static subscribe(cb: AnimationSubscriber): () => void {
     this.subscribers.add(cb);
@@ -23,6 +25,11 @@ export class AnimationEvents {
   static publish(intent: AnimationIntent): void {
     console.log(`🎬 [AnimationEvents] Publishing intent:`, intent);
     console.log(`🎬 [AnimationEvents] Notifying ${this.subscribers.size} subscriber(s)`);
+
+    // Cache the intent for components that mount shortly after publication
+    const key = `${intent.type}:${intent.gameId}`;
+    this.recentIntents.set(key, { intent, timestamp: Date.now() });
+
     for (const cb of this.subscribers) {
       try {
         cb(intent);
@@ -30,5 +37,26 @@ export class AnimationEvents {
         console.warn("🎬 [AnimationEvents] Subscriber error:", err);
       }
     }
+  }
+
+  /**
+   * Check if an intent was recently published (within INTENT_CACHE_DURATION).
+   * Used by components that mount after an intent was published.
+   */
+  static wasRecentlyPublished(type: AnimationIntent["type"], gameId: string): boolean {
+    const key = `${type}:${gameId}`;
+    const cached = this.recentIntents.get(key);
+
+    if (!cached) return false;
+
+    const age = Date.now() - cached.timestamp;
+    if (age > this.INTENT_CACHE_DURATION) {
+      // Clean up old intent
+      this.recentIntents.delete(key);
+      return false;
+    }
+
+    console.log(`🎬 [AnimationEvents] Intent ${type} was recently published ${age}ms ago`);
+    return true;
   }
 }
