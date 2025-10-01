@@ -119,16 +119,6 @@ export class AnimationService {
   }
 
   /**
-   * @deprecated Use BoardIntroAnimation from AnimationDefinitions instead
-   * This method is kept temporarily for backwards compatibility.
-   */
-  async animateBoardIntro(config: AnimationConfig = {}): Promise<void> {
-    console.warn('🎬 [AnimationService.animateBoardIntro] DEPRECATED - Use BoardIntroAnimation from AnimationDefinitions');
-    const { BoardIntroAnimation } = await import('./AnimationDefinitions');
-    return BoardIntroAnimation.execute({ round: 'unknown', gameId: 'unknown' }, config);
-  }
-
-  /**
    * Animates category strip movement and splash image fade.
    * Used during category introduction sequences.
    *
