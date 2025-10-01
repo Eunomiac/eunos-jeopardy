@@ -6,7 +6,7 @@ import { PlayerPodiums, type PlayerInfo } from "./PlayerPodiums";
 import type { ClueInfo } from "./ClueRevealModal";
 import { BuzzerState } from "../../types/BuzzerState";
 import { supabase } from "../../services/supabase/client";
-import type { ClueState } from "../../services/clues/ClueService";
+import { ClueService, type ClueState } from "../../services/clues/ClueService";
 import { AnimationService } from "../../services/animations/AnimationService";
 import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
@@ -524,12 +524,40 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           table: "clue_states",
           filter: `game_id=eq.${gameId}`,
         },
-        (payload) => {
+        async (payload) => {
           console.log("🔔 Clue state update:", payload);
           if (payload.new) {
             const clueState = payload.new as ClueState;
+            const prevClueState = payload.old as ClueState | null;
+
             // Update clue states for board display
             updateClueState(clueState);
+
+            // Trigger animations when clue is revealed (host clicked "Reveal Prompt")
+            if (clueState.revealed && (!prevClueState || !prevClueState.revealed)) {
+              console.log("🎬 [PlayerDashboard] Clue revealed, triggering animation for clue:", clueState.clue_id);
+
+              // Check if this is a daily double
+              const isDailyDouble = await ClueService.isDailyDouble(clueState.clue_id);
+
+              if (isDailyDouble) {
+                // Daily double clue reveal (fade out splash, show clue)
+                console.log("🎬 [PlayerDashboard] Publishing DailyDoubleClueReveal intent");
+                AnimationEvents.publish({
+                  type: "DailyDoubleClueReveal",
+                  gameId,
+                  clueId: clueState.clue_id
+                });
+              } else {
+                // Regular clue reveal
+                console.log("🎬 [PlayerDashboard] Publishing ClueReveal intent");
+                AnimationEvents.publish({
+                  type: "ClueReveal",
+                  gameId,
+                  clueId: clueState.clue_id
+                });
+              }
+            }
 
             // Show modal when clue is revealed and it's the focused clue (Reveal Prompt action)
             if (

@@ -64,24 +64,22 @@ export class AnimationOrchestrator {
       AnimationEvents.publish({ type: "CategoryIntro", gameId, categoryNumber: nextIntroCat });
     }
 
-    // Clue reveal when focused_clue_id is set/changed
-    // Check if it's a daily double and publish appropriate intent
-    if (next.focused_clue_id && next.focused_clue_id !== prev?.focused_clue_id) {
-      // Check if this is a daily double asynchronously
+    // Daily Double reveal when focused_player_id is set for a daily double clue
+    // This happens when host clicks "Daily Double!" button
+    if (next.focused_player_id && next.focused_player_id !== prev?.focused_player_id && next.focused_clue_id) {
+      // Check if the focused clue is a daily double
       ClueService.isDailyDouble(next.focused_clue_id).then((isDailyDouble) => {
         if (isDailyDouble) {
-          console.log(`🎬 [AnimationOrchestrator] Detected DailyDoubleReveal trigger (clue: ${prev?.focused_clue_id} → ${next.focused_clue_id})`);
+          console.log(`🎬 [AnimationOrchestrator] Detected DailyDoubleReveal trigger (player focused for daily double)`);
           AnimationEvents.publish({ type: "DailyDoubleReveal", gameId, clueId: next.focused_clue_id! });
-        } else {
-          console.log(`🎬 [AnimationOrchestrator] Detected ClueReveal trigger (clue: ${prev?.focused_clue_id} → ${next.focused_clue_id})`);
-          AnimationEvents.publish({ type: "ClueReveal", gameId, clueId: next.focused_clue_id! });
         }
       }).catch((error) => {
         console.error(`🎬 [AnimationOrchestrator] Error checking daily double status:`, error);
-        // Fall back to regular clue reveal
-        AnimationEvents.publish({ type: "ClueReveal", gameId, clueId: next.focused_clue_id! });
       });
     }
+
+    // Note: ClueReveal and DailyDoubleClueReveal are triggered by clue_states.revealed changes
+    // These are handled by a separate subscription in PlayerDashboard that watches clue_states table
 
     // Player buzz-in when focused_player_id is set/changed
     if (next.focused_player_id && next.focused_player_id !== prev?.focused_player_id) {
