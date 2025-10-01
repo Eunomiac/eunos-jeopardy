@@ -249,6 +249,21 @@
       }
     }
   }
+
+  /**
+  * Game Phase Styles
+  *
+  * Game flow styles initializing components as phases change.
+  **/
+
+  &.game_intro {
+    .jeopardy-board-container {
+      visibility: hidden;
+    }
+    .player-podium {
+      visibility: hidden;
+    }
+  }
 }
 
 // Visual Feedback Classes

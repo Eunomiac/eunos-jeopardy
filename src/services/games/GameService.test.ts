@@ -185,6 +185,7 @@ describe('GameService', () => {
         focused_clue_id: null,
         focused_player_id: null,
         current_player_id: null,
+        current_introduction_category: 0,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -268,6 +269,7 @@ describe('GameService', () => {
         focused_clue_id: null,
         focused_player_id: null,
         current_player_id: null,
+        current_introduction_category: 0,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -309,6 +311,7 @@ describe('GameService', () => {
         focused_clue_id: null,
         focused_player_id: null,
         current_player_id: null,
+        current_introduction_category: 0,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -346,6 +349,7 @@ describe('GameService', () => {
         focused_clue_id: null,
         focused_player_id: null,
         current_player_id: null,
+        current_introduction_category: 0,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -811,6 +815,7 @@ describe('GameService', () => {
         focused_clue_id: null,
         focused_player_id: null,
         current_player_id: null,
+        current_introduction_category: 0,
         created_at: '2025-01-01T00:00:00Z'
       }
 
@@ -847,6 +852,7 @@ describe('GameService', () => {
         focused_clue_id: null,
         focused_player_id: null,
         current_player_id: null,
+        current_introduction_category: 0,
         created_at: '2025-01-01T00:00:00Z'
       }
 

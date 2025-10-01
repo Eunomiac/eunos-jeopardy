@@ -9,7 +9,7 @@ export type AnimationIntent =
 export type AnimationSubscriber = (intent: AnimationIntent) => void | Promise<void>;
 
 export class AnimationEvents {
-  private static subscribers: Set<AnimationSubscriber> = new Set();
+  private static readonly subscribers: Set<AnimationSubscriber> = new Set();
 
   static subscribe(cb: AnimationSubscriber): () => void {
     this.subscribers.add(cb);
@@ -19,11 +19,10 @@ export class AnimationEvents {
   static publish(intent: AnimationIntent): void {
     for (const cb of this.subscribers) {
       try {
-        void cb(intent);
+        cb(intent);
       } catch (err) {
         console.warn("AnimationEvents subscriber error:", err);
       }
     }
   }
 }
-

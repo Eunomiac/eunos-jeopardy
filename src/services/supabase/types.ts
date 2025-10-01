@@ -341,6 +341,7 @@ export type Database = {
         Row: {
           clue_set_id: string | null
           created_at: string
+          current_introduction_category: number | null
           current_player_id: string | null
           current_round: Database["public"]["Enums"]["round_type"]
           focused_clue_id: string | null
@@ -353,6 +354,7 @@ export type Database = {
         Insert: {
           clue_set_id?: string | null
           created_at?: string
+          current_introduction_category?: number | null
           current_player_id?: string | null
           current_round?: Database["public"]["Enums"]["round_type"]
           focused_clue_id?: string | null
@@ -365,6 +367,7 @@ export type Database = {
         Update: {
           clue_set_id?: string | null
           created_at?: string
+          current_introduction_category?: number | null
           current_player_id?: string | null
           current_round?: Database["public"]["Enums"]["round_type"]
           focused_clue_id?: string | null

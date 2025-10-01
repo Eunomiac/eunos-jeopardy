@@ -44,7 +44,7 @@ export interface AnimationConfig {
 export class AnimationService {
   private static instance: AnimationService;
   private activeTimelines: gsap.core.Timeline[] = [];
-  private playedKeys = new Set<string>();
+  private readonly playedKeys = new Set<string>();
 
   /**
    * Gets the singleton instance of AnimationService.
@@ -58,7 +58,7 @@ export class AnimationService {
 
   /** Play an animation exactly once per session for the given key */
   async playOnce(key: string, fn: () => Promise<void> | void): Promise<void> {
-    if (this.playedKeys.has(key)) return;
+    if (this.playedKeys.has(key)) {return;}
     try {
       this.playedKeys.add(key);
       await fn();
@@ -73,19 +73,117 @@ export class AnimationService {
   async waitForElement(target: string | HTMLElement, timeoutMs = 1000): Promise<HTMLElement> {
     const start = Date.now();
     const resolveEl = (): HTMLElement | null => {
-      if (typeof target !== 'string') return target;
-      return (document.querySelector(target) as HTMLElement | null);
+      if (typeof target !== 'string') {return target;}
+      return document.querySelector(target);
     };
 
     return new Promise<HTMLElement>((resolve, reject) => {
       const tryFind = () => {
         const el = resolveEl();
-        if (el) return resolve(el);
-        if (Date.now() - start >= timeoutMs) return reject(new Error(`Element not found: ${typeof target === 'string' ? target : '[HTMLElement]'} within ${timeoutMs}ms`));
-        setTimeout(tryFind, 50);
+        if (el) {
+          resolve(el);
+        } else if (Date.now() - start >= timeoutMs) {
+          reject(new Error(`Element not found: ${typeof target === 'string' ? target : '[HTMLElement]'} within ${timeoutMs}ms`));
+        } else {
+          setTimeout(tryFind, 50);
+        }
       };
       tryFind();
     });
+  }
+
+  /**
+   * Animates the game board introduction.
+   * Wraps the animateBoardIn GSAP effect from utils/animations.ts.
+   *
+   * @param config - Animation configuration
+   * @returns Promise that resolves when animation completes
+   */
+  async animateBoardIntro(config: AnimationConfig = {}): Promise<void> {
+    return new Promise((resolve) => {
+      const timeline = gsap.effects.animateBoardIn();
+
+      if (config.onComplete) {
+        timeline.eventCallback('onComplete', () => {
+          config.onComplete?.();
+          resolve();
+        });
+      } else {
+        timeline.eventCallback('onComplete', resolve);
+      }
+
+      this.activeTimelines.push(timeline);
+    });
+  }
+
+  /**
+   * Animates category strip movement and splash image fade.
+   * Used during category introduction sequences.
+   *
+   * @param stripElement - The category strip element to animate
+   * @param targetX - Target X position as percentage
+   * @param categoryNumber - Current category number (1-indexed)
+   * @param config - Animation configuration
+   * @returns Promise that resolves when animation completes
+   */
+  async animateCategoryStripMovement(
+    stripElement: HTMLElement,
+    targetX: number,
+    categoryNumber: number,
+    config: AnimationConfig = {}
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      const splashImage = stripElement.querySelector(
+        `.category-header:nth-child(${categoryNumber}) img.splash-jeopardy`
+      ) as HTMLElement | null;
+
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          config.onComplete?.();
+          resolve();
+        }
+      });
+
+      timeline
+        .to(stripElement, {
+          x: `${targetX}%`,
+          duration: config.duration || 0.8,
+          ease: config.ease || 'power2.inOut'
+        })
+        .to(splashImage, {
+          autoAlpha: 0,
+          duration: 0.5,
+          ease: 'power2.inOut'
+        }, "-=0.3");
+
+      this.activeTimelines.push(timeline);
+    });
+  }
+
+  /**
+   * Sets initial state for category strip without animation.
+   * Used when component renders mid-sequence.
+   *
+   * @param stripElement - The category strip element
+   * @param targetX - Target X position as percentage
+   * @param categoryNumber - Current category number (1-indexed)
+   */
+  setCategoryStripInitialState(
+    stripElement: HTMLElement,
+    targetX: number,
+    categoryNumber: number
+  ): void {
+    gsap.set(stripElement, { x: `${targetX}%` });
+
+    // Hide all splash images up to and including current category
+    for (let i = 1; i <= categoryNumber; i++) {
+      const splashImage = stripElement.querySelector(
+        `.category-header:nth-child(${i}) img.splash-jeopardy`
+      ) as HTMLElement | null;
+      if (splashImage) {
+        gsap.set(splashImage, { autoAlpha: 0 });
+      }
+    }
   }
 
   /**

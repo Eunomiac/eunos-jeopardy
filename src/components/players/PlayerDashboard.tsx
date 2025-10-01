@@ -11,8 +11,6 @@ import { AnimationService } from "../../services/animations/AnimationService";
 import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
-import { gsap } from "gsap";
-import { FEATURE_ANIMATION_EVENTS } from "../../config/featureFlags";
 
 import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
 import "./PlayerDashboard.scss";
@@ -99,12 +97,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   const displayWindowRef = useRef<HTMLDivElement>(null);
   const clueContentRef = useRef<HTMLDivElement>(null);
 
-  // Game introduction animation state
-  const [isPlayingGameIntro, setIsPlayingGameIntro] = useState(false);
-
-  // Track which game status we've already animated to prevent duplicates
-  const animatedGameStatus = useRef<string | null>(null);
-
   // Track the last category we animated to distinguish initial render from category advance
   const lastAnimatedCategory = useRef<number>(0);
 
@@ -121,17 +113,14 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     }
   }, [showClueModal, currentClue, animationService]);
 
-  // Subscribe to centralized animation intents (feature-flagged)
+  // Subscribe to centralized animation intents
   useEffect(() => {
-    if (!FEATURE_ANIMATION_EVENTS) return;
-
     const unsubscribe = AnimationEvents.subscribe(async (intent) => {
       if (intent.type === "BoardIntro" && intent.gameId === gameId) {
         await animationService.playOnce(`boardIntro:${gameId}:${String(game?.current_round || '')}`,
           async () => {
             await animationService.waitForElement('.jeopardy-board', 1000);
-            // Use the registered GSAP effect for board intro
-            gsap.effects.animateBoardIn();
+            await animationService.animateBoardIntro();
           }
         );
       }
@@ -145,30 +134,20 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
           if (isInitialRender) {
             // Set initial state without animation
-            gsap.set(stripElement, { x: `${targetX}%` });
-            for (let i = 1; i <= category; i++) {
-              const splashImage = stripElement.querySelector(`.category-header:nth-child(${i}) img.splash-jeopardy`) as HTMLElement | null;
-              if (splashImage) {
-                gsap.set(splashImage, { autoAlpha: 0 });
-              }
-            }
+            animationService.setCategoryStripInitialState(stripElement, targetX, category);
             lastAnimatedCategory.current = category;
           } else {
-            const splashImage = stripElement.querySelector(`.category-header:nth-child(${category}) img.splash-jeopardy`) as HTMLElement | null;
-            gsap.timeline()
-              .to(stripElement, {
-                x: `${targetX}%`,
-                duration: 0.8,
-                ease: 'power2.inOut',
+            // Animate the category strip movement
+            await animationService.animateCategoryStripMovement(
+              stripElement,
+              targetX,
+              category,
+              {
                 onComplete: () => {
                   lastAnimatedCategory.current = category;
                 }
-              })
-              .to(splashImage, {
-                autoAlpha: 0,
-                duration: 0.5,
-                ease: 'power2.inOut'
-              }, "-=0.3");
+              }
+            );
           }
         } catch (e) {
           console.warn('CategoryIntro: element not ready in time');
@@ -620,59 +599,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   // Set up real-time subscriptions
   useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions]);
 
-  // Watch for game status changes to trigger animations
-  useEffect(() => {
-    if (FEATURE_ANIMATION_EVENTS) return; // centralized intents handle this
-    // Only trigger animation when status is game_intro and we haven't animated this status yet
-    if (game?.status === 'game_intro' &&
-        !isPlayingGameIntro &&
-        animatedGameStatus.current !== 'game_intro') {
-
-      console.log('🎬 Game status is game_intro, starting animation');
-      setIsPlayingGameIntro(true);
-      animatedGameStatus.current = 'game_intro'; // Mark this status as animated
-
-      // Wait for DOM to be ready with multiple checks
-      const waitForBoard = (attempts = 0) => {
-        const boardElement = document.querySelector('.jeopardy-board');
-        console.log(`🎬 Board element search attempt ${attempts + 1}:`, boardElement);
-
-        if (boardElement) {
-          console.log('🎬 Setting up player intro animation timeline');
-
-          // Create placeholder GSAP timeline for player
-          const playerIntroTimeline = gsap.timeline({
-            onComplete: () => {
-              console.log('🎬 Player game introduction animation complete');
-              setIsPlayingGameIntro(false);
-            }
-          });
-
-          // Use the animateBoardIn effect from utils/animations.ts
-          playerIntroTimeline
-            .add(() => console.log('🎬 Animation started'))
-            .add(gsap.effects.animateBoardIn())
-            .add(() => console.log('🎬 Animation completed'));
-        } else if (attempts < 10) {
-          // Retry up to 10 times with increasing delay
-          setTimeout(() => waitForBoard(attempts + 1), 50 * (attempts + 1));
-        } else {
-          console.error('🎬 Board element not found after 10 attempts - animation skipped');
-          setIsPlayingGameIntro(false);
-          animatedGameStatus.current = null; // Reset so we can try again later
-        }
-      };
-
-      // Start waiting for board element
-      waitForBoard();
-    }
-
-    // Reset animation tracking when game status changes away from game_intro
-    if (game?.status && game.status !== 'game_intro') {
-      animatedGameStatus.current = null;
-    }
-  }, [game?.status, isPlayingGameIntro]);
-
   // Watch for game state changes to handle buzzer state
   useEffect(() => {
     if (!game) {
@@ -710,89 +636,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     handleFocusedClueChange();
   }, [game, loadClueData]);
 
-  // Watch for category introduction changes and animate with GSAP
-  useEffect(() => {
-    if (FEATURE_ANIMATION_EVENTS) return; // centralized intents handle this
-    if (!game) {
-      return;
-    }
 
-    const gameStatus = game.status;
-    const isIntroducingCategories = gameStatus === 'introducing_categories';
-    const gameWithCategory = game as GameUpdatePayload & { current_introduction_category?: number };
-    const currentIntroCategory = gameWithCategory.current_introduction_category || 1;
-
-    if (isIntroducingCategories) {
-      console.log('🎬 Category introduction animation triggered for category:', currentIntroCategory);
-
-      // Wait for DOM to be ready with multiple checks
-      const waitForCategoryStrip = (attempts = 0) => {
-        const stripElement = document.querySelector('.jeopardy-category-display-strip');
-        console.log(`🎬 Category strip search attempt ${attempts + 1}:`, stripElement);
-
-        if (stripElement) {
-        // Calculate the target position (same logic as before)
-        const targetX = -((currentIntroCategory - 1) * 100 / 6);
-
-        // Check if this is initial render (component mounting) vs category advance
-        const isInitialRender = lastAnimatedCategory.current === 0 && currentIntroCategory > 1;
-
-        console.log(`🎬 Category ${currentIntroCategory}: lastAnimated=${lastAnimatedCategory.current}, isInitialRender=${isInitialRender}`);
-
-        if (isInitialRender) {
-          console.log('🎬 Initial render detected - setting up category strip for category', currentIntroCategory);
-
-          // Set strip position immediately without animation
-          gsap.set(stripElement, { x: `${targetX}%` });
-
-          // Hide splash images for all categories from 1 to currentIntroCategory
-          for (let i = 1; i <= currentIntroCategory; i++) {
-            const splashImage = stripElement.querySelector(`.category-header:nth-child(${i}) img.splash-jeopardy`);
-            if (splashImage) {
-              gsap.set(splashImage, { autoAlpha: 0 });
-              console.log(`🎬 Set splash image for category ${i} to hidden`);
-            }
-          }
-
-          // Update tracking
-          lastAnimatedCategory.current = currentIntroCategory;
-        } else {
-          console.log('🎬 Animating category strip to category', currentIntroCategory);
-
-          // Get the proper splash image element based on category number
-          const splashImage = stripElement.querySelector(`.category-header:nth-child(${currentIntroCategory}) img.splash-jeopardy`);
-
-          // Animate with GSAP
-          gsap.timeline()
-            .to(stripElement, {
-              x: `${targetX}%`,
-              duration: 0.8,
-              ease: 'power2.inOut',
-              onStart: () => console.log('🎬 Category animation started'),
-              onComplete: () => {
-                console.log('🎬 Category animation completed');
-                // Update tracking after animation completes
-                lastAnimatedCategory.current = currentIntroCategory;
-              }
-            })
-            .to(splashImage, {
-              autoAlpha: 0,
-              duration: 0.5,
-              ease: 'power2.inOut'
-            }, "-=0.3");
-        }
-        } else if (attempts < 10) {
-          // Retry up to 10 times with increasing delay
-          setTimeout(() => waitForCategoryStrip(attempts + 1), 50 * (attempts + 1));
-        } else {
-          console.error('🎬 Category strip element not found after 10 attempts - animation skipped');
-        }
-      };
-
-      // Start waiting for category strip element
-      waitForCategoryStrip();
-    }
-  }, [game]);
 
   // Loading state
   if (loading) {
@@ -1031,7 +875,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               <div className="game-intro-display">
                 <div className="intro-content">
                   <h2>Get Ready!</h2>
-                  <p>{isPlayingGameIntro ? "Game starting..." : "Waiting for host..."}</p>
+                  <p>Game starting...</p>
                 </div>
               </div>
             );

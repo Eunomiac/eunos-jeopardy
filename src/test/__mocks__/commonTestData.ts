@@ -58,6 +58,7 @@ export const mockGame: GameRow = {
   status: 'lobby',
   current_round: 'jeopardy',
   current_player_id: null,
+  current_introduction_category: 0,
   is_buzzer_locked: true,
   focused_clue_id: null,
   focused_player_id: null,

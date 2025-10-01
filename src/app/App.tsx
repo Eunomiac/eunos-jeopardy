@@ -12,7 +12,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { supabase } from '../services/supabase/client'
 import { AnimationOrchestrator } from '../services/animations/AnimationOrchestrator'
-import { FEATURE_ANIMATION_EVENTS } from '../config/featureFlags'
 
 
 /**
@@ -319,10 +318,8 @@ export function App() {
           setPlayerGameData(payload.new)
 
           // Feed the orchestrator to publish animation intents
-          if (FEATURE_ANIMATION_EVENTS) {
-            const orchestrator = AnimationOrchestrator.getInstance()
-            orchestrator.ingestGameUpdate(payload.new as any)
-          }
+          const orchestrator = AnimationOrchestrator.getInstance()
+          orchestrator.ingestGameUpdate(payload.new as any)
         }
 
         // Check the new game status
@@ -348,9 +345,7 @@ export function App() {
     return () => {
       subscription.unsubscribe()
       // Clear orchestrator memory for this game
-      if (FEATURE_ANIMATION_EVENTS) {
-        AnimationOrchestrator.getInstance().clear(playerGameId)
-      }
+      AnimationOrchestrator.getInstance().clear(playerGameId)
       setPlayerGameData(null) // Clean up game data when subscription ends
     }
   }, [playerGameId, user, mode])

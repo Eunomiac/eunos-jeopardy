@@ -12,6 +12,7 @@
  * - Accordingly, elements will need to be revealed by setting their autoAlpha: 1 (visibility: visible & opacity: 1)
  */
 import {gsap} from 'gsap';
+import {AnimationService} from "../services/animations/AnimationService";
 
 export type GSAPEffect = (targets?: gsap.TweenTarget, config?: gsap.AnimationVars) => gsap.core.Timeline;
 
@@ -59,7 +60,7 @@ export function initializeAnimations(): void {
 
   // Expose GSAP globally for console debugging
   if (typeof window !== 'undefined') {
-    Object.assign(globalThis, {gsap});
+    Object.assign(globalThis, {gsap, AnimationService});
     console.log('🎬 GSAP animations initialized and exposed globally');
   } else {
     console.log('🎬 GSAP animations initialized');
