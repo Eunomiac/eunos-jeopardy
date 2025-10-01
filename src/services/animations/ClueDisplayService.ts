@@ -105,16 +105,17 @@ export class ClueDisplayService {
     displayWindow.className = 'dynamic-display-window';
 
     if (content.isDailyDouble) {
-      // Daily double layout: splash graphic + hidden clue content
-      displayWindow.classList.add('daily-double-display');
-      displayWindow.innerHTML = `
-        <div class="daily-double-splash" style="opacity: 1;">
-          <img src="/assets/images/splash-daily-double.webp" alt="Daily Double" />
-        </div>
-        <div class="clue-content" style="opacity: 0;">
-          ${content.prompt}
-        </div>
-      `;
+      // Daily double layout: clue text + splash image overlay
+      // Both jeopardy-clue-display (for base styling) and daily-double-display (for splash)
+      displayWindow.classList.add('jeopardy-clue-display', 'daily-double-display');
+      displayWindow.textContent = content.prompt;
+
+      // Add splash image as overlay (will be hidden by animation)
+      const splashImg = document.createElement('img');
+      splashImg.src = '/assets/images/splash-daily-double.webp';
+      splashImg.alt = 'Daily Double';
+      splashImg.className = 'daily-double-splash';
+      displayWindow.appendChild(splashImg);
     } else {
       // Regular clue layout: just the clue text with jeopardy-clue-display class
       displayWindow.classList.add('jeopardy-clue-display');

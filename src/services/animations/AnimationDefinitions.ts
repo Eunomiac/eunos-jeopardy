@@ -340,36 +340,34 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
       return;
     }
 
-    // Populate display window with daily double content (splash + hidden clue)
+    // Populate display window with daily double content (adds both classes + splash image)
     await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
 
-    const dailyDoubleSplash = displayWindow.querySelector('.daily-double-splash');
-    if (!dailyDoubleSplash) {
-      console.warn(`🎬 [DailyDoubleRevealAnimation] Daily double splash not found after population`);
-      config.onComplete?.();
-      return;
-    }
-
     if (isInstant) {
-      // Instant: Show display window with daily double splash in final position
-      gsap.set(displayWindow, {
-        autoAlpha: 1,
-        scale: 1,
-        x: '50%',
-        y: '50%',
-        xPercent: -50,
-        yPercent: -50,
-        position: 'fixed'
-      });
-      gsap.set(dailyDoubleSplash, { autoAlpha: 1 });
+      // Instant: Just show at final CSS-defined position
+      gsap.set(displayWindow, { autoAlpha: 1 });
       console.log(`🎬 [DailyDoubleRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
     }
 
-    // Animated: Similar to ClueReveal but with daily double splash
+    // Animated: Use gsap.from() like ClueReveal, but with dramatic back.out easing
     return new Promise((resolve) => {
       const cellRect = focusedCell.getBoundingClientRect();
+
+      // Calculate the scale factor to match cell size
+      const finalWidth = window.innerWidth * 0.8;
+      const finalHeight = finalWidth * (4 / 6);
+      const scaleX = cellRect.width / finalWidth;
+      const scaleY = cellRect.height / finalHeight;
+
+      // Calculate position offset from center
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const cellCenterX = cellRect.left + cellRect.width / 2;
+      const cellCenterY = cellRect.top + cellRect.height / 2;
+      const offsetX = cellCenterX - centerX;
+      const offsetY = cellCenterY - centerY;
 
       const timeline = gsap.timeline({
         onComplete: () => {
@@ -379,44 +377,22 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
         }
       });
 
-      // Start: Position display window over cell
-      timeline.set(displayWindow, {
-        position: 'fixed',
-        left: cellRect.left,
-        top: cellRect.top,
-        width: cellRect.width,
-        height: cellRect.height,
-        autoAlpha: 0,
-        scale: 1
+      // Animate FROM cell position/scale TO final CSS position with dramatic easing
+      timeline.from(displayWindow, {
+        x: offsetX,
+        y: offsetY,
+        scaleX: scaleX,
+        scaleY: scaleY,
+        duration: 0.8,
+        ease: 'back.out(1.7)' // Dramatic overshoot effect for daily double
       });
 
-      timeline.set(dailyDoubleSplash, { autoAlpha: 1 });
-
-      // Fade in and scale to center with dramatic effect
+      // Simultaneously fade in
       timeline.to(displayWindow, {
         autoAlpha: 1,
-        duration: 0.3,
+        duration: 0.4,
         ease: 'power2.out'
-      });
-
-      timeline.to(displayWindow, {
-        x: '50%',
-        y: '50%',
-        xPercent: -50,
-        yPercent: -50,
-        width: '80%',
-        height: '60%',
-        scale: 1.1,
-        duration: 0.6,
-        ease: 'back.out(1.7)'
-      });
-
-      // Settle to final scale
-      timeline.to(displayWindow, {
-        scale: 1,
-        duration: 0.2,
-        ease: 'power2.inOut'
-      });
+      }, 0);
 
       (animationService as any).activeTimelines?.push(timeline);
     });
@@ -449,9 +425,10 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
 /**
  * Daily Double Clue Reveal Animation
  *
- * Animates the clue content appearing in the display window after the player has entered their wager (and the Host 'reveals prompt' on a daily double clue)
- * - populates the display window with the clue prompt, underneath/obscured by the daily double splash graphic
- * - fades out the daily-double splash to reveal the clue prompt
+ * Animates the clue content appearing after the player has entered their wager
+ * - The display window already has the clue text (populated during DailyDoubleReveal)
+ * - The splash image is overlaid on top, obscuring the text
+ * - This animation simply hides the splash image to reveal the clue text underneath
  */
 export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: string }> = {
   id: "DailyDoubleClueReveal",
@@ -463,24 +440,22 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
     const animationService = AnimationService.getInstance();
     const displayWindow = await animationService.waitForElement('.dynamic-display-window', 2000);
     const dailyDoubleSplash = displayWindow.querySelector('.daily-double-splash');
-    const clueContent = displayWindow.querySelector('.clue-content');
 
-    if (!dailyDoubleSplash || !clueContent) {
-      console.warn(`🎬 [DailyDoubleClueRevealAnimation] Missing required elements`);
+    if (!dailyDoubleSplash) {
+      console.warn(`🎬 [DailyDoubleClueRevealAnimation] Daily double splash not found`);
       config.onComplete?.();
       return;
     }
 
     if (isInstant) {
-      // Instant: Hide splash, show clue
-      gsap.set(dailyDoubleSplash, { autoAlpha: 0 });
-      gsap.set(clueContent, { autoAlpha: 1 });
+      // Instant: Just hide the splash
+      gsap.set(dailyDoubleSplash, { visibility: 'hidden' });
       console.log(`🎬 [DailyDoubleClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
     }
 
-    // Animated: Fade out splash, fade in clue
+    // Animated: Fade out splash to reveal clue text underneath
     return new Promise((resolve) => {
       const timeline = gsap.timeline({
         onComplete: () => {
@@ -491,16 +466,10 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
       });
 
       timeline.to(dailyDoubleSplash, {
-        autoAlpha: 0,
-        duration: 0.4,
+        visibility: 'hidden',
+        duration: 0.5,
         ease: 'power2.inOut'
       });
-
-      timeline.to(clueContent, {
-        autoAlpha: 1,
-        duration: 0.4,
-        ease: 'power2.inOut'
-      }, '-=0.2'); // Overlap slightly
 
       (animationService as any).activeTimelines?.push(timeline);
     });

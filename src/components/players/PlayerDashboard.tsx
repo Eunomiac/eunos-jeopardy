@@ -1088,12 +1088,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           // Default placeholder
           return (
             <div className="display-placeholder" ref={clueContentRef}>
-              <div className="placeholder-content">
-                <div className="placeholder-icon">🎯</div>
-                <div className="placeholder-text">
-                  {gameStatus === 'lobby' ? 'Game starting soon...' : 'Waiting for next clue...'}
-                </div>
-              </div>
             </div>
           );
         })()}
