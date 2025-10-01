@@ -9,6 +9,7 @@ import { gsap } from 'gsap';
 import type { Game, GameStatus } from '../games/GameService';
 import { AnimationService } from './AnimationService';
 import type { AnimationConfig } from './AnimationService';
+import { ClueDisplayService } from './ClueDisplayService';
 
 /**
  * Animation Definition Interface
@@ -222,6 +223,7 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
     console.log(`🎬 [ClueRevealAnimation] ${isInstant ? 'Instant' : 'Animated'} clue reveal for ${params.clueId} in game ${params.gameId}`);
 
     const animationService = AnimationService.getInstance();
+    const clueDisplayService = ClueDisplayService.getInstance();
     const displayWindow = await animationService.waitForElement('.dynamic-display-window', 2000);
     const focusedCell = document.querySelector('.clue-cell.focused');
 
@@ -230,6 +232,9 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
       config.onComplete?.();
       return;
     }
+
+    // Populate display window with clue content
+    await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
 
     if (isInstant) {
       // Instant: Show display window in final centered position
@@ -331,12 +336,22 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
     console.log(`🎬 [DailyDoubleRevealAnimation] ${isInstant ? 'Instant' : 'Animated'} daily double reveal for ${params.clueId} in game ${params.gameId}`);
 
     const animationService = AnimationService.getInstance();
+    const clueDisplayService = ClueDisplayService.getInstance();
     const displayWindow = await animationService.waitForElement('.dynamic-display-window', 2000);
-    const dailyDoubleSplash = displayWindow.querySelector('.daily-double-splash');
     const focusedCell = document.querySelector('.clue-cell.focused');
 
-    if (!focusedCell || !dailyDoubleSplash) {
-      console.warn(`🎬 [DailyDoubleRevealAnimation] Missing required elements`);
+    if (!focusedCell) {
+      console.warn(`🎬 [DailyDoubleRevealAnimation] No focused clue cell found`);
+      config.onComplete?.();
+      return;
+    }
+
+    // Populate display window with daily double content (splash + hidden clue)
+    await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
+
+    const dailyDoubleSplash = displayWindow.querySelector('.daily-double-splash');
+    if (!dailyDoubleSplash) {
+      console.warn(`🎬 [DailyDoubleRevealAnimation] Daily double splash not found after population`);
       config.onComplete?.();
       return;
     }

@@ -1,5 +1,6 @@
 import type { Game } from "../games/GameService";
 import { AnimationEvents } from "./AnimationEvents";
+import { ClueService } from "../clues/ClueService";
 
 /**
  * Lightweight domain → animation-intent orchestrator.
@@ -64,12 +65,22 @@ export class AnimationOrchestrator {
     }
 
     // Clue reveal when focused_clue_id is set/changed
-    // TODO: Detect if clue is a daily double and publish DailyDoubleReveal instead
+    // Check if it's a daily double and publish appropriate intent
     if (next.focused_clue_id && next.focused_clue_id !== prev?.focused_clue_id) {
-      console.log(`🎬 [AnimationOrchestrator] Detected ClueReveal trigger (clue: ${prev?.focused_clue_id} → ${next.focused_clue_id})`);
-      AnimationEvents.publish({ type: "ClueReveal", gameId, clueId: next.focused_clue_id });
-
-      // TODO: If daily double, also listen for wager submission and publish DailyDoubleClueReveal
+      // Check if this is a daily double asynchronously
+      ClueService.isDailyDouble(next.focused_clue_id).then((isDailyDouble) => {
+        if (isDailyDouble) {
+          console.log(`🎬 [AnimationOrchestrator] Detected DailyDoubleReveal trigger (clue: ${prev?.focused_clue_id} → ${next.focused_clue_id})`);
+          AnimationEvents.publish({ type: "DailyDoubleReveal", gameId, clueId: next.focused_clue_id! });
+        } else {
+          console.log(`🎬 [AnimationOrchestrator] Detected ClueReveal trigger (clue: ${prev?.focused_clue_id} → ${next.focused_clue_id})`);
+          AnimationEvents.publish({ type: "ClueReveal", gameId, clueId: next.focused_clue_id! });
+        }
+      }).catch((error) => {
+        console.error(`🎬 [AnimationOrchestrator] Error checking daily double status:`, error);
+        // Fall back to regular clue reveal
+        AnimationEvents.publish({ type: "ClueReveal", gameId, clueId: next.focused_clue_id! });
+      });
     }
 
     // Player buzz-in when focused_player_id is set/changed
