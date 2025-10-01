@@ -7,11 +7,11 @@
 
 ## Statistics (Current)
 
-- **Total redundancies found**: 4
+- **Total redundancies found**: 5
 - **Consolidations completed**: 0
-- **Removals completed**: 3
+- **Removals completed**: 5
 - **Fixes completed**: 1
-- **Total lines of code removed**: 256 lines
+- **Total lines of code removed**: 262 lines
 - **Files affected**: 3 files
 - **Test coverage before**: Not measured (tests had pre-existing failures)
 - **Test coverage after**: Not measured (tests have same pre-existing failures)
@@ -48,23 +48,37 @@
 - **Impact**: No breaking changes - method was not used anywhere
 - **Reason**: Deprecated backwards compatibility code. Project does not require backwards compatibility. Replacement (BoardIntroAnimation) fully implemented.
 
+### 4. Removed Unused ClueStateUpdate Type Export
+**Type**: Unnecessary Code - Unused Export
+**Location**: `src/services/clues/ClueService.ts`
+**Commit**: `608b6d6`
+
+- **Files affected**: 1 file
+- **Lines removed**: 2 lines
+- **Impact**: No breaking changes - type was not imported anywhere
+- **Reason**: Type was exported but never used. ClueService methods use inline update objects instead.
+
+### 5. Removed Unused Answer and Wager Type Exports
+**Type**: Unnecessary Code - Unused Exports
+**Location**: `src/services/games/GameService.ts`
+**Commit**: `0531150`
+
+- **Files affected**: 1 file
+- **Lines removed**: 4 lines
+- **Impact**: No breaking changes - types were not imported anywhere
+- **Reason**: Types were exported but never used. The `*Insert` variants are sufficient for the application's needs.
+
 ## Items Identified But Not Yet Addressed
 
-### 4. Unused Type Export: ClueStateUpdate
-**Type**: Unnecessary Code - Unused Export
-**Location**: `src/services/clues/ClueService.ts` (line 14)
-**Status**: DOCUMENTED, NOT YET REMOVED
-
-- **Description**: `ClueStateUpdate` type is exported but never imported or used anywhere in the codebase
-- **Impact**: Minimal - just an unused type export
-- **Recommendation**: Remove the export
-- **Next Steps**: Verify with comprehensive search, then remove
+None at this time. All identified issues have been addressed.
 
 ## Commits Made
 
 1. `4ed7a65` - chore(utils): remove unused gsap-examples file
 2. `602b415` - fix(animations): prefix unused gameState parameters with underscore
 3. `625a439` - chore(animations): remove deprecated animateBoardIntro method
+4. `608b6d6` - chore(clues): remove unused ClueStateUpdate type export
+5. `0531150` - chore(games): remove unused Answer and Wager type exports
 
 ## Areas Examined
 
