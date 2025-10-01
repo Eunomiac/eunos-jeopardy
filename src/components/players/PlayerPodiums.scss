@@ -77,18 +77,23 @@
   // Buzzed-in overlay image
   .podium-buzzed-in {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    top: 50%;
+    left: 50%;
     height: 100%;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
+    transform: translate(-50%, -50%);
   }
 
   // Show overlay when player is buzzed in
-  &.buzzed-in .podium-buzzed-in {
-    opacity: 1;
+  &.buzzed-in {
+    .podium-buzzed-in {
+      opacity: 1;
+    }
+    .integrated-buzzer {
+      visibility: hidden;
+    }
   }
 }
 

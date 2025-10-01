@@ -100,34 +100,25 @@ export class ClueDisplayService {
       return;
     }
 
-    // Clear existing content
+    // Clear existing content and classes
     displayWindow.innerHTML = '';
+    displayWindow.className = 'dynamic-display-window';
 
     if (content.isDailyDouble) {
       // Daily double layout: splash graphic + hidden clue content
+      displayWindow.classList.add('daily-double-display');
       displayWindow.innerHTML = `
         <div class="daily-double-splash" style="opacity: 1;">
           <img src="/assets/images/splash-daily-double.webp" alt="Daily Double" />
         </div>
         <div class="clue-content" style="opacity: 0;">
-          <div class="clue-header">
-            <div class="clue-category">${content.category}</div>
-            <div class="clue-value">$${content.value.toLocaleString()}</div>
-          </div>
-          <div class="clue-prompt">${content.prompt}</div>
+          ${content.prompt}
         </div>
       `;
     } else {
-      // Regular clue layout
-      displayWindow.innerHTML = `
-        <div class="clue-content">
-          <div class="clue-header">
-            <div class="clue-category">${content.category}</div>
-            <div class="clue-value">$${content.value.toLocaleString()}</div>
-          </div>
-          <div class="clue-prompt">${content.prompt}</div>
-        </div>
-      `;
+      // Regular clue layout: just the clue text with jeopardy-clue-display class
+      displayWindow.classList.add('jeopardy-clue-display');
+      displayWindow.textContent = content.prompt;
     }
 
     console.log(`🎬 [ClueDisplayService] Populated display window for clue ${clueId} (daily double: ${content.isDailyDouble})`);
@@ -140,4 +131,3 @@ export class ClueDisplayService {
     this.clueCache.clear();
   }
 }
-

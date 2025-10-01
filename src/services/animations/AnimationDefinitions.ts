@@ -233,28 +233,35 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
       return;
     }
 
-    // Populate display window with clue content
+    // Populate display window with clue content (adds .jeopardy-clue-display class)
     await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
 
     if (isInstant) {
-      // Instant: Show display window in final centered position
-      gsap.set(displayWindow, {
-        autoAlpha: 1,
-        scale: 1,
-        x: '50%',
-        y: '50%',
-        xPercent: -50,
-        yPercent: -50,
-        position: 'fixed'
-      });
+      // Instant: Just show at final CSS-defined position
+      gsap.set(displayWindow, { autoAlpha: 1 });
       console.log(`🎬 [ClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
     }
 
-    // Animated: Position over cell, then scale/move to center
+    // Animated: Use gsap.from() to animate FROM clue cell position TO final CSS position
     return new Promise((resolve) => {
       const cellRect = focusedCell.getBoundingClientRect();
+
+      // Calculate the scale factor to match cell size
+      // Final size is defined in CSS as 80% width with 6/4 aspect ratio
+      const finalWidth = window.innerWidth * 0.8;
+      const finalHeight = finalWidth * (4 / 6);
+      const scaleX = cellRect.width / finalWidth;
+      const scaleY = cellRect.height / finalHeight;
+
+      // Calculate position offset from center
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const cellCenterX = cellRect.left + cellRect.width / 2;
+      const cellCenterY = cellRect.top + cellRect.height / 2;
+      const offsetX = cellCenterX - centerX;
+      const offsetY = cellCenterY - centerY;
 
       const timeline = gsap.timeline({
         onComplete: () => {
@@ -264,35 +271,22 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
         }
       });
 
-      // Start: Position display window exactly over the focused cell
-      timeline.set(displayWindow, {
-        position: 'fixed',
-        left: cellRect.left,
-        top: cellRect.top,
-        width: cellRect.width,
-        height: cellRect.height,
-        autoAlpha: 0,
-        scale: 1
+      // Animate FROM cell position/scale TO final CSS position (centered, full size)
+      timeline.from(displayWindow, {
+        x: offsetX,
+        y: offsetY,
+        scaleX: scaleX,
+        scaleY: scaleY,
+        duration: 0.6,
+        ease: config.ease || 'power2.out'
       });
 
-      // Fade in at cell position
+      // Simultaneously fade in
       timeline.to(displayWindow, {
         autoAlpha: 1,
-        duration: 0.2,
+        duration: 0.3,
         ease: 'power2.out'
-      });
-
-      // Scale up and move to center
-      timeline.to(displayWindow, {
-        x: '50%',
-        y: '50%',
-        xPercent: -50,
-        yPercent: -50,
-        width: '80%',
-        height: '60%',
-        duration: 0.5,
-        ease: config.ease || 'power2.inOut'
-      });
+      }, 0); // Start at time 0 (simultaneous with scale/position)
 
       (animationService as any).activeTimelines?.push(timeline);
     });
