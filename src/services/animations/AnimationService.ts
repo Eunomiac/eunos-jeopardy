@@ -36,6 +36,8 @@ export interface AnimationConfig {
   delay?: number;
   /** Callback when animation completes */
   onComplete?: () => void;
+  /** If true, animation completes instantly (duration = 0) for initial state setup */
+  instant?: boolean;
 }
 
 /**
@@ -58,12 +60,18 @@ export class AnimationService {
 
   /** Play an animation exactly once per session for the given key */
   async playOnce(key: string, fn: () => Promise<void> | void): Promise<void> {
-    if (this.playedKeys.has(key)) {return;}
+    if (this.playedKeys.has(key)) {
+      console.log(`🎬 [AnimationService] Skipping already-played animation: ${key}`);
+      return;
+    }
     try {
+      console.log(`🎬 [AnimationService] Playing animation: ${key}`);
       this.playedKeys.add(key);
       await fn();
+      console.log(`🎬 [AnimationService] Animation complete: ${key}`);
     } catch (err) {
       // allow retry on failure
+      console.error(`🎬 [AnimationService] Animation failed: ${key}`, err);
       this.playedKeys.delete(key);
       throw err;
     }
@@ -93,27 +101,13 @@ export class AnimationService {
   }
 
   /**
-   * Animates the game board introduction.
-   * Wraps the animateBoardIn GSAP effect from utils/animations.ts.
-   *
-   * @param config - Animation configuration
-   * @returns Promise that resolves when animation completes
+   * @deprecated Use BoardIntroAnimation from AnimationDefinitions instead
+   * This method is kept temporarily for backwards compatibility.
    */
   async animateBoardIntro(config: AnimationConfig = {}): Promise<void> {
-    return new Promise((resolve) => {
-      const timeline = gsap.effects.animateBoardIn();
-
-      if (config.onComplete) {
-        timeline.eventCallback('onComplete', () => {
-          config.onComplete?.();
-          resolve();
-        });
-      } else {
-        timeline.eventCallback('onComplete', resolve);
-      }
-
-      this.activeTimelines.push(timeline);
-    });
+    console.warn('🎬 [AnimationService.animateBoardIntro] DEPRECATED - Use BoardIntroAnimation from AnimationDefinitions');
+    const { BoardIntroAnimation } = await import('./AnimationDefinitions');
+    return BoardIntroAnimation.execute({ round: 'unknown', gameId: 'unknown' }, config);
   }
 
   /**
@@ -132,13 +126,27 @@ export class AnimationService {
     categoryNumber: number,
     config: AnimationConfig = {}
   ): Promise<void> {
+    const isInstant = config.instant === true;
+    console.log(`🎬 [AnimationService.animateCategoryStripMovement] ${isInstant ? 'Instant' : 'Animated'} category ${categoryNumber}`);
+
     return new Promise((resolve) => {
+      if (isInstant) {
+        // Instant: set final state immediately
+        this.setCategoryStripInitialState(stripElement, targetX, categoryNumber);
+        console.log(`🎬 [AnimationService.animateCategoryStripMovement] Instant setup complete for category ${categoryNumber}`);
+        config.onComplete?.();
+        resolve();
+        return;
+      }
+
+      // Animated: run the full animation
       const splashImage = stripElement.querySelector(
         `.category-header:nth-child(${categoryNumber}) img.splash-jeopardy`
-      ) as HTMLElement | null;
+      );
 
       const timeline = gsap.timeline({
         onComplete: () => {
+          console.log(`🎬 [AnimationService.animateCategoryStripMovement] Animation complete for category ${categoryNumber}`);
           config.onComplete?.();
           resolve();
         }
@@ -179,7 +187,7 @@ export class AnimationService {
     for (let i = 1; i <= categoryNumber; i++) {
       const splashImage = stripElement.querySelector(
         `.category-header:nth-child(${i}) img.splash-jeopardy`
-      ) as HTMLElement | null;
+      );
       if (splashImage) {
         gsap.set(splashImage, { autoAlpha: 0 });
       }

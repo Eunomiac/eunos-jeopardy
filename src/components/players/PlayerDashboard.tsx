@@ -9,6 +9,7 @@ import { supabase } from "../../services/supabase/client";
 import type { ClueState } from "../../services/clues/ClueService";
 import { AnimationService } from "../../services/animations/AnimationService";
 import { AnimationEvents } from "../../services/animations/AnimationEvents";
+import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
 
@@ -113,50 +114,86 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     }
   }, [showClueModal, currentClue, animationService]);
 
+  // Handle initial game state on mount (for page reloads mid-game)
+  useEffect(() => {
+    if (!game) return;
+
+    console.log(`🎬 [PlayerDashboard] Checking initial game state for instant animations`);
+
+    // Check all registered animations to see which should run instantly
+    const instantAnimations = AnimationRegistry.checkAllForInstantRun(game as any);
+
+    for (const { def, params } of instantAnimations) {
+      console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
+
+      // Use playOnce to ensure we don't re-run if already executed
+      animationService.playOnce(
+        `${def.id}:${gameId}:${JSON.stringify(params)}`,
+        async () => {
+          await def.execute(params, { instant: true });
+
+          // Update tracking for category animations
+          if (def.id === 'CategoryIntro') {
+            lastAnimatedCategory.current = params.categoryNumber;
+          }
+        }
+      );
+    }
+  }, [game?.status, gameId, animationService]);
+
   // Subscribe to centralized animation intents
   useEffect(() => {
+    console.log(`🎬 [PlayerDashboard] Setting up animation intent subscription for game ${gameId}`);
+
     const unsubscribe = AnimationEvents.subscribe(async (intent) => {
-      if (intent.type === "BoardIntro" && intent.gameId === gameId) {
-        await animationService.playOnce(`boardIntro:${gameId}:${String(game?.current_round || '')}`,
-          async () => {
-            await animationService.waitForElement('.jeopardy-board', 1000);
-            await animationService.animateBoardIntro();
-          }
-        );
+      console.log(`🎬 [PlayerDashboard] Received animation intent:`, intent);
+
+      // Only handle intents for this game
+      if (intent.gameId !== gameId) return;
+
+      // Get the animation definition from registry
+      const def = AnimationRegistry.get(intent.type);
+      if (!def) {
+        console.warn(`🎬 [PlayerDashboard] No animation definition found for: ${intent.type}`);
+        return;
       }
 
-      if (intent.type === "CategoryIntro" && intent.gameId === gameId) {
-        const category = intent.categoryNumber;
-        try {
-          const stripElement = await animationService.waitForElement('.jeopardy-category-display-strip', 1000);
-          const targetX = -((category - 1) * 100 / 6);
-          const isInitialRender = lastAnimatedCategory.current === 0 && category > 1;
+      // Convert intent to params
+      let params: any = null;
+      if (intent.type === "BoardIntro") {
+        params = { round: intent.round, gameId: intent.gameId };
+      } else if (intent.type === "CategoryIntro") {
+        params = { categoryNumber: intent.categoryNumber, gameId: intent.gameId };
+      } else if (intent.type === "ClueReveal") {
+        params = { clueId: intent.clueId, gameId: intent.gameId };
+      }
 
-          if (isInitialRender) {
-            // Set initial state without animation
-            animationService.setCategoryStripInitialState(stripElement, targetX, category);
-            lastAnimatedCategory.current = category;
-          } else {
-            // Animate the category strip movement
-            await animationService.animateCategoryStripMovement(
-              stripElement,
-              targetX,
-              category,
-              {
-                onComplete: () => {
-                  lastAnimatedCategory.current = category;
-                }
-              }
-            );
+      if (!params) {
+        console.warn(`🎬 [PlayerDashboard] Could not derive params for intent:`, intent);
+        return;
+      }
+
+      console.log(`🎬 [PlayerDashboard] Handling ${intent.type} animation (animated)`, params);
+
+      // Execute animation (always animated when triggered by subscription)
+      await animationService.playOnce(
+        `${def.id}:${gameId}:${JSON.stringify(params)}`,
+        async () => {
+          await def.execute(params);  // No instant flag = animated
+
+          // Update tracking for category animations
+          if (intent.type === 'CategoryIntro') {
+            lastAnimatedCategory.current = params.categoryNumber;
           }
-        } catch (e) {
-          console.warn('CategoryIntro: element not ready in time');
         }
-      }
+      );
     });
 
-    return unsubscribe;
-  }, [gameId, game?.current_round, animationService]);
+    return () => {
+      console.log(`🎬 [PlayerDashboard] Cleaning up animation intent subscription for game ${gameId}`);
+      unsubscribe();
+    };
+  }, [gameId, animationService]);
 
   /**
    * Loads initial game data and player information.

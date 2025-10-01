@@ -187,8 +187,6 @@ export function ConnectionDebugger() {
       activeChannels.add(name);
       subscriptionCount = activeChannels.size;
 
-      console.log(`📡 Channel created: ${name} (Total: ${subscriptionCount})`);
-
       setConnectionStatus(prev => ({
         ...prev,
         subscriptionCount,
@@ -200,8 +198,6 @@ export function ConnectionDebugger() {
       channel.unsubscribe = function() {
         activeChannels.delete(name);
         subscriptionCount = activeChannels.size;
-
-        console.log(`📡 Channel cleaned up: ${name} (Total: ${subscriptionCount})`);
 
         setConnectionStatus(prev => ({
           ...prev,

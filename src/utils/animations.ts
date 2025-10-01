@@ -17,22 +17,8 @@ import {AnimationService} from "../services/animations/AnimationService";
 export type GSAPEffect = (targets?: gsap.TweenTarget, config?: gsap.AnimationVars) => gsap.core.Timeline;
 
 const GSAP_EFFECTS: Record<string, GSAPEffect> = {
-
-  // New board animation. Run at start of "jeopardy" and "double" rounds when board is first displayed.
-  animateBoardIn: () => gsap
-    .timeline({})
-      .to(".jeopardy-board", {autoAlpha: 1, duration: 1, ease: "power2.inOut"})
-      .fromTo(".clue-cell", {autoAlpha: 0}, {
-        duration: 0.15,
-        autoAlpha: 1,
-        ease: "power2.inOut",
-        stagger: {
-          amount: 2,
-          grid: [5,6],
-          ease: "steps(7)",
-          from: "random"
-        }
-      })
+  // GSAP effects are being phased out in favor of AnimationDefinitions
+  // See src/services/animations/AnimationDefinitions.ts
 };
 
 /**

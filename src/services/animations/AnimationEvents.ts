@@ -13,15 +13,21 @@ export class AnimationEvents {
 
   static subscribe(cb: AnimationSubscriber): () => void {
     this.subscribers.add(cb);
-    return () => this.subscribers.delete(cb);
+    console.log(`🎬 [AnimationEvents] Subscriber added (total: ${this.subscribers.size})`);
+    return () => {
+      this.subscribers.delete(cb);
+      console.log(`🎬 [AnimationEvents] Subscriber removed (total: ${this.subscribers.size})`);
+    };
   }
 
   static publish(intent: AnimationIntent): void {
+    console.log(`🎬 [AnimationEvents] Publishing intent:`, intent);
+    console.log(`🎬 [AnimationEvents] Notifying ${this.subscribers.size} subscriber(s)`);
     for (const cb of this.subscribers) {
       try {
         cb(intent);
       } catch (err) {
-        console.warn("AnimationEvents subscriber error:", err);
+        console.warn("🎬 [AnimationEvents] Subscriber error:", err);
       }
     }
   }
