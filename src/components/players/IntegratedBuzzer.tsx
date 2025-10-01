@@ -127,10 +127,6 @@ export function IntegratedBuzzer({
         aria-label={ariaLabel}
         type="button"
       >
-        {/* Buzzer State Display */}
-        <div className="buzzer-state-display">
-          {buzzerStateService.getStateDisplayText(state)}
-        </div>
 
         {/* State Icon */}
         <div className="buzzer-state-icon">
@@ -162,12 +158,6 @@ export function IntegratedBuzzer({
         )}
       </button>
 
-      {/* Focus Indicator */}
-      {isFocused && (
-        <div className="focus-indicator">
-          <div className="focus-ring"></div>
-        </div>
-      )}
     </div>
   );
 }

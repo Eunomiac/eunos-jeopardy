@@ -141,6 +141,12 @@
   .dynamic-display-window {
     // Base container - no default styling, all styles applied via modifier classes
     z-index: 1000;
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translate(-50%, 0%);
+    width: var(--jeopardy-board-width);
+    height: calc(var(--jeopardy-board-height) + 100px);
 
     // Clue display styling (regular clues)
     &.jeopardy-clue-display {
@@ -156,6 +162,11 @@
       font-size: 3rem;
 
       &.daily-double-display {
+        transform: translate(-50%, -50%);
+        top: 50%;
+        width: 100%;
+
+
         .daily-double-splash {
           position: absolute;
           top: 0;
@@ -307,32 +318,6 @@
   }
 }
 
-// .player-podiums-container {
-//   .player-podium {
-//     &.buzzed-podium {
-//       background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-//       border: 3px solid #FF4500;
-//       animation: buzz-glow 0.5s ease-out;
-
-//       .player-score {
-//         color: #000;
-//       }
-//     }
-
-//     &.frozen-podium {
-//       background: linear-gradient(135deg, #4169E1 0%, #1E90FF 100%);
-//       border: 3px solid #87CEEB;
-//       animation: freeze-shake 0.5s ease-in-out;
-
-//       .integrated-buzzer-container {
-//         .integrated-buzzer {
-//           animation: freeze 1s infinite;
-//         }
-//       }
-//     }
-//   }
-// }
-
 // Animations
 @keyframes category-glow {
   0% {
@@ -406,8 +391,11 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    background: $jeopardy-blue;
-    border: 2px solid $jeopardy-gold;
+
+    background-image: url('/assets/images/bg-clue.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 
     // Splash images
     .splash-jeopardy {

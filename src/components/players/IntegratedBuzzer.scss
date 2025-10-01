@@ -40,9 +40,9 @@
   .integrated-buzzer {
     position: relative;
     width: 80px;
-    height: 60px;
+    height: 80px;
     border: 2px solid $jeopardy-gold;
-    border-radius: 8px;
+    border-radius: 50%;
     background: $jeopardy-blue;
     color: white;
     font-family: $font-family-ui;
@@ -76,8 +76,8 @@
     }
 
     .buzzer-state-icon {
-      font-size: 1.2rem;
-      line-height: 1;
+      font-size: 2rem;
+      line-height: 0.6;
     }
 
     .reaction-time-display {
@@ -192,23 +192,6 @@
     }
   }
 
-  .focus-indicator {
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-    pointer-events: none;
-    z-index: 5;
-
-    .focus-ring {
-      width: 100%;
-      height: 100%;
-      border: 2px solid $jeopardy-gold;
-      border-radius: 12px;
-      animation: focus-pulse 1.5s infinite;
-    }
-  }
 }
 
 // Animations
@@ -253,41 +236,4 @@
 @keyframes focus-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(1.05); }
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .integrated-buzzer-container {
-    .integrated-buzzer {
-      width: 60px;
-      height: 45px;
-      font-size: 0.7rem;
-
-      .buzzer-state-icon {
-        font-size: 1rem;
-      }
-    }
-
-    .player-name-display {
-      font-size: 0.8rem;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .integrated-buzzer-container {
-    .integrated-buzzer {
-      width: 50px;
-      height: 38px;
-      font-size: 0.6rem;
-
-      .buzzer-state-icon {
-        font-size: 0.9rem;
-      }
-    }
-
-    .player-name-display {
-      font-size: 0.7rem;
-    }
-  }
 }

@@ -1,272 +1,194 @@
-@use "../../styles/variables" as *;
-@use "../../styles/jeopardy-theme" as *;
+// @use "../../styles/variables" as *;
+// @use "../../styles/jeopardy-theme" as *;
 
-/**
- * Clue Reveal Modal Component Styles
- *
- * Modal overlay with clue display and integrated buzzer.
- * Moved from PlayerDashboard.scss for better component organization.
- */
+// /**
+//  * Clue Reveal Modal Component Styles
+//  *
+//  * Modal overlay with clue display and integrated buzzer.
+//  * Moved from PlayerDashboard.scss for better component organization.
+//  */
 
-// Modal overlay (full screen)
-.clue-reveal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba($jeopardy-black, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(2px);
-}
+// // Modal overlay (full screen)
+// .clue-reveal-overlay {
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   width: 100vw;
+//   height: 100vh;
+//   background: rgba($jeopardy-black, 0.7);
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   z-index: 1000;
+//   backdrop-filter: blur(2px);
+// }
 
-// Main modal container
-.clue-reveal-modal {
-  --clue-display-width: 20vw;
-  position: relative;
-  width: 30vw;
-  max-width: 1000px;
-  min-width: 400px;
-  height: auto;
-  background: rgba($jeopardy-background-blue, 1);
-  border-radius: $border-radius-lg;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
-  padding: 5vh;
-  border: 3px solid $jeopardy-gold;
+// // Main modal container
+// .clue-reveal-modal {
+//   --clue-display-width: 20vw;
+//   position: relative;
+//   width: 30vw;
+//   max-width: 1000px;
+//   min-width: 400px;
+//   height: auto;
+//   background: rgba($jeopardy-background-blue, 1);
+//   border-radius: $border-radius-lg;
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: flex-start;
+//   align-items: center;
+//   box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
+//   padding: 5vh;
+//   border: 3px solid $jeopardy-gold;
 
-  // Animation states
-  &.animating-in {
-    animation: modalSlideIn 0.3s ease-out;
-  }
+//   // Animation states
+//   &.animating-in {
+//     animation: modalSlideIn 0.3s ease-out;
+//   }
 
-  &.animating-out {
-    animation: modalSlideOut 0.3s ease-in;
-  }
+//   &.animating-out {
+//     animation: modalSlideOut 0.3s ease-in;
+//   }
 
-  // Daily Double styling
-  &.daily-double {
-    border-color: $jeopardy-red;
-    box-shadow:
-      30px 30px 30px rgba($jeopardy-black, 0.8),
-      0 0 20px rgba($jeopardy-red, 0.5);
-  }
-}
+//   // Daily Double styling
+//   &.daily-double {
+//     border-color: $jeopardy-red;
+//     box-shadow:
+//       30px 30px 30px rgba($jeopardy-black, 0.8),
+//       0 0 20px rgba($jeopardy-red, 0.5);
+//   }
+// }
 
-// Daily Double indicator
-.daily-double-indicator {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: $jeopardy-red;
-  color: $jeopardy-white;
-  padding: 0.5rem 1.5rem;
-  border-radius: 20px;
-  font-family: $font-family-daily-double;
-  font-weight: bold;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  box-shadow: 0 4px 8px rgba($jeopardy-black, 0.3);
-  animation: pulse 2s infinite;
-}
+// // Daily Double indicator
+// .daily-double-indicator {
+//   position: absolute;
+//   top: -15px;
+//   left: 50%;
+//   transform: translateX(-50%);
+//   background: $jeopardy-red;
+//   color: $jeopardy-white;
+//   padding: 0.5rem 1.5rem;
+//   border-radius: 20px;
+//   font-family: $font-family-daily-double;
+//   font-weight: bold;
+//   font-size: 1rem;
+//   text-transform: uppercase;
+//   letter-spacing: 2px;
+//   box-shadow: 0 4px 8px rgba($jeopardy-black, 0.3);
+//   animation: pulse 2s infinite;
+// }
 
-// Clue header (category and value)
-.clue-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid $jeopardy-gold;
-}
+// // Clue header (category and value)
+// .clue-header {
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   width: 100%;
+//   margin-bottom: 2rem;
+//   padding-bottom: 1rem;
+//   border-bottom: 2px solid $jeopardy-gold;
+// }
 
-.clue-category {
-  font-family: $font-family-category;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: $jeopardy-gold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+// .clue-category {
+//   font-family: $font-family-category;
+//   font-size: 1.5rem;
+//   font-weight: bold;
+//   color: $jeopardy-gold;
+//   text-transform: uppercase;
+//   letter-spacing: 1px;
+// }
 
-.clue-value {
-  font-family: $font-family-money;
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: $jeopardy-white;
-}
+// .clue-value {
+//   font-family: $font-family-money;
+//   font-size: 1.8rem;
+//   font-weight: bold;
+//   color: $jeopardy-white;
+// }
 
-// Clue content area
-.clue-content {
-  width: 100%;
-  margin-bottom: 2rem;
-  text-align: center;
-}
+// // Clue content area
+// .clue-content {
+//   width: 100%;
+//   margin-bottom: 2rem;
+//   text-align: center;
+// }
 
-.clue-prompt {
-  font-family: $font-family-base;
-  font-size: 1.4rem;
-  line-height: 1.6;
-  color: $jeopardy-white;
-  text-align: center;
-  padding: 1rem;
-  background: rgba($jeopardy-black, 0.2);
-  border-radius: $border-radius-md;
-  border: 1px solid rgba($jeopardy-gold, 0.3);
-  min-height: 4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+// .clue-prompt {
+//   font-family: $font-family-base;
+//   font-size: 1.4rem;
+//   line-height: 1.6;
+//   color: $jeopardy-white;
+//   text-align: center;
+//   padding: 1rem;
+//   background: rgba($jeopardy-black, 0.2);
+//   border-radius: $border-radius-md;
+//   border: 1px solid rgba($jeopardy-gold, 0.3);
+//   min-height: 4rem;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+// }
 
-// Buzzer section
-.buzzer-section {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 1rem;
+// // Buzzer section
+// .buzzer-section {
+//   width: 100%;
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   margin-top: 1rem;
 
-  // Override buzzer sizing for modal context
-  .player-buzzer-container {
-    .player-buzzer {
-      width: 10vw;
-      height: 10vw;
-      min-width: 120px;
-      min-height: 120px;
-      max-width: 200px;
-      max-height: 200px;
-      font-size: 1rem;
-      border-width: 0.5vw;
+//   // Override buzzer sizing for modal context
+//   .player-buzzer-container {
+//     .player-buzzer {
+//       width: 10vw;
+//       height: 10vw;
+//       min-width: 120px;
+//       min-height: 120px;
+//       max-width: 200px;
+//       max-height: 200px;
+//       font-size: 1rem;
+//       border-width: 0.5vw;
 
-      .buzzer-text {
-        font-size: 0.9rem;
-      }
+//       .buzzer-text {
+//         font-size: 0.9rem;
+//       }
 
-      .buzzer-indicator {
-        font-size: 1.2rem;
-      }
-    }
-  }
-}
+//       .buzzer-indicator {
+//         font-size: 1.2rem;
+//       }
+//     }
+//   }
+// }
 
-// Modal animations
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+// // Modal animations
+// @keyframes modalSlideIn {
+//   from {
+//     opacity: 0;
+//     transform: translateY(-50px) scale(0.9);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0) scale(1);
+//   }
+// }
 
-@keyframes modalSlideOut {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-}
+// @keyframes modalSlideOut {
+//   from {
+//     opacity: 1;
+//     transform: translateY(0) scale(1);
+//   }
+//   to {
+//     opacity: 0;
+//     transform: translateY(-50px) scale(0.9);
+//   }
+// }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: translateX(-50%) scale(1.05);
-  }
-}
-
-// Responsive design
-@media (max-width: 1200px) {
-  .clue-reveal-modal {
-    width: 40vw;
-    min-width: 350px;
-    padding: 4vh;
-  }
-
-  .clue-category {
-    font-size: 1.3rem;
-  }
-
-  .clue-value {
-    font-size: 1.5rem;
-  }
-
-  .clue-prompt {
-    font-size: 1.2rem;
-  }
-
-  .buzzer-section .player-buzzer-container .player-buzzer {
-    width: 12vw;
-    height: 12vw;
-    min-width: 100px;
-    min-height: 100px;
-  }
-}
-
-@media (max-width: 768px) {
-  .clue-reveal-modal {
-    width: 90vw;
-    min-width: 300px;
-    padding: 3vh;
-  }
-
-  .clue-header {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
-
-  .clue-category {
-    font-size: 1.1rem;
-  }
-
-  .clue-value {
-    font-size: 1.3rem;
-  }
-
-  .clue-prompt {
-    font-size: 1rem;
-    padding: 0.75rem;
-    min-height: 3rem;
-  }
-
-  .daily-double-indicator {
-    font-size: 0.875rem;
-    padding: 0.375rem 1rem;
-  }
-
-  .buzzer-section .player-buzzer-container .player-buzzer {
-    width: 25vw;
-    height: 25vw;
-    min-width: 80px;
-    min-height: 80px;
-    max-width: 150px;
-    max-height: 150px;
-
-    .buzzer-text {
-      font-size: 0.8rem;
-    }
-
-    .buzzer-indicator {
-      font-size: 1rem;
-    }
-  }
-}
+// @keyframes pulse {
+//   0%, 100% {
+//     opacity: 1;
+//     transform: translateX(-50%) scale(1);
+//   }
+//   50% {
+//     opacity: 0.8;
+//     transform: translateX(-50%) scale(1.05);
+//   }
+// }

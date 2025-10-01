@@ -565,13 +565,13 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               clueState.clue_id === focusedClue.id
             ) {
               setCurrentClue(focusedClue);
-              setShowClueModal(true);
+              // setShowClueModal(true);
               setBuzzerState(BuzzerState.LOCKED); // Lock buzzer when clue is revealed
             }
 
             // Hide modal, clear display window, and lock buzzer when clue is completed
             if (clueState.completed) {
-              setShowClueModal(false);
+              // setShowClueModal(false);
               setCurrentClue(null);
               setBuzzerState(BuzzerState.LOCKED);
               setReactionTime(null);
@@ -645,7 +645,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               clueData.id === focusedClue.id
             ) {
               console.log("🚫 Current player locked out - hiding modal");
-              setShowClueModal(false);
+              // setShowClueModal(false);
               setCurrentClue(null);
               setBuzzerState(BuzzerState.LOCKED);
               setReactionTime(null);
@@ -748,7 +748,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         setFocusedClue(clueInfo);
       } else {
         setFocusedClue(null);
-        setShowClueModal(false);
+        // setShowClueModal(false);
         setCurrentClue(null);
         setBuzzerState(BuzzerState.LOCKED);
         setReactionTime(null);
@@ -995,10 +995,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
             // Show game introduction display
             return (
               <div className="game-intro-display">
-                <div className="intro-content">
-                  <h2>Get Ready!</h2>
-                  <p>Game starting...</p>
-                </div>
               </div>
             );
           }

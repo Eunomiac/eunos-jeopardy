@@ -15,6 +15,7 @@
   height: 20vh;
   bottom: 0;
   left: 0;
+  z-index: 10000;
 
 // Three-section layout container
 .player-podiums-layout {
@@ -105,7 +106,7 @@
   align-items: center;
   height: 50%;
   position: absolute;
-  top: 35%;
+  top: 42px;
 
   // Player name display for non-main podiums
   .player-name-display {
@@ -120,9 +121,9 @@
     text-overflow: ellipsis;
     max-width: 100%;
 
-    // For main player, make name slightly larger (though this shouldn't be used for main)
+    // For main player, make name invisible
     .player-podium.main & {
-      font-size: 1rem;
+      visibility: hidden;
     }
   }
 
@@ -132,36 +133,7 @@
     max-width: 120px;
 
     .player-name-display {
-      font-size: 0.9rem;
-      color: $jeopardy-white;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-
-      // For main player, make name slightly larger
-      .player-podium.main & {
-        font-size: 1rem;
-      }
-    }
-
-    .integrated-buzzer {
-      // Adjust buzzer size for podium context
-      width: 70px;
-      height: 50px;
-      font-size: 0.7rem;
-
-      .buzzer-state-icon {
-        font-size: 1rem;
-      }
-
-      // For main player, make buzzer slightly larger
-      .player-podium.main & {
-        width: 85px;
-        height: 60px;
-        font-size: 0.8rem;
-
-        .buzzer-state-icon {
-          font-size: 1.2rem;
-        }
-      }
+      display: none;
     }
   }
 }
@@ -174,7 +146,7 @@
   text-align: center;
   width: 50%;
   position: absolute;
-  top: 9%;
+  top: 13px;
 
   &.negative {
     color: $jeopardy-red;
