@@ -47,6 +47,7 @@ export class AnimationService {
   private static instance: AnimationService;
   private activeTimelines: gsap.core.Timeline[] = [];
   private readonly playedKeys = new Set<string>();
+  private readonly playingKeys = new Set<string>();  // Track currently playing animations
 
   /**
    * Gets the singleton instance of AnimationService.
@@ -58,14 +59,29 @@ export class AnimationService {
     return AnimationService.instance;
   }
 
+  /** Check if an animation is currently playing */
+  isPlaying(key: string): boolean {
+    return this.playingKeys.has(key);
+  }
+
+  /** Check if an animation has already been played */
+  hasPlayed(key: string): boolean {
+    return this.playedKeys.has(key);
+  }
+
   /** Play an animation exactly once per session for the given key */
   async playOnce(key: string, fn: () => Promise<void> | void): Promise<void> {
     if (this.playedKeys.has(key)) {
       console.log(`🎬 [AnimationService] Skipping already-played animation: ${key}`);
       return;
     }
+    if (this.playingKeys.has(key)) {
+      console.log(`🎬 [AnimationService] Skipping currently-playing animation: ${key}`);
+      return;
+    }
     try {
       console.log(`🎬 [AnimationService] Playing animation: ${key}`);
+      this.playingKeys.add(key);
       this.playedKeys.add(key);
       await fn();
       console.log(`🎬 [AnimationService] Animation complete: ${key}`);
@@ -74,6 +90,8 @@ export class AnimationService {
       console.error(`🎬 [AnimationService] Animation failed: ${key}`, err);
       this.playedKeys.delete(key);
       throw err;
+    } finally {
+      this.playingKeys.delete(key);
     }
   }
 

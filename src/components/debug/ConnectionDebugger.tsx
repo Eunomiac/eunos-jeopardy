@@ -15,7 +15,6 @@ type ConnectionState = 'CONNECTING' | 'OPEN' | 'CLOSING' | 'CLOSED';
 interface ConnectionStatus {
   status: ConnectionState;
   lastUpdate: Date;
-  subscriptionCount: number;
   userId: string | null;
   currentGameId: string | null;
 }
@@ -24,17 +23,14 @@ export function ConnectionDebugger() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     status: 'CLOSED',
     lastUpdate: new Date(),
-    subscriptionCount: 0,
     userId: null,
     currentGameId: null
   });
 
   useEffect(() => {
-    let subscriptionCount = 0;
-
     // Monitor auth state
     const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setConnectionStatus(prev => ({
+      setConnectionStatus((prev) => ({
         ...prev,
         userId: session?.user?.id || null,
         lastUpdate: new Date()
@@ -68,31 +64,8 @@ export function ConnectionDebugger() {
         gameId = pathMatch ? pathMatch[1] : null;
       }
 
-      // Method 5: Listen for console logs that contain game IDs
-      if (!gameId) {
-        // Override console.log temporarily to catch game ID logs
-        const originalLog = console.log;
-        console.log = function(...args) {
-          const message = args.join(' ');
-          const gameIdMatch = message.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
-          if (gameIdMatch && !connectionStatus.currentGameId) {
-            setConnectionStatus(prev => ({
-              ...prev,
-              currentGameId: gameIdMatch[1],
-              lastUpdate: new Date()
-            }));
-          }
-          return originalLog.apply(console, args);
-        };
-
-        // Restore original console.log after a short delay
-        setTimeout(() => {
-          console.log = originalLog;
-        }, 1000);
-      }
-
       if (gameId && gameId !== connectionStatus.currentGameId) {
-        setConnectionStatus(prev => ({
+        setConnectionStatus((prev) => ({
           ...prev,
           currentGameId: gameId,
           lastUpdate: new Date()
@@ -103,12 +76,12 @@ export function ConnectionDebugger() {
     // Initial detection
     detectGameId();
 
-    // Also check for active games via GameService
+    // Also check for active games via GameService (only once on mount)
     const checkActiveGame = async () => {
       try {
         const activeGame = await GameService.getActiveGame();
-        if (activeGame && !connectionStatus.currentGameId) {
-          setConnectionStatus(prev => ({
+        if (activeGame) {
+          setConnectionStatus((prev) => ({
             ...prev,
             currentGameId: activeGame.id,
             lastUpdate: new Date()
@@ -125,7 +98,6 @@ export function ConnectionDebugger() {
     // Monitor for URL changes
     const handleLocationChange = () => {
       detectGameId();
-      checkActiveGame();
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -137,16 +109,14 @@ export function ConnectionDebugger() {
     const channel = supabase.channel('debug-connection-monitor');
 
     channel
-      .on('system', {}, (payload) => {
-        console.log('Realtime system event:', payload);
-        setConnectionStatus(prev => ({
+      .on('system', {}, () => {
+        setConnectionStatus((prev) => ({
           ...prev,
           lastUpdate: new Date()
         }));
       })
       .subscribe((status) => {
-        console.log('Subscription status:', status);
-        setConnectionStatus(prev => ({
+        setConnectionStatus((prev) => ({
           ...prev,
           status: status as ConnectionStatus['status'],
           lastUpdate: new Date()
@@ -161,55 +131,22 @@ export function ConnectionDebugger() {
         schema: 'public',
         table: 'games'
       }, (payload) => {
-        console.log('Game change detected in debugger:', payload);
         // If we see a game event and don't have a current game ID, try to detect it
-        if (!connectionStatus.currentGameId && payload.new) {
-          const gameData = payload.new as any;
-          if (gameData.id && (gameData.status === 'lobby' || gameData.status === 'game_intro' || gameData.status === 'introducing_categories' || gameData.status === 'in_progress')) {
-            setConnectionStatus(prev => ({
-              ...prev,
-              currentGameId: gameData.id,
-              lastUpdate: new Date()
-            }));
+        setConnectionStatus((prev) => {
+          if (!prev.currentGameId && payload.new) {
+            const gameData = payload.new as any;
+            if (gameData.id && (gameData.status === 'lobby' || gameData.status === 'game_intro' || gameData.status === 'introducing_categories' || gameData.status === 'in_progress')) {
+              return {
+                ...prev,
+                currentGameId: gameData.id,
+                lastUpdate: new Date()
+              };
+            }
           }
-        }
+          return prev;
+        });
       })
       .subscribe();
-
-    // Track subscription count (creation AND cleanup)
-    const originalChannel = supabase.channel;
-    const activeChannels = new Set<string>();
-
-    supabase.channel = function(name: string, ...args: any[]) {
-      const channel = originalChannel.call(this, name, ...args);
-
-      // Track channel creation
-      activeChannels.add(name);
-      subscriptionCount = activeChannels.size;
-
-      setConnectionStatus(prev => ({
-        ...prev,
-        subscriptionCount,
-        lastUpdate: new Date()
-      }));
-
-      // Override unsubscribe to track cleanup
-      const originalUnsubscribe = channel.unsubscribe;
-      channel.unsubscribe = function() {
-        activeChannels.delete(name);
-        subscriptionCount = activeChannels.size;
-
-        setConnectionStatus(prev => ({
-          ...prev,
-          subscriptionCount,
-          lastUpdate: new Date()
-        }));
-
-        return originalUnsubscribe.call(this);
-      };
-
-      return channel;
-    };
 
     return () => {
       authSubscription.unsubscribe();
@@ -217,10 +154,8 @@ export function ConnectionDebugger() {
       gameMonitor.unsubscribe();
       window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('storage', handleLocationChange);
-      // Restore original channel function
-      supabase.channel = originalChannel;
     };
-  }, []);
+  }, [connectionStatus.currentGameId]);
 
   const getStatusColor = (status: ConnectionState) => {
     switch (status) {
@@ -289,9 +224,6 @@ export function ConnectionDebugger() {
         Status: <span style={{ color: getStatusColor(connectionStatus.status) }}>
           {connectionStatus.status}
         </span>
-      </div>
-      <div className="debug-line">
-        Subs: {connectionStatus.subscriptionCount}
       </div>
       <div className="debug-line">
         User: {connectionStatus.userId ? connectionStatus.userId.slice(0, 8) + '...' : 'None'}

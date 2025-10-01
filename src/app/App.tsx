@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { SimpleLogin } from '../components/auth/SimpleLogin'
 import { ClueSetSelector } from '../components/clueSets/ClueSetSelector'
 import { ClueSetSummary } from '../components/clueSets/ClueSetSummary'
@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { supabase } from '../services/supabase/client'
 import { AnimationOrchestrator } from '../services/animations/AnimationOrchestrator'
+// import { FEATURE_ANIMATION_EVENTS } from '../config/featureFlags'
 
 
 /**
@@ -119,6 +120,9 @@ export function App() {
 
   /** Whether we're still determining the user's role */
   const [roleLoading, setRoleLoading] = useState(false)
+
+  /** Ref to prevent multiple simultaneous role detection calls */
+  const roleDetectionInProgress = useRef(false)
 
   // URL parameter effect removed - no longer needed since we have:
   // 1. Role-based interface detection (players automatically see player interface)
@@ -240,9 +244,17 @@ export function App() {
       if (!user) {
         setUserRole(null)
         setRoleLoading(false)
+        roleDetectionInProgress.current = false
         return
       }
 
+      // Prevent multiple simultaneous role detection calls
+      if (roleDetectionInProgress.current) {
+        console.log('🔍 Role detection already in progress, skipping')
+        return
+      }
+
+      roleDetectionInProgress.current = true
       setRoleLoading(true)
       console.log('🔍 Starting role detection for user:', user.id)
 
@@ -261,6 +273,7 @@ export function App() {
         setMode('player-join')
       } finally {
         setRoleLoading(false)
+        roleDetectionInProgress.current = false
       }
     }
 
@@ -318,8 +331,10 @@ export function App() {
           setPlayerGameData(payload.new)
 
           // Feed the orchestrator to publish animation intents
-          const orchestrator = AnimationOrchestrator.getInstance()
-          orchestrator.ingestGameUpdate(payload.new as any)
+          // if (FEATURE_ANIMATION_EVENTS) {
+            const orchestrator = AnimationOrchestrator.getInstance()
+            orchestrator.ingestGameUpdate(payload.new as any)
+          // }
         }
 
         // Check the new game status
@@ -345,7 +360,9 @@ export function App() {
     return () => {
       subscription.unsubscribe()
       // Clear orchestrator memory for this game
-      AnimationOrchestrator.getInstance().clear(playerGameId)
+      // if (FEATURE_ANIMATION_EVENTS) {
+        AnimationOrchestrator.getInstance().clear(playerGameId)
+      // }
       setPlayerGameData(null) // Clean up game data when subscription ends
     }
   }, [playerGameId, user, mode])
