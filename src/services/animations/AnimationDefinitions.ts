@@ -6,7 +6,7 @@
  */
 
 import { gsap } from 'gsap';
-import type { Game, GameStatus } from '../games/GameService';
+import type { Game } from '../games/GameService';
 import { AnimationService } from './AnimationService';
 import type { AnimationConfig } from './AnimationService';
 import { ClueDisplayService } from './ClueDisplayService';
@@ -274,28 +274,19 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
         }
       });
 
-      // Set initial state: positioned at cell with cell scale, hidden
-      timeline.set(displayWindow, {
+      timeline.from(displayWindow, {
+        autoAlpha: 0,
         x: offsetX,
         y: offsetY,
-        scaleX: scaleX,
-        scaleY: scaleY,
-        visibility: 'visible',
-        opacity: 0
-      });
-
-      // Animate TO final CSS position (centered, full size) and fade in
-      timeline.to(displayWindow, {
-        x: 0,
-        y: 0,
-        scaleX: 1,
-        scaleY: 1,
-        opacity: 1,
-        duration: 0.6,
+        scaleX,
+        scaleY,
+        duration: 0.3,
         ease: config.ease || 'power2.out'
       });
 
-      (animationService as any).activeTimelines?.push(timeline);
+      timeline.to(displayWindow, {autoAlpha: 1, duration: 0.3}, 0);
+
+      (animationService).activeTimelines?.push(timeline);
     });
   },
 

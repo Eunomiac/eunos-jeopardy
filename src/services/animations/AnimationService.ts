@@ -45,7 +45,7 @@ export interface AnimationConfig {
  */
 export class AnimationService {
   private static instance: AnimationService;
-  private activeTimelines: gsap.core.Timeline[] = [];
+  activeTimelines: gsap.core.Timeline[] = [];
   private readonly playedKeys = new Set<string>();
   private readonly playingKeys = new Set<string>();  // Track currently playing animations
 

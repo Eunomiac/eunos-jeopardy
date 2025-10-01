@@ -1,62 +1,62 @@
 round,category,value,prompt,response
-jeopardy,Tiny Terrors,200,,
-jeopardy,Tiny Terrors,400,,
-jeopardy,Tiny Terrors,600,,
-jeopardy,Tiny Terrors,800,This small creature is responsible for more human deaths each year than any other animal.,What is a mosquito?
+jeopardy,Tiny Terrors,200,These rodents harbored the fleas that carried the Black Death across medieval Europe.,What are rats?
+jeopardy,Tiny Terrors,400,This small creature is responsible for more human deaths each year than any other animal.,What is a mosquito?
+jeopardy,Tiny Terrors,600,This deadly virus was declared fully eradicated in 1980.,What is smallpox?
+jeopardy,Tiny Terrors,800,This stinging insect made headlines in 2019 when it was spotted in the United States.,What is the murder hornet?
 jeopardy,Tiny Terrors,1000,Thousands of these stinging insects are sewn into gloves worn by young tribesmen during a rite of passage.,What are bullet ants?
-jeopardy,Heroes Without Capes,200,,
+jeopardy,Heroes Without Capes,200,This friendly neighborhood hero swings through New York in spandex but never in a cape.,Who is Spider-Man?
 jeopardy,Heroes Without Capes,400,His imprisonment caused a global pandemic of sleeping sickness.,Who is the Sandman?
-jeopardy,Heroes Without Capes,600,,Who is Invincible?
-jeopardy,Heroes Without Capes,800,,Who is Daredevil?
-jeopardy,Heroes Without Capes,1000,"Chris Evans returned to play this unexpected hero in ""Deadpool vs. Wolverine"".",Who is the Torch?
+jeopardy,Heroes Without Capes,600,"This teenage Image Comics hero, son of Omni-Man, got his own ultraviolent animated series in 2021.",Who is Invincible?
+jeopardy,Heroes Without Capes,800,"Chris Evans returned to play this unexpected hero in ""Deadpool vs. Wolverine"".",Who is the Human Torch?
+jeopardy,Heroes Without Capes,1000,"In Pixar's The Incredibles, this fashion designer warned superheroes with her famous line, ""No capes!""",Who is Edna Mode?
 jeopardy,Not-So-Recent Television,200,These robots hunted humanity nearly to extinction in Battlestar Galactica.,What are Cylons?
-jeopardy,Not-So-Recent Television,400,,
-jeopardy,Not-So-Recent Television,600,"Driven to madness by the murder of her girlfriend, this friend of Buffy became the season's Big Bad.",Who is Willow?
-jeopardy,Not-So-Recent Television,800,,
-jeopardy,Not-So-Recent Television,1000,,
+jeopardy,Not-So-Recent Television,400,X-Files' Fox Mulder hung an iconic poster in his office bearing this four-word caption,"What is ""I Want to Believe""?"
+jeopardy,Not-So-Recent Television,600,"Driven to madness by the death of her girlfriend, this friend of Buffy became Season 6's Big Bad.",Who is Willow?
+jeopardy,Not-So-Recent Television,800,"Captain Malcolm Reynolds captained this Firefly-class ship, home to his ragtag crew.",What is Serenity?
+jeopardy,Not-So-Recent Television,1000,"In Babylon 5, Ambassador Delenn belonged to this alien race, known for their bone crests.",What are the Minbari?
 jeopardy,Five Syllable Words,200,How Sherlock Holmes would describe a simple task.,What is Elementary?
 jeopardy,Five Syllable Words,400,Only the British pronunciation of this element qualifies for this category.,What is Al-u-min-i-um?
-jeopardy,Five Syllable Words,600,,What Is a Bicentennial?
-jeopardy,Five Syllable Words,800,,
-jeopardy,Five Syllable Words,1000,,
+jeopardy,Five Syllable Words,600,"In 1976, the United States celebrated this 200th anniversary.",What Is a Bicentennial?
+jeopardy,Five Syllable Words,800,"This Mars rover far outlasted its planned 90-day mission, running for nearly 15 years.",What is Opportunity?
+jeopardy,Five Syllable Words,1000,"From Jurassic Park's T. rex to Disney's Haunted Mansion, this technology was the pre-CGI way to bring creatures to life.",What are animatronics?
 jeopardy,Astronomy / Astrology,200,This water sign is represented by a crab.,What is Cancer?
-jeopardy,Astronomy / Astrology,400,"If this asteroid were named by the Ancient Greeks, it would have been called ""Demeter"".",What is Ceres?
-jeopardy,Astronomy / Astrology,600,,What is the Age of Aquarius?
+jeopardy,Astronomy / Astrology,400,"This astrological ""Age"" got its pop-culture anthem in the 1967 musical Hair.",What is the Age of Aquarius?
+jeopardy,Astronomy / Astrology,600,"The bright star Regulus, known to astronomers as Alpha Leonis, is the ""heart"" of this zodiac constellation.",What is Leo?
 jeopardy,Astronomy / Astrology,800,"The names of this planet's moons were drawn from Shakespeare, not myth.",What is Uranus?
-jeopardy,Astronomy / Astrology,1000,,
-jeopardy,Before & After,200,,
-jeopardy,Before & After,400,,
-jeopardy,Before & After,600,,
-jeopardy,Before & After,800,,
-jeopardy,Before & After,1000,,
+jeopardy,Astronomy / Astrology,1000,"If this asteroid were named by the Ancient Greeks, it would have been called ""Demeter"".",What is Ceres?
+jeopardy,Before & After,200,This notorious Gotham institution shelters two of every villain from a global flood.,What is Noah's Arkham Asylum?
+jeopardy,Before & After,400,This superhero's adversaries include Doctor Octopus and windmills,What is Spider Man of La Mancha?
+jeopardy,Before & After,600,This hit song by Lady Gaga details a chemistry teacher's burgeoning meth empire.,What is Breaking Bad Romance?
+jeopardy,Before & After,800,"These struggles between the Lancasters and Yorks happened in a galaxy far, far away.",What is Star Wars of the Roses?
+jeopardy,Before & After,1000,"This sweeping Civil War romance drifts downstream with Mole, Rat, and Mr. Toad.",What is Gone with the Wind in the Willows?
 double,Quantum Physics,400,The Double-Slit experiment proves that photons behave as both particles and these.,What are waves?
-double,Quantum Physics,800,,
-double,Quantum Physics,1200,"Einstein once dismissed this phenomenon as ""spooky action at a distance"".",What is entanglement?
+double,Quantum Physics,800,This famous thought experiment features a feline that is both alive and dead until observed.,What is Schrodinger's Cat?
+double,Quantum Physics,1200,This scientist's Uncertainty Principle defines hard limits to our ability to understand reality.,Who is Heisenberg?
 double,Quantum Physics,1600,This elementary particle is the most recent addition to the Standard Model.,What is the Higgs Boson?
-double,Quantum Physics,2000,This scientist's Uncertainty Principle defines hard limits to our ability to understand reality.,Who is Heisenberg?
-double,Goes To 11,400,,
-double,Goes To 11,800,This science experiment is the largest engineering project in human history.,What is the Large Hadron Collider?
-double,Goes To 11,1200,"This bomb, detonated by the Soviet Union in <X>, is the largest man-made explosion in history.",What is the Tsar Bomba?
-double,Goes To 11,1600,,
+double,Quantum Physics,2000,"Einstein once dismissed this phenomenon as ""spooky action at a distance"".",What is entanglement?
+double,Goes To 11,400,"Located within the Marianas Trench, this is the deepest known point on Earth.",What is the Challenger Deep?
+double,Goes To 11,800,This science experiment is the largest machine ever built.,What is the Large Hadron Collider?
+double,Goes To 11,1200,This planet is the hottest in our solar system.,What is Venus?
+double,Goes To 11,1600,"This bomb, detonated by the Soviet Union in 1961, is the largest man-made explosion in history.",What is the Tsar Bomba?
 double,Goes To 11,2000,"Currently in close orbit around the Sun, this is the fastest object humanity has ever built.",What is the Parker Solar Probe?
 double,Middle Earth Geography,400,This pastoral region is the homeland of hobbitfolk.,What is the Shire?
-double,Middle Earth Geography,800,This dark fortress in the Mountains of Mordor opposes Minas Tirith in more than just name.,What is Minas Morgul?
-double,Middle Earth Geography,1200,Gandalf was imprisoned atop this tower at the heart of Isengard by Saruman the White.,What is Orthanc?
-double,Middle Earth Geography,1600,,What are the Dead Marshes?
-double,Middle Earth Geography,2000,Gandalf the Grey met his demise facing a Balrog in this abandoned mine.,What is Moria?
-double,Invented Languages,400,,
-double,Invented Languages,800,,
-double,Invented Languages,1200,,
-double,Invented Languages,1600,,
-double,Invented Languages,2000,,
-double,Finish The Painting,400,,Who is Jesus?
-double,Finish The Painting,800,,What is a sea shell?
-double,Finish The Painting,1200,,What is a pitch fork?
-double,Finish The Painting,1600,,What is a baby?
-double,Finish The Painting,2000,,What are angels?
-double,"Crossword Clues ""Y""",400,This American national park harbors a dormant supervolcano.,What is Yellowstone?
-double,"Crossword Clues ""Y""",800,,
-double,"Crossword Clues ""Y""",1200,,
-double,"Crossword Clues ""Y""",1600,The alleged discovery of this form of Uranium served as pretense for the US invasion of Iraq in (2003?),What is yellowcake?
-double,"Crossword Clues ""Y""",2000,,
-final,The Afterlife,0,,
+double,Middle Earth Geography,800,"Gandalf the Grey fell battling a Balrog in this ancient dwarven stronghold, also called Khazad-dûm.",What is Moria?
+double,Middle Earth Geography,1200,"This dark fortress, once called Minas Ithil, stood opposite Minas Tirith across the Anduin.",What is Minas Morgul?
+double,Middle Earth Geography,1600,This haunted region of stagnant pools formed after the Battle of Dagorlad in the Second Age.,What are the Dead Marshes?
+double,Middle Earth Geography,2000,This fortress and mountain pass on Mordor's western border housed Shelob and a tower garrison of orcs.,What is Cirith Ungol?
+double,AD&D,400,"Before ascending to godhood, Vecna was most famous for losing these two body parts.",What are his hand and eye?
+double,AD&D,800,"The default campaign world for official AD&D adventures, created by Gary Gygax.",What is Greyhawk?
+double,AD&D,1200,A wizard was known by this hyphenated class.,What is a magic-user.
+double,AD&D,1600,The acronym THAC0 stood for this phrase describing how attacks were resolved.,What is 'to hit armor class zero'.
+double,AD&D,2000,"This saving throw category grouped wands, staves, and this third class of magic items.",What are rods?
+double,Military Acronyms,400,AWOL,"What is ""absent without leave"""
+double,Military Acronyms,800,SAM,"What is ""surface to air missile"""
+double,Military Acronyms,1200,FNG,"What is ""fucking new guy"""
+double,Military Acronyms,1600,SNAFU,"What is ""situation normal, all fucked up"""
+double,Military Acronyms,2000,LRRP,"What is ""long range reconnaissance patrol"""
+double,"Crossword Clues ""Y""",400,"This Ivy League university in New Haven, Connecticut, is home to the Bulldogs.",What is Yale?
+double,"Crossword Clues ""Y""",800,This American national park sits atop a massive supervolcano.,What is Yellowstone?
+double,"Crossword Clues ""Y""",1200,"In Norse mythology, this world tree connects the Nine Realms.",What is Yggdrasil?
+double,"Crossword Clues ""Y""",1600,This Japanese admiral masterminded the attack on Pearl Harbor.,Who is Yamamoto?
+double,"Crossword Clues ""Y""",2000,The alleged discovery of this uranium ore concentrate was cited as a pretense for the 2003 U.S. invasion of Iraq.,What is yellowcake?
+final,The Afterlife,0,This realm of the afterlife in Greek mythology is reserved for the heroic and the virtuous,What are the Elysian Fields?
