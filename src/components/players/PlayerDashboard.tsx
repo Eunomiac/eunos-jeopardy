@@ -12,6 +12,7 @@ import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
+import { gsap } from "gsap";
 
 import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
 import "./PlayerDashboard.scss";
@@ -568,12 +569,27 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               setBuzzerState(BuzzerState.LOCKED); // Lock buzzer when clue is revealed
             }
 
-            // Hide modal and lock buzzer when clue is completed
+            // Hide modal, clear display window, and lock buzzer when clue is completed
             if (clueState.completed) {
               setShowClueModal(false);
               setCurrentClue(null);
               setBuzzerState(BuzzerState.LOCKED);
               setReactionTime(null);
+
+              // Clear the dynamic display window
+              if (displayWindowRef.current) {
+                gsap.to(displayWindowRef.current, {
+                  autoAlpha: 0,
+                  duration: 0.3,
+                  ease: 'power2.out',
+                  onComplete: () => {
+                    if (displayWindowRef.current) {
+                      displayWindowRef.current.innerHTML = '';
+                      displayWindowRef.current.className = 'dynamic-display-window';
+                    }
+                  }
+                });
+              }
             }
           }
         }
