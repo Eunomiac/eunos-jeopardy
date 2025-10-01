@@ -75,6 +75,7 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
 
     if (isInstant) {
       // Instant: Set final state immediately without animation
+      gsap.set('.jeopardy-board-container', {autoAlpha: 1});
       gsap.set('.jeopardy-board', { autoAlpha: 1 });
       gsap.set('.clue-cell', { autoAlpha: 1 });
       console.log(`🎬 [BoardIntroAnimation] Instant setup complete`);
@@ -93,9 +94,13 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
       });
 
       // Fade in board container
-      timeline.to('.jeopardy-board', {
+      timeline.fromTo('.jeopardy-board-container, .jeopardy-board', {
+        scale: 1.25,
+        autoAlpha: 0
+      },{
+        scale: 1,
         autoAlpha: 1,
-        duration: config.duration || 1,
+        duration: 0.25,
         ease: config.ease || 'power2.inOut'
       });
 
@@ -121,7 +126,7 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
   },
 
   shouldRunInstantly(gameState, params) {
-    // Don't run instantly if animation is currently playing
+    // Don't run instantly if animation is currently playing or already played
     if (params) {
       const animationService = AnimationService.getInstance();
       const key = `BoardIntro:${params.gameId}:${params.round}`;
@@ -132,6 +137,7 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
 
     // Board intro is "in the past" if we're currently IN game_intro or beyond
     // (meaning the transition TO game_intro already happened)
+    // The subscription is now set up before this check, so we can safely check game_intro
     return gameState.status === 'game_intro'
         || gameState.status === 'introducing_categories'
         || gameState.status === 'in_progress';
