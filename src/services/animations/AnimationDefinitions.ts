@@ -233,18 +233,21 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
       return;
     }
 
+    // Hide display window before populating to avoid flash
+    gsap.set(displayWindow, { visibility: 'hidden' });
+
     // Populate display window with clue content (adds .jeopardy-clue-display class)
     await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
 
     if (isInstant) {
       // Instant: Just show at final CSS-defined position
-      gsap.set(displayWindow, { autoAlpha: 1 });
+      gsap.set(displayWindow, { visibility: 'visible', opacity: 1 });
       console.log(`🎬 [ClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
     }
 
-    // Animated: Use gsap.from() to animate FROM clue cell position TO final CSS position
+    // Animated: Position at cell, then animate to center
     return new Promise((resolve) => {
       const cellRect = focusedCell.getBoundingClientRect();
 
@@ -255,7 +258,7 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
       const scaleX = cellRect.width / finalWidth;
       const scaleY = cellRect.height / finalHeight;
 
-      // Calculate position offset from center
+      // Calculate position offset from center to cell
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
       const cellCenterX = cellRect.left + cellRect.width / 2;
@@ -271,22 +274,26 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
         }
       });
 
-      // Animate FROM cell position/scale TO final CSS position (centered, full size)
-      timeline.from(displayWindow, {
+      // Set initial state: positioned at cell with cell scale, hidden
+      timeline.set(displayWindow, {
         x: offsetX,
         y: offsetY,
         scaleX: scaleX,
         scaleY: scaleY,
+        visibility: 'visible',
+        opacity: 0
+      });
+
+      // Animate TO final CSS position (centered, full size) and fade in
+      timeline.to(displayWindow, {
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1,
         duration: 0.6,
         ease: config.ease || 'power2.out'
       });
-
-      // Simultaneously fade in
-      timeline.to(displayWindow, {
-        autoAlpha: 1,
-        duration: 0.3,
-        ease: 'power2.out'
-      }, 0); // Start at time 0 (simultaneous with scale/position)
 
       (animationService as any).activeTimelines?.push(timeline);
     });
@@ -340,18 +347,21 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
       return;
     }
 
+    // Hide display window before populating to avoid flash
+    gsap.set(displayWindow, { visibility: 'hidden' });
+
     // Populate display window with daily double content (adds both classes + splash image)
     await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
 
     if (isInstant) {
       // Instant: Just show at final CSS-defined position
-      gsap.set(displayWindow, { autoAlpha: 1 });
+      gsap.set(displayWindow, { visibility: 'visible', opacity: 1 });
       console.log(`🎬 [DailyDoubleRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
     }
 
-    // Animated: Use gsap.from() like ClueReveal, but with dramatic back.out easing
+    // Animated: Position at cell, then animate to center with dramatic easing
     return new Promise((resolve) => {
       const cellRect = focusedCell.getBoundingClientRect();
 
@@ -361,7 +371,7 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
       const scaleX = cellRect.width / finalWidth;
       const scaleY = cellRect.height / finalHeight;
 
-      // Calculate position offset from center
+      // Calculate position offset from center to cell
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
       const cellCenterX = cellRect.left + cellRect.width / 2;
@@ -377,22 +387,26 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
         }
       });
 
-      // Animate FROM cell position/scale TO final CSS position with dramatic easing
-      timeline.from(displayWindow, {
+      // Set initial state: positioned at cell with cell scale, hidden
+      timeline.set(displayWindow, {
         x: offsetX,
         y: offsetY,
         scaleX: scaleX,
         scaleY: scaleY,
+        visibility: 'visible',
+        opacity: 0
+      });
+
+      // Animate TO final CSS position with dramatic overshoot and fade in
+      timeline.to(displayWindow, {
+        x: 0,
+        y: 0,
+        scaleX: 1,
+        scaleY: 1,
+        opacity: 1,
         duration: 0.8,
         ease: 'back.out(1.7)' // Dramatic overshoot effect for daily double
       });
-
-      // Simultaneously fade in
-      timeline.to(displayWindow, {
-        autoAlpha: 1,
-        duration: 0.4,
-        ease: 'power2.out'
-      }, 0);
 
       (animationService as any).activeTimelines?.push(timeline);
     });
