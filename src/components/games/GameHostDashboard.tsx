@@ -16,7 +16,7 @@ import type { ClueSetData, ClueData } from "../../services/clueSets/loader";
 import { SupabaseConnection } from "../../services/supabase/connection";
 
 import { supabase } from "../../services/supabase/client";
-import { gsap } from "gsap";
+import { AnimationService } from "../../services/animations/AnimationService";
 import "./GameHostDashboard.scss";
 
 import { BuzzerQueuePanel } from "./panels/BuzzerQueuePanel";
@@ -299,6 +299,9 @@ export function GameHostDashboard({
   const [isPlayingGameIntro, setIsPlayingGameIntro] = useState(false);
   const [gameIntroComplete, setGameIntroComplete] = useState(false);
 
+  /** Animation service instance */
+  const animationService = AnimationService.getInstance();
+
   /** Category introduction state */
   const [isIntroducingCategories, setIsIntroducingCategories] = useState(false);
 
@@ -366,19 +369,14 @@ export function GameHostDashboard({
           setIsPlayingGameIntro(true);
           setGameIntroComplete(false);
 
-          // Create placeholder GSAP timeline for host
-          const hostIntroTimeline = gsap.timeline({
+          // Play host dashboard intro animation through AnimationService
+          animationService.animateHostDashboardIntro({
             onComplete: () => {
               console.log('🎬 Host game introduction animation complete');
               setIsPlayingGameIntro(false);
               setGameIntroComplete(true);
             }
           });
-
-          // Placeholder animation - you'll replace this with detailed animations
-          hostIntroTimeline
-            .set('.game-host-dashboard', { opacity: 0.8 })
-            .to('.game-host-dashboard', { opacity: 1, duration: 5, ease: 'power2.inOut' });
         }
 
         // Handle other status transitions
@@ -391,7 +389,7 @@ export function GameHostDashboard({
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameId]);
+  }, [gameId, animationService]);
 
   /**
    * Effect to monitor connection status with periodic health checks.

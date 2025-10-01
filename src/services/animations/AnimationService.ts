@@ -422,4 +422,33 @@ export class AnimationService {
       timeline.resume();
     });
   }
+
+  /**
+   * Animates the host dashboard introduction.
+   * Placeholder animation for host view during game intro.
+   *
+   * @param config - Animation configuration
+   * @returns Promise that resolves when animation completes
+   */
+  async animateHostDashboardIntro(config: AnimationConfig = {}): Promise<void> {
+    return new Promise((resolve) => {
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          config.onComplete?.();
+          resolve();
+        }
+      });
+
+      // Placeholder animation - fade in the dashboard
+      timeline
+        .set('.game-host-dashboard', { opacity: 0.8 })
+        .to('.game-host-dashboard', {
+          opacity: 1,
+          duration: config.duration || 5,
+          ease: config.ease || 'power2.inOut'
+        });
+
+      this.activeTimelines.push(timeline);
+    });
+  }
 }
