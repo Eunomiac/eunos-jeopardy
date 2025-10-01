@@ -81,11 +81,8 @@ export class AnimationOrchestrator {
     // Note: ClueReveal and DailyDoubleClueReveal are triggered by clue_states.revealed changes
     // These are handled by a separate subscription in PlayerDashboard that watches clue_states table
 
-    // Player buzz-in when focused_player_id is set/changed
-    if (next.focused_player_id && next.focused_player_id !== prev?.focused_player_id) {
-      console.log(`🎬 [AnimationOrchestrator] Detected PlayerBuzzIn trigger (player: ${prev?.focused_player_id} → ${next.focused_player_id})`);
-      AnimationEvents.publish({ type: "PlayerBuzzIn", gameId, playerId: next.focused_player_id });
-    }
+    // Note: Player buzz-in visual feedback is handled via CSS class on podium
+    // No animation needed - the .buzzed-in class triggers CSS transition
 
     // Persist last state snapshot
     this.lastStateByGame.set(gameId, next);

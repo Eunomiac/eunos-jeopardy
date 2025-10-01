@@ -148,8 +148,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         params = { clueId: intent.clueId, gameId: intent.gameId };
       } else if (intent.type === "DailyDoubleClueReveal") {
         params = { clueId: intent.clueId, gameId: intent.gameId };
-      } else if (intent.type === "PlayerBuzzIn") {
-        params = { playerId: intent.playerId, gameId: intent.gameId };
       } else if (intent.type === "RoundTransition") {
         params = { fromRound: intent.fromRound, toRound: intent.toRound, gameId: intent.gameId };
       }

@@ -106,12 +106,16 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
    * Renders a single player podium.
    */
   const renderPodium = (player: PlayerInfo, isMain = false) => {
-    const podiumClass = isMain ? 'player-podium main' : 'player-podium competitor'
+    // Add 'buzzed-in' class when player is focused
+    const podiumClasses = [
+      isMain ? 'player-podium main' : 'player-podium competitor',
+      player.isFocused ? 'buzzed-in' : ''
+    ].filter(Boolean).join(' ')
 
     return (
       <div
         key={player.id}
-        className={podiumClass}
+        className={podiumClasses}
         data-player-id={player.id}
         ref={(el) => {
           if (el) {
@@ -121,12 +125,11 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
           }
         }}
       >
-        {/* Buzzed-in overlay image (hidden by default, shown by animation) */}
+        {/* Buzzed-in overlay image (fades in via CSS when .buzzed-in class is added) */}
         <img
           src="/assets/images/player-podium-buzzed.webp"
           alt="Buzzed In"
           className="podium-buzzed-in"
-          style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
         />
 
         <div className={`player-score ${player.score < 0 ? 'negative' : ''}`}>

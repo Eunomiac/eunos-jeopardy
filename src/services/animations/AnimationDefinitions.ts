@@ -533,80 +533,13 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
 };
 
 /**
- * Player Buzz-In Animation
+ * Player Buzz-In Visual Feedback
  *
- * Animates the podium of the player who has just buzzed in and become the focused player.
- * - fades the 'podium buzzed in' image overtop of their podium
- * - will work regardless of whether the buzzed-in player is the main player or a competitor (it only affects the podium graphic)
+ * NOTE: This is now handled via CSS transitions, not GSAP animations.
+ * When a player buzzes in, the .buzzed-in class is added to their podium,
+ * which triggers a CSS transition on the .podium-buzzed-in overlay image.
+ * See PlayerPodiums.scss for the CSS implementation.
  */
-export const PlayerBuzzInAnimation: AnimationDefinition<{ playerId: string; gameId: string }> = {
-  id: "PlayerBuzzIn",
-
-  async execute(params, config = {}) {
-    const isInstant = config.instant === true;
-    console.log(`🎬 [PlayerBuzzInAnimation] ${isInstant ? 'Instant' : 'Animated'} buzz-in for player ${params.playerId} in game ${params.gameId}`);
-
-    const animationService = AnimationService.getInstance();
-    const podium = await animationService.waitForElement(`[data-player-id="${params.playerId}"] .podium-buzzed-in`, 2000);
-
-    if (!podium) {
-      console.warn(`🎬 [PlayerBuzzInAnimation] Podium not found for player ${params.playerId}`);
-      config.onComplete?.();
-      return;
-    }
-
-    if (isInstant) {
-      // Instant: Show buzzed-in state
-      gsap.set(podium, { autoAlpha: 1 });
-      console.log(`🎬 [PlayerBuzzInAnimation] Instant setup complete`);
-      config.onComplete?.();
-      return;
-    }
-
-    // Animated: Fade in buzzed-in overlay
-    return new Promise((resolve) => {
-      const timeline = gsap.timeline({
-        onComplete: () => {
-          console.log(`🎬 [PlayerBuzzInAnimation] Animation complete`);
-          config.onComplete?.();
-          resolve();
-        }
-      });
-
-      timeline.fromTo(podium,
-        { autoAlpha: 0 },
-        {
-          autoAlpha: 1,
-          duration: 0.3,
-          ease: config.ease || 'power2.out'
-        }
-      );
-
-      (animationService as any).activeTimelines?.push(timeline);
-    });
-  },
-
-  shouldRunInstantly(gameState, params) {
-    if (params) {
-      const animationService = AnimationService.getInstance();
-      const key = `PlayerBuzzIn:${params.gameId}:${params.playerId}`;
-      if (animationService.isPlaying(key) || animationService.hasPlayed(key)) {
-        return false;
-      }
-    }
-
-    // Buzz-in is "in the past" if there's a focused player
-    return gameState.status === 'in_progress' as GameStatus && !!gameState.focused_player_id;
-  },
-
-  getParamsFromGameState(gameState) {
-    if (!gameState.focused_player_id || !gameState.id) return null;
-    return {
-      playerId: gameState.focused_player_id,
-      gameId: gameState.id
-    };
-  }
-};
 
 /**
  * Round Transition Animation
@@ -765,7 +698,6 @@ AnimationRegistry.register(CategoryIntroAnimation);
 AnimationRegistry.register(ClueRevealAnimation);
 AnimationRegistry.register(DailyDoubleRevealAnimation);
 AnimationRegistry.register(DailyDoubleClueRevealAnimation);
-AnimationRegistry.register(PlayerBuzzInAnimation);
 AnimationRegistry.register(RoundTransitionAnimation);
 
 // Expose to window for console testing
@@ -776,7 +708,6 @@ if (typeof window !== 'undefined') {
     ClueRevealAnimation,
     DailyDoubleRevealAnimation,
     DailyDoubleClueRevealAnimation,
-    PlayerBuzzInAnimation,
     RoundTransitionAnimation,
     AnimationRegistry,
     AnimationService
