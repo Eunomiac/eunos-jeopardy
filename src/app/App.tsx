@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { GameService } from '../services/games/GameService'
 import { supabase } from '../services/supabase/client'
 import { AnimationOrchestrator } from '../services/animations/AnimationOrchestrator'
+import { AnimationEvents } from '../services/animations/AnimationEvents'
 // import { FEATURE_ANIMATION_EVENTS } from '../config/featureFlags'
 
 

@@ -116,7 +116,12 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
   // Subscribe to centralized animation intents (stable - doesn't re-run on game state changes)
   useEffect(() => {
-    console.log(`🎬 [PlayerDashboard] Setting up animation intent subscription for game ${gameId}`);
+    if (!game) return;
+
+    console.log(`🎬 [PlayerDashboard] Setting up animation system for game ${gameId}`);
+
+    // Track which animations have been handled by subscription
+    const handledBySubscription = new Set<string>();
 
     const unsubscribe = AnimationEvents.subscribe(async (intent) => {
       console.log(`🎬 [PlayerDashboard] Received animation intent:`, intent);
@@ -146,11 +151,15 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         return;
       }
 
+      // Mark as handled by subscription
+      const key = `${def.id}:${gameId}:${JSON.stringify(params)}`;
+      handledBySubscription.add(key);
+
       console.log(`🎬 [PlayerDashboard] Handling ${intent.type} animation (animated)`, params);
 
       // Execute animation (always animated when triggered by subscription)
       await animationService.playOnce(
-        `${def.id}:${gameId}:${JSON.stringify(params)}`,
+        key,
         async () => {
           await def.execute(params);  // No instant flag = animated
 
@@ -162,37 +171,45 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       );
     });
 
+    // Wait for subscription to potentially receive intents, then check for instant animations
+    // This delay allows the subscription to receive any intents that were published during component mount
+    const timeoutId = setTimeout(() => {
+      console.log(`🎬 [PlayerDashboard] Checking initial game state for instant animations (after subscription delay)`);
+
+      // Check all registered animations to see which should run instantly
+      const instantAnimations = AnimationRegistry.checkAllForInstantRun(game as any);
+
+      for (const { def, params } of instantAnimations) {
+        const key = `${def.id}:${gameId}:${JSON.stringify(params)}`;
+
+        // Skip if already handled by subscription
+        if (handledBySubscription.has(key)) {
+          console.log(`🎬 [PlayerDashboard] Skipping instant animation ${def.id} - already handled by subscription`);
+          continue;
+        }
+
+        console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
+
+        // Use playOnce to ensure we don't re-run if already executed
+        animationService.playOnce(
+          key,
+          async () => {
+            await def.execute(params, { instant: true });
+
+            // Update tracking for category animations
+            if (def.id === 'CategoryIntro') {
+              lastAnimatedCategory.current = params.categoryNumber;
+            }
+          }
+        );
+      }
+    }, 500); // Wait 500ms for subscription to receive any pending intents
+
     return () => {
-      console.log(`🎬 [PlayerDashboard] Cleaning up animation intent subscription for game ${gameId}`);
+      console.log(`🎬 [PlayerDashboard] Cleaning up animation system for game ${gameId}`);
+      clearTimeout(timeoutId);
       unsubscribe();
     };
-  }, [gameId, animationService]); // Stable dependencies - doesn't include game?.status
-
-  // Check for instant animations on mount (separate effect that runs once after subscription is ready)
-  useEffect(() => {
-    if (!game) return;
-
-    console.log(`🎬 [PlayerDashboard] Checking initial game state for instant animations`);
-
-    // Check all registered animations to see which should run instantly
-    const instantAnimations = AnimationRegistry.checkAllForInstantRun(game as any);
-
-    for (const { def, params } of instantAnimations) {
-      console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
-
-      // Use playOnce to ensure we don't re-run if already executed
-      animationService.playOnce(
-        `${def.id}:${gameId}:${JSON.stringify(params)}`,
-        async () => {
-          await def.execute(params, { instant: true });
-
-          // Update tracking for category animations
-          if (def.id === 'CategoryIntro') {
-            lastAnimatedCategory.current = params.categoryNumber;
-          }
-        }
-      );
-    }
   }, [game?.id, gameId, animationService]); // Only run when game ID changes (mount/game change)
 
   /**
