@@ -4,7 +4,11 @@ import type { Game } from "../games/GameService";
 export type AnimationIntent =
   | { type: "BoardIntro"; gameId: string; round: NonNullable<Game["current_round"]> }
   | { type: "CategoryIntro"; gameId: string; categoryNumber: number }
-  | { type: "ClueReveal"; gameId: string; clueId: string };
+  | { type: "ClueReveal"; gameId: string; clueId: string }
+  | { type: "DailyDoubleReveal"; gameId: string; clueId: string }
+  | { type: "DailyDoubleClueReveal"; gameId: string; clueId: string }
+  | { type: "PlayerBuzzIn"; gameId: string; playerId: string }
+  | { type: "RoundTransition"; gameId: string; fromRound: NonNullable<Game["current_round"]>; toRound: NonNullable<Game["current_round"]> };
 
 export type AnimationSubscriber = (intent: AnimationIntent) => void | Promise<void>;
 

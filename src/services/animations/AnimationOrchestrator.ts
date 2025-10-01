@@ -30,11 +30,26 @@ export class AnimationOrchestrator {
     console.log(`🎬 [AnimationOrchestrator] Ingesting game update for ${gameId}`, {
       prevStatus: prev?.status,
       nextStatus: next.status,
+      prevRound: prev?.current_round,
+      nextRound: next.current_round,
       prevIntroCat,
       nextIntroCat,
       prevFocusedClue: prev?.focused_clue_id,
-      nextFocusedClue: next.focused_clue_id
+      nextFocusedClue: next.focused_clue_id,
+      prevFocusedPlayer: prev?.focused_player_id,
+      nextFocusedPlayer: next.focused_player_id
     });
+
+    // Round transition when current_round changes (jeopardy → double → final)
+    if (next.current_round && prev?.current_round && next.current_round !== prev.current_round) {
+      console.log(`🎬 [AnimationOrchestrator] Detected RoundTransition trigger (round: ${prev.current_round} → ${next.current_round})`);
+      AnimationEvents.publish({
+        type: "RoundTransition",
+        gameId,
+        fromRound: prev.current_round,
+        toRound: next.current_round
+      });
+    }
 
     // Board intro when entering game_intro status
     if (next.status === ("game_intro" as GameStatus) && prev?.status !== ("game_intro" as GameStatus) && next.current_round) {
@@ -49,9 +64,18 @@ export class AnimationOrchestrator {
     }
 
     // Clue reveal when focused_clue_id is set/changed
+    // TODO: Detect if clue is a daily double and publish DailyDoubleReveal instead
     if (next.focused_clue_id && next.focused_clue_id !== prev?.focused_clue_id) {
       console.log(`🎬 [AnimationOrchestrator] Detected ClueReveal trigger (clue: ${prev?.focused_clue_id} → ${next.focused_clue_id})`);
       AnimationEvents.publish({ type: "ClueReveal", gameId, clueId: next.focused_clue_id });
+
+      // TODO: If daily double, also listen for wager submission and publish DailyDoubleClueReveal
+    }
+
+    // Player buzz-in when focused_player_id is set/changed
+    if (next.focused_player_id && next.focused_player_id !== prev?.focused_player_id) {
+      console.log(`🎬 [AnimationOrchestrator] Detected PlayerBuzzIn trigger (player: ${prev?.focused_player_id} → ${next.focused_player_id})`);
+      AnimationEvents.publish({ type: "PlayerBuzzIn", gameId, playerId: next.focused_player_id });
     }
 
     // Persist last state snapshot
