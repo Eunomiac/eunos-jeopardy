@@ -316,6 +316,14 @@ export function App() {
 
     loadInitialGameData()
 
+    // Set up animation intent subscription (persists across component mounts)
+    console.log('🎬 [App] Setting up animation intent subscription for player game');
+    const unsubscribeAnimations = AnimationEvents.subscribe((intent) => {
+      console.log('🎬 [App] Received animation intent for player:', intent);
+      // Intents are handled by PlayerDashboard when it's mounted
+      // This subscription just ensures intents aren't lost when PlayerDashboard doesn't exist yet
+    });
+
     // Set up real-time subscription for game state changes
     const subscription = supabase
       .channel(`player-game-state:${playerGameId}`)
@@ -359,6 +367,7 @@ export function App() {
       .subscribe()
 
     return () => {
+      unsubscribeAnimations();
       subscription.unsubscribe()
       // Clear orchestrator memory for this game
       // if (FEATURE_ANIMATION_EVENTS) {
