@@ -47,14 +47,8 @@ This document outlines our comprehensive testing strategy for this project, incl
 - [ ] SonarQube quality gate passes
 - [ ] No critical code smells or security issues
 
-## Mock Management Strategy
-
-### Anti-Over-Mocking Approach
-- **✔️ Mock**: External dependencies (APIs, databases, file system), side effects, callback props
-- **❌ Use Directly**: Pure functions, simple utilities, deterministic functions
-
-### Mock Registration
-**⚠️ REQUIRED**: All new mocks must be registered in [TESTING_MOCKS_REFERENCE.md](../TESTING_MOCKS_REFERENCE.md) with proper justification.
+## Mock Management
+**⚠️ REQUIRED**: All mocks must be registered in [TESTING_MOCKS_REFERENCE.md](../TESTING_MOCKS_REFERENCE.md). See that document for complete guidelines.
 
 ## Common Pitfalls to Be Aware Of
 
@@ -143,21 +137,9 @@ Files excluded from coverage requirements with documented rationale:
 - **Coverage**: Istanbul with detailed reporting
 
 ### Mock Strategy
-- **External APIs**: Mock at service layer boundary
-- **Supabase Client**: Comprehensive mocking for database operations
-- **Environment Variables**: Jest globals for consistent test environment
-- **Third-party Libraries**: Mock only when necessary for isolation
+See [TESTING_MOCKS_REFERENCE.md](../TESTING_MOCKS_REFERENCE.md) for complete mock guidelines and registry.
 
 ## Continuous Improvement
-
-### Regular Reviews
-- Monthly test strategy review
-- Coverage trend analysis
-- Test execution time monitoring
-- Quality metrics assessment
-
-### Adaptation Guidelines
 - Update strategy based on project evolution
-- Incorporate new testing tools and practices
 - Maintain balance between coverage and maintainability
 - Focus on value-driven testing over metric achievement

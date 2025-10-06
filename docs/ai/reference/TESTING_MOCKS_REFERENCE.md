@@ -1,67 +1,67 @@
 # Testing Mocks Reference
 
-## Purpose
-Registry of all mocks to prevent over-mocking. **All new mocks must be registered here** after confirming they are valid mocks.
+## 🔴 Critical Rules
 
-## Guidelines
-**When to Mock vs. Use Directly:**
-- **✔️ Mock**: External dependencies (APIs, databases, file system), side effects, callback props
-- **❌ Use Directly**: Pure functions, simple utilities, deterministic functions
+### Use Global Mocks Only
+**Location:** `src/test/__mocks__/`
 
-**Registration Process:**
-1. Check if a real function exists that could be used directly
-2. Verify the function requires mocking (external dependency, side effect, etc.)
-3. Add proper TypeScript typing to the mock
-4. Register the mock below with justification
+**❌ NEVER:**
+- Create local `__mocks__` adjacent to source files (except manual service mocks)
+- Use `jest.mock()` with inline implementations
+- Create test-specific mock data duplicating shared fixtures
 
-## Current Mocks
+**✅ ALWAYS:**
+- Use `src/test/__mocks__/@supabase/supabase-js.ts` for database
+- Import from `src/test/__mocks__/commonTestData.ts` for test data
+- Use factory functions for variations: `createMockGame({ status: 'in_progress' })`
+- Override in `beforeEach`: `mockGameService.getGame.mockResolvedValue(mockGame)`
 
-### Test Data & Factories (commonTestData.ts)
-- mockUser ✅ `User` ✔️ Standard user object for authentication tests
-- mockSession ✅ `Session` ✔️ Standard session object for authentication tests
-- mockGame ✅ `GameRow` ✔️ Standard game object for game-related tests
-- mockPlayers ✅ `PlayerRow[]` ✔️ Standard player array for game tests
-- mockClueSets ✅ `ClueSetRow[]` ✔️ Standard clue set array for selection tests
-- testCSVText ✅ `string` ✔️ Simple CSV content for basic tests
-- expectedParsedRows ✅ `readonly CSVRow[]` ✔️ Derived from testCSVText using real parseCSV function
-- testCSVFiles ✅ `object` ✔️ Paths to test fixture files
-- createMockGame ✅ `(overrides?: Partial<GameRow>) => GameRow` ✔️ Factory for game variations
-- createMockUser ✅ `(overrides?: Partial<User>) => User` ✔️ Factory for user variations
-- createMockPlayer ✅ `(overrides?: Partial<PlayerRow>) => PlayerRow` ✔️ Factory for player variations
+### Mocks Must Match Real Behavior
+- Return full database rows from `commonTestData.ts`, not partial data
+- Support method chaining: `.from().select().eq().single()`
+- Include all real-time subscription methods
 
-### Service & External Dependencies
-- mockGameService ✅ `jest.Mocked<typeof GameService>` ✔️ External service dependency
-- mockLoadClueSetFromCSV ✅ `jest.MockedFunction<typeof loadClueSetFromCSV>` ✔️ File I/O operation
-- mockSaveClueSetToDatabase ✅ `jest.MockedFunction<typeof saveClueSetToDatabase>` ✔️ Database operation
-- mockClueSetService ✅ `jest.Mocked<typeof ClueSetService>` ✔️ External service dependency
-- mockClueService ✅ `jest.Mocked<typeof ClueService>` ✔️ External service dependency
-- mockGetAvailableClueSets ✅ `jest.Mock` ✔️ File system operation
-- mockGetUserClueSets ✅ `jest.Mock` ✔️ Database query operation
+### Manual Service Mocks for ES6 Classes
+Jest auto-mock fails on ES6 class static methods. Create manual mocks:
+- **Location:** `src/services/<service>/__mocks__/<ServiceName>.ts`
+- **Structure:** Object with all static methods as `jest.fn()`
+- **Example:** `src/services/games/__mocks__/GameService.ts`
 
-### Authentication & Context
-- mockLogin ✅ `jest.MockedFunction<() => Promise<void>>` ✔️ Authentication side effect
-- mockLogout ✅ `jest.MockedFunction<() => void>` ✔️ Authentication side effect
-- mockUseAuth ✅ `jest.MockedFunction<typeof useAuth>` ✔️ React context hook
+## When to Mock
+- **✔️ Mock**: External dependencies (APIs, databases, file system), side effects
+- **❌ Use Real**: Pure functions, utilities, deterministic functions
 
-### Callbacks & Browser APIs
-- mockOnClueSetSelected ✅ `jest.MockedFunction<(clueSetId: string) => void>` ✔️ Callback prop
-- mockConfirm ✅ `jest.MockedFunction<typeof window.confirm>` ✔️ Browser API
+## Mock Registry
 
-### Database & Infrastructure
-- mockSupabase ✅ `jest.Mocked<typeof supabase>` ✔️ Database client
-- mockSupabaseConnection ✅ `MockSupabaseConnection` ✔️ Database connection
-- mockSupabaseClient ✅ Comprehensive typed mock with Database schema ✔️ Database client
+### Global Mocks (`src/test/__mocks__/`)
+- **@supabase/supabase-js.ts** - Database client with method chaining, returns mockGame/mockPlayers. Add `jest.mock('@supabase/supabase-js')` to tests for proper hoisting.
 
-### Complex Test Data
-- mockUserClueSets ✅ `ClueSetRow[]` ✔️ Database query result data
-- mockClueSetData ✅ `ClueSetData` ✔️ Complex structured test data
-- mockGameInProgress ✅ `GameRow` ✔️ Specific game state test data
-- mockProps ✅ `GameHostDashboardProps` ✔️ Component props test data
-- mockInsert/mockSelect/mockUpdate ✅ `jest.Mock` ✔️ Database operation mocks
-- mockClueSets/mockPlayers/mockBuzzes ✅ Various arrays ✔️ Database result arrays
+### Manual Service Mocks (`src/services/<service>/__mocks__/`)
+- **GameService.ts** - 33 static methods as `jest.fn()`. Use `jest.mock('../../services/games/GameService')`.
 
-## Test Fixtures
-- `src/test/fixtures/test-valid-basic.csv` - Complete valid Jeopardy structure
-- `src/test/fixtures/test-invalid-missing-jeopardy.csv` - Missing clues for validation testing
-- `src/test/fixtures/test-invalid-no-final.csv` - Missing Final Jeopardy
-- `src/test/fixtures/test-invalid-malformed.csv` - Malformed CSV structure
+### Shared Test Data (`src/test/__mocks__/commonTestData.ts`)
+**Core Data:**
+- mockUser, mockSession, mockGame (id: 'game-123'), mockPlayers (2 players), mockClueSets
+
+**Factories:**
+- createMockGame, createMockUser, createMockPlayer - Use these for variations
+
+**CSV Test Data:**
+- testCSVText, expectedParsedRows, testCSVFiles
+
+### Test Fixtures (`src/test/fixtures/`)
+- test-valid-basic.csv, test-invalid-*.csv - For CSV parsing tests
+
+## Troubleshooting
+
+### Categories Show "Loading..." Instead of Real Data
+**Cause:** Global Supabase mock returning partial data instead of full rows from `commonTestData.ts`
+**Fix:** Update mock to return `mockGame`, `mockPlayers`, etc. from shared test data
+
+### "from() is not a function" or Mock Not Called
+**Cause:** Mock not hoisted before client.ts loads
+**Fix:** Add `jest.mock('@supabase/supabase-js')` at top of test file
+
+### ES6 Class Static Methods Not Mocked
+**Cause:** Jest auto-mock doesn't handle ES6 class static methods
+**Fix:** Create manual mock in `src/services/<service>/__mocks__/<ServiceName>.ts`
