@@ -70,6 +70,8 @@ describe('GameHostDashboard', () => {
     mockGameService.getBuzzesForClue.mockResolvedValue([]) // Mock buzzer queue
     mockGameService.startGame.mockResolvedValue(mockGame)
     mockGameService.setFocusedClue.mockResolvedValue(mockGame)
+    mockGameService.initializeCurrentPlayerRandomly.mockResolvedValue(mockGame)
+    mockGameService.startGameIntroduction.mockResolvedValue(mockGame)
 
     // Mock BroadcastService to prevent subscription errors
     mockBroadcastService.subscribeToGameBuzzer.mockReturnValue({
@@ -289,8 +291,7 @@ describe('GameHostDashboard', () => {
       const lobbyGame = { ...mockGame, status: 'lobby' as const, clue_set_id: 'clue-set-123' }
       const startedGame = { ...lobbyGame, status: 'in_progress' as const }
 
-      // Clear and reset all mocks for this test
-      jest.clearAllMocks()
+      // Set up mocks for lobby state - don't clear, just override
       mockGameService.getGame.mockResolvedValue(lobbyGame)
       mockGameService.getPlayers.mockResolvedValue(mockPlayers)
       mockGameService.startGame.mockResolvedValue(startedGame)
@@ -320,8 +321,9 @@ describe('GameHostDashboard', () => {
       fireEvent.click(startGameButton)
 
       await waitFor(() => {
-        expect(mockGameService.startGame).toHaveBeenCalledWith('game-123', 'user-123')
-        expect(screen.getByText('Game started successfully!')).toBeInTheDocument()
+        expect(mockGameService.initializeCurrentPlayerRandomly).toHaveBeenCalledWith('game-123', 'user-123')
+        expect(mockGameService.startGameIntroduction).toHaveBeenCalledWith('game-123', 'user-123')
+        expect(screen.getByText('Game introduction started!')).toBeInTheDocument()
       })
 
       // Fast-forward timer to clear message
@@ -332,11 +334,10 @@ describe('GameHostDashboard', () => {
       const lobbyGame = { ...mockGame, status: 'lobby' as const, clue_set_id: 'clue-set-123' }
       const error = new Error('Failed to start')
 
-      // Clear and reset all mocks for this test
-      jest.clearAllMocks()
+      // Set up mocks for lobby state - don't clear, just override
       mockGameService.getGame.mockResolvedValue(lobbyGame)
       mockGameService.getPlayers.mockResolvedValue(mockPlayers)
-      mockGameService.startGame.mockRejectedValue(error)
+      mockGameService.startGameIntroduction.mockRejectedValue(error)
       mockClueSetService.loadClueSetFromDatabase.mockResolvedValue({
         name: 'Test Clue Set',
         filename: 'test-clue-set.csv',

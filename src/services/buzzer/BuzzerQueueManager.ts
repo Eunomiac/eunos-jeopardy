@@ -66,7 +66,7 @@ export class BuzzerQueueManager {
   /**
    * Set of player IDs who have already buzzed (for duplicate detection).
    */
-  private buzzedPlayers = new Set<string>();
+  private readonly buzzedPlayers = new Set<string>();
 
   /**
    * Adds a buzz to the queue.
@@ -233,4 +233,3 @@ export class BuzzerQueueManager {
     };
   }
 }
-
