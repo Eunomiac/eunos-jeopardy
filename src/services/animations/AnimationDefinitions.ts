@@ -199,7 +199,7 @@ export const CategoryIntroAnimation: AnimationDefinition<{ categoryNumber: numbe
 
   getParamsFromGameState(gameState) {
     const category = (gameState as Game & { current_introduction_category?: number }).current_introduction_category;
-    if (!category || !gameState.id) return null;
+    if (!category || !gameState.id) {return null;};
     return {
       categoryNumber: category,
       gameId: gameState.id
@@ -304,7 +304,7 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) return null;
+    if (!gameState.focused_clue_id || !gameState.id) {return null;};
     return {
       clueId: gameState.focused_clue_id,
       gameId: gameState.id
