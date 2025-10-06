@@ -381,4 +381,145 @@ export class ClueService {
 
     return data?.length || 0
   }
+
+  /**
+   * Gets count of completed clues for a specific round.
+   *
+   * Filters clue states by round to accurately track progress within
+   * the current round, ignoring completed clues from previous rounds.
+   * This is essential for round transition logic to determine when
+   * a round is complete.
+   *
+   * **Query Strategy:**
+   * 1. Get game's clue_set_id
+   * 2. Get board_id for the specified round
+   * 3. Get all category_ids for that board
+   * 4. Get all clue_ids for those categories
+   * 5. Count clue_states where clue_id IN (board clues) AND completed = true
+   *
+   * @param gameId - UUID of the game
+   * @param round - Round type to check ("jeopardy" | "double" | "final")
+   * @returns Promise resolving to count of completed clues in the round
+   * @throws {Error} When database operation fails
+   *
+   * @example
+   * ```typescript
+   * const completedCount = await ClueService.getCompletedCluesCountByRound(gameId, 'jeopardy');
+   * console.log(`Completed ${completedCount} of 30 clues in Jeopardy round`);
+   * ```
+   *
+   * @since 0.2.0
+   * @author Euno's Jeopardy Team
+   */
+  static async getCompletedCluesCountByRound(
+    gameId: string,
+    round: RoundType
+  ): Promise<number> {
+    // Step 1: Get game's clue_set_id
+    const { data: game, error: gameError } = await supabase
+      .from('games')
+      .select('clue_set_id')
+      .eq('id', gameId)
+      .single()
+
+    if (gameError) {
+      throw new Error(`Failed to fetch game: ${gameError.message}`)
+    }
+
+    if (!game?.clue_set_id) {
+      throw new Error('Game does not have a clue set assigned')
+    }
+
+    // Step 2: Get board_id for the specified round
+    const { data: board, error: boardError } = await supabase
+      .from('boards')
+      .select('id')
+      .eq('clue_set_id', game.clue_set_id)
+      .eq('round', round)
+      .single()
+
+    if (boardError) {
+      throw new Error(`Failed to fetch board for ${round} round: ${boardError.message}`)
+    }
+
+    if (!board) {
+      throw new Error(`No board found for ${round} round`)
+    }
+
+    // Step 3: Get all category_ids for that board
+    const { data: categories, error: categoriesError } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('board_id', board.id)
+
+    if (categoriesError) {
+      throw new Error(`Failed to fetch categories: ${categoriesError.message}`)
+    }
+
+    if (!categories || categories.length === 0) {
+      throw new Error('No categories found for this board')
+    }
+
+    const categoryIds = categories.map((category) => category.id)
+
+    // Step 4: Get all clue_ids for those categories
+    const { data: clues, error: cluesError } = await supabase
+      .from('clues')
+      .select('id')
+      .in('category_id', categoryIds)
+
+    if (cluesError) {
+      throw new Error(`Failed to fetch clues: ${cluesError.message}`)
+    }
+
+    if (!clues || clues.length === 0) {
+      return 0 // No clues in this round
+    }
+
+    const clueIds = clues.map((clue) => clue.id)
+
+    // Step 5: Count completed clue_states for this round's clues
+    const { data: clueStates, error: statesError } = await supabase
+      .from('clue_states')
+      .select('*')
+      .eq('game_id', gameId)
+      .in('clue_id', clueIds)
+      .eq('completed', true)
+
+    if (statesError) {
+      throw new Error(`Failed to count completed clues: ${statesError.message}`)
+    }
+
+    return clueStates?.length || 0
+  }
+
+  /**
+   * Checks if all clues in a round have been completed.
+   *
+   * Determines round completion by comparing the count of completed clues
+   * against the expected total for the round (30 for jeopardy/double, 1 for final).
+   * Used by round transition logic to enable/disable the "Next Round" button.
+   *
+   * @param gameId - UUID of the game
+   * @param round - Round type to check
+   * @returns Promise resolving to true if all clues completed
+   * @throws {Error} When database operation fails
+   *
+   * @example
+   * ```typescript
+   * const isComplete = await ClueService.isRoundComplete(gameId, 'jeopardy');
+   * if (isComplete) {
+   *   console.log('Jeopardy round is complete!');
+   *   // Enable "Next Round" button
+   * }
+   * ```
+   *
+   * @since 0.2.0
+   * @author Euno's Jeopardy Team
+   */
+  static async isRoundComplete(gameId: string, round: RoundType): Promise<boolean> {
+    const totalClues = round === 'final' ? 1 : 30
+    const completedCount = await this.getCompletedCluesCountByRound(gameId, round)
+    return completedCount >= totalClues
+  }
 }
