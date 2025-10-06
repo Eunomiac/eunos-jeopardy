@@ -382,8 +382,8 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
       timeline.set(displayWindow, {
         x: offsetX,
         y: offsetY,
-        scaleX: scaleX,
-        scaleY: scaleY,
+        scaleX,
+        scaleY,
         visibility: 'visible',
         opacity: 0
       });
@@ -418,7 +418,7 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) return null;
+    if (!gameState.focused_clue_id || !gameState.id) {return null;}
     // TODO: Check if focused clue is actually a daily double
     return {
       clueId: gameState.focused_clue_id,
@@ -492,7 +492,7 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) return null;
+    if (!gameState.focused_clue_id || !gameState.id) {return null;}
     return {
       clueId: gameState.focused_clue_id,
       gameId: gameState.id

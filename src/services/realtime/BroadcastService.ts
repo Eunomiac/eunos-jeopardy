@@ -45,12 +45,12 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 import {
   BROADCAST_EVENTS,
-  BuzzerEventHandlers,
-  BuzzerUnlockPayload,
-  BuzzerLockPayload,
-  PlayerBuzzPayload,
-  FocusPlayerPayload,
-  BroadcastSubscription,
+  type BuzzerEventHandlers,
+  type BuzzerUnlockPayload,
+  type BuzzerLockPayload,
+  type PlayerBuzzPayload,
+  type FocusPlayerPayload,
+  type BroadcastSubscription,
 } from '../../types/BroadcastEvents';
 
 /**
@@ -60,7 +60,7 @@ export class BroadcastService {
   /**
    * Active channels by game ID for cleanup tracking.
    */
-  private static activeChannels = new Map<string, RealtimeChannel>();
+  private static readonly activeChannels = new Map<string, RealtimeChannel>();
 
   /**
    * Creates a game buzzer broadcast channel.
@@ -73,7 +73,7 @@ export class BroadcastService {
    */
   static createGameBuzzerChannel(gameId: string): RealtimeChannel {
     const channelName = `game-buzzer:${gameId}`;
-    
+
     // Remove existing channel if present
     const existingChannel = this.activeChannels.get(gameId);
     if (existingChannel) {
@@ -321,4 +321,3 @@ export class BroadcastService {
     this.activeChannels.clear();
   }
 }
-

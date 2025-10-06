@@ -33,8 +33,6 @@ interface GameUpdatePayload {
   [key: string]: unknown;
 }
 
-
-
 /**
  * PlayerDashboard Component
  *
@@ -83,17 +81,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showClueModal] = useState(false);
 
   // Broadcast subscription for real-time buzzer events
-  const [, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+  const [_broadcastSubscription, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
 
   // Buzzer timing for client-side reaction time calculation
   const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
 
   // Track fastest buzz received for late correction handling
   const [fastestBuzzTime, setFastestBuzzTime] = useState<number | null>(null);
-  const [, setFastestPlayerId] = useState<string | null>(null);
+  const [_fastestPlayerId, setFastestPlayerId] = useState<string | null>(null);
 
   // Animation services and refs
   const animationService = AnimationService.getInstance();
@@ -109,18 +106,18 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
    * Effect to handle display window animations when content changes.
    */
   useEffect(() => {
-    if (clueContentRef.current && showClueModal && currentClue) {
+    if (clueContentRef.current && currentClue) {
       // Animate clue reveal
       animationService.animateClueReveal(clueContentRef.current, currentClue, {
         duration: 0.8,
         ease: "power2.out"
       });
     }
-  }, [showClueModal, currentClue, animationService]);
+  }, [currentClue, animationService]);
 
   // Subscribe to centralized animation intents (stable - doesn't re-run on game state changes)
   useEffect(() => {
-    if (!game) return;
+    if (!game) {return;}
 
     console.log(`🎬 [PlayerDashboard] Setting up animation system for game ${gameId}`);
 
@@ -131,7 +128,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       console.log(`🎬 [PlayerDashboard] Received animation intent:`, intent);
 
       // Only handle intents for this game
-      if (intent.gameId !== gameId) return;
+      if (intent.gameId !== gameId) {return;}
 
       // Get the animation definition from registry
       const def = AnimationRegistry.get(intent.type);
@@ -411,9 +408,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   const loadClueData = useCallback(
     async (clueId: string): Promise<ClueInfo | null> => {
       try {
-        const { ClueService } = await import(
-          "../../services/clues/ClueService"
-        );
         const clue = await ClueService.getClueById(clueId);
 
         // Get category name from category_id
@@ -536,7 +530,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
             updateClueState(clueState);
 
             // Trigger animations when clue is revealed (host clicked "Reveal Prompt")
-            if (clueState.revealed && (!prevClueState || !prevClueState.revealed)) {
+            if (clueState.revealed && !prevClueState?.revealed) {
               console.log("🎬 [PlayerDashboard] Clue revealed, triggering animation for clue:", clueState.clue_id);
 
               // Check if this is a daily double
@@ -568,13 +562,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               clueState.clue_id === focusedClue.id
             ) {
               setCurrentClue(focusedClue);
-              // setShowClueModal(true);
               setBuzzerState(BuzzerState.LOCKED); // Lock buzzer when clue is revealed
             }
 
             // Hide modal, clear display window, and lock buzzer when clue is completed
             if (clueState.completed) {
-              // setShowClueModal(false);
               setCurrentClue(null);
               setBuzzerState(BuzzerState.LOCKED);
               setReactionTime(null);
@@ -620,12 +612,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
             // If current player was just locked out and modal is showing, hide it
             if (
               lockedOutPlayers.includes(user.id) &&
-              showClueModal &&
               focusedClue &&
               clueData.id === focusedClue.id
             ) {
               console.log("🚫 Current player locked out - hiding modal");
-              // setShowClueModal(false);
               setCurrentClue(null);
               setBuzzerState(BuzzerState.LOCKED);
               setReactionTime(null);
@@ -644,7 +634,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     gameId,
     user,
     focusedClue,
-    showClueModal,
     updateClueState,
   ]);
 
@@ -791,7 +780,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         setFocusedClue(clueInfo);
       } else {
         setFocusedClue(null);
-        // setShowClueModal(false);
         setCurrentClue(null);
         setBuzzerState(BuzzerState.LOCKED);
         setReactionTime(null);
@@ -1084,7 +1072,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
             );
           }
 
-          if (showClueModal && currentClue) {
+          if (currentClue) {
             // Show clue content
             return (
               <div className="clue-display-content gsap-animation" ref={clueContentRef}>
