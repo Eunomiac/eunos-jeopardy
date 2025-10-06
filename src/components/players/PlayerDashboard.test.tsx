@@ -6,6 +6,7 @@ import { FontAssignmentService } from '../../services/fonts/FontAssignmentServic
 import { mockUser, mockGame, mockPlayers } from '../../test/__mocks__/commonTestData'
 import type { PlayerInfo } from './PlayerPodiums'
 import type { Database } from '../../services/supabase/types'
+import { supabase } from '../../services/supabase/client'
 
 // Type aliases for cleaner code
 type PlayerRow = Database['public']['Tables']['players']['Row']
@@ -333,19 +334,17 @@ describe('PlayerDashboard', () => {
   })
 
   describe('Real-time Updates', () => {
-    it.skip('should set up real-time subscriptions', async () => {
-      // TODO: This test needs to be updated to work with the global Supabase mock
-      // The global mock doesn't expose mockSupabase for direct assertions
+    it('should set up real-time subscriptions', async () => {
       setupMockGameWithPlayers()
 
       renderWithAuth(<PlayerDashboard {...mockProps} />)
 
-      // await waitFor(() => {
-      //   // Component sets up Supabase postgres_changes subscriptions
-      //   expect(supabase.channel).toHaveBeenCalledWith('players-game-123')
-      //   expect(supabase.channel).toHaveBeenCalledWith('clue-states-game-123')
-      //   expect(supabase.channel).toHaveBeenCalledWith('clues-game-123')
-      // })
+      await waitFor(() => {
+        // Component sets up Supabase postgres_changes subscriptions
+        expect(supabase.channel).toHaveBeenCalledWith('players-game-123')
+        expect(supabase.channel).toHaveBeenCalledWith('clue-states-game-123')
+        expect(supabase.channel).toHaveBeenCalledWith('clues-game-123')
+      })
     })
   })
 })
