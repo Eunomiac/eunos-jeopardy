@@ -353,13 +353,13 @@ export function GameHostDashboard({
   const [gameIntroComplete, setGameIntroComplete] = useState(false);
 
   /** Broadcast subscription for real-time buzzer events */
-  const [broadcastSubscription, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+  const [, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
 
   /** Buzzer queue manager for tracking buzzes and determining fastest player */
   const [buzzerQueueManager] = useState(() => new BuzzerQueueManager());
 
   /** Timestamp when buzzer was unlocked (for debugging) */
-  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
+  const [, setBuzzerUnlockTime] = useState<number | null>(null);
 
   /** Animation service instance */
   const animationService = AnimationService.getInstance();

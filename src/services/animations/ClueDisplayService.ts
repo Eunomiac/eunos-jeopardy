@@ -7,7 +7,6 @@
 
 import { supabase } from '../supabase/client';
 import { ClueService } from '../clues/ClueService';
-import type { ClueSetData } from '../clueSets/loader';
 
 export interface ClueDisplayContent {
   clueId: string;
@@ -32,7 +31,7 @@ export class ClueDisplayService {
   /**
    * Get clue content for display
    */
-  async getClueContent(clueId: string, gameId: string): Promise<ClueDisplayContent | null> {
+  async getClueContent(clueId: string, _gameId: string): Promise<ClueDisplayContent | null> {
     // Check cache first
     if (this.clueCache.has(clueId)) {
       return this.clueCache.get(clueId)!;
