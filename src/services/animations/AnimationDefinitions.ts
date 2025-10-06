@@ -403,7 +403,7 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
     });
   },
 
-  shouldRunInstantly(gameState, params) {
+  shouldRunInstantly(_gameState, params) {
     if (params) {
       const animationService = AnimationService.getInstance();
       const key = `DailyDoubleReveal:${params.gameId}:${params.clueId}`;
@@ -480,7 +480,7 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
     });
   },
 
-  shouldRunInstantly(gameState, params) {
+  shouldRunInstantly(_gameState, params) {
     if (params) {
       const animationService = AnimationService.getInstance();
       const key = `DailyDoubleClueReveal:${params.gameId}:${params.clueId}`;
