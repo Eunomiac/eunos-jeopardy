@@ -1879,7 +1879,7 @@ export class GameService {
   static async transitionToNextRound(
     gameId: string,
     hostId: string,
-    force: boolean = false
+    force = false
   ): Promise<Game> {
     // 1. Get and validate game
     const game = await this.getGame(gameId, hostId)
