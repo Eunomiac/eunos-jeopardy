@@ -874,4 +874,160 @@ describe('GameService', () => {
       getGameSpy.mockRestore()
     })
   })
+
+  describe('transitionToNextRound', () => {
+    const mockGame = {
+      id: 'game-123',
+      host_id: 'user-123',
+      clue_set_id: 'clue-set-123',
+      status: 'in_progress' as const,
+      current_round: 'jeopardy' as const,
+      is_buzzer_locked: false,
+      focused_clue_id: 'clue-123',
+      focused_player_id: 'player-123',
+      created_at: '2025-01-01T00:00:00Z'
+    }
+
+    it('should transition from jeopardy to double when round is complete', async () => {
+      const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(mockGame)
+      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+        .mockResolvedValue(true)
+
+      const updatedGame = {
+        ...mockGame,
+        current_round: 'double' as const,
+        status: 'round_transition' as const,
+        focused_clue_id: null,
+        focused_player_id: null,
+        is_buzzer_locked: true
+      }
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: updatedGame, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        update: mockUpdate
+      } as MockSupabaseQueryBuilder)
+
+      const result = await GameService.transitionToNextRound('game-123', 'user-123')
+
+      expect(result.current_round).toBe('double')
+      expect(result.status).toBe('round_transition')
+      expect(result.focused_clue_id).toBeNull()
+      expect(result.focused_player_id).toBeNull()
+      expect(result.is_buzzer_locked).toBe(true)
+
+      getGameSpy.mockRestore()
+      isRoundCompleteSpy.mockRestore()
+    })
+
+    it('should transition from double to final when round is complete', async () => {
+      const doubleGame = { ...mockGame, current_round: 'double' as const }
+      const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(doubleGame)
+      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+        .mockResolvedValue(true)
+
+      const updatedGame = {
+        ...doubleGame,
+        current_round: 'final' as const,
+        status: 'round_transition' as const,
+        focused_clue_id: null,
+        focused_player_id: null,
+        is_buzzer_locked: true
+      }
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: updatedGame, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        update: mockUpdate
+      } as MockSupabaseQueryBuilder)
+
+      const result = await GameService.transitionToNextRound('game-123', 'user-123')
+
+      expect(result.current_round).toBe('final')
+      expect(result.status).toBe('round_transition')
+
+      getGameSpy.mockRestore()
+      isRoundCompleteSpy.mockRestore()
+    })
+
+    it('should throw error when trying to transition beyond final round', async () => {
+      const finalGame = { ...mockGame, current_round: 'final' as const }
+      const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(finalGame)
+
+      await expect(GameService.transitionToNextRound('game-123', 'user-123'))
+        .rejects.toThrow('Cannot advance beyond Final Jeopardy')
+
+      getGameSpy.mockRestore()
+    })
+
+    it('should throw error when game is not in progress', async () => {
+      const lobbyGame = { ...mockGame, status: 'lobby' as const }
+      const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(lobbyGame)
+
+      await expect(GameService.transitionToNextRound('game-123', 'user-123'))
+        .rejects.toThrow('Cannot transition rounds: Game is not in progress (status: lobby)')
+
+      getGameSpy.mockRestore()
+    })
+
+    it('should throw error when round is incomplete without force flag', async () => {
+      const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(mockGame)
+      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+        .mockResolvedValue(false)
+
+      await expect(GameService.transitionToNextRound('game-123', 'user-123', false))
+        .rejects.toThrow('Current round is not complete. Use force=true to override.')
+
+      getGameSpy.mockRestore()
+      isRoundCompleteSpy.mockRestore()
+    })
+
+    it('should allow transition with incomplete round when force=true', async () => {
+      const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(mockGame)
+      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+        .mockResolvedValue(false)
+
+      const updatedGame = {
+        ...mockGame,
+        current_round: 'double' as const,
+        status: 'round_transition' as const,
+        focused_clue_id: null,
+        focused_player_id: null,
+        is_buzzer_locked: true
+      }
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: updatedGame, error: null })
+          })
+        })
+      })
+
+      mockSupabase.from.mockReturnValue({
+        update: mockUpdate
+      } as MockSupabaseQueryBuilder)
+
+      const result = await GameService.transitionToNextRound('game-123', 'user-123', true)
+
+      expect(result.current_round).toBe('double')
+      // isRoundComplete should not have been called when force=true
+      expect(isRoundCompleteSpy).not.toHaveBeenCalled()
+
+      getGameSpy.mockRestore()
+      isRoundCompleteSpy.mockRestore()
+    })
+  })
 })

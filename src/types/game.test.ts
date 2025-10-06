@@ -57,6 +57,7 @@ describe('game types', () => {
       expect(isValidGameStatus('game_intro')).toBe(true)
       expect(isValidGameStatus('introducing_categories')).toBe(true)
       expect(isValidGameStatus('in_progress')).toBe(true)
+      expect(isValidGameStatus('round_transition')).toBe(true)
       expect(isValidGameStatus('completed')).toBe(true)
       expect(isValidGameStatus('cancelled')).toBe(true)
     })
@@ -120,13 +121,13 @@ describe('game types', () => {
   describe('type guard integration', () => {
     it('should work together for validation', () => {
       const roundValues = ['jeopardy', 'double', 'final', 'invalid']
-      const statusValues = ['lobby', 'in_progress', 'completed', 'cancelled', 'invalid']
+      const statusValues = ['lobby', 'in_progress', 'round_transition', 'completed', 'cancelled', 'invalid']
 
       const validRounds = roundValues.filter(isValidRoundType)
       const validStatuses = statusValues.filter(isValidGameStatus)
 
       expect(validRounds).toEqual(['jeopardy', 'double', 'final'])
-      expect(validStatuses).toEqual(['lobby', 'in_progress', 'completed', 'cancelled'])
+      expect(validStatuses).toEqual(['lobby', 'in_progress', 'round_transition', 'completed', 'cancelled'])
     })
 
     it('should handle mixed type validation', () => {
