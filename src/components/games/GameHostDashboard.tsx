@@ -17,6 +17,9 @@ import { SupabaseConnection } from "../../services/supabase/connection";
 
 import { supabase } from "../../services/supabase/client";
 import { AnimationService } from "../../services/animations/AnimationService";
+import { BroadcastService } from "../../services/realtime/BroadcastService";
+import { BuzzerQueueManager } from "../../services/buzzer/BuzzerQueueManager";
+import type { BroadcastSubscription, PlayerBuzzPayload } from "../../types/BroadcastEvents";
 import "./GameHostDashboard.scss";
 
 import { BuzzerQueuePanel } from "./panels/BuzzerQueuePanel";
@@ -299,6 +302,15 @@ export function GameHostDashboard({
   const [isPlayingGameIntro, setIsPlayingGameIntro] = useState(false);
   const [gameIntroComplete, setGameIntroComplete] = useState(false);
 
+  /** Broadcast subscription for real-time buzzer events */
+  const [broadcastSubscription, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+
+  /** Buzzer queue manager for tracking buzzes and determining fastest player */
+  const [buzzerQueueManager] = useState(() => new BuzzerQueueManager());
+
+  /** Timestamp when buzzer was unlocked (for debugging) */
+  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
+
   /** Animation service instance */
   const animationService = AnimationService.getInstance();
 
@@ -554,41 +566,120 @@ export function GameHostDashboard({
   }, [clueTimeoutId]);
 
   /**
-   * Schedule auto-select of the fastest buzz when exactly one buzz exists.
-   * Flattens nested conditionals in the subscription handler for readability.
+   * Handles player buzz events from broadcast channel.
+   * Automatically focuses fastest player and updates UI.
    */
-  const scheduleAutoSelectFastest = useCallback((sortedBuzzes: Buzz[]) => {
-    if (sortedBuzzes.length !== 1) {
-      return;
+  const handlePlayerBuzz = useCallback(async (payload: PlayerBuzzPayload) => {
+    console.log(`⚡ Received player buzz: ${payload.playerNickname} (${payload.reactionTimeMs}ms)`);
+
+    // Add buzz to queue manager
+    const isNewFastest = buzzerQueueManager.addBuzz(
+      payload.playerId,
+      payload.playerNickname,
+      payload.reactionTimeMs
+    );
+
+    // Update buzzer queue display
+    const queueEntries = buzzerQueueManager.getQueue();
+    const buzzes: Buzz[] = queueEntries.map((entry) => ({
+      id: `${payload.gameId}-${entry.playerId}`,
+      game_id: payload.gameId,
+      clue_id: payload.clueId,
+      user_id: entry.playerId,
+      reaction_time: entry.reactionTimeMs,
+      created_at: new Date(entry.receivedAt).toISOString(),
+      playerNickname: entry.playerNickname,
+    }));
+    setBuzzerQueue(buzzes);
+
+    // If this is the new fastest buzz, auto-focus this player
+    if (isNewFastest) {
+      const fastestPlayerId = buzzerQueueManager.getFastestPlayer();
+      const fastestNickname = buzzerQueueManager.getFastestPlayerNickname();
+      const fastestTime = buzzerQueueManager.getFastestReactionTime();
+
+      if (fastestPlayerId && fastestNickname) {
+        console.log(`🎯 Auto-focusing fastest player: ${fastestNickname} (${fastestTime}ms)`);
+
+        // Broadcast focus change to all clients
+        await BroadcastService.broadcastFocusPlayer(
+          payload.gameId,
+          fastestPlayerId,
+          fastestNickname,
+          isNewFastest && queueEntries.length > 1 ? 'correction' : 'auto'
+        );
+
+        // Update database with focused player
+        try {
+          await GameService.setFocusedPlayer(payload.gameId, fastestPlayerId, user!.id);
+          setMessage(`Auto-selected ${fastestNickname} (${fastestTime}ms)`);
+          setMessageType("success");
+        } catch (error) {
+          console.error("Failed to set focused player in database:", error);
+        }
+
+        // Record buzz in database
+        try {
+          await GameService.recordBuzz(
+            payload.gameId,
+            payload.clueId,
+            payload.playerId,
+            payload.reactionTimeMs
+          );
+        } catch (error) {
+          console.error("Failed to record buzz in database:", error);
+        }
+      }
+    } else {
+      // Not the fastest, but still record in database
+      try {
+        await GameService.recordBuzz(
+          payload.gameId,
+          payload.clueId,
+          payload.playerId,
+          payload.reactionTimeMs
+        );
+      } catch (error) {
+        console.error("Failed to record buzz in database:", error);
+      }
+    }
+  }, [buzzerQueueManager, user]);
+
+  /**
+   * Effect to set up broadcast channel for real-time buzzer events.
+   */
+  useEffect(() => {
+    if (!gameId || !user) {
+      return () => {};
     }
 
-    // Clear any existing clue timeout and resolution timeout
-    clearClueTimeout();
-    if (buzzerResolutionTimeoutId) {
-      clearTimeout(buzzerResolutionTimeoutId);
-    }
+    console.log(`📡 Setting up broadcast channel for game: ${gameId}`);
 
-    const timeoutId = setTimeout(() => {
-      if (sortedBuzzes.length === 0) {
-        return;
-      }
-      const fastestBuzz = sortedBuzzes[0];
-      setAutoSelectedPlayerId(fastestBuzz.user_id);
+    // Subscribe to broadcast channel for buzzer events
+    const subscription = BroadcastService.subscribeToGameBuzzer(gameId, {
+      onPlayerBuzz: handlePlayerBuzz,
+      onBuzzerUnlock: (payload) => {
+        console.log(`🔓 Buzzer unlocked at ${payload.timestamp}`);
+        setBuzzerUnlockTime(payload.timestamp);
+      },
+      onBuzzerLock: (payload) => {
+        console.log(`🔒 Buzzer locked at ${payload.timestamp}`);
+        setBuzzerUnlockTime(null);
+      },
+      onFocusPlayer: (payload) => {
+        console.log(`👁️ Focus player: ${payload.playerNickname} (${payload.source})`);
+      },
+    });
 
-      const fastestPlayerButton = document.querySelector(
-        `[data-player-id="${fastestBuzz.user_id}"]`
-      );
-      if (!(fastestPlayerButton instanceof HTMLElement)) {
-        return;
-      }
+    setBroadcastSubscription(subscription);
 
-      fastestPlayerButton.click();
-      setMessage(`Auto-selected fastest player (${fastestBuzz.reaction_time}ms)`);
-      setMessageType("success");
-    }, buzzerTimeoutMs);
-
-    setBuzzerResolutionTimeoutId(timeoutId);
-  }, [clearClueTimeout, buzzerResolutionTimeoutId, buzzerTimeoutMs]);
+    // Cleanup on unmount
+    return () => {
+      console.log(`🔌 Cleaning up broadcast channel for game: ${gameId}`);
+      subscription.unsubscribe();
+      setBroadcastSubscription(null);
+    };
+  }, [gameId, user, handlePlayerBuzz]);
 
   /**
    * Effect to set up real-time subscriptions for game state changes.
@@ -624,43 +715,6 @@ export function GameHostDashboard({
       .on(
         "postgres_changes",
         {
-          event: "*",
-          schema: "public",
-          table: "buzzes",
-          filter: `game_id=eq.${gameId}`,
-        },
-        async () => {
-          console.log("Buzz change detected");
-
-          // Refresh buzzer queue when new buzzes arrive
-          // Only refresh if we have a focused clue
-          if (focusedClue) {
-            try {
-              const updatedBuzzes = await GameService.getBuzzesForClue(
-                gameId,
-                focusedClue.id
-              );
-
-              // Sort by reaction time (fastest first), with null times at the end
-              const sortedBuzzes = [...updatedBuzzes].sort((a: Buzz, b: Buzz) => {
-                const timeA = a.reaction_time ?? Infinity;
-                const timeB = b.reaction_time ?? Infinity;
-                return timeA - timeB;
-              });
-
-              setBuzzerQueue(sortedBuzzes);
-
-              // Flattened: delegate auto-selection logic to helper
-              scheduleAutoSelectFastest(sortedBuzzes);
-            } catch (error) {
-              console.error("Failed to refresh buzzes:", error);
-            }
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
           event: "UPDATE",
           schema: "public",
           table: "games",
@@ -685,15 +739,7 @@ export function GameHostDashboard({
     return () => {
       subscription.unsubscribe();
     };
-  }, [
-    gameId,
-    user,
-    focusedClue,
-    clearClueTimeout,
-    buzzerResolutionTimeoutId,
-    buzzerTimeoutMs,
-    scheduleAutoSelectFastest,
-  ]);
+  }, [gameId, user]);
 
   // Effect to manage full-screen layout classes
   useEffect(() => {
@@ -1050,6 +1096,10 @@ export function GameHostDashboard({
 
       // Lock the buzzer when revealing clue (host must unlock it manually)
       if (!game.is_buzzer_locked) {
+        // Broadcast lock first
+        await BroadcastService.broadcastBuzzerLock(gameId);
+
+        // Then update database
         const updatedGame = await GameService.toggleBuzzerLock(gameId, user.id);
         setGame(updatedGame);
       }
@@ -1072,9 +1122,10 @@ export function GameHostDashboard({
   };
 
   /**
-   * Handles selecting a player from the buzzer queue.
+   * Handles selecting a player from the buzzer queue (manual override).
    *
    * Sets the selected player as the focused player for answer adjudication.
+   * This is a manual override of the automatic fastest player selection.
    *
    * @param playerId - UUID of the player to select
    */
@@ -1096,6 +1147,19 @@ export function GameHostDashboard({
       try {
         setMessage("Selecting player...");
 
+        // Find player name for broadcast
+        const player = players.find((p) => p.user_id === playerId);
+        const playerName = player?.nickname || "Unknown Player";
+
+        // Broadcast focus change first (manual override)
+        await BroadcastService.broadcastFocusPlayer(
+          gameId,
+          playerId,
+          playerName,
+          'manual'
+        );
+
+        // Then update database
         const updatedGame = await GameService.setFocusedPlayer(
           gameId,
           playerId,
@@ -1103,11 +1167,7 @@ export function GameHostDashboard({
         );
         setGame(updatedGame);
 
-        // Find player name for feedback
-        const player = players.find((p) => p.user_id === playerId);
-        const playerName = player?.nickname || "Unknown Player";
-
-        setMessage(`Selected player: ${playerName}`);
+        setMessage(`Manually selected player: ${playerName}`);
         setMessageType("success");
       } catch (error) {
         console.error("Failed to select player:", error);
@@ -1298,32 +1358,49 @@ export function GameHostDashboard({
 
   const handleToggleBuzzer = async () => {
     // Validate prerequisites
-    if (!user || !game) {
+    if (!user || !game || !focusedClue) {
       return;
     }
 
     try {
+      // Determine new state (toggle current state)
+      const willUnlock = game.is_buzzer_locked;
+
       // Provide immediate user feedback
       setMessage("Updating buzzer state...");
 
-      // Toggle buzzer state via GameService
-      const updatedGame = await GameService.toggleBuzzerLock(gameId, user.id);
+      if (willUnlock) {
+        // UNLOCK: Broadcast first for immediate UI update, then database
+        console.log("🔓 Unlocking buzzer - broadcasting first");
 
-      // Update local state with new game data
-      setGame(updatedGame);
+        // Clear buzzer queue for new clue
+        buzzerQueueManager.clear();
+        setBuzzerQueue([]);
 
-      // If buzzer was unlocked and there's a focused clue, start timeout
-      if (!updatedGame.is_buzzer_locked && focusedClue) {
+        // Broadcast unlock event
+        await BroadcastService.broadcastBuzzerUnlock(gameId, focusedClue.id);
+
+        // Update database
+        const updatedGame = await GameService.toggleBuzzerLock(gameId, user.id);
+        setGame(updatedGame);
+
+        // Start clue timeout
         startClueTimeout();
         setMessage("Buzzer unlocked - players have 5 seconds to buzz in");
-      } else if (updatedGame.is_buzzer_locked) {
-        // If buzzer was locked, clear any active timeout
+      } else {
+        // LOCK: Broadcast first for immediate UI update, then database
+        console.log("🔒 Locking buzzer - broadcasting first");
+
+        // Broadcast lock event
+        await BroadcastService.broadcastBuzzerLock(gameId);
+
+        // Update database
+        const updatedGame = await GameService.toggleBuzzerLock(gameId, user.id);
+        setGame(updatedGame);
+
+        // Clear clue timeout
         clearClueTimeout();
         setMessage("Buzzer locked");
-      } else {
-        setMessage(
-          `Buzzer ${updatedGame.is_buzzer_locked ? "locked" : "unlocked"}`
-        );
       }
 
       setMessageType("success");
