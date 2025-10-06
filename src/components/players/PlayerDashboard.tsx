@@ -33,15 +33,7 @@ interface GameUpdatePayload {
   [key: string]: unknown;
 }
 
-/**
- * Buzz payload from real-time subscriptions.
- */
-interface BuzzPayload {
-  user_id: string;
-  game_id: string;
-  clue_id: string;
-  created_at: string;
-}
+
 
 /**
  * PlayerDashboard Component
@@ -91,17 +83,17 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showClueModal, setShowClueModal] = useState(false);
+  const [showClueModal] = useState(false);
 
   // Broadcast subscription for real-time buzzer events
-  const [broadcastSubscription, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+  const [, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
 
   // Buzzer timing for client-side reaction time calculation
   const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
 
   // Track fastest buzz received for late correction handling
   const [fastestBuzzTime, setFastestBuzzTime] = useState<number | null>(null);
-  const [fastestPlayerId, setFastestPlayerId] = useState<string | null>(null);
+  const [, setFastestPlayerId] = useState<string | null>(null);
 
   // Animation services and refs
   const animationService = AnimationService.getInstance();
@@ -675,8 +667,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         }
 
         // Get player nickname for broadcast
-        const currentPlayer = players.find((p) => p.userId === user.id);
-        const playerNickname = currentPlayer?.nickname || user.email || "Unknown Player";
+        const currentPlayer = players.find((p) => p.id === user.id);
+        const playerNickname = currentPlayer?.name || user.email || "Unknown Player";
 
         // Broadcast buzz event immediately (no database write)
         await BroadcastService.broadcastPlayerBuzz(

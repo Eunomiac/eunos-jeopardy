@@ -419,7 +419,8 @@ describe('GameService', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('players')
       expect(mockSelect).toHaveBeenCalledWith('*')
-      expect(result).toEqual(mockPlayers)
+      // Result should include profiles field (null when no profiles found)
+      expect(result).toEqual(mockPlayers.map(player => ({ ...player, profiles: null })))
     })
 
     it('should handle players fetch error', async () => {
