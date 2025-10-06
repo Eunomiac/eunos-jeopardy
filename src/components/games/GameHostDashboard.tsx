@@ -90,14 +90,14 @@ const getCurrentRoundClueIds = (
   round: string
 ): string[] => {
   if (round === "final") {
-    return (clueSetData.rounds.final.clues?.map(c => c.id).filter((id): id is string => id !== undefined)) || [];
+    return (clueSetData.rounds.final.clues?.map((c) => c.id).filter((id): id is string => id !== undefined)) || [];
   }
 
   const roundData = clueSetData.rounds[round as "jeopardy" | "double"];
-  if (!Array.isArray(roundData)) return [];
+  if (!Array.isArray(roundData)) {return [];}
 
-  return roundData.flatMap(category =>
-    category.clues.map(clue => clue.id).filter((id): id is string => id !== undefined)
+  return roundData.flatMap((category) =>
+    category.clues.map((clue) => clue.id).filter((id): id is string => id !== undefined)
   );
 };
 
@@ -125,11 +125,11 @@ const calculateClueProgress = (
   const currentRoundClueIds = getCurrentRoundClueIds(clueSetData, currentRound);
 
   // Filter clue states to only include current round
-  const currentRoundStates = clueStates.filter(state =>
+  const currentRoundStates = clueStates.filter((state) =>
     currentRoundClueIds.includes(state.clue_id)
   );
 
-  const completedCount = currentRoundStates.filter(state => state.completed).length;
+  const completedCount = currentRoundStates.filter((state) => state.completed).length;
   const totalClues = currentRound === "final" ? 1 : 30;
   const percentage = totalClues > 0 ? (completedCount / totalClues) * 100 : 0;
 
@@ -623,9 +623,10 @@ export function GameHostDashboard({
 
   /**
    * Handles player buzz events from broadcast channel.
-   * Automatically focuses fastest player and updates UI.
+   * Automatically focuses fastest player and updates UI immediately.
+   * Database writes happen asynchronously in the background.
    */
-  const handlePlayerBuzz = useCallback(async (payload: PlayerBuzzPayload) => {
+  const handlePlayerBuzz = useCallback((payload: PlayerBuzzPayload) => {
     console.log(`⚡ Received player buzz: ${payload.playerNickname} (${payload.reactionTimeMs}ms)`);
 
     // Add buzz to queue manager
@@ -657,47 +658,46 @@ export function GameHostDashboard({
       if (fastestPlayerId && fastestNickname) {
         console.log(`🎯 Auto-focusing fastest player: ${fastestNickname} (${fastestTime}ms)`);
 
-        // Broadcast focus change to all clients
-        await BroadcastService.broadcastFocusPlayer(
+        // Broadcast focus change to all clients (fire and forget)
+        BroadcastService.broadcastFocusPlayer(
           payload.gameId,
           fastestPlayerId,
           fastestNickname,
-          isNewFastest && queueEntries.length > 1 ? 'correction' : 'auto'
-        );
+          queueEntries.length > 1 ? 'correction' : 'auto'
+        ).catch((error) => {
+          console.error("Failed to broadcast focus player:", error);
+        });
 
-        // Update database with focused player
-        try {
-          await GameService.setFocusedPlayer(payload.gameId, fastestPlayerId, user!.id);
-          setMessage(`Auto-selected ${fastestNickname} (${fastestTime}ms)`);
-          setMessageType("success");
-        } catch (error) {
-          console.error("Failed to set focused player in database:", error);
-        }
+        // Update database with focused player (fire and forget)
+        GameService.setFocusedPlayer(payload.gameId, fastestPlayerId, user!.id)
+          .then(() => {
+            setMessage(`Auto-selected ${fastestNickname} (${fastestTime}ms)`);
+            setMessageType("success");
+          })
+          .catch((error) => {
+            console.error("Failed to set focused player in database:", error);
+          });
 
-        // Record buzz in database
-        try {
-          await GameService.recordBuzz(
-            payload.gameId,
-            payload.clueId,
-            payload.playerId,
-            payload.reactionTimeMs
-          );
-        } catch (error) {
-          console.error("Failed to record buzz in database:", error);
-        }
-      }
-    } else {
-      // Not the fastest, but still record in database
-      try {
-        await GameService.recordBuzz(
+        // Record buzz in database (fire and forget)
+        GameService.recordBuzz(
           payload.gameId,
           payload.clueId,
           payload.playerId,
           payload.reactionTimeMs
-        );
-      } catch (error) {
-        console.error("Failed to record buzz in database:", error);
+        ).catch((error) => {
+          console.error("Failed to record buzz in database:", error);
+        });
       }
+    } else {
+      // Not the fastest, but still record in database (fire and forget)
+      GameService.recordBuzz(
+        payload.gameId,
+        payload.clueId,
+        payload.playerId,
+        payload.reactionTimeMs
+      ).catch((error) => {
+        console.error("Failed to record buzz in database:", error);
+      });
     }
   }, [buzzerQueueManager, user]);
 
@@ -854,7 +854,7 @@ export function GameHostDashboard({
    * all clues in the current round have been completed.
    */
   useEffect(() => {
-    if (!game || !clueSetData) return;
+    if (!game || !clueSetData) {return;}
 
     const checkRoundCompletion = () => {
       const progress = calculateClueProgress(clueStates, game.current_round, clueSetData);
@@ -871,10 +871,10 @@ export function GameHostDashboard({
    * phase after the round transition animation completes.
    */
   useEffect(() => {
-    if (!game || !user) return;
+    if (!game || !user) {return;}
 
     // Only handle round_transition status
-    if (game.status !== 'round_transition') return;
+    if (game.status !== 'round_transition') {return;}
 
     // Subscribe to animation events
     const unsubscribe = AnimationEvents.subscribe(async (event) => {
@@ -1878,7 +1878,7 @@ export function GameHostDashboard({
    * - Disabled at Final Jeopardy
    */
   const handleNextRound = async () => {
-    if (!user || !game) return;
+    if (!user || !game) {return;}
 
     try {
       // Check if round is complete
@@ -1906,7 +1906,7 @@ export function GameHostDashboard({
    * confirmation dialog (for early transitions).
    */
   const performRoundTransition = async () => {
-    if (!user || !game) return;
+    if (!user || !game) {return;}
 
     setMessage("Transitioning to next round...");
     setMessageType("");
@@ -1952,7 +1952,7 @@ export function GameHostDashboard({
    * manually resolving all 30 clues. Only visible in development mode.
    */
   const handleDebugCompleteAllClues = async () => {
-    if (!user || !game || !clueSetData) return;
+    if (!user || !game || !clueSetData) {return;}
 
     try {
       setMessage("DEBUG: Completing all clues in current round...");

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { GameService } from "../../services/games/GameService";
+import { GameService, type Game } from "../../services/games/GameService";
 import { FontAssignmentService } from "../../services/fonts/FontAssignmentService";
 import { PlayerPodiums, type PlayerInfo } from "./PlayerPodiums";
 import type { ClueInfo } from "./ClueRevealModal";
@@ -8,7 +8,7 @@ import { BuzzerState } from "../../types/BuzzerState";
 import { supabase } from "../../services/supabase/client";
 import { ClueService, type ClueState } from "../../services/clues/ClueService";
 import { AnimationService } from "../../services/animations/AnimationService";
-import { AnimationEvents } from "../../services/animations/AnimationEvents";
+import { AnimationEvents, type AnimationIntent } from "../../services/animations/AnimationEvents";
 import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
@@ -184,7 +184,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       console.log(`🎬 [PlayerDashboard] Checking initial game state for instant animations (after subscription delay)`);
 
       // Check all registered animations to see which should run instantly
-      const instantAnimations = AnimationRegistry.checkAllForInstantRun(game as any);
+      const instantAnimations = AnimationRegistry.checkAllForInstantRun(game as Game);
 
       for (const { def, params } of instantAnimations) {
         const key = `${def.id}:${gameId}:${JSON.stringify(params)}`;
@@ -197,7 +197,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
         // If intent was recently published, run ANIMATED version (not instant)
         // This handles the case where component mounted during a live transition
-        if (AnimationEvents.wasRecentlyPublished(def.id as any, gameId)) {
+        if (AnimationEvents.wasRecentlyPublished(def.id as AnimationIntent["type"], gameId)) {
           console.log(`🎬 [PlayerDashboard] Intent ${def.id} was recently published - running ANIMATED version`);
           animationService.playOnce(
             key,

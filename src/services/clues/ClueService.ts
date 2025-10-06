@@ -1,5 +1,5 @@
 import { supabase } from '../supabase/client'
-import type { Tables, TablesInsert, TablesUpdate } from '../supabase/types'
+import type { Tables, TablesInsert } from '../supabase/types'
 
 /** Clue entity type from database schema */
 export type Clue = Tables<'clues'>

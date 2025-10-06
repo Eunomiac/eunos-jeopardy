@@ -50,7 +50,7 @@ export class AnimationEvents {
     const key = `${type}:${gameId}`;
     const cached = this.recentIntents.get(key);
 
-    if (!cached) return false;
+    if (!cached) {return false;}
 
     const age = Date.now() - cached.timestamp;
     if (age > this.INTENT_CACHE_DURATION) {

@@ -119,21 +119,33 @@ export type BroadcastPayload =
 
 /**
  * Handler function for buzzer unlock events.
+ * Handlers are called synchronously for immediate UI updates.
+ * Any async operations (e.g., database writes) should be fired off
+ * in the background without blocking the handler.
  */
 export type BuzzerUnlockHandler = (payload: BuzzerUnlockPayload) => void;
 
 /**
  * Handler function for buzzer lock events.
+ * Handlers are called synchronously for immediate UI updates.
+ * Any async operations (e.g., database writes) should be fired off
+ * in the background without blocking the handler.
  */
 export type BuzzerLockHandler = (payload: BuzzerLockPayload) => void;
 
 /**
  * Handler function for player buzz events.
+ * Handlers are called synchronously for immediate UI updates.
+ * Any async operations (e.g., database writes) should be fired off
+ * in the background without blocking the handler.
  */
 export type PlayerBuzzHandler = (payload: PlayerBuzzPayload) => void;
 
 /**
  * Handler function for focus player events.
+ * Handlers are called synchronously for immediate UI updates.
+ * Any async operations (e.g., database writes) should be fired off
+ * in the background without blocking the handler.
  */
 export type FocusPlayerHandler = (payload: FocusPlayerPayload) => void;
 
@@ -174,4 +186,3 @@ export interface BroadcastSubscription {
   /** Channel ID for debugging */
   channelId: string;
 }
-

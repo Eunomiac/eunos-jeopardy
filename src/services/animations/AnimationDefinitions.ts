@@ -37,20 +37,28 @@ export interface AnimationDefinition<TParams = any> {
    * Returns true if the game state indicates this animation is "in the past"
    * (i.e., the triggering event already happened before component mounted).
    *
+   * Optional: If not provided, animation will never run instantly on mount.
+   * This is appropriate for animations that are always triggered explicitly
+   * (e.g., daily doubles that require async database checks).
+   *
    * @param gameState - Current game state
    * @param params - Animation parameters (optional, for context)
    * @returns true if animation should run instantly, false otherwise
    */
-  shouldRunInstantly(gameState: Game, params?: TParams): boolean;
+  shouldRunInstantly?(gameState: Game, params?: TParams): boolean;
 
   /**
    * Derive animation parameters from current game state.
    * Used when shouldRunInstantly returns true to get the correct params.
    *
+   * Optional: If not provided, animation cannot derive params from game state.
+   * This is appropriate for animations that are always triggered explicitly
+   * with params provided by the caller.
+   *
    * @param gameState - Current game state
    * @returns Animation parameters, or null if cannot be derived
    */
-  getParamsFromGameState(gameState: Game): TParams | null;
+  getParamsFromGameState?(gameState: Game): TParams | null;
 }
 
 /**
@@ -401,30 +409,13 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
 
       (animationService as any).activeTimelines?.push(timeline);
     });
-  },
-
-  shouldRunInstantly(_gameState, params) {
-    if (params) {
-      const animationService = AnimationService.getInstance();
-      const key = `DailyDoubleReveal:${params.gameId}:${params.clueId}`;
-      if (animationService.isPlaying(key) || animationService.hasPlayed(key)) {
-        return false;
-      }
-    }
-
-    // Daily double reveal is "in the past" if there's a focused clue that's a daily double
-    // Note: We'd need to check if the clue is actually a daily double from game state
-    return false; // For now, never run instantly (requires more context)
-  },
-
-  getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) {return null;}
-    // TODO: Check if focused clue is actually a daily double
-    return {
-      clueId: gameState.focused_clue_id,
-      gameId: gameState.id
-    };
   }
+
+  // Note: shouldRunInstantly and getParamsFromGameState are intentionally omitted.
+  // Daily double animations are always triggered explicitly via AnimationEvents.publish()
+  // after async ClueService.isDailyDouble() checks in AnimationOrchestrator.
+  // They never run instantly on page load because we can't synchronously determine
+  // if a clue is a daily double without a database call.
 };
 
 /**
@@ -478,26 +469,13 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
 
       (animationService as any).activeTimelines?.push(timeline);
     });
-  },
-
-  shouldRunInstantly(_gameState, params) {
-    if (params) {
-      const animationService = AnimationService.getInstance();
-      const key = `DailyDoubleClueReveal:${params.gameId}:${params.clueId}`;
-      if (animationService.isPlaying(key) || animationService.hasPlayed(key)) {
-        return false;
-      }
-    }
-    return false; // Requires more context about daily double state
-  },
-
-  getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) {return null;}
-    return {
-      clueId: gameState.focused_clue_id,
-      gameId: gameState.id
-    };
   }
+
+  // Note: shouldRunInstantly and getParamsFromGameState are intentionally omitted.
+  // Daily double clue reveal animations are always triggered explicitly via AnimationEvents.publish()
+  // after async ClueService.isDailyDouble() checks in PlayerDashboard's clue_states subscription.
+  // They never run instantly on page load because we can't synchronously determine
+  // if a clue is a daily double without a database call.
 };
 
 /**
@@ -583,7 +561,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
     });
   },
 
-  shouldRunInstantly(_gameState, params) {
+  shouldRunInstantly(gameState, params) {
     if (params) {
       const animationService = AnimationService.getInstance();
       const key = `RoundTransition:${params.gameId}:${params.fromRound}-${params.toRound}`;
@@ -632,6 +610,9 @@ export class AnimationRegistry {
    * Check all registered animations to see which should run instantly
    * based on current game state.
    *
+   * Only checks animations that have both shouldRunInstantly and getParamsFromGameState methods.
+   * Animations without these methods are always triggered explicitly and never run instantly.
+   *
    * @param gameState - Current game state
    * @returns Array of animations that should run instantly with their params
    */
@@ -641,6 +622,11 @@ export class AnimationRegistry {
     console.log(`🎬 [AnimationRegistry] Checking ${this.definitions.size} animations for instant run`);
 
     for (const def of this.definitions.values()) {
+      // Skip animations that don't implement instant-run methods
+      if (!def.shouldRunInstantly || !def.getParamsFromGameState) {
+        continue;
+      }
+
       if (def.shouldRunInstantly(gameState)) {
         const params = def.getParamsFromGameState(gameState);
         if (params) {
