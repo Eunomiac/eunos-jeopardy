@@ -41,9 +41,16 @@ export class AnimationOrchestrator {
       nextFocusedPlayer: next.focused_player_id
     });
 
-    // Round transition when current_round changes (jeopardy → double → final)
-    if (next.current_round && prev?.current_round && next.current_round !== prev.current_round) {
-      console.log(`🎬 [AnimationOrchestrator] Detected RoundTransition trigger (round: ${prev.current_round} → ${next.current_round})`);
+    // Round transition when current_round changes AND status is round_transition
+    // This ensures the animation only plays during intentional round transitions,
+    // not during game initialization or other state changes
+    if (
+      next.current_round &&
+      prev?.current_round &&
+      next.current_round !== prev.current_round &&
+      next.status === ('round_transition' as GameStatus)
+    ) {
+      console.log(`🎬 [AnimationOrchestrator] Detected RoundTransition trigger (round: ${prev.current_round} → ${next.current_round}, status: ${next.status})`);
       AnimationEvents.publish({
         type: "RoundTransition",
         gameId,

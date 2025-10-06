@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type GameStatus = "lobby" | "in_progress" | "completed" | "cancelled";
+export type GameStatus = "lobby" | "game_intro" | "introducing_categories" | "in_progress" | "round_transition" | "completed" | "cancelled";
 export type RoundType = "jeopardy" | "double" | "final";
 
 export type Database = {

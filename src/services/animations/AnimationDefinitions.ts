@@ -199,7 +199,7 @@ export const CategoryIntroAnimation: AnimationDefinition<{ categoryNumber: numbe
 
   getParamsFromGameState(gameState) {
     const category = (gameState as Game & { current_introduction_category?: number }).current_introduction_category;
-    if (!category || !gameState.id) return null;
+    if (!category || !gameState.id) {return null;};
     return {
       categoryNumber: category,
       gameId: gameState.id
@@ -304,7 +304,7 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) return null;
+    if (!gameState.focused_clue_id || !gameState.id) {return null;};
     return {
       clueId: gameState.focused_clue_id,
       gameId: gameState.id
@@ -592,13 +592,14 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
       }
     }
 
-    // Round transition is "in the past" if we're in a later round
-    // This is complex - for now, never run instantly
-    return false;
+    // Round transition should run instantly if status is 'round_transition'
+    // This handles page reloads during round transitions
+    return gameState.status === ('round_transition' as GameStatus);
   },
 
-  getParamsFromGameState(gameState) {
+  getParamsFromGameState(_gameState) {
     // Can't derive transition params from current state alone
+    // The orchestrator provides params when publishing the event
     return null;
   }
 };
