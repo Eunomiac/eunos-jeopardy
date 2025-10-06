@@ -1,0 +1,41 @@
+# Real-Time Buzzer Implementation Task
+
+Your mission is to implement a real-time broadcast-based buzzer system for the Euno's Jeopardy application that provides immediate (<50ms) buzzer responsiveness.
+
+## Primary Instructions
+Read and follow the comprehensive instructions in:
+**`docs/ai/prompts/REMOTE_AGENT_REALTIME_BUZZER_PROMPT.md`**
+
+That file contains:
+- Complete mission statement and requirements
+- Reference to the detailed implementation plan
+- Git workflow requirements (CRITICAL: commit frequently and push immediately)
+- Testing requirements and success criteria
+- Pull request submission instructions
+
+## Implementation Plan
+The detailed technical implementation plan is in:
+**`docs/ai/features/REAL-TIME BUZZER.md`**
+
+This contains:
+- Current system analysis
+- Target architecture with design principles
+- 6 implementation phases with code examples
+- Broadcast channel specifications
+- Performance targets and testing strategy
+
+## Critical Requirements
+1. **Commit frequently**: After each phase and significant milestone
+2. **Push immediately**: After every commit to preserve work
+3. **Remove deprecated code**: Do not retain old code or add deprecation warnings
+4. **Create PR when complete**: Use GitHub CLI as documented in the prompt file
+
+## Getting Started
+1. Read `docs/ai/prompts/REMOTE_AGENT_REALTIME_BUZZER_PROMPT.md` thoroughly
+2. Review `docs/ai/features/REAL-TIME BUZZER.md` for technical details
+3. Create feature branch: `feature/real-time-buzzer`
+4. Begin with Phase 1: Broadcast Infrastructure
+5. Commit and push after each phase completion
+
+Good luck! Remember to commit frequently and create a PR when all phases are complete.
+
