@@ -597,7 +597,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
     return gameState.status === ('round_transition' as GameStatus);
   },
 
-  getParamsFromGameState(gameState) {
+  getParamsFromGameState(_gameState) {
     // Can't derive transition params from current state alone
     // The orchestrator provides params when publishing the event
     return null;
