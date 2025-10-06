@@ -10,10 +10,12 @@ import type { Database } from '../../services/supabase/types'
 // Type aliases for cleaner code
 type PlayerRow = Database['public']['Tables']['players']['Row']
 
+// Mock Supabase - this ensures the mock is used before client.ts is loaded
+jest.mock('@supabase/supabase-js')
+
 // Mock services
 jest.mock('../../services/games/GameService')
 jest.mock('../../services/fonts/FontAssignmentService')
-jest.mock('../../services/supabase/client')
 
 const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockFontAssignmentService = FontAssignmentService as jest.Mocked<typeof FontAssignmentService>
@@ -121,7 +123,13 @@ function setupMockGameWithPlayers() {
 
 describe('PlayerDashboard', () => {
   const mockProps = {
-    gameId: 'game-123'
+    gameId: 'game-123',
+    game: {
+      ...mockGame,
+      current_round: 'jeopardy',
+      is_buzzer_locked: true,
+      focused_clue_id: null
+    }
   }
 
   beforeEach(() => {
@@ -261,10 +269,11 @@ describe('PlayerDashboard', () => {
       await waitFor(() => {
         // Should show round header
         expect(screen.getByText('The Jeopardy Round')).toBeInTheDocument()
-        // Should show categories
+        // Should show all 6 categories
         expect(screen.getByText('Category 1')).toBeInTheDocument()
-        // Should show clue cells
-        expect(screen.getAllByText('$200')).toHaveLength(2) // 2 categories × 1 clue each
+        expect(screen.getByText('Category 6')).toBeInTheDocument()
+        // Should show clue cells - 6 categories with $200 as first clue value
+        expect(screen.getAllByText('$200')).toHaveLength(6)
         // Should show player podiums section
         expect(screen.getByText('Other Player')).toBeInTheDocument()
       })
