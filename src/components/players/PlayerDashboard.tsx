@@ -1058,7 +1058,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
                   className="jeopardy-category-display-strip"
                   // Transform now handled by GSAP animation
                 >
-                  {/* Always populate with current round's categories */}
                   {(() => {
                     if (game.current_round === "final") {
                       // Final Jeopardy - single category
