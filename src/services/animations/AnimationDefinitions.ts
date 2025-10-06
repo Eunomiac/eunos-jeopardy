@@ -592,13 +592,14 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
       }
     }
 
-    // Round transition is "in the past" if we're in a later round
-    // This is complex - for now, never run instantly
-    return false;
+    // Round transition should run instantly if status is 'round_transition'
+    // This handles page reloads during round transitions
+    return gameState.status === ('round_transition' as GameStatus);
   },
 
   getParamsFromGameState(gameState) {
     // Can't derive transition params from current state alone
+    // The orchestrator provides params when publishing the event
     return null;
   }
 };
