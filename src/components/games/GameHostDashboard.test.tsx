@@ -9,6 +9,7 @@ import { mockUser, mockPlayers, createMockGame } from '../../test/__mocks__/comm
 jest.mock('../../services/games/GameService')
 jest.mock('../../services/clues/ClueService')
 jest.mock('../../services/clueSets/clueSetService')
+jest.mock('../../services/realtime/BroadcastService')
 
 const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockClueService = ClueService as jest.Mocked<typeof ClueService>
@@ -16,6 +17,10 @@ const mockClueService = ClueService as jest.Mocked<typeof ClueService>
 // Import ClueSetService after mocking
 import { ClueSetService } from '../../services/clueSets/clueSetService'
 const mockClueSetService = ClueSetService as jest.Mocked<typeof ClueSetService>
+
+// Import BroadcastService after mocking
+import { BroadcastService } from '../../services/realtime/BroadcastService'
+const mockBroadcastService = BroadcastService as jest.Mocked<typeof BroadcastService>
 
 // Mock window.confirm
 const mockConfirm = jest.fn()
@@ -65,6 +70,12 @@ describe('GameHostDashboard', () => {
     mockGameService.getBuzzesForClue.mockResolvedValue([]) // Mock buzzer queue
     mockGameService.startGame.mockResolvedValue(mockGame)
     mockGameService.setFocusedClue.mockResolvedValue(mockGame)
+
+    // Mock BroadcastService to prevent subscription errors
+    mockBroadcastService.subscribeToGameBuzzer.mockReturnValue({
+      channelId: 'test-channel',
+      unsubscribe: jest.fn()
+    })
 
     // Mock ClueService methods to prevent "Clue set not found" error
     mockClueService.getGameClueStates.mockResolvedValue([])
