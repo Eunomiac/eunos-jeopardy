@@ -11,7 +11,7 @@ import type { Database } from '../../services/supabase/types'
 import { parseCSV } from '../../utils/csvParser'
 
 // Type aliases for cleaner code
-type GameRow = Database['public']['Tables']['games']['Row']
+export type GameRow = Database['public']['Tables']['games']['Row']
 type PlayerRow = Database['public']['Tables']['players']['Row']
 type ClueSetRow = Database['public']['Tables']['clue_sets']['Row']
 

@@ -19,7 +19,7 @@ export interface ClueDisplayContent {
 
 export class ClueDisplayService {
   private static instance: ClueDisplayService;
-  private clueCache: Map<string, ClueDisplayContent> = new Map();
+  private readonly clueCache: Map<string, ClueDisplayContent> = new Map();
 
   static getInstance(): ClueDisplayService {
     if (!this.instance) {

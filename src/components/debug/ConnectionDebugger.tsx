@@ -134,8 +134,8 @@ export function ConnectionDebugger() {
         // If we see a game event and don't have a current game ID, try to detect it
         setConnectionStatus((prev) => {
           if (!prev.currentGameId && payload.new) {
-            const gameData = payload.new as any;
-            if (gameData.id && (gameData.status === 'lobby' || gameData.status === 'game_intro' || gameData.status === 'introducing_categories' || gameData.status === 'in_progress')) {
+            const gameData = payload.new as Record<string, unknown>;
+            if (typeof gameData.id === 'string' && ["lobby", "game_intro", "introducing_categories", "in_progress"].includes(gameData.status)) {
               return {
                 ...prev,
                 currentGameId: gameData.id,
@@ -209,9 +209,14 @@ export function ConnectionDebugger() {
       textArea.value = channelName;
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      alert(`Copied: ${channelName}`);
+      // Modern fallback for clipboard copy
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(channelName)
+          .then(() => alert(`Copied: ${channelName}`))
+          .catch(() => alert(`Failed to copy: ${channelName}`));
+      } else {
+        alert(`Failed to copy: ${channelName}`);
+      }
     }
   };
 

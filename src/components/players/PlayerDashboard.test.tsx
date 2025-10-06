@@ -4,104 +4,22 @@ import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { FontAssignmentService } from '../../services/fonts/FontAssignmentService'
 import { mockUser, mockGame, mockPlayers } from '../../test/__mocks__/commonTestData'
-import { supabase } from '../../services/supabase/client'
 import type { PlayerInfo } from './PlayerPodiums'
 import type { Database } from '../../services/supabase/types'
+import { supabase } from '../../services/supabase/client'
 
 // Type aliases for cleaner code
 type PlayerRow = Database['public']['Tables']['players']['Row']
 
+// Mock Supabase - this ensures the mock is used before client.ts is loaded
+jest.mock('@supabase/supabase-js')
+
 // Mock services
 jest.mock('../../services/games/GameService')
 jest.mock('../../services/fonts/FontAssignmentService')
-jest.mock('../../services/supabase/client')
 
 const mockGameService = GameService as jest.Mocked<typeof GameService>
 const mockFontAssignmentService = FontAssignmentService as jest.Mocked<typeof FontAssignmentService>
-const mockSupabase = supabase as jest.Mocked<typeof supabase>
-
-// Mock Supabase client
-jest.mock('../../services/supabase/client', () => ({
-  supabase: {
-    from: jest.fn((table: string) => {
-      // Mock different responses based on table
-      if (table === 'clue_states') {
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: [],
-              error: null
-            })
-          })
-        }
-      }
-      if (table === 'games') {
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { clue_set_id: 'clue-set-123' },
-                error: null
-              })
-            })
-          })
-        }
-      }
-      if (table === 'boards') {
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: 'board-1',
-                    round: 'jeopardy',
-                    categories: [
-                      {
-                        id: 'cat-1',
-                        name: 'Category 1',
-                        position: 0,
-                        clues: [
-                          { id: 'clue-1', prompt: 'Test prompt 1', response: 'Test response 1', value: 200, position: 0 }
-                        ]
-                      },
-                      {
-                        id: 'cat-2',
-                        name: 'Category 2',
-                        position: 1,
-                        clues: [
-                          { id: 'clue-2', prompt: 'Test prompt 2', response: 'Test response 2', value: 200, position: 0 }
-                        ]
-                      }
-                    ]
-                  }
-                ],
-                error: null
-              })
-            })
-          })
-        }
-      }
-      // Default mock for profiles and other tables
-      return {
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { handwritten_font: 'handwritten-2', temp_handwritten_font: null },
-              error: null
-            })
-          })
-        })
-      }
-    }),
-    channel: jest.fn(() => ({
-      on: jest.fn().mockReturnThis(),
-      subscribe: jest.fn().mockReturnThis(),
-      unsubscribe: jest.fn().mockReturnThis(),
-      send: jest.fn().mockResolvedValue(undefined)
-    }))
-  }
-}))
 
 // Mock AuthContext
 jest.mock('../../contexts/AuthContext', () => ({
@@ -191,6 +109,7 @@ function createMockPlayerNotInGame(): { players: PlayerRow[] } {
 
 /**
  * Sets up all mocks for a successful game state with players
+ * Note: Relies on the global Supabase mock defined at the top of this file
  */
 function setupMockGameWithPlayers() {
   const { players, playerInfos } = createMockGameWithPlayers()
@@ -198,84 +117,20 @@ function setupMockGameWithPlayers() {
   mockGameService.getPlayers.mockResolvedValue(players)
   mockFontAssignmentService.getPlayerFont.mockResolvedValue('handwritten-1')
 
-  // Mock Supabase queries - use the same comprehensive mock as the global one
-  mockSupabase.from.mockImplementation((table: string) => {
-    if (table === 'clue_states') {
-      return {
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            data: [],
-            error: null
-          })
-        })
-      }
-    }
-    if (table === 'games') {
-      return {
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { clue_set_id: 'clue-set-123' },
-              error: null
-            })
-          })
-        })
-      }
-    }
-    if (table === 'boards') {
-      return {
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  id: 'board-1',
-                  round: 'jeopardy',
-                  categories: [
-                    {
-                      id: 'cat-1',
-                      name: 'Category 1',
-                      position: 0,
-                      clues: [
-                        { id: 'clue-1', prompt: 'Test prompt 1', response: 'Test response 1', value: 200, position: 0 }
-                      ]
-                    },
-                    {
-                      id: 'cat-2',
-                      name: 'Category 2',
-                      position: 1,
-                      clues: [
-                        { id: 'clue-2', prompt: 'Test prompt 2', response: 'Test response 2', value: 200, position: 0 }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              error: null
-            })
-          })
-        })
-      }
-    }
-    // Default mock for profiles and other tables
-    return {
-      select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { handwritten_font: 'handwritten-2', temp_handwritten_font: null },
-            error: null
-          })
-        })
-      })
-    }
-  })
+  // No need to override mockSupabase.from - the global mock at the top of the file handles it
 
   return { players, playerInfos }
 }
 
 describe('PlayerDashboard', () => {
   const mockProps = {
-    gameId: 'game-123'
+    gameId: 'game-123',
+    game: {
+      ...mockGame,
+      current_round: 'jeopardy',
+      is_buzzer_locked: true,
+      focused_clue_id: null
+    }
   }
 
   beforeEach(() => {
@@ -415,10 +270,11 @@ describe('PlayerDashboard', () => {
       await waitFor(() => {
         // Should show round header
         expect(screen.getByText('The Jeopardy Round')).toBeInTheDocument()
-        // Should show categories
+        // Should show all 6 categories
         expect(screen.getByText('Category 1')).toBeInTheDocument()
-        // Should show clue cells
-        expect(screen.getAllByText('$200')).toHaveLength(2) // 2 categories × 1 clue each
+        expect(screen.getByText('Category 6')).toBeInTheDocument()
+        // Should show clue cells - 6 categories with $200 as first clue value
+        expect(screen.getAllByText('$200')).toHaveLength(6)
         // Should show player podiums section
         expect(screen.getByText('Other Player')).toBeInTheDocument()
       })
@@ -485,10 +341,9 @@ describe('PlayerDashboard', () => {
 
       await waitFor(() => {
         // Component sets up Supabase postgres_changes subscriptions
-        // Note: BroadcastService creates its own channel internally, not through mockSupabase
-        expect(mockSupabase.channel).toHaveBeenCalledWith('players-game-123')
-        expect(mockSupabase.channel).toHaveBeenCalledWith('clue-states-game-123')
-        expect(mockSupabase.channel).toHaveBeenCalledWith('clues-game-123')
+        expect(supabase.channel).toHaveBeenCalledWith('players-game-123')
+        expect(supabase.channel).toHaveBeenCalledWith('clue-states-game-123')
+        expect(supabase.channel).toHaveBeenCalledWith('clues-game-123')
       })
     })
   })

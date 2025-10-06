@@ -4,18 +4,13 @@ import type { Clue } from "../../../services/clues/ClueService";
 import type { ClueSetData } from "../../../services/clueSets/loader";
 import { isPanelDisabled } from "./panelUtils";
 
+export type RevealBuzzerButtonState = "disabled" | "daily-double" | "daily-double-wager" | "reveal" | "unlock" | "lock";
 export interface ClueControlPanelProps {
   readonly game: Game | null;
   readonly focusedClue: Clue | null;
   readonly clueSetData: ClueSetData | null;
   readonly dailyDoublePositions: Array<{ category: number; row: number }>;
-  readonly getRevealBuzzerButtonState: () =>
-    | "disabled"
-    | "daily-double"
-    | "daily-double-wager"
-    | "reveal"
-    | "unlock"
-    | "lock";
+  readonly getRevealBuzzerButtonState: () => RevealBuzzerButtonState;
   readonly handleRevealBuzzerButton: () => void | Promise<void>;
   readonly clueTimeRemaining: number | null;
   readonly dailyDoubleWager: number | null;
@@ -46,9 +41,9 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
   } = props;
 
   const isDailyDoubleForFocused = useMemo(() => {
-    if (!focusedClue || !game) return false;
+    if (!focusedClue || !game) {return false;}
     const clueData = clueSetData?.rounds[game.current_round || "jeopardy"];
-    if (!Array.isArray(clueData)) return false;
+    if (!Array.isArray(clueData)) {return false;}
 
     for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
       const category = clueData[categoryIndex];

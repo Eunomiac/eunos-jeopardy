@@ -158,6 +158,12 @@ export class GameStateClassService {
       case BuzzerState.INACTIVE:
         classes.push(GameStateClassService.CLASS_NAMES.PODIUM_INACTIVE);
         break;
+      case BuzzerState.FROZEN:
+        classes.push(GameStateClassService.CLASS_NAMES.PODIUM_FROZEN);
+        break;
+      case BuzzerState.LOCKED:
+        classes.push(GameStateClassService.CLASS_NAMES.PODIUM_INACTIVE);
+        break;
     }
 
     return classes;
@@ -178,18 +184,18 @@ export class GameStateClassService {
   ): CategoryState[] {
     return categoryNames.map((name, index) => {
       // Find clues for this category (assuming 5 clues per category)
-      const categoryClues = clueStates.filter((_, clueIndex) => 
+      const categoryClues = clueStates.filter((_, clueIndex) =>
         Math.floor(clueIndex / 5) === index
       );
 
-      const completedCount = categoryClues.filter(clue => clue.completed).length;
+      const completedCount = categoryClues.filter((clue) => clue.completed).length;
       const totalCount = categoryClues.length;
       const isEmpty = completedCount === totalCount;
 
       // Check if focused clue is in this category
       let isFocused = false;
       if (focusedClueId) {
-        const focusedClueState = clueStates.find(state => state.clue_id === focusedClueId);
+        const focusedClueState = clueStates.find((state) => state.clue_id === focusedClueId);
         if (focusedClueState) {
           const focusedClueIndex = clueStates.indexOf(focusedClueState);
           isFocused = Math.floor(focusedClueIndex / 5) === index;
@@ -220,7 +226,7 @@ export class GameStateClassService {
     focusedPlayerId: string | null,
     buzzerStates: Map<string, BuzzerState>
   ): PodiumState[] {
-    return players.map(player => {
+    return players.map((player) => {
       const buzzerState = buzzerStates.get(player.user_id) || BuzzerState.INACTIVE;
       const isFocused = player.user_id === focusedPlayerId;
       const hasBuzzed = buzzerState === BuzzerState.BUZZED;
@@ -250,7 +256,7 @@ export class GameStateClassService {
     this.removeStateClasses(element, prefix);
 
     // Add new classes
-    classes.forEach(className => {
+    classes.forEach((className) => {
       const fullClassName = prefix ? `${prefix}-${className}` : className;
       element.classList.add(fullClassName);
     });
@@ -264,8 +270,8 @@ export class GameStateClassService {
    */
   removeStateClasses(element: HTMLElement, prefix?: string): void {
     const classesToRemove = Object.values(GameStateClassService.CLASS_NAMES);
-    
-    classesToRemove.forEach(className => {
+
+    classesToRemove.forEach((className) => {
       const fullClassName = prefix ? `${prefix}-${className}` : className;
       element.classList.remove(fullClassName);
     });
@@ -277,9 +283,9 @@ export class GameStateClassService {
    * @param element - Target DOM element
    * @param duration - Transition duration in milliseconds
    */
-  addTransitionClasses(element: HTMLElement, duration: number = 300): void {
+  addTransitionClasses(element: HTMLElement, duration = 300): void {
     element.classList.add(GameStateClassService.CLASS_NAMES.TRANSITIONING);
-    
+
     setTimeout(() => {
       element.classList.remove(GameStateClassService.CLASS_NAMES.TRANSITIONING);
     }, duration);
