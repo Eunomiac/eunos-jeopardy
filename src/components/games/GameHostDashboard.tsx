@@ -17,6 +17,7 @@ import { SupabaseConnection } from "../../services/supabase/connection";
 
 import { supabase } from "../../services/supabase/client";
 import { AnimationService } from "../../services/animations/AnimationService";
+import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import "./GameHostDashboard.scss";
 
 import { BuzzerQueuePanel } from "./panels/BuzzerQueuePanel";
@@ -72,15 +73,63 @@ const getGameControlButton = (game: Game | null) => {
 };
 
 /**
- * Helper function to calculate clue completion progress.
+ * Helper to extract clue IDs for a specific round from clue set data.
+ *
+ * Filters clues by round to ensure progress tracking only counts
+ * clues from the current round, not previous rounds.
+ *
+ * @param clueSetData - Complete clue set data structure
+ * @param round - Round type to get clues for
+ * @returns Array of clue IDs for the specified round
+ */
+const getCurrentRoundClueIds = (
+  clueSetData: ClueSetData,
+  round: string
+): string[] => {
+  if (round === "final") {
+    return (clueSetData.rounds.final.clues?.map(c => c.id).filter((id): id is string => id !== undefined)) || [];
+  }
+
+  const roundData = clueSetData.rounds[round as "jeopardy" | "double"];
+  if (!Array.isArray(roundData)) return [];
+
+  return roundData.flatMap(category =>
+    category.clues.map(clue => clue.id).filter((id): id is string => id !== undefined)
+  );
+};
+
+/**
+ * Helper function to calculate clue completion progress for current round only.
+ *
+ * Filters clue states to only include clues from the current round,
+ * ensuring accurate progress tracking for round transitions.
+ *
+ * @param clueStates - All clue states for the game
+ * @param currentRound - Current round type
+ * @param clueSetData - Complete clue set data (needed to filter by round)
+ * @returns Object with completedCount, totalClues, and percentage
  */
 const calculateClueProgress = (
   clueStates: ClueState[],
-  currentRound: string
+  currentRound: string,
+  clueSetData: ClueSetData | null
 ) => {
-  const completedCount = clueStates.filter((state) => state.completed).length;
+  if (!clueSetData) {
+    return { completedCount: 0, totalClues: 0, percentage: 0 };
+  }
+
+  // Get clue IDs for current round
+  const currentRoundClueIds = getCurrentRoundClueIds(clueSetData, currentRound);
+
+  // Filter clue states to only include current round
+  const currentRoundStates = clueStates.filter(state =>
+    currentRoundClueIds.includes(state.clue_id)
+  );
+
+  const completedCount = currentRoundStates.filter(state => state.completed).length;
   const totalClues = currentRound === "final" ? 1 : 30;
   const percentage = totalClues > 0 ? (completedCount / totalClues) * 100 : 0;
+
   return {
     completedCount,
     totalClues,
@@ -101,7 +150,7 @@ const formatGameStatus = (status: string): string => {
 /**
  * Helper function to calculate game progress.
  */
-const renderGameStatusInfo = (game: Game, clueStates: ClueState[]) => {
+const renderGameStatusInfo = (game: Game, clueStates: ClueState[], clueSetData: ClueSetData | null) => {
   return (
     <div className="game-status-info">
       <div className="status-row">
@@ -119,7 +168,8 @@ const renderGameStatusInfo = (game: Game, clueStates: ClueState[]) => {
             {(() => {
               const progress = calculateClueProgress(
                 clueStates,
-                game.current_round
+                game.current_round,
+                clueSetData
               );
               return progress.totalClues - progress.completedCount;
             })()}
@@ -135,11 +185,11 @@ const renderGameStatusInfo = (game: Game, clueStates: ClueState[]) => {
             id="round-progress-bar"
             className="progress-bar w-100"
             value={
-              calculateClueProgress(clueStates, game.current_round).percentage
+              calculateClueProgress(clueStates, game.current_round, clueSetData).percentage
             }
             max={100}
           >
-            {calculateClueProgress(clueStates, game.current_round).percentage}%
+            {calculateClueProgress(clueStates, game.current_round, clueSetData).percentage}%
             Complete
           </progress>
         </div>
@@ -313,6 +363,12 @@ export function GameHostDashboard({
 
   /** Daily Double wager input value */
   const [wagerInput, setWagerInput] = useState("");
+
+  /** Round transition confirmation dialog state */
+  const [showRoundTransitionConfirm, setShowRoundTransitionConfirm] = useState(false);
+
+  /** Round completion state for enabling "Next Round" button */
+  const [isRoundComplete, setIsRoundComplete] = useState(false);
 
   /**
    * Effect to sync game state and handle animation triggers via subscription.
@@ -744,6 +800,61 @@ export function GameHostDashboard({
   useEffect(() => {
     loadBuzzerQueue();
   }, [loadBuzzerQueue]);
+
+  /**
+   * Effect to check round completion and enable "Next Round" button.
+   *
+   * Monitors clue states and updates the isRoundComplete state when
+   * all clues in the current round have been completed.
+   */
+  useEffect(() => {
+    if (!game || !clueSetData) return;
+
+    const checkRoundCompletion = () => {
+      const progress = calculateClueProgress(clueStates, game.current_round, clueSetData);
+      setIsRoundComplete(progress.completedCount >= progress.totalClues);
+    };
+
+    checkRoundCompletion();
+  }, [clueStates, game?.current_round, clueSetData, game]);
+
+  /**
+   * Effect to handle round transition animation completion.
+   *
+   * Subscribes to AnimationEvents and transitions to category introduction
+   * phase after the round transition animation completes.
+   */
+  useEffect(() => {
+    if (!game || !user) return;
+
+    // Only handle round_transition status
+    if (game.status !== 'round_transition') return;
+
+    // Subscribe to animation events
+    const unsubscribe = AnimationEvents.subscribe(async (event) => {
+      if (event.type === 'RoundTransition' && event.gameId === game.id) {
+        console.log('🎬 [GameHostDashboard] Round transition animation started');
+
+        // Wait for animation to complete (approximately 2.5 seconds based on animation definition)
+        // The animation timeline includes: fade out (0.5s) + overlay show (0.6s) + hold (1.5s) + overlay fade (0.5s)
+        // Total: ~3.1 seconds, but we'll use 2.5s to start category intro slightly before overlay fully fades
+        setTimeout(async () => {
+          try {
+            console.log('🎬 [GameHostDashboard] Round transition animation complete, starting category introductions');
+            await GameService.startCategoryIntroductions(game.id, user.id);
+          } catch (error) {
+            console.error('Failed to start category introductions:', error);
+            setMessage(
+              `Failed to start category introductions: ${error instanceof Error ? error.message : "Unknown error"}`
+            );
+            setMessageType("error");
+          }
+        }, 2500);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [game?.status, game?.id, user]);
 
   /**
    * Determines the current state of the multi-state reveal/buzzer button
@@ -1674,6 +1785,132 @@ export function GameHostDashboard({
   };
 
   /**
+   * Handles round transition to next round.
+   *
+   * Checks if the current round is complete and either proceeds with
+   * the transition or shows a confirmation dialog for early transitions.
+   *
+   * **Round Progression:**
+   * - jeopardy → double
+   * - double → final
+   * - final → (disabled, no further progression)
+   *
+   * **Validation:**
+   * - Automatic enablement when all clues completed
+   * - Confirmation dialog for early transitions
+   * - Disabled at Final Jeopardy
+   */
+  const handleNextRound = async () => {
+    if (!user || !game) return;
+
+    try {
+      // Check if round is complete
+      if (!isRoundComplete) {
+        // Show confirmation dialog
+        setShowRoundTransitionConfirm(true);
+        return;
+      }
+
+      // Proceed with transition
+      await performRoundTransition();
+    } catch (error) {
+      console.error("Failed to transition round:", error);
+      setMessage(
+        `Failed to advance round: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Performs the actual round transition.
+   *
+   * Called either directly (when round is complete) or after
+   * confirmation dialog (for early transitions).
+   */
+  const performRoundTransition = async () => {
+    if (!user || !game) return;
+
+    setMessage("Transitioning to next round...");
+    setMessageType("");
+
+    try {
+      const updatedGame = await GameService.transitionToNextRound(
+        game.id,
+        user.id,
+        !isRoundComplete // force if not complete
+      );
+
+      setGame(updatedGame);
+      setMessage(`Advanced to ${updatedGame.current_round} round`);
+      setMessageType("success");
+    } catch (error) {
+      console.error("Failed to transition round:", error);
+      setMessage(
+        `Failed to advance round: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
+   * Handles confirmation of round transition with incomplete clues.
+   */
+  const handleConfirmRoundTransition = async () => {
+    setShowRoundTransitionConfirm(false);
+    await performRoundTransition();
+  };
+
+  /**
+   * Handles cancellation of round transition.
+   */
+  const handleCancelRoundTransition = () => {
+    setShowRoundTransitionConfirm(false);
+  };
+
+  /**
+   * DEBUG ONLY: Marks all clues in the current round as completed.
+   *
+   * This is a development utility to test round transitions without
+   * manually resolving all 30 clues. Only visible in development mode.
+   */
+  const handleDebugCompleteAllClues = async () => {
+    if (!user || !game || !clueSetData) return;
+
+    try {
+      setMessage("DEBUG: Completing all clues in current round...");
+      setMessageType("");
+
+      // Get all clue IDs for current round
+      const currentRoundClueIds = getCurrentRoundClueIds(clueSetData, game.current_round);
+
+      // Mark all as completed in database
+      const { error } = await supabase
+        .from('clue_states')
+        .update({ completed: true })
+        .eq('game_id', game.id)
+        .in('clue_id', currentRoundClueIds);
+
+      if (error) {
+        throw new Error(`Failed to complete clues: ${error.message}`);
+      }
+
+      // Refresh clue states
+      const updatedClueStates = await ClueService.getGameClueStates(game.id);
+      setClueStates(updatedClueStates);
+
+      setMessage(`DEBUG: Completed all ${currentRoundClueIds.length} clues in ${game.current_round} round`);
+      setMessageType("success");
+    } catch (error) {
+      console.error("Failed to complete all clues:", error);
+      setMessage(
+        `DEBUG: Failed to complete clues: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+      setMessageType("error");
+    }
+  };
+
+  /**
    * Handles score adjustment input changes for players.
    */
   const handleScoreAdjustmentChange = (playerId: string, value: string) => {
@@ -2122,15 +2359,29 @@ export function GameHostDashboard({
               </button>
               <button
                 className="jeopardy-button flex-1"
-                disabled
-                title="Round progression controls"
+                onClick={handleNextRound}
+                disabled={!game || game.status !== 'in_progress' || game.current_round === 'final'}
+                title="Advance to next round"
               >
                 Next Round
               </button>
+
+              {/* DEBUG BUTTON - Remove before production */}
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  className="jeopardy-button flex-1"
+                  onClick={handleDebugCompleteAllClues}
+                  disabled={!game || game.status !== 'in_progress'}
+                  title="DEBUG: Mark all clues in current round as completed"
+                  style={{ opacity: 0.7, fontSize: '0.85em' }}
+                >
+                  🐛 Complete Round
+                </button>
+              )}
             </div>
 
             {/* Game Status Info - moved from Game Status Panel */}
-            {renderGameStatusInfo(game, clueStates)}
+            {renderGameStatusInfo(game, clueStates, clueSetData)}
 
             {players.length === 0 ? (
               <p className="text-muted">No players joined yet</p>
@@ -2255,6 +2506,35 @@ export function GameHostDashboard({
           handleMarkWrong={handleMarkWrong}
         />
       </div>
+
+      {/* Round Transition Confirmation Dialog */}
+      {showRoundTransitionConfirm && game && clueSetData && (
+        <div className="confirmation-overlay">
+          <div className="confirmation-dialog">
+            <h3>Advance Round?</h3>
+            <p>
+              There are {calculateClueProgress(clueStates, game.current_round, clueSetData).totalClues -
+                        calculateClueProgress(clueStates, game.current_round, clueSetData).completedCount} clues
+              remaining in this round.
+            </p>
+            <p>Are you sure you want to advance to the next round?</p>
+            <div className="confirmation-buttons">
+              <button
+                className="jeopardy-button red"
+                onClick={handleCancelRoundTransition}
+              >
+                Cancel
+              </button>
+              <button
+                className="jeopardy-button green"
+                onClick={handleConfirmRoundTransition}
+              >
+                Advance Round
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

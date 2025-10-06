@@ -931,4 +931,186 @@ describe('ClueService', () => {
       await expect(ClueService.getCompletedCluesCount('game-123')).rejects.toThrow('Failed to count completed clues: Database error')
     })
   })
+
+  describe('getCompletedCluesCountByRound', () => {
+    const mockGame = { clue_set_id: 'clue-set-123' }
+    const mockBoard = { id: 'board-123' }
+    const mockCategories = [
+      { id: 'cat-1' },
+      { id: 'cat-2' },
+      { id: 'cat-3' },
+      { id: 'cat-4' },
+      { id: 'cat-5' },
+      { id: 'cat-6' }
+    ]
+    const mockClues = [
+      { id: 'clue-1' },
+      { id: 'clue-2' },
+      { id: 'clue-3' }
+    ]
+    const mockCompletedClueStates = [
+      { game_id: 'game-123', clue_id: 'clue-1', completed: true },
+      { game_id: 'game-123', clue_id: 'clue-2', completed: true }
+    ]
+
+    it('should return count of completed clues for jeopardy round', async () => {
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+              })
+            })
+          }
+        }
+        if (table === 'boards') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockBoard, error: null })
+                })
+              })
+            })
+          }
+        }
+        if (table === 'categories') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+            })
+          }
+        }
+        if (table === 'clues') {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
+            })
+          }
+        }
+        if (table === 'clue_states') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                in: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockResolvedValue({ data: mockCompletedClueStates, error: null })
+                })
+              })
+            })
+          }
+        }
+      })
+
+      const result = await ClueService.getCompletedCluesCountByRound('game-123', 'jeopardy')
+      expect(result).toBe(2)
+    })
+
+    it('should return 0 when no clues completed in round', async () => {
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+              })
+            })
+          }
+        }
+        if (table === 'boards') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockBoard, error: null })
+                })
+              })
+            })
+          }
+        }
+        if (table === 'categories') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+            })
+          }
+        }
+        if (table === 'clues') {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
+            })
+          }
+        }
+        if (table === 'clue_states') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                in: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockResolvedValue({ data: [], error: null })
+                })
+              })
+            })
+          }
+        }
+      })
+
+      const result = await ClueService.getCompletedCluesCountByRound('game-123', 'double')
+      expect(result).toBe(0)
+    })
+
+    it('should handle game without clue set', async () => {
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'games') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { clue_set_id: null }, error: null })
+              })
+            })
+          }
+        }
+      })
+
+      await expect(ClueService.getCompletedCluesCountByRound('game-123', 'jeopardy'))
+        .rejects.toThrow('Game does not have a clue set assigned')
+    })
+  })
+
+  describe('isRoundComplete', () => {
+    it('should return true when all 30 clues completed for jeopardy round', async () => {
+      jest.spyOn(ClueService, 'getCompletedCluesCountByRound').mockResolvedValue(30)
+
+      const result = await ClueService.isRoundComplete('game-123', 'jeopardy')
+      expect(result).toBe(true)
+    })
+
+    it('should return false when clues remain in jeopardy round', async () => {
+      jest.spyOn(ClueService, 'getCompletedCluesCountByRound').mockResolvedValue(25)
+
+      const result = await ClueService.isRoundComplete('game-123', 'jeopardy')
+      expect(result).toBe(false)
+    })
+
+    it('should return true when all 30 clues completed for double round', async () => {
+      jest.spyOn(ClueService, 'getCompletedCluesCountByRound').mockResolvedValue(30)
+
+      const result = await ClueService.isRoundComplete('game-123', 'double')
+      expect(result).toBe(true)
+    })
+
+    it('should return true when 1 clue completed for final round', async () => {
+      jest.spyOn(ClueService, 'getCompletedCluesCountByRound').mockResolvedValue(1)
+
+      const result = await ClueService.isRoundComplete('game-123', 'final')
+      expect(result).toBe(true)
+    })
+
+    it('should return false when final clue not completed', async () => {
+      jest.spyOn(ClueService, 'getCompletedCluesCountByRound').mockResolvedValue(0)
+
+      const result = await ClueService.isRoundComplete('game-123', 'final')
+      expect(result).toBe(false)
+    })
+  })
 })

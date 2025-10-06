@@ -75,15 +75,15 @@ export type ClueStateInsert = TablesInsert<'clue_states'>
  */
 export class GameService {
   /**
-   * Gets the currently active game (lobby, game_intro, introducing_categories, or in_progress status).
+   * Gets the currently active game (lobby, game_intro, introducing_categories, in_progress, or round_transition status).
    *
    * This method enforces the "one game at a time" rule by finding any game
-   * that is currently in lobby, game_intro, introducing_categories, or in_progress status. Used to prevent multiple
+   * that is currently in lobby, game_intro, introducing_categories, in_progress, or round_transition status. Used to prevent multiple
    * simultaneous games and to redirect hosts to existing active games.
    *
    * **Business Logic:**
    * - Only one game can be active at any time
-   * - Active games are those with status 'lobby', 'game_intro', 'introducing_categories', or 'in_progress'
+   * - Active games are those with status 'lobby', 'game_intro', 'introducing_categories', 'in_progress', or 'round_transition'
    * - Completed/cancelled games are not considered active
    *
    * @returns Promise resolving to the active game or null if none exists
@@ -107,7 +107,7 @@ export class GameService {
     const { data, error } = await supabase
       .from('games')
       .select()
-      .in('status', ['lobby', 'game_intro' as Game['status'], 'introducing_categories' as Game['status'], 'in_progress'])
+      .in('status', ['lobby', 'game_intro' as Game['status'], 'introducing_categories' as Game['status'], 'in_progress', 'round_transition' as Game['status']])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -1802,5 +1802,121 @@ export class GameService {
     const randomPlayer = players[randomIndex]
 
     return this.setCurrentPlayer(gameId, randomPlayer.user_id, hostId)
+  }
+
+  /**
+   * Helper method to determine next round in sequence.
+   *
+   * Maps the current round to the next round in the standard Jeopardy progression.
+   * Returns null if already at Final Jeopardy (no further progression possible).
+   *
+   * **Round Sequence:**
+   * - jeopardy → double
+   * - double → final
+   * - final → null (no further rounds)
+   *
+   * @param currentRound - Current round type
+   * @returns Next round type or null if at final round
+   *
+   * @example
+   * ```typescript
+   * const nextRound = GameService.getNextRound('jeopardy');
+   * console.log(nextRound); // 'double'
+   * ```
+   *
+   * @since 0.2.0
+   * @author Euno's Jeopardy Team
+   */
+  private static getNextRound(currentRound: RoundType): RoundType | null {
+    const roundSequence: Record<RoundType, RoundType | null> = {
+      'jeopardy': 'double',
+      'double': 'final',
+      'final': null
+    }
+    return roundSequence[currentRound]
+  }
+
+  /**
+   * Transitions the game to the next round with validation.
+   *
+   * Handles round progression: jeopardy → double → final
+   * Validates round completion unless force flag is set.
+   * Updates game status to trigger round transition animation.
+   *
+   * **Round Progression:**
+   * - jeopardy → double: Advances to Double Jeopardy
+   * - double → final: Advances to Final Jeopardy
+   * - final → (error): Cannot advance beyond Final Jeopardy
+   *
+   * **Validation:**
+   * - Checks if current round is complete (unless force = true)
+   * - Verifies host authorization
+   * - Ensures game is in 'in_progress' status
+   *
+   * **Status Transitions:**
+   * - Sets status to 'round_transition' (new status)
+   * - Updates current_round to next round
+   * - Animation orchestrator detects change and triggers animation
+   * - After animation, status transitions to 'introducing_categories'
+   *
+   * **State Cleanup:**
+   * - Clears focused_clue_id (no clue selected)
+   * - Clears focused_player_id (no player turn)
+   * - Locks buzzer during transition
+   *
+   * @param gameId - UUID of the game
+   * @param hostId - UUID of the host (for authorization)
+   * @param force - If true, skip round completion validation
+   * @returns Promise resolving to updated game
+   * @throws {Error} When unauthorized, invalid state, or already at final round
+   *
+   * @example
+   * ```typescript
+   * // Normal transition (validates round completion)
+   * const game = await GameService.transitionToNextRound(gameId, hostId);
+   *
+   * // Force transition (skip validation)
+   * const game = await GameService.transitionToNextRound(gameId, hostId, true);
+   * ```
+   *
+   * @since 0.2.0
+   * @author Euno's Jeopardy Team
+   */
+  static async transitionToNextRound(
+    gameId: string,
+    hostId: string,
+    force: boolean = false
+  ): Promise<Game> {
+    // 1. Get and validate game
+    const game = await this.getGame(gameId, hostId)
+
+    // 2. Validate game status
+    if (game.status !== 'in_progress') {
+      throw new Error(`Cannot transition rounds: Game is not in progress (status: ${game.status})`)
+    }
+
+    // 3. Determine next round
+    const nextRound = this.getNextRound(game.current_round)
+    if (!nextRound) {
+      throw new Error('Cannot advance beyond Final Jeopardy')
+    }
+
+    // 4. Check round completion (unless forced)
+    if (!force) {
+      const isComplete = await ClueService.isRoundComplete(gameId, game.current_round)
+      if (!isComplete) {
+        throw new Error('Current round is not complete. Use force=true to override.')
+      }
+    }
+
+    // 5. Update game to trigger round transition
+    // Note: 'round_transition' status will be added to database enum in Phase 2
+    return this.updateGame(gameId, {
+      current_round: nextRound,
+      status: 'round_transition' as GameStatus,
+      focused_clue_id: null,
+      focused_player_id: null,
+      is_buzzer_locked: true
+    }, hostId)
   }
 }
