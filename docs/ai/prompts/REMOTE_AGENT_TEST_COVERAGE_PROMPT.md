@@ -10,23 +10,21 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 - **Coverage Tool**: Built into Jest, reported via SonarQube integration
 
 # Key References
+
+## Testing References
 - **[Testing Mocks Reference](../reference/TESTING_MOCKS_REFERENCE.md)** - Mock registry and anti-over-mocking guidelines
 - **[Testing Strategy](../reference/strategy/TESTING_STRATEGY.md)** - Testing approach and architecture
 - **[Testing Reference](../reference/TESTING_REFERENCE.md)** - Technical setup and configuration
 
-## Current State
-- **Authentication system**: Working with Supabase Auth + profile creation + session management
-- **CSV loader**: Complete with parsing, validation, and database saving
-- **Game creation workflow**: Complete - users can create games and access host dashboard
-- **Host controls**: Basic buzzer lock/unlock and game ending functionality working
-- **Database**: Supabase with RLS policies rebuilt and working correctly
-- **Code quality**: All SonarQube quality gates passing
-- **Documentation**: Recently streamlined with clear separation of concerns
+## General References
+- **[INDEX.md](../INDEX.md)** - Navigation hub for all AI documentation]
+- **[CURRENT_STATUS.md](../CURRENT_STATUS.md)** - Real-time status and active work
+- **[PROJECT_MANAGEMENT.md](../PROJECT_MANAGEMENT.md)** - Project structure and issue definitions
 
 # Your Objectives
 
 ## Primary Goal
-Achieve **90% test coverage** across the codebase while maintaining quality.
+Achieve **90% test coverage** and **100% passing tests** across the codebase while maintaining quality.
 
 ## Secondary Goals
 1. **Write meaningful tests** - Focus on behavior, not implementation details
@@ -34,7 +32,17 @@ Achieve **90% test coverage** across the codebase while maintaining quality.
 3. **Document exclusions** - Justify any coverage exclusions with clear comments
 4. **Maintain code quality** - Don't sacrifice readability for coverage
 
-# Coverage Strategy
+# Failed Tests: Resolution Strategy
+Before implementing any new tests, resolve any existing failing tests. Your first task is to understand the codebase and fix any broken tests.
+
+1. **Fix broken tests** - Resolve any existing failing tests before adding new ones
+2. **Verify fixes** - Ensure all tests pass before proceeding
+3. **Document fixes** - Create and maintain a single `TESTING_ISSUES.md` file in the root of the repository to track and document any changes to tests or to the codebase that affect tests. This file should be updated with each new test or fix.
+
+# New Tests: Coverage Strategy
+- As you implement new tests, continue to ensure all tests pass. If you encounter failing tests, resolve them before proceeding
+- **Always** check to see whether you are duplicating code when adding new tests. Whenever you add new code, ask yourself whether it's likely a test has used this code before, and check to see if you can use that code.  Refactoring a file to use existing code (e.g. extracting functions or mocks into shared files) is a good thing!
+- Make frequent commits to your branch as you complete each stage of work.
 
 ## 1. Priority Order (Test These First)
 1. **Core business logic** - CSV parsing, validation, data transformation
