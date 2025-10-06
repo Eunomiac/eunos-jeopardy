@@ -12,6 +12,8 @@ import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
+import { BroadcastService } from "../../services/realtime/BroadcastService";
+import type { BroadcastSubscription, BuzzerUnlockPayload, PlayerBuzzPayload, FocusPlayerPayload } from "../../types/BroadcastEvents";
 import { gsap } from "gsap";
 
 import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
@@ -90,7 +92,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showClueModal, setShowClueModal] = useState(false);
-  // Buzzer timing - removed unused state variables
+
+  // Broadcast subscription for real-time buzzer events
+  const [broadcastSubscription, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+
+  // Buzzer timing for client-side reaction time calculation
+  const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
+
+  // Track fastest buzz received for late correction handling
+  const [fastestBuzzTime, setFastestBuzzTime] = useState<number | null>(null);
+  const [fastestPlayerId, setFastestPlayerId] = useState<string | null>(null);
 
   // Animation services and refs
   const animationService = AnimationService.getInstance();
@@ -596,30 +607,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       )
       .subscribe();
 
-    // Subscribe to buzzer events
-    const buzzesSubscription = supabase
-      .channel(`buzzes-${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "buzzes",
-          filter: `game_id=eq.${gameId}`,
-        },
-        (payload) => {
-          console.log("🔔 Buzz event:", payload);
-          // Handle buzzer state changes based on buzz events
-          if (
-            payload.new &&
-            (payload.new as BuzzPayload).user_id === user?.id
-          ) {
-            // This player's buzz was recorded
-            setBuzzerState(BuzzerState.BUZZED);
-          }
-        }
-      )
-      .subscribe();
+
 
     // Subscribe to clue changes (for locked_out_player_ids updates)
     const cluesSubscription = supabase
@@ -658,7 +646,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     return () => {
       playersSubscription.unsubscribe();
       clueStatesSubscription.unsubscribe();
-      buzzesSubscription.unsubscribe();
       cluesSubscription.unsubscribe();
     };
   }, [
@@ -671,33 +658,38 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
   /**
    * Handles player buzzer click.
+   * Broadcasts buzz event immediately for real-time response.
    */
   const handleBuzz = useCallback(async () => {
     if (buzzerState === BuzzerState.UNLOCKED && user && currentClue) {
-      // Record buzz timestamp for client-side timing (will be implemented later)
+      // Immediately set buzzed state for instant UI feedback
       setBuzzerState(BuzzerState.BUZZED);
 
       try {
         // Calculate reaction time using client-side timing
-        let reactionTimeMs: number | undefined;
-        // Note: buzzerUnlockTime was removed - reaction time calculation disabled
-        // if (buzzerUnlockTime) {
-        //   reactionTimeMs = Date.now() - buzzerUnlockTime;
-        //   setReactionTime(reactionTimeMs);
-        //   console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`);
-        // }
+        let reactionTimeMs = 0;
+        if (buzzerUnlockTime) {
+          reactionTimeMs = Date.now() - buzzerUnlockTime;
+          setReactionTime(reactionTimeMs);
+          console.log(`⏱️ Reaction time: ${reactionTimeMs}ms`);
+        }
 
-        // Send buzz event to server with reaction time
-        await GameService.recordBuzz(
+        // Get player nickname for broadcast
+        const currentPlayer = players.find((p) => p.userId === user.id);
+        const playerNickname = currentPlayer?.nickname || user.email || "Unknown Player";
+
+        // Broadcast buzz event immediately (no database write)
+        await BroadcastService.broadcastPlayerBuzz(
           gameId,
           currentClue.id,
           user.id,
+          playerNickname,
           reactionTimeMs
         );
 
         console.log("⚡ Player buzzed in successfully!");
       } catch (buzzError) {
-        console.error("Failed to record buzz:", buzzError);
+        console.error("Failed to broadcast buzz:", buzzError);
         // Reset buzzer state on error
         setBuzzerState(BuzzerState.UNLOCKED);
       }
@@ -706,7 +698,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       setBuzzerState(BuzzerState.FROZEN);
       console.log("❄️ Player buzzed too early - frozen!");
     }
-  }, [buzzerState, user, currentClue, gameId]);
+  }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime, players]);
 
 
 
@@ -721,20 +713,79 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   // Set up real-time subscriptions
   useEffect(() => setupRealtimeSubscriptions(), [setupRealtimeSubscriptions]);
 
-  // Watch for game state changes to handle buzzer state
+  // Set up broadcast channel for real-time buzzer events
+  useEffect(() => {
+    if (!gameId || !user) {
+      return () => {};
+    }
+
+    console.log(`📡 [Player] Setting up broadcast channel for game: ${gameId}`);
+
+    // Subscribe to broadcast channel for buzzer events
+    const subscription = BroadcastService.subscribeToGameBuzzer(gameId, {
+      onBuzzerUnlock: (payload: BuzzerUnlockPayload) => {
+        console.log(`🔓 [Player] Buzzer unlocked at ${payload.timestamp}`);
+        setBuzzerUnlockTime(payload.timestamp);
+        setBuzzerState(BuzzerState.UNLOCKED);
+        setFastestBuzzTime(null);
+        setFastestPlayerId(null);
+      },
+      onBuzzerLock: () => {
+        console.log(`🔒 [Player] Buzzer locked`);
+        setBuzzerUnlockTime(null);
+        setBuzzerState(BuzzerState.LOCKED);
+      },
+      onPlayerBuzz: (payload: PlayerBuzzPayload) => {
+        console.log(`⚡ [Player] Received buzz: ${payload.playerNickname} (${payload.reactionTimeMs}ms)`);
+
+        // Lock buzzer immediately when any player buzzes
+        setBuzzerState(BuzzerState.LOCKED);
+
+        // Track fastest buzz for late correction handling
+        if (fastestBuzzTime === null || payload.reactionTimeMs < fastestBuzzTime) {
+          setFastestBuzzTime(payload.reactionTimeMs);
+          setFastestPlayerId(payload.playerId);
+
+          // If this is a late correction (faster buzz arrived after slower one)
+          if (fastestBuzzTime !== null) {
+            console.log(`🔄 [Player] Late correction: ${payload.playerNickname} is now fastest`);
+          }
+        }
+      },
+      onFocusPlayer: (payload: FocusPlayerPayload) => {
+        console.log(`👁️ [Player] Focus player: ${payload.playerNickname} (${payload.source})`);
+        setFastestPlayerId(payload.playerId);
+      },
+    });
+
+    setBroadcastSubscription(subscription);
+
+    // Cleanup on unmount
+    return () => {
+      console.log(`🔌 [Player] Cleaning up broadcast channel for game: ${gameId}`);
+      subscription.unsubscribe();
+      setBroadcastSubscription(null);
+    };
+  }, [gameId, user, fastestBuzzTime]);
+
+  // Watch for game state changes to handle buzzer state (database backup)
   useEffect(() => {
     if (!game) {
       return;
     }
 
-    // Update buzzer state based on game state
-    if (game.is_buzzer_locked) {
+    // Database state can override broadcast state if different
+    // This provides recovery for clients that missed broadcast events
+    if (game.is_buzzer_locked && buzzerState === BuzzerState.UNLOCKED) {
+      console.log("🔄 [Player] Database override: locking buzzer");
       setBuzzerState(BuzzerState.LOCKED);
       setReactionTime(null);
-    } else {
+      setBuzzerUnlockTime(null);
+    } else if (!game.is_buzzer_locked && buzzerState === BuzzerState.LOCKED && currentClue) {
+      console.log("🔄 [Player] Database override: unlocking buzzer");
       setBuzzerState(BuzzerState.UNLOCKED);
     }
-  }, [game]);
+  }, [game, buzzerState, currentClue]);
 
   // Watch for focused clue changes
   useEffect(() => {
