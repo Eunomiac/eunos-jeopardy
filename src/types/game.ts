@@ -47,6 +47,23 @@ declare global {
    * @author Euno's Jeopardy Team
    */
   type RoundType = "jeopardy" | "double" | "final"
+
+  /**
+   * Clue information for display.
+   */
+  interface ClueInfo {
+    /** Clue ID */
+    id: string
+    /** Clue prompt text */
+    prompt: string
+    /** Clue value/amount */
+    value: number
+    /** Category name */
+    category: string
+    /** Whether this is a Daily Double */
+    isDailyDouble: boolean
+  }
+
 }
 
 /**

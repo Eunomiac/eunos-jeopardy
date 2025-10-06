@@ -97,7 +97,8 @@ jest.mock('../../services/supabase/client', () => ({
     channel: jest.fn(() => ({
       on: jest.fn().mockReturnThis(),
       subscribe: jest.fn().mockReturnThis(),
-      unsubscribe: jest.fn().mockReturnThis()
+      unsubscribe: jest.fn().mockReturnThis(),
+      send: jest.fn().mockResolvedValue(undefined)
     }))
   }
 }))
@@ -483,10 +484,11 @@ describe('PlayerDashboard', () => {
       renderWithAuth(<PlayerDashboard {...mockProps} />)
 
       await waitFor(() => {
-        // Component sets up multiple channels with prefixed names
-        expect(mockSupabase.channel).toHaveBeenCalledWith('game-game-123')
+        // Component sets up Supabase postgres_changes subscriptions
+        // Note: BroadcastService creates its own channel internally, not through mockSupabase
         expect(mockSupabase.channel).toHaveBeenCalledWith('players-game-123')
         expect(mockSupabase.channel).toHaveBeenCalledWith('clue-states-game-123')
+        expect(mockSupabase.channel).toHaveBeenCalledWith('clues-game-123')
       })
     })
   })

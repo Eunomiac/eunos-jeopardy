@@ -3,7 +3,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { GameService, type Game } from "../../services/games/GameService";
 import { FontAssignmentService } from "../../services/fonts/FontAssignmentService";
 import { PlayerPodiums, type PlayerInfo } from "./PlayerPodiums";
-import type { ClueInfo } from "./ClueRevealModal";
 import { BuzzerState } from "../../types/BuzzerState";
 import { supabase } from "../../services/supabase/client";
 import { ClueService, type ClueState } from "../../services/clues/ClueService";

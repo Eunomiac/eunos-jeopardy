@@ -60,7 +60,7 @@ export function ConnectionDebugger() {
 
       // Method 4: Extract from current path
       if (!gameId) {
-        const pathMatch = window.location.pathname.match(/\/game\/([a-f0-9-]+)/);
+        const pathMatch = RegExp(/\/game\/([a-f0-9-]+)/).exec(window.location.pathname);
         gameId = pathMatch ? pathMatch[1] : null;
       }
 
@@ -178,7 +178,7 @@ export function ConnectionDebugger() {
   };
 
   const getMainChannelName = (gameId: string | null): string => {
-    if (!gameId) return 'No game active';
+    if (!gameId) {return 'No game active';}
     return `game:${gameId}`;
   };
 

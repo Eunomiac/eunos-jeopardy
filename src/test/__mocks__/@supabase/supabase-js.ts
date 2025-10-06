@@ -54,6 +54,32 @@ const mockSupabaseClient = {
           return [] as Database['public']['Tables']['clues']['Row'][]
         case 'buzzes':
           return [] as Database['public']['Tables']['buzzes']['Row'][]
+        case 'boards':
+          // Return mock board data with nested categories and clues for PlayerDashboard tests
+          return [
+            {
+              id: 'board-1',
+              round: 'jeopardy',
+              categories: [
+                {
+                  id: 'cat-1',
+                  name: 'Category 1',
+                  position: 0,
+                  clues: [
+                    { id: 'clue-1', prompt: 'Test prompt 1', response: 'Test response 1', value: 200, position: 0 }
+                  ]
+                },
+                {
+                  id: 'cat-2',
+                  name: 'Category 2',
+                  position: 1,
+                  clues: [
+                    { id: 'clue-2', prompt: 'Test prompt 2', response: 'Test response 2', value: 200, position: 0 }
+                  ]
+                }
+              ]
+            }
+          ]
         default:
           return null
       }
@@ -68,21 +94,27 @@ const mockSupabaseClient = {
         const createChainableMethods = (): ChainableMethods & Promise<{ data: unknown; error: null }> => {
           const methods: ChainableMethods = {} as ChainableMethods
 
+          const data = getDefaultData()
+
           // Create a promise-like object that can be chained or awaited
           const promiseResult = Promise.resolve({
-            data: getDefaultData(),
+            data,
             error: null
           })
 
           // Add chainable methods that return the same structure
-          methods.eq = jest.fn().mockReturnValue(promiseResult)
+          methods.eq = jest.fn().mockReturnValue(
+            Object.assign(Promise.resolve({ data, error: null }), {
+              order: jest.fn().mockResolvedValue({ data, error: null })
+            })
+          )
           methods.in = jest.fn().mockReturnValue(promiseResult)
           methods.single = jest.fn().mockResolvedValue({
-            data: getDefaultData(),
+            data: Array.isArray(data) && data.length > 0 ? data[0] : data,
             error: null
           })
           methods.limit = jest.fn().mockResolvedValue({
-            data: Array.isArray(getDefaultData()) ? getDefaultData() : [],
+            data: Array.isArray(data) ? data : [],
             error: null
           })
 
@@ -101,6 +133,8 @@ const mockSupabaseClient = {
   channel: jest.fn().mockReturnValue({
     on: jest.fn().mockReturnThis(),
     subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+    unsubscribe: jest.fn(),
+    send: jest.fn().mockResolvedValue(undefined),
   }),
 }
 

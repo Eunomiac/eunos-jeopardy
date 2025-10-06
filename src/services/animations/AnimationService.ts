@@ -22,7 +22,6 @@
  */
 
 import { gsap } from 'gsap';
-import type { ClueInfo } from '../../components/players/ClueRevealModal';
 
 /**
  * Animation configuration options.

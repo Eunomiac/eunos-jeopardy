@@ -65,7 +65,9 @@ jest.mock('../services/supabase/client', () => ({
     }),
     channel: jest.fn().mockReturnValue({
       on: jest.fn().mockReturnThis(),
-      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() })
+      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+      unsubscribe: jest.fn(),
+      send: jest.fn().mockResolvedValue(undefined)
     })
   }
 }))
