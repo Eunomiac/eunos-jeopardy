@@ -583,7 +583,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
     });
   },
 
-  shouldRunInstantly(gameState, params) {
+  shouldRunInstantly(_gameState, params) {
     if (params) {
       const animationService = AnimationService.getInstance();
       const key = `RoundTransition:${params.gameId}:${params.fromRound}-${params.toRound}`;

@@ -10,9 +10,6 @@ export type ClueState = Tables<'clue_states'>
 /** Insert type for creating new clue states */
 export type ClueStateInsert = TablesInsert<'clue_states'>
 
-/** Update type for modifying existing clue states */
-export type ClueStateUpdate = TablesUpdate<'clue_states'>
-
 /**
  * Enhanced clue data with state information for gameplay
  */
