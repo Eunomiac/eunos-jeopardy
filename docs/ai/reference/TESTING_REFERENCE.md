@@ -38,6 +38,31 @@ npm test -- --coverage --watchAll=false
 - **Coverage Tool**: Built into Jest, reported via SonarQube integration
 - **Global Setup**: `src/test/setup.ts` configures global test environment
 
+### Console Output in Tests
+**Console methods (log, warn, error) are NOT globally suppressed.**
+
+This means you will see console output during test runs, which aids debugging. If a specific test needs to suppress or verify console output:
+
+```typescript
+it('should handle error gracefully', () => {
+  // Suppress console.error for this test only
+  const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+  // Test code that triggers expected error
+  someFunction();
+
+  // Optionally verify the error was logged
+  expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Error message'));
+
+  // Clean up
+  consoleSpy.mockRestore();
+});
+```
+
+**IMPORTANT**: Local console mocking is NOT the same as mocking service dependencies:
+- **Console mocking**: Local, per-test, for suppressing noise or verifying logging
+- **Service mocking**: Global, centralized in `src/test/__mocks__/`, see [TESTING_MOCKS_REFERENCE.md](./TESTING_MOCKS_REFERENCE.md)
+
 ## Coverage Exclusions Configuration
 
 ### Jest Configuration (`jest.config.js`)
