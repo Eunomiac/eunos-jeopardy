@@ -462,14 +462,14 @@
                   white-space: nowrap;
 
                   &.daily-double {
-                    background: linear-gradient(135deg, $jeopardy-gold, darken($jeopardy-gold, 15%));
+                    background: linear-gradient(135deg, $jeopardy-gold, color.adjust($jeopardy-gold, $lightness: -15%));
                     color: $jeopardy-blue;
                     font-weight: bold;
                     animation: daily-double-pulse 1.5s ease-in-out infinite alternate;
                     box-shadow: 0 0 20px rgba($jeopardy-gold, 0.6);
 
                     &:hover {
-                      background: linear-gradient(135deg, lighten($jeopardy-gold, 10%), $jeopardy-gold);
+                      background: linear-gradient(135deg, color.adjust($jeopardy-gold, $lightness: 10%), $jeopardy-gold);
                       box-shadow: 0 0 25px rgba($jeopardy-gold, 0.8);
                     }
                   }

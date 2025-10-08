@@ -8,6 +8,7 @@
 
 @use "../../styles/variables" as *;
 @use "../../styles/jeopardy-theme" as *;
+@use "sass:color";
 
 .integrated-buzzer-container {
   display: flex;
@@ -90,7 +91,7 @@
       color: white;
 
       &:hover {
-        background: lighten($jeopardy-blue, 10%);
+        background: color.adjust($jeopardy-blue, $lightness: 10%);
       }
     }
 
