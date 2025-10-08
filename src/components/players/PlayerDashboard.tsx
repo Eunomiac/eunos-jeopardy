@@ -823,6 +823,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       if (game.focused_clue_id) {
         const clueInfo = await loadClueData(game.focused_clue_id);
         setFocusedClue(clueInfo);
+        // Reset buzzer state to LOCKED for new clue (clears FROZEN from previous clue)
+        setBuzzerState(BuzzerState.LOCKED);
+        setReactionTime(null);
       } else {
         setFocusedClue(null);
         setCurrentClue(null);
