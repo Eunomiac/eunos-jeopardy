@@ -527,12 +527,10 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
     console.log(`🎬 [RoundTransitionAnimation] ${isInstant ? 'Instant' : 'Animated'} transition from ${params.fromRound} to ${params.toRound} in game ${params.gameId}`);
 
     const animationService = AnimationService.getInstance();
-    const board = await animationService.waitForElement('.jeopardy-board', 2000);
     const transitionOverlay = document.querySelector('.round-transition-overlay');
 
     if (isInstant) {
-      // Instant: Just hide the board, ready for new round
-      gsap.set(board, { autoAlpha: 0 });
+      // Instant: Just ensure overlay is hidden
       if (transitionOverlay) {
         gsap.set(transitionOverlay, { autoAlpha: 0 });
       }
@@ -541,7 +539,8 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
       return;
     }
 
-    // Animated: Fade out board, show transition, fade out transition
+    // Animated: Show transition overlay, then fade it out
+    // Board remains visible throughout - category intro animation will handle board changes
     return new Promise((resolve) => {
       const timeline = gsap.timeline({
         onComplete: () => {
@@ -549,13 +548,6 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
           config.onComplete?.();
           resolve();
         }
-      });
-
-      // Fade out current board
-      timeline.to(board, {
-        autoAlpha: 0,
-        duration: 0.5,
-        ease: 'power2.inOut'
       });
 
       // Show transition overlay if it exists
@@ -579,6 +571,9 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
           duration: 0.5,
           ease: 'power2.inOut'
         });
+      } else {
+        // No overlay - just wait a moment for visual continuity
+        timeline.to({}, { duration: 2.0 });
       }
 
       (animationService as any).activeTimelines?.push(timeline);

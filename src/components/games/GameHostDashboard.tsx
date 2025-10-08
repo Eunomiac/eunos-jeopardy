@@ -2203,6 +2203,19 @@ export function GameHostDashboard({
                 </div>
               </div>
             )}
+            {/* Round Transition UI */}
+            {String(game?.status) === "round_transition" && (
+              <div className="game-introduction-panel">
+                <div className="introduction-header">
+                  <h3>Round Transition</h3>
+                  <p>Animation in progress...</p>
+                </div>
+
+                <div className="introduction-controls">
+                  <p className="transition-message">Transitioning to {game.current_round === "double" ? "Double Jeopardy" : "Final Jeopardy"}...</p>
+                </div>
+              </div>
+            )}
             {String(game?.status) === "introducing_categories" && clueSetData && (
               <div className="category-introduction-panel">
                 <div className="introduction-header">
@@ -2250,7 +2263,7 @@ export function GameHostDashboard({
                 </div>
               </div>
             )}
-            {String(game?.status) !== "game_intro" && String(game?.status) !== "introducing_categories" && (
+            {String(game?.status) !== "game_intro" && String(game?.status) !== "round_transition" && String(game?.status) !== "introducing_categories" && (
               <div className="board-scale-wrapper">
                 <div className="jeopardy-board">
                   {/* Game board with real clue set data */}

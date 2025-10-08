@@ -140,3 +140,11 @@ Each issue entry should be interpreted as a direct instruction for diagnosing, r
 **Problem:** After advancing to the next round when all clues have been completed, the jeopardy board element on the player UI fades out (likely in preparation for the round transition animation, which doesn't appear to play).
 
 **Resolution Strategy:** The board should not fade out when a round transition is triggered:  All changes to the board's appearance will be handled by the round transition animation.
+
+
+---
+
+## Issue 11
+**Problem:** The current display of the focused clue on the player dashboard incorrectly brightens and scales up the clue cell itself.  Instead, the _category_ containing the focused clue should get a white boarder, and the clue cell itself should only get a very subtle brightening -- just enough to distinguish it from the other clues in that column.
+
+**Resolution Strategy:** Apply a class to the appropriate category cell, and then implement appropriate styles in the SCSS.
