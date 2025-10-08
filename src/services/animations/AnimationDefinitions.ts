@@ -87,6 +87,7 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
       gsap.set('.jeopardy-board-container', {autoAlpha: 1});
       gsap.set('.jeopardy-board', { autoAlpha: 1 });
       gsap.set('.clue-cell', { autoAlpha: 1 });
+      gsap.set('.player-podium', { autoAlpha: 1 });
       console.log(`🎬 [BoardIntroAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
@@ -111,6 +112,29 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
         autoAlpha: 1,
         duration: 0.25,
         ease: config.ease || 'power2.inOut'
+      });
+
+      // Fade in competitor podiums
+      timeline.fromTo('.player-podium.competitor', {
+        autoAlpha: 0,
+        y: 50
+      },{
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.25,
+        ease: 'power2.inOut',
+        stagger: 0.05
+      });
+
+      // Fade in main player podium
+      timeline.fromTo('.player-podium.main', {
+        autoAlpha: 0,
+        y: 50
+      },{
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.25,
+        ease: 'power2.inOut'
       });
 
       // Stagger in clue cells with random pattern

@@ -35,21 +35,37 @@ export class FontAssignmentService {
   ] as const
 
   /**
+   * Fonts that are narrower and better suited for long names.
+   */
+  private static readonly NARROW_FONTS = [
+    'handwritten-1',
+    'handwritten-3',
+    'handwritten-5'
+  ] as const
+
+  /**
+   * Character count threshold for considering a name "long".
+   * Names with this many characters or more will preferentially receive narrow fonts.
+   */
+  private static readonly LONG_NAME_THRESHOLD = 12
+
+  /**
    * Gets or assigns a handwritten font for a player joining a game.
    * Implements the three-step font assignment algorithm.
    *
    * @param userId - The user's ID
    * @param gameId - The game ID they're joining
+   * @param displayName - The player's display name (optional, used for narrow font preference)
    * @returns Promise resolving to the font name to use
    */
-  static async getPlayerFont(userId: string, gameId: string): Promise<string> {
+  static async getPlayerFont(userId: string, gameId: string, displayName?: string): Promise<string> {
     try {
       // Step 1: Check if user already has a font assigned
       const userProfile = await this.getUserProfile(userId)
 
       if (!userProfile.handwritten_font) {
         // Step 2: Assign permanent font using fair distribution
-        const newFont = await this.assignPermanentFont(userId)
+        const newFont = await this.assignPermanentFont(userId, displayName)
         await this.updateUserFont(userId, newFont)
         userProfile.handwritten_font = newFont
       }
@@ -97,18 +113,36 @@ export class FontAssignmentService {
 
   /**
    * Step 2: Assigns a permanent font using fair distribution algorithm.
+   * Prefers narrow fonts for players with long display names.
+   *
+   * @param userId - The user's ID
+   * @param displayName - The player's display name (optional)
    */
-  private static async assignPermanentFont(userId: string): Promise<string> {
+  private static async assignPermanentFont(userId: string, displayName?: string): Promise<string> {
     // Get font assignment counts across all users
     const fontCounts = await this.getFontAssignmentCounts()
 
     // Find fonts with lowest assignment count
     const minCount = Math.min(...Object.values(fontCounts))
-    const availableFonts = this.AVAILABLE_FONTS.filter(
+    let availableFonts = this.AVAILABLE_FONTS.filter(
       (font) => (fontCounts[font] || 0) === minCount
     )
 
-    // Random selection from least-used fonts
+    // If player has a long name, prefer narrow fonts
+    const hasLongName = displayName && displayName.length >= this.LONG_NAME_THRESHOLD
+    if (hasLongName) {
+      const narrowFontsAvailable = availableFonts.filter((font) =>
+        this.NARROW_FONTS.includes(font as typeof this.NARROW_FONTS[number])
+      )
+
+      // Use narrow fonts if any are available, otherwise fall back to all available fonts
+      if (narrowFontsAvailable.length > 0) {
+        availableFonts = narrowFontsAvailable
+        console.log(`🎨 Preferring narrow fonts for long name "${displayName}"`)
+      }
+    }
+
+    // Random selection from available fonts
     const selectedFont = availableFonts[Math.floor(Math.random() * availableFonts.length)]
 
     console.log(`🎨 Assigned permanent font "${selectedFont}" to user ${userId}`)

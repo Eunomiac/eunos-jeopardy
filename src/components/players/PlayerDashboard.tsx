@@ -260,8 +260,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           let font: string;
 
           if (player.user_id === user.id) {
-            // Get or assign font for current user
-            font = await FontAssignmentService.getPlayerFont(user.id, gameId);
+            // Get or assign font for current user (pass nickname for narrow font preference)
+            font = await FontAssignmentService.getPlayerFont(user.id, gameId, player.nickname || undefined);
           } else {
             // For other players, get their assigned font from profile
             const { data: profile } = await supabase
@@ -475,9 +475,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
                 let font: string;
 
                 if (player.user_id === user.id) {
+                  // Pass nickname for narrow font preference
                   font = await FontAssignmentService.getPlayerFont(
                     user.id,
-                    gameId
+                    gameId,
+                    player.nickname || undefined
                   );
                 } else {
                   const { data: profile } = await supabase

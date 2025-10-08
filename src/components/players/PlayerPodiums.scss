@@ -100,7 +100,7 @@
 
 // Player buzzer container with integrated buzzer
 .player-buzzer-container {
-  width: 60%;
+  width: 35%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -110,7 +110,7 @@
 
   // Player name display for non-main podiums
   .player-name-display {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: $jeopardy-white;
     text-align: center;
@@ -119,7 +119,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
 
     // For main player, make name invisible
     .player-podium.main & {

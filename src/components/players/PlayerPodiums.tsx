@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { IntegratedBuzzer } from './IntegratedBuzzer'
 import { BuzzerState } from '../../types/BuzzerState'
 import './PlayerPodiums.scss'
@@ -67,6 +67,65 @@ interface PlayerPodiumsProps {
  */
 export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<PlayerPodiumsProps>) {
   const podiumRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const nameRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  /**
+   * Effect to scale player names to fit within podium width.
+   * Applies scaleX transform or ellipsis based on name length.
+   */
+  useEffect(() => {
+    // Wait for DOM to settle before measuring
+    const timeoutId = setTimeout(() => {
+      try {
+        nameRefs.current.forEach((nameElement) => {
+          if (!nameElement) {return}
+
+          // Get the container width (parent element)
+          const container = nameElement.parentElement
+          if (!container) {return}
+
+          const containerWidth = container.clientWidth
+          const nameWidth = nameElement.scrollWidth
+
+          // Skip if measurements are invalid
+          if (containerWidth === 0 || nameWidth === 0) {return}
+
+          // Calculate scale factor needed to fit name in container
+          const scaleFactor = containerWidth / nameWidth
+
+          if (scaleFactor < 1) {
+            // Name is too wide, needs scaling
+            if (scaleFactor < 0.5) {
+              // Too much scaling required, use scaleX(0.75) + ellipsis
+              const scaleValue = 0.75
+              nameElement.style.transform = `scaleX(${scaleValue})`
+              nameElement.style.transformOrigin = 'center'
+              nameElement.style.minWidth = `${100 / scaleValue}%` // Compensate for scaling
+              nameElement.style.textOverflow = 'ellipsis'
+              nameElement.style.overflow = 'hidden'
+            } else {
+              // Apply scaleX transform to fit exactly
+              nameElement.style.transform = `scaleX(${scaleFactor})`
+              nameElement.style.transformOrigin = 'center'
+              nameElement.style.minWidth = '' // Reset min-width
+              nameElement.style.textOverflow = 'clip'
+              nameElement.style.overflow = 'visible'
+            }
+          } else {
+            // Name fits naturally, no transform needed
+            nameElement.style.transform = 'scaleX(1)'
+            nameElement.style.minWidth = '' // Reset min-width
+            nameElement.style.textOverflow = 'clip'
+            nameElement.style.overflow = 'visible'
+          }
+        })
+      } catch (error) {
+        console.error('Error scaling player names:', error)
+      }
+    }, 100) // Small delay to ensure fonts are loaded
+
+    return () => clearTimeout(timeoutId)
+  }, [players]) // Re-run when players change
 
   /**
    * Separates players into main player and competitors.
@@ -149,7 +208,17 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
             />
           ) : (
             // Show just player name for other players
-            <div className="player-name-display" style={{ fontFamily: `'${player.fontFamily}', cursive` }}>
+            <div
+              className="player-name-display"
+              style={{ fontFamily: `'${player.fontFamily}', cursive` }}
+              ref={(el) => {
+                if (el) {
+                  nameRefs.current.set(player.id, el)
+                } else {
+                  nameRefs.current.delete(player.id)
+                }
+              }}
+            >
               {player.name}
             </div>
           )}

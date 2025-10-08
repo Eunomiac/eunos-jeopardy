@@ -17,26 +17,6 @@
   width: 100%;
   position: relative;
 
-  .player-name-display {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: $jeopardy-gold;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    min-height: 1.2rem;
-
-    // Player name scaling with 0.5x minimum before ellipsis
-    transform-origin: center;
-    transition: transform 0.2s ease;
-
-    &.scaled {
-      transform: scale(0.5);
-    }
-  }
-
   .integrated-buzzer {
     position: relative;
     width: 80px;
