@@ -89,17 +89,23 @@ export function PlayerBuzzer({
 
     switch (state) {
       case BuzzerState.LOCKED:
-        classes.push('buzzer-locked')
-        break
+        classes.push('buzzer-locked');
+        break;
       case BuzzerState.UNLOCKED:
-        classes.push('buzzer-unlocked')
-        break
+        classes.push('buzzer-unlocked');
+        break;
       case BuzzerState.BUZZED:
-        classes.push('buzzer-buzzed')
-        break
+        classes.push('buzzer-buzzed');
+        break;
       case BuzzerState.FROZEN:
-        classes.push('buzzer-frozen')
-        break
+        classes.push('buzzer-frozen');
+        break;
+      case BuzzerState.HIDDEN:
+        classes.push('buzzer-hidden');
+        break;
+      case BuzzerState.INACTIVE:
+        classes.push('buzzer-inactive')
+        break;
     }
 
     return classes.join(' ')
