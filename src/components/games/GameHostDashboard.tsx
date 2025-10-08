@@ -1415,6 +1415,16 @@ export function GameHostDashboard({
         );
         // Show correct answer when all players are wrong (non-blocking): message area handles feedback
       } else {
+        // Clue still active - broadcast unlock for remaining players
+        console.log("🔓 Broadcasting buzzer unlock for remaining players after wrong answer");
+
+        // Clear buzzer queue for new round of buzzing
+        buzzerQueueManager.clear();
+        setBuzzerQueue([]);
+
+        // Broadcast unlock event to all players
+        await BroadcastService.broadcastBuzzerUnlock(gameId, focusedClue.id);
+
         setMessage(
           "Answer marked incorrect, buzzer unlocked for other players"
         );

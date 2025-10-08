@@ -610,15 +610,15 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
             const clueData = payload.new;
             const lockedOutPlayers = clueData.locked_out_player_ids || [];
 
-            // If current player was just locked out and modal is showing, hide it
+            // If current player was just locked out, freeze their buzzer
             if (
               lockedOutPlayers.includes(user.id) &&
               focusedClue &&
               clueData.id === focusedClue.id
             ) {
-              console.log("🚫 Current player locked out - hiding modal");
+              console.log("🚫 Current player locked out - freezing buzzer");
               setCurrentClue(null);
-              setBuzzerState(BuzzerState.LOCKED);
+              setBuzzerState(BuzzerState.FROZEN);
               setReactionTime(null);
             }
           }
@@ -702,12 +702,29 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
     // Subscribe to broadcast channel for buzzer events
     const subscription = BroadcastService.subscribeToGameBuzzer(gameId, {
-      onBuzzerUnlock: (payload: BuzzerUnlockPayload) => {
+      onBuzzerUnlock: async (payload: BuzzerUnlockPayload) => {
         console.log(`🔓 [Player] Buzzer unlocked at ${payload.timestamp}`);
-        setBuzzerUnlockTime(payload.timestamp);
-        setBuzzerState(BuzzerState.UNLOCKED);
-        setFastestBuzzTime(null);
-        setFastestPlayerId(null);
+
+        // Check if current player is locked out from this clue
+        const { data: clueData } = await supabase
+          .from('clues')
+          .select('locked_out_player_ids')
+          .eq('id', payload.clueId)
+          .single();
+
+        const lockedOutPlayers = clueData?.locked_out_player_ids || [];
+
+        if (lockedOutPlayers.includes(user?.id)) {
+          console.log(`🚫 [Player] Cannot unlock - player is locked out from this clue`);
+          // Keep buzzer frozen for locked-out players
+          setBuzzerState(BuzzerState.FROZEN);
+        } else {
+          // Unlock buzzer for eligible players
+          setBuzzerUnlockTime(payload.timestamp);
+          setBuzzerState(BuzzerState.UNLOCKED);
+          setFastestBuzzTime(null);
+          setFastestPlayerId(null);
+        }
       },
       onBuzzerLock: () => {
         console.log(`🔒 [Player] Buzzer locked`);
@@ -764,7 +781,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         hasFocusedClue: boolean;
       }>;
 
-      const { gameId: eventGameId, isLocked, hasFocusedClue } = customEvent.detail;
+      const { gameId: eventGameId, isLocked } = customEvent.detail;
 
       // Only process if this event is for our game
       if (eventGameId !== gameId) {
@@ -773,16 +790,20 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
       console.log(`🔄 [Player] Database buzzer state override: isLocked=${isLocked}, currentState=${buzzerState}`);
 
-      // Database state can override broadcast state when they differ
+      // Database override is ONLY for recovery when client missed broadcast events
+      // The database is_buzzer_locked field is for HOST MANUAL CONTROL only
+      // Broadcasts handle all real-time buzzer state changes (unlock, buzz-in, etc.)
+
+      // ONLY apply database override to LOCK the buzzer (recovery scenario)
+      // NEVER unlock based on database - broadcasts handle that
       if (isLocked && buzzerState === BuzzerState.UNLOCKED) {
-        console.log("🔄 [Player] Database override: locking buzzer");
+        console.log("🔄 [Player] Database override: locking buzzer (recovery)");
         setBuzzerState(BuzzerState.LOCKED);
         setReactionTime(null);
         setBuzzerUnlockTime(null);
-      } else if (!isLocked && buzzerState === BuzzerState.LOCKED && hasFocusedClue) {
-        console.log("🔄 [Player] Database override: unlocking buzzer");
-        setBuzzerState(BuzzerState.UNLOCKED);
       }
+      // Note: We intentionally do NOT unlock based on database state
+      // All unlocking is handled by broadcasts for real-time responsiveness
     };
 
     window.addEventListener('database-buzzer-state-change', handleDatabaseBuzzerStateChange);
