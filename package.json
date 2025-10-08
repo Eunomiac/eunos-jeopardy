@@ -1,7 +1,7 @@
 {
   "name": "eunos-jeopardy",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Online platform to create and host custom Jeopardy!-style games with friends. Features host-authored boards, buzzer lock/unlock, score tracking, Double and Final Jeopardy, and a polished, authentic interface.",
   "author": "Eunomiac",
