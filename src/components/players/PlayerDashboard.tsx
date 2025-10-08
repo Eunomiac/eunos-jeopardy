@@ -821,11 +821,17 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
     const handleFocusedClueChange = async () => {
       if (game.focused_clue_id) {
+        // Only reset buzzer state if this is a NEW clue (different from current focusedClue)
+        const isNewClue = !focusedClue || focusedClue.id !== game.focused_clue_id;
+
         const clueInfo = await loadClueData(game.focused_clue_id);
         setFocusedClue(clueInfo);
-        // Reset buzzer state to LOCKED for new clue (clears FROZEN from previous clue)
-        setBuzzerState(BuzzerState.LOCKED);
-        setReactionTime(null);
+
+        // Only reset buzzer state for NEW clues (clears FROZEN from previous clue)
+        if (isNewClue) {
+          setBuzzerState(BuzzerState.LOCKED);
+          setReactionTime(null);
+        }
       } else {
         setFocusedClue(null);
         setCurrentClue(null);
@@ -835,7 +841,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     };
 
     handleFocusedClueChange();
-  }, [game, loadClueData]);
+  }, [game, loadClueData, focusedClue]);
 
 
 
