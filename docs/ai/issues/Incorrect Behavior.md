@@ -20,20 +20,26 @@ Each issue entry should be interpreted as a direct instruction for diagnosing, r
 
 **Resolution Strategy:** Review why the "`scaleX` to fit" functionality isn't working, and ensure that ellipsis overflow is used if the x-scaling would require half size or less
 
-## Issue 4
+## Issue 4 ✅ RESOLVED
 **Problem:** Main player buzzer does not lock after (successful) buzz-in
 
-**Resolution Strategy:** All buzzer states should be handled by the instant/real-time broadcast service, even that of the player who sent the broadcast (by buzzing in). When this player receives their own broadcast, his buzzer should immediately be set to the "buzzed in" state.
+**Resolution:** Player now waits to receive their own broadcast before setting state to BUZZED. All buzzer state changes are controlled by broadcasts, ensuring consistent behavior across all clients.
 
-## Issue 5
+**Implementation:** Modified `handleBuzz` to remove immediate state change. Added logic in `onPlayerBuzz` to check if buzz is from current player (BUZZED) or another player (LOCKED).
+
+## Issue 5 ✅ RESOLVED
 **Problem:** Other players' buzzers do not lock after a different player has successfully buzzed in
 
-**Resolution Strategy:** When any other player (i.e. other than the one who sent the broadcast) receives the buzzed-in broadcast, their buzzer should immediately lock.  (Note: We do allow for late broadcasts and the host's database update to override and change buzzer states even after the initial broadcast should have locked them, to account for players who have high latency --- so buzzers should always be able to change their state whenever they receive a broadcast message or database update; in other words, they should be completely controlled by those broadcasts/database updates, without for example ignoring any that come after they've been locked)
+**Resolution:** When any player receives a buzz broadcast, they check if it's their own buzz (set to BUZZED) or another player's buzz (set to LOCKED). Database override logic now only locks buzzers (never unlocks) to prevent race conditions with broadcasts.
 
-## Issue 6
+**Implementation:** Updated `onPlayerBuzz` handler to differentiate between own buzz and others' buzzes. Modified database override to only apply lock overrides, letting broadcasts handle all unlocking.
+
+## Issue 6 ✅ RESOLVED
 **Problem:** The five second clue timer is not being cancelled when a player buzzes in
 
-**Resolution Strategy:** When any player buzzes in, the auto-cancel 5-second clue timer should be disabled.  (Keep in mind that the timer should restart at 5 seconds if the buzzers are subsequently unlocked, which usually happens if a player gets the answer wrong and a new round of buzzing is initiated)
+**Resolution:** Host now cancels the 5-second clue timeout when any player buzzes in. Timer restarts when buzzers are unlocked after wrong answer.
+
+**Implementation:** Added `clearClueTimeout()` call in `handlePlayerBuzz` on GameHostDashboard. Timer properly restarts in `handleMarkWrong` when clue remains active.
 
 ## Issue 7
 **Problem:** The initial position of the dynamic display window is not being set to overlay the clue cell that triggered it (so that it appears as if that cell were expanding to reveal the prompt).
