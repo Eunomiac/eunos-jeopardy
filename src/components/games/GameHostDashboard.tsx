@@ -25,6 +25,7 @@ import "./GameHostDashboard.scss";
 
 import { BuzzerQueuePanel } from "./panels/BuzzerQueuePanel";
 import { ClueControlPanel } from "./panels/ClueControlPanel";
+import { Alert, useAlert } from "../common/Alert";
 
 /**
  * Helper function to determine if panels should be disabled based on game status.
@@ -313,6 +314,9 @@ export function GameHostDashboard({
   /** Type of message for appropriate styling (success/error) */
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
+  /** Centralized alert management */
+  const { alertState, showStatus, showConfirmation } = useAlert();
+
   /** Connection status monitoring */
   const [connectionStatus, setConnectionStatus] = useState<
     "ACTIVE" | "DISCONNECTED" | "SLOW"
@@ -375,9 +379,6 @@ export function GameHostDashboard({
 
   /** Daily Double wager input value */
   const [wagerInput, setWagerInput] = useState("");
-
-  /** Round transition confirmation dialog state */
-  const [showRoundTransitionConfirm, setShowRoundTransitionConfirm] = useState(false);
 
   /** Round completion state for enabling "Next Round" button */
   const [isRoundComplete, setIsRoundComplete] = useState(false);
@@ -1841,20 +1842,25 @@ export function GameHostDashboard({
     }
 
     // Confirmation dialog to prevent accidental game termination
-    if (!confirm("Are you sure you want to end this game?")) {
+    const confirmed = await showConfirmation(
+      "Are you sure you want to end this game?",
+      "End Game",
+      "warning"
+    );
+
+    if (!confirmed) {
       return;
     }
 
     try {
       // Provide immediate user feedback
-      setMessage("Ending game...");
+      showStatus("Ending game...", "info");
 
       // End game with appropriate status (completed or cancelled)
       await GameService.endGame(gameId, user.id);
 
       // Show success message
-      setMessage("Game ended successfully");
-      setMessageType("success");
+      showStatus("Game ended successfully", "success");
 
       // Navigate back to creator after delay to show success message
       setTimeout(() => {
@@ -1865,12 +1871,12 @@ export function GameHostDashboard({
       console.error("Failed to end game:", error);
 
       // Display user-friendly error message
-      setMessage(
+      showStatus(
         `Failed to end game: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1891,24 +1897,35 @@ export function GameHostDashboard({
    * - Disabled at Final Jeopardy
    */
   const handleNextRound = async () => {
-    if (!user || !game) {return;}
+    if (!user || !game || !clueSetData) {return;}
 
     try {
       // Check if round is complete
       if (!isRoundComplete) {
+        // Calculate remaining clues
+        const progress = calculateClueProgress(clueStates, game.current_round, clueSetData);
+        const remainingClues = progress.totalClues - progress.completedCount;
+
         // Show confirmation dialog
-        setShowRoundTransitionConfirm(true);
-        return;
+        const confirmed = await showConfirmation(
+          `There are ${remainingClues} clues remaining in this round. Are you sure you want to advance to the next round?`,
+          "Advance Round?",
+          "warning"
+        );
+
+        if (!confirmed) {
+          return;
+        }
       }
 
       // Proceed with transition
       await performRoundTransition();
     } catch (error) {
       console.error("Failed to transition round:", error);
-      setMessage(
-        `Failed to advance round: ${error instanceof Error ? error.message : "Unknown error"}`
+      showStatus(
+        `Failed to advance round: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1921,8 +1938,7 @@ export function GameHostDashboard({
   const performRoundTransition = async () => {
     if (!user || !game) {return;}
 
-    setMessage("Transitioning to next round...");
-    setMessageType("");
+    showStatus("Transitioning to next round...", "info");
 
     try {
       const updatedGame = await GameService.transitionToNextRound(
@@ -1932,31 +1948,17 @@ export function GameHostDashboard({
       );
 
       setGame(updatedGame);
-      setMessage(`Advanced to ${updatedGame.current_round} round`);
-      setMessageType("success");
+      showStatus(`Advanced to ${updatedGame.current_round} round`, "success");
     } catch (error) {
       console.error("Failed to transition round:", error);
-      setMessage(
-        `Failed to advance round: ${error instanceof Error ? error.message : "Unknown error"}`
+      showStatus(
+        `Failed to advance round: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
-  /**
-   * Handles confirmation of round transition with incomplete clues.
-   */
-  const handleConfirmRoundTransition = async () => {
-    setShowRoundTransitionConfirm(false);
-    await performRoundTransition();
-  };
 
-  /**
-   * Handles cancellation of round transition.
-   */
-  const handleCancelRoundTransition = () => {
-    setShowRoundTransitionConfirm(false);
-  };
 
   /**
    * DEBUG ONLY: Marks all clues in the current round as completed.
@@ -2187,6 +2189,17 @@ export function GameHostDashboard({
           {message}
         </div>
       )}
+
+      {/* Centralized Alert Component */}
+      <Alert
+        type={alertState.type}
+        severity={alertState.severity}
+        message={alertState.message}
+        isVisible={alertState.isVisible}
+        onConfirm={alertState.onConfirm}
+        onCancel={alertState.onCancel}
+        title={alertState.title}
+      />
 
       {/* 4-panel dashboard grid layout */}
       <div className="dashboard-grid" data-introducing-categories={isIntroducingCategories ? "true" : "false"}>
@@ -2597,34 +2610,7 @@ export function GameHostDashboard({
         />
       </div>
 
-      {/* Round Transition Confirmation Dialog */}
-      {showRoundTransitionConfirm && game && clueSetData && (
-        <div className="confirmation-overlay">
-          <div className="confirmation-dialog">
-            <h3>Advance Round?</h3>
-            <p>
-              There are {calculateClueProgress(clueStates, game.current_round, clueSetData).totalClues -
-                        calculateClueProgress(clueStates, game.current_round, clueSetData).completedCount} clues
-              remaining in this round.
-            </p>
-            <p>Are you sure you want to advance to the next round?</p>
-            <div className="confirmation-buttons">
-              <button
-                className="jeopardy-button red"
-                onClick={handleCancelRoundTransition}
-              >
-                Cancel
-              </button>
-              <button
-                className="jeopardy-button green"
-                onClick={handleConfirmRoundTransition}
-              >
-                Advance Round
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
