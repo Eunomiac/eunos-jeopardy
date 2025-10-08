@@ -111,39 +111,47 @@ await BroadcastService.broadcastPlayerBuzz(
 ### Buzzer Unlock Flow
 
 1. **Host clicks "Unlock Buzzer"**
-   - Host broadcasts `buzzer_unlock` event with timestamp
+   - Host broadcasts `buzzer_unlock` event with timestamp and clue ID
    - Host updates `games.is_buzzer_locked = false` in database
+   - Host starts 5-second auto-complete timer
 
 2. **All clients receive broadcast** (~20-50ms)
-   - Players: Buzzer becomes clickable, record unlock timestamp
+   - Check `clues.locked_out_player_ids` for current clue
+   - **Eligible players**: Buzzer becomes UNLOCKED, record unlock timestamp
+   - **Locked-out players**: Buzzer remains FROZEN (answered wrong previously)
    - Host: Visual confirmation of unlock state
 
 3. **All clients receive database update** (~200-500ms)
-   - If state differs from broadcast, database overrides (rare)
-   - Provides recovery for clients that missed broadcast
+   - **Database override only locks** - never unlocks (broadcasts handle unlocking)
+   - Prevents race conditions where database update resets buzzer state
+   - Only applies lock override if client missed broadcast lock event
 
 ### Player Buzz Flow
 
 1. **Player clicks buzzer**
    - Calculate reaction time: `Date.now() - unlockTimestamp`
    - Broadcast `player_buzz` event with reaction time
-   - Local UI immediately shows "BUZZED" state
+   - **Wait for own broadcast** - state set to BUZZED when broadcast received
 
 2. **All clients receive broadcast** (~20-50ms)
-   - **All players**: Buzzers immediately lock
+   - **Buzzing player**: Set state to BUZZED
+   - **Other players**: Set state to LOCKED
    - **All clients**: Check if this is fastest buzz received so far
    - **All clients**: If fastest, immediately set as focused player
    - **Host**: Add to buzzer queue for monitoring
+   - **Host**: Cancel 5-second clue timeout
 
 3. **Host receives broadcast**
+   - Cancels 5-second auto-complete timer
    - Maintains in-memory queue of all buzzes with reaction times
    - Automatically focuses fastest player (may switch if faster buzz arrives)
    - Writes buzz to `buzzes` table in database
    - Updates `games.focused_player_id` in database
 
 4. **All clients receive database updates** (~200-500ms)
-   - Verify focused player matches fastest buzz
-   - If different, database overrides (handles extreme latency cases)
+   - **Database override only locks** - never unlocks (broadcasts handle unlocking)
+   - Provides recovery for clients that missed broadcast lock events
+   - Prevents race conditions between broadcasts and database updates
 
 ### Late Buzz Correction Flow
 
@@ -160,6 +168,33 @@ await BroadcastService.broadcastPlayerBuzz(
 3. **Database update arrives**
    - Confirms Player B as focused player
    - No visual change (already correct)
+
+### Wrong Answer Flow
+
+**Scenario**: Player answers incorrectly, buzzer unlocked for remaining players
+
+1. **Host marks answer wrong**
+   - Add player to `clues.locked_out_player_ids` array
+   - Clear buzzer queue for new round of buzzing
+   - Broadcast `buzzer_unlock` event for remaining players
+   - Update database with `is_buzzer_locked = false`
+   - Restart 5-second auto-complete timer
+
+2. **All clients receive unlock broadcast** (~20-50ms)
+   - Check `clues.locked_out_player_ids` for current clue
+   - **Wrong player**: Buzzer set to FROZEN (via clue subscription)
+   - **Eligible players**: Buzzer set to UNLOCKED
+   - All players can attempt again except those who answered wrong
+
+3. **Clue subscription fires** (when locked_out_player_ids updated)
+   - Wrong player receives clue update notification
+   - Buzzer state set to FROZEN for locked-out player
+   - FROZEN state persists until new clue is focused
+
+4. **New clue focused**
+   - All players reset to LOCKED state (clears FROZEN from previous clue)
+   - Each clue has its own `locked_out_player_ids` array
+   - Players can participate in new clue regardless of previous performance
 
 ## Technical Implementation
 
@@ -279,6 +314,13 @@ await BroadcastService.broadcastPlayerBuzz(
 - Verify database `is_buzzer_locked` field
 - Check console for broadcast errors
 - Ensure focused clue is set
+- Verify player not in `locked_out_player_ids` for current clue
+
+**Buzzer immediately relocking after unlock**:
+- Check for game state updates triggering useEffect
+- Verify focused clue ID hasn't changed
+- Ensure database override only locks (never unlocks)
+- Review console for "Database override" messages
 
 **Late buzz corrections not working**:
 - Verify all clients receiving broadcasts
@@ -291,6 +333,11 @@ await BroadcastService.broadcastPlayerBuzz(
 - Verify host database writes completing
 - Review database override logs
 - Ensure proper error handling
+
+**FROZEN state persisting across clues**:
+- Verify new clue focus resets buzzer to LOCKED
+- Check that `locked_out_player_ids` is clue-specific
+- Ensure focused clue change detection working correctly
 
 ### Debug Logging
 
@@ -338,6 +385,34 @@ console.log(`🔄 Database override: locking buzzer`);
 - **Queue management**: Prevents duplicate buzzes
 - **State validation**: Ensures valid transitions
 
+## Known Issues & Future Improvements
+
+### Architectural Issues
+
+**`locked_out_player_ids` in global `clues` table**:
+- Currently stored in `clues` table (global, shared across games)
+- Should be moved to `clue_states` table (game-specific)
+- **Impact**: Locked-out players from previous games persist in clue data
+- **Workaround**: Clear `locked_out_player_ids` when starting new game
+- **Future Fix**: Migrate field to `clue_states` table with proper game isolation
+
+**Game initialization**:
+- Need to clear/reset game-specific state when starting new game
+- Should initialize `clue_states.locked_out_player_ids` (when migrated)
+- Should clear any stale buzzer queue data
+- Should reset player states to default
+
+### Recent Fixes (2025-10-08)
+
+✅ **Issues #4, #5, #6 - Buzzer State Management**:
+- Fixed: Player's own buzzer now locks after buzz-in (waits for own broadcast)
+- Fixed: Other players' buzzers lock when someone buzzes in
+- Fixed: 5-second timer cancels when player buzzes in
+- Fixed: Database override only locks (never unlocks) to prevent race conditions
+- Fixed: Buzzer state not reset on game object updates (only on new clue)
+- Fixed: FROZEN state persisting across clues (resets to LOCKED on new clue)
+- Fixed: Wrong answer flow - eligible players unlock, wrong players stay FROZEN
+
 ## Testing & Validation
 
 ### Verified Functionality
@@ -346,6 +421,9 @@ console.log(`🔄 Database override: locking buzzer`);
 ✅ **Automatic player focusing**: Fastest player immediately selected
 ✅ **Late buzz correction**: Faster late buzzes override slower early buzzes
 ✅ **Client-side timing**: Accurate reaction time calculation
+✅ **Wrong answer flow**: Buzzers unlock for eligible players, FROZEN for wrong players
+✅ **State persistence**: FROZEN state clears when new clue focused
+✅ **Race condition prevention**: Database updates don't interfere with broadcast states
 ✅ **Database backup**: All buzzes recorded for game reports
 ✅ **Manual override**: Host can manually select player if needed
 ✅ **Error recovery**: Database reconciles state on broadcast failures
