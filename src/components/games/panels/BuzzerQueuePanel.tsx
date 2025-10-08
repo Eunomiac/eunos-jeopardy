@@ -41,13 +41,12 @@ export function BuzzerQueuePanel(props: Readonly<BuzzerQueuePanelProps>) {
           <span>
             <span className="status-label">Connection Status:</span>
             <span
-              className={
-                connectionStatus === "ACTIVE"
-                  ? "text-success"
-                  : connectionStatus === "SLOW"
-                  ? "text-warning"
-                  : "text-danger"
-              }
+              className={{
+                ACTIVE: "text-success",
+                SLOW: "text-warning",
+                DISCONNECTED: "text-danger",
+              }[connectionStatus]
+            }
             >
               {connectionStatus}
             </span>
