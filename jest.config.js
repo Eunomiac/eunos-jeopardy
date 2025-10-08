@@ -91,6 +91,12 @@ export default {
     /* ❌ EXCLUDED: Higher-Order Testing Required */
     // e.g. animations, DOM manipulation, etc.
 
+    /* ❌ EXCLUDED: Debug Components - Development utilities only */
+    '!src/components/debug/**',
+
+    /* ❌ EXCLUDED: Animation Initialization - Simple setup, no business logic */
+    '!src/utils/animations.ts',
+
   ],
 
   // Coverage thresholds - 80% for new code, 90% global
