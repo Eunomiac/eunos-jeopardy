@@ -150,39 +150,35 @@ const mockSupabaseClient = {
           return Promise.resolve({ data: null, error: null, count: 0 })
         }
 
-        const createChainableMethods = (): ChainableMethods & Promise<{ data: unknown; error: null }> => {
-          const data = getDefaultData()
+        // Refactored: Move chainable query creation to top-level for reduced nesting
+        function createChainableQuery(data: unknown): any {
+          const query: any = {};
 
-          // Create a fully chainable query object that supports all method combinations
-          const createChainableQuery = (): any => {
-            const query: any = {}
+          query.eq = jest.fn().mockImplementation(() => query);
+          query.in = jest.fn().mockReturnValue(query);
+          query.order = jest.fn().mockReturnValue(query);
+          query.limit = jest.fn().mockReturnValue(query);
+          query.single = jest.fn().mockReturnValue(query);
 
-            // All methods return the same chainable query object
-            query.eq = jest.fn().mockImplementation(() => query)
-            query.in = jest.fn().mockReturnValue(query)
-            query.order = jest.fn().mockReturnValue(query)
-            query.limit = jest.fn().mockReturnValue(query)
-            query.single = jest.fn().mockReturnValue(query)
+          query.then = jest.fn().mockImplementation((resolve) => {
+            const wasSingleCalled = query.single.mock.calls.length > 0;
+            const resultData = wasSingleCalled && Array.isArray(data) && data.length > 0 ? data[0] : data;
 
-            // Make it thenable so it can be awaited
-            query.then = jest.fn().mockImplementation((resolve) => {
-              // If single() was called, return single object, otherwise return array
-              const wasSingleCalled = query.single.mock.calls.length > 0
-              const resultData = wasSingleCalled && Array.isArray(data) && data.length > 0 ? data[0] : data
+            return Promise.resolve({
+              data: resultData,
+              error: null
+            }).then(resolve);
+          });
 
-              return Promise.resolve({
-                data: resultData,
-                error: null
-              }).then(resolve)
-            })
-
-            return query
-          }
-
-          return createChainableQuery()
+          return query;
         }
 
-        return createChainableMethods()
+        const createChainableMethods = (): ChainableMethods & Promise<{ data: unknown; error: null }> => {
+          const data = getDefaultData();
+          return createChainableQuery(data);
+        }
+
+        return createChainableMethods();
       }),
       insert: jest.fn().mockResolvedValue({ data: getDefaultData(), error: null }),
       update: jest.fn().mockResolvedValue({ data: getDefaultData(), error: null }),

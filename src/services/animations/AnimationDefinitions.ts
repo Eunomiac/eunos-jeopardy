@@ -642,11 +642,8 @@ export class AnimationRegistry {
 
     for (const def of this.definitions.values()) {
       // Skip animations that don't implement instant-run methods
-      if (!def.shouldRunInstantly || !def.getParamsFromGameState) {
-        continue;
-      }
 
-      if (def.shouldRunInstantly(gameState)) {
+      if (def.getParamsFromGameState && def.shouldRunInstantly?.(gameState)) {
         const params = def.getParamsFromGameState(gameState);
         if (params) {
           console.log(`🎬 [AnimationRegistry] Animation ${def.id} should run instantly`, params);

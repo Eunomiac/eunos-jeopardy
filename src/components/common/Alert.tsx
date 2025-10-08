@@ -7,11 +7,11 @@
  * 3. Confirmation Pop-Ups - Centered modal with OK and Cancel buttons
  */
 
-import React from "react";
-import "./Alert.scss";
+import React from 'react';
+import './Alert.scss';
 
-export type AlertType = "status" | "notification" | "confirmation";
-export type AlertSeverity = "success" | "error" | "warning" | "info" | "";
+export type AlertType = 'status' | 'notification' | 'confirmation';
+export type AlertSeverity = 'success' | 'error' | 'warning' | 'info' | '';
 
 export interface AlertProps {
   /** Type of alert to display */
@@ -56,7 +56,7 @@ export function Alert({
   onCancel,
   title,
   children
-}: AlertProps): React.ReactElement | null {
+}: Readonly<AlertProps>): React.ReactElement | null {
 
   // Don't render if not visible
   if (!isVisible) {
@@ -64,7 +64,7 @@ export function Alert({
   }
 
   // Status alert - top banner
-  if (type === "status") {
+  if (type === 'status') {
     return (
       <div className={`alert alert-status alert-${severity} jeopardy-alert`}>
         {message}
@@ -73,7 +73,7 @@ export function Alert({
   }
 
   // Modal alerts (notification and confirmation)
-  const isConfirmation = type === "confirmation";
+  const isConfirmation = type === 'confirmation';
 
   return (
     <div className="alert-overlay">
@@ -101,7 +101,7 @@ export function Alert({
           )}
 
           <button
-            className={`jeopardy-button ${isConfirmation ? "green" : "blue"}`}
+            className={`jeopardy-button ${isConfirmation ? 'green' : 'blue'}`}
             onClick={onConfirm}
           >
             OK
@@ -137,9 +137,9 @@ export interface UseAlertReturn {
 
 export function useAlert(): UseAlertReturn {
   const [alertState, setAlertState] = React.useState<AlertState>({
-    type: "status",
-    severity: "",
-    message: "",
+    type: 'status',
+    severity: '',
+    message: '',
     isVisible: false
   });
 
@@ -159,6 +159,9 @@ export function useAlert(): UseAlertReturn {
    * Show a notification alert (blocking modal with OK button)
    * Returns a promise that resolves when OK is clicked
    */
+  const onConfirm = React.useCallback(() => {
+    setAlertState((prev) => ({ ...prev, isVisible: false }));
+  }, []);
   const showNotification = React.useCallback((
     message: string,
     title?: string,
@@ -171,11 +174,9 @@ export function useAlert(): UseAlertReturn {
         message,
         title,
         isVisible: true,
-        onConfirm: () => {
-          setAlertState(prev => ({ ...prev, isVisible: false }));
-          resolve();
-        }
+        onConfirm
       });
+      resolve();
     });
   }, []);
 
@@ -183,6 +184,18 @@ export function useAlert(): UseAlertReturn {
    * Show a confirmation alert (blocking modal with OK and Cancel buttons)
    * Returns a promise that resolves to true if OK clicked, false if Cancel clicked
    */
+  function buildOnConfirm(resolve: (value: boolean) => void) {
+    return () => {
+      setAlertState((prev) => ({ ...prev, isVisible: false }));
+      resolve(true);
+    };
+  }
+  function buildOnCancel(resolve: (value: boolean) => void) {
+    return () => {
+      setAlertState((prev) => ({ ...prev, isVisible: false }));
+      resolve(false);
+    };
+  }
   const showConfirmation = React.useCallback((
     message: string,
     title?: string,
@@ -195,14 +208,8 @@ export function useAlert(): UseAlertReturn {
         message,
         title,
         isVisible: true,
-        onConfirm: () => {
-          setAlertState(prev => ({ ...prev, isVisible: false }));
-          resolve(true);
-        },
-        onCancel: () => {
-          setAlertState(prev => ({ ...prev, isVisible: false }));
-          resolve(false);
-        }
+        onConfirm: buildOnConfirm(resolve),
+        onCancel: buildOnCancel(resolve)
       });
     });
   }, []);
@@ -211,7 +218,7 @@ export function useAlert(): UseAlertReturn {
    * Hide the current alert
    */
   const hideAlert = React.useCallback(() => {
-    setAlertState(prev => ({ ...prev, isVisible: false }));
+    setAlertState((prev) => ({ ...prev, isVisible: false }));
   }, []);
 
   return {

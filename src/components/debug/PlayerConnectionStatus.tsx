@@ -19,59 +19,63 @@ export function PlayerConnectionStatus({ playerId, playerName }: Readonly<Player
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [lastSeen, setLastSeen] = useState<Date | null>(null);
 
+  // Helper: Check if player is present in presence state
+  function isPlayerPresent(presenceState: Record<string, any[]>): boolean {
+    return Object.keys(presenceState).some((key) =>
+      presenceState[key].some((presence: any) => presence.user_id === playerId)
+    );
+  }
+
+  // Presence event handlers
+  function handlePresenceSync(presenceChannel: any) {
+    const presenceState = presenceChannel.presenceState();
+    const present = isPlayerPresent(presenceState);
+    setConnectionState(present ? "connected" : "disconnected");
+    if (present) {setLastSeen(new Date())};
+  }
+
+  function handlePresenceJoin(newPresences: any[]) {
+    if (newPresences.some((presence: any) => presence.user_id === playerId)) {
+      setConnectionState("connected");
+      setLastSeen(new Date());
+    }
+  }
+
+  function handlePresenceLeave(leftPresences: any[]) {
+    if (leftPresences.some((presence: any) => presence.user_id === playerId)) {
+      setConnectionState("disconnected");
+    }
+  }
+
+  function handlePresenceSubscribe(status: string) {
+    if (status === "SUBSCRIBED") {
+      setConnectionState("connecting");
+    } else if (status === "CHANNEL_ERROR") {
+      setConnectionState("error");
+    }
+  }
+
   useEffect(() => {
-    // Monitor player's presence/activity
     const presenceChannel = supabase.channel(`player-presence-${playerId}`);
-
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = presenceChannel.presenceState();
-        const isPlayerPresent = Object.keys(presenceState).some((key) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          presenceState[key].some((presence: any) => presence.user_id === playerId)
-        );
-
-        setConnectionState(isPlayerPresent ? 'connected' : 'disconnected');
-        if (isPlayerPresent) {
-          setLastSeen(new Date());
-        }
-      })
-      .on('presence', { event: 'join' }, ({ newPresences }) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const isThisPlayer = newPresences.some((presence: any) => presence.user_id === playerId);
-        if (isThisPlayer) {
-          setConnectionState('connected');
-          setLastSeen(new Date());
-        }
-      })
-      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const isThisPlayer = leftPresences.some((presence: any) => presence.user_id === playerId);
-        if (isThisPlayer) {
-          setConnectionState('disconnected');
-        }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setConnectionState('connecting');
-        } else if (status === 'CHANNEL_ERROR') {
-          setConnectionState('error');
-        }
-      });
-
-    // Track player's game activity (buzzes, etc.)
     const activityChannel = supabase.channel(`player-activity-${playerId}`);
 
+    presenceChannel
+      .on("presence", { event: "sync" }, () => handlePresenceSync(presenceChannel))
+      .on("presence", { event: "join" }, ({ newPresences }) => handlePresenceJoin(newPresences))
+      .on("presence", { event: "leave" }, ({ leftPresences }) => handlePresenceLeave(leftPresences))
+      .subscribe(handlePresenceSubscribe);
+
     activityChannel
-      .on('postgres_changes',
+      .on(
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'buzzes',
-          filter: `user_id=eq.${playerId}`
+          event: "*",
+          schema: "public",
+          table: "buzzes",
+          filter: `user_id=eq.${playerId}`,
         },
         () => {
-          setConnectionState('connected');
+          setConnectionState("connected");
           setLastSeen(new Date());
         }
       )
@@ -85,11 +89,16 @@ export function PlayerConnectionStatus({ playerId, playerName }: Readonly<Player
 
   const getStatusEmoji = (state: ConnectionState): string => {
     switch (state) {
-      case 'connected': return '🟢';
-      case 'connecting': return '🟡';
-      case 'disconnected': return '🔴';
-      case 'error': return '🟠';
-      default: return '⚪';
+      case "connected":
+        return "🟢";
+      case "connecting":
+        return "🟡";
+      case "disconnected":
+        return "🔴";
+      case "error":
+        return "🟠";
+      default:
+        return "⚪";
     }
   };
 
@@ -111,9 +120,9 @@ export function PlayerConnectionStatus({ playerId, playerName }: Readonly<Player
       className="player-connection-status"
       title={getTooltipText(connectionState)}
       style={{
-        marginRight: '4px',
-        fontSize: '12px',
-        cursor: 'help'
+        marginRight: "4px",
+        fontSize: "12px",
+        cursor: "help",
       }}
     >
       {getStatusEmoji(connectionState)}

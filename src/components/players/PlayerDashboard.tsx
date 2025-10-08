@@ -116,7 +116,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
   // Subscribe to centralized animation intents (stable - doesn't re-run on game state changes)
   useEffect(() => {
-    if (!game) {return;}
+    if (!game) {
+      return () => {};
+    }
 
     console.log(`🎬 [PlayerDashboard] Setting up animation system for game ${gameId}`);
 
@@ -127,17 +129,18 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       console.log(`🎬 [PlayerDashboard] Received animation intent:`, intent);
 
       // Only handle intents for this game
-      if (intent.gameId !== gameId) {return;}
+      if (intent.gameId !== gameId) {
+        return;
+      }
 
       // Get the animation definition from registry
       const def = AnimationRegistry.get(intent.type);
       if (!def) {
         console.warn(`🎬 [PlayerDashboard] No animation definition found for: ${intent.type}`);
-        return;
       }
 
       // Convert intent to params
-      let params: any = null;
+      let params: Record<string, number|string> | null = null;
       if (intent.type === "BoardIntro") {
         params = { round: intent.round, gameId: intent.gameId };
       } else if (intent.type === "CategoryIntro") {
@@ -158,7 +161,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       }
 
       // Mark as handled by subscription
-      const key = `${def.id}:${gameId}:${JSON.stringify(params)}`;
+      const key = `${def?.id}:${gameId}:${JSON.stringify(params)}`;
       handledBySubscription.add(key);
 
       console.log(`🎬 [PlayerDashboard] Handling ${intent.type} animation (animated)`, params);
@@ -167,11 +170,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       await animationService.playOnce(
         key,
         async () => {
-          await def.execute(params);  // No instant flag = animated
+          await def?.execute(params);  // No instant flag = animated
 
           // Update tracking for category animations
           if (intent.type === 'CategoryIntro') {
-            lastAnimatedCategory.current = params.categoryNumber;
+            lastAnimatedCategory.current = params.categoryNumber as number;
           }
         }
       );
@@ -191,12 +194,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         // Skip if already handled by subscription
         if (handledBySubscription.has(key)) {
           console.log(`🎬 [PlayerDashboard] Skipping instant animation ${def.id} - already handled by subscription`);
-          continue;
-        }
 
-        // If intent was recently published, run ANIMATED version (not instant)
-        // This handles the case where component mounted during a live transition
-        if (AnimationEvents.wasRecentlyPublished(def.id as AnimationIntent["type"], gameId)) {
+        } else if (AnimationEvents.wasRecentlyPublished(def.id as AnimationIntent["type"], gameId)) {
+          // If intent was published recently, run animated version
           console.log(`🎬 [PlayerDashboard] Intent ${def.id} was recently published - running ANIMATED version`);
           animationService.playOnce(
             key,
@@ -209,23 +209,22 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               }
             }
           );
-          continue;
-        }
+        } else {
+          console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
 
-        console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
+          // Use playOnce to ensure we don't re-run if already executed
+          animationService.playOnce(
+            key,
+            async () => {
+              await def.execute(params, { instant: true });
 
-        // Use playOnce to ensure we don't re-run if already executed
-        animationService.playOnce(
-          key,
-          async () => {
-            await def.execute(params, { instant: true });
-
-            // Update tracking for category animations
-            if (def.id === 'CategoryIntro') {
-              lastAnimatedCategory.current = params.categoryNumber;
+              // Update tracking for category animations
+              if (def.id === 'CategoryIntro') {
+                lastAnimatedCategory.current = params.categoryNumber;
+              }
             }
-          }
-        );
+          );
+        }
       }
     }, 500); // Wait 500ms for subscription to receive any pending intents
 
@@ -729,8 +728,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               setFastestBuzzTime(null);
               setFastestPlayerId(null);
             }
-          } catch (error) {
-            console.error('🚫 [Player] Error checking locked-out status:', error);
+          } catch (err) {
+            console.error('🚫 [Player] Error checking locked-out status:', err);
             // On error, default to unlocking (fail open)
             setBuzzerUnlockTime(payload.timestamp);
             setBuzzerState(BuzzerState.UNLOCKED);
@@ -844,14 +843,13 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           setBuzzerState(BuzzerState.LOCKED);
           setReactionTime(null);
         }
-      } else {
-        // Only clear if we currently have a focused clue
-        if (focusedClue) {
-          setFocusedClue(null);
-          setCurrentClue(null);
-          setBuzzerState(BuzzerState.LOCKED);
-          setReactionTime(null);
-        }
+
+      } else if (focusedClue) {
+        // Clear focused clue if game doesn't have one
+        setFocusedClue(null);
+        setCurrentClue(null);
+        setBuzzerState(BuzzerState.LOCKED);
+        setReactionTime(null);
       }
     };
 
