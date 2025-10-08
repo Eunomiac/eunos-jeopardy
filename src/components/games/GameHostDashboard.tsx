@@ -629,6 +629,9 @@ export function GameHostDashboard({
   const handlePlayerBuzz = useCallback((payload: PlayerBuzzPayload) => {
     console.log(`⚡ Received player buzz: ${payload.playerNickname} (${payload.reactionTimeMs}ms)`);
 
+    // Cancel the 5-second clue timeout when first player buzzes in
+    clearClueTimeout();
+
     // Add buzz to queue manager
     const isNewFastest = buzzerQueueManager.addBuzz(
       payload.playerId,
@@ -699,7 +702,7 @@ export function GameHostDashboard({
         console.error("Failed to record buzz in database:", error);
       });
     }
-  }, [buzzerQueueManager, user]);
+  }, [buzzerQueueManager, user, clearClueTimeout]);
 
   /**
    * Effect to set up broadcast channel for real-time buzzer events.

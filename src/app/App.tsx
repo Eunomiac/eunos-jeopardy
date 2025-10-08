@@ -339,6 +339,20 @@ export function App() {
         if (payload.new) {
           setPlayerGameData(payload.new)
 
+          // Publish database buzzer state change event for PlayerDashboard to handle
+          // This allows database to override broadcast state when needed
+          if (payload.old && payload.new.is_buzzer_locked !== payload.old.is_buzzer_locked) {
+            console.log(`🔄 [App] Database buzzer state changed: ${payload.old.is_buzzer_locked} → ${payload.new.is_buzzer_locked}`)
+            // Dispatch custom event that PlayerDashboard can listen to
+            window.dispatchEvent(new CustomEvent('database-buzzer-state-change', {
+              detail: {
+                gameId: playerGameId,
+                isLocked: payload.new.is_buzzer_locked,
+                hasFocusedClue: !!payload.new.focused_clue_id
+              }
+            }))
+          }
+
           // Feed the orchestrator to publish animation intents
           // if (FEATURE_ANIMATION_EVENTS) {
             const orchestrator = AnimationOrchestrator.getInstance()
