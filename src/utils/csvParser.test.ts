@@ -213,8 +213,72 @@ jeopardy,Science,-200,What is H2O?,Water`
 
     it('should throw error for missing Final Jeopardy', () => {
       const rows = createMockRows(30, 30, 0)
-      
+
       expect(() => validateJeopardyStructure(rows)).toThrow('Final Jeopardy should have 1 clue, found 0')
+    })
+
+    it('should throw error for wrong category count in Jeopardy', () => {
+      // Create rows with only 5 categories but 30 total clues (6 clues in each category)
+      const rows: CSVRow[] = []
+      for (let cat = 1; cat <= 5; cat++) {
+        for (let val = 1; val <= 6; val++) {
+          rows.push({
+            round: 'jeopardy',
+            category: `Category ${cat}`,
+            value: val * 200,
+            prompt: `Prompt ${cat}-${val}`,
+            response: `Response ${cat}-${val}`
+          })
+        }
+      }
+      // Add complete Double Jeopardy and Final
+      rows.push(...createMockRows(0, 30, 1))
+
+      expect(() => validateJeopardyStructure(rows)).toThrow('Jeopardy should have 6 categories, found 5')
+    })
+
+    it('should throw error for wrong clue count per category in Double Jeopardy', () => {
+      // Create valid Jeopardy round
+      const rows: CSVRow[] = createMockRows(30, 0, 0)
+
+      // Add Double Jeopardy with wrong clue count per category
+      // 6 categories but one has 6 clues and another has 4 (still 30 total)
+      for (let cat = 1; cat <= 4; cat++) {
+        for (let val = 1; val <= 5; val++) {
+          rows.push({
+            round: 'double',
+            category: `Double Category ${cat}`,
+            value: val * 400,
+            prompt: `Double Prompt ${cat}-${val}`,
+            response: `Double Response ${cat}-${val}`
+          })
+        }
+      }
+      // 5th category with 6 clues
+      for (let val = 1; val <= 6; val++) {
+        rows.push({
+          round: 'double',
+          category: 'Double Category 5',
+          value: val * 400,
+          prompt: `Double Prompt 5-${val}`,
+          response: `Double Response 5-${val}`
+        })
+      }
+      // 6th category with 4 clues (wrong! should be 5)
+      for (let val = 1; val <= 4; val++) {
+        rows.push({
+          round: 'double',
+          category: 'Double Category 6',
+          value: val * 400,
+          prompt: `Double Prompt 6-${val}`,
+          response: `Double Response 6-${val}`
+        })
+      }
+      // Add Final
+      rows.push(...createMockRows(0, 0, 1))
+
+      // Should fail on the first category with wrong count (Category 5 with 6 clues)
+      expect(() => validateJeopardyStructure(rows)).toThrow('Category "Double Category 5" in Double Jeopardy should have 5 clues, found 6')
     })
   })
 })

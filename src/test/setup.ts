@@ -42,19 +42,26 @@ global.assert = (condition: unknown, message?: string): asserts condition => {
 import { initializeGlobals } from '../shared/utils/setup';
 initializeGlobals();
 
-// Suppress console output in tests unless explicitly testing them
-const originalConsoleWarn = console.warn;
-const originalConsoleError = console.error;
-const originalConsoleLog = console.log;
-
-beforeEach(() => {
-  console.warn = jest.fn();
-  console.error = jest.fn();
-  console.log = jest.fn(); // Suppress console.log during tests
-});
-
-afterEach(() => {
-  console.warn = originalConsoleWarn;
-  console.error = originalConsoleError;
-  console.log = originalConsoleLog;
-});
+/**
+ * NOTE: Console methods (log, warn, error) are NOT globally suppressed.
+ *
+ * If a test needs to suppress console output (e.g., testing error handling),
+ * mock console methods locally within that specific test:
+ *
+ * @example
+ * it('should handle error', () => {
+ *   const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+ *   // ... test code that triggers expected error ...
+ *   expect(consoleSpy).toHaveBeenCalled();
+ *   consoleSpy.mockRestore();
+ * });
+ *
+ * This approach:
+ * - Makes debugging easier (you can see actual console output during failures)
+ * - Makes tests more explicit about what they're testing
+ * - Avoids confusion about missing console output
+ *
+ * IMPORTANT: Local console mocking is NOT the same as mocking service dependencies.
+ * Service dependencies (Supabase, GameService, etc.) MUST use global mocks from
+ * src/test/__mocks__/ or src/services/__mocks__/. See TESTING_MOCKS_REFERENCE.md.
+ */
