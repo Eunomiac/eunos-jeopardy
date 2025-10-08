@@ -500,6 +500,52 @@ describe('GameService', () => {
         .rejects.toThrow('Failed to fetch players: Fetch failed')
     })
 
+    it('should handle profiles fetch error gracefully', async () => {
+      const mockPlayers = [
+        {
+          id: 'player-1',
+          game_id: 'game-123',
+          user_id: 'user-456',
+          nickname: 'Player One',
+          score: 1000,
+          joined_at: '2025-01-01T00:00:00Z'
+        }
+      ]
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          order: jest.fn().mockResolvedValue({ data: mockPlayers, error: null })
+        })
+      })
+
+      // Mock the profiles query to return error
+      const mockProfilesSelect = jest.fn().mockReturnValue({
+        in: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Profiles database error' }
+        })
+      })
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'players') {
+          return { select: mockSelect } as MockSupabaseQueryBuilder
+        } else if (table === 'profiles') {
+          return { select: mockProfilesSelect } as MockSupabaseQueryBuilder
+        }
+        return {} as MockSupabaseQueryBuilder
+      })
+
+      const result = await GameService.getPlayers('game-123')
+
+      // Should still return players even though profiles failed
+      expect(result).toEqual(mockPlayers.map(player => ({ ...player, profiles: null })))
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch player profiles:', { message: 'Profiles database error' })
+
+      consoleSpy.mockRestore()
+    })
+
     it('should return empty array when no players', async () => {
       const mockSelect = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -1341,6 +1387,53 @@ describe('GameService', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Error getting Final Jeopardy board:', { message: 'Board not found' })
 
       consoleSpy.mockRestore()
+    })
+  })
+
+  describe('startGame', () => {
+    it('should start game successfully when in lobby status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      // Mock getGame to return game in lobby status
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        host_id: hostId,
+        status: 'lobby'
+      } as any)
+
+      // Mock updateGame
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
+        id: gameId,
+        status: 'in_progress'
+      } as any)
+
+      await GameService.startGame(gameId, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { status: 'in_progress' }, hostId)
+
+      getGameSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should throw error when game is not in lobby status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      // Mock getGame to return game already in progress
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        host_id: hostId,
+        status: 'in_progress'
+      } as any)
+
+      await expect(GameService.startGame(gameId, hostId))
+        .rejects.toThrow("Cannot start game: current status is 'in_progress', expected 'lobby'")
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+
+      getGameSpy.mockRestore()
     })
   })
 })
