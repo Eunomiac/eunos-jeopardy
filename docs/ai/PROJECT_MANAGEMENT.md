@@ -38,6 +38,106 @@ Online platform to create and host custom Jeopardy!-style games for friends. The
 - Scale: Small/medium sessions (up to ~20 concurrent players)
 - Optimization: Batched updates, memoization, DB indexing, lean payloads
 
+## Version Management
+
+This project follows **[Semantic Versioning 2.0.0](https://semver.org/)** (SemVer) for version numbering.
+
+### Version Format: MAJOR.MINOR.PATCH
+
+- **MAJOR** (x.0.0): Breaking changes - incompatible API changes
+- **MINOR** (0.x.0): New features - backwards-compatible additions
+- **PATCH** (0.0.x): Bug fixes - backwards-compatible fixes
+
+### Pre-1.0 Development (Current Phase)
+
+**Version 0.x.x indicates "In Development"** - the API is unstable and may change frequently.
+
+During the 0.x.x phase:
+- Increment **MINOR** version when completing a major feature/issue
+- Increment **PATCH** version for bug fixes and small improvements
+- Breaking changes are expected and don't require a major version bump
+
+### Version Roadmap to 1.0.0
+
+```
+✅ v0.1.0 - Initial project setup
+✅ v0.2.0 - CSV Question Set Loader complete
+✅ v0.3.0 - Game Host Dashboard complete
+✅ v0.4.0 - Player Dashboard complete
+✅ v0.5.0 - Real-time Buzzer System complete
+✅ v0.6.0 - Daily Double Flow complete (CURRENT)
+🔄 v0.7.0 - Bug fixes and flow refinement (next)
+📋 v0.8.0 - Final Jeopardy implementation
+📋 v0.9.0 - Round Progression & Game Completion
+🎯 v1.0.0 - First stable release (friends can play complete games)
+```
+
+### When to Bump Versions
+
+**Bump MINOR version (0.x.0) when:**
+- Completing a major issue/feature from PROJECT_MANAGEMENT.md
+- Adding significant new functionality
+- Completing a development milestone
+- Roughly every 1-2 weeks of active feature development
+
+**Bump PATCH version (0.x.y) when:**
+- Fixing bugs without adding features
+- Making small improvements or refinements
+- Between major feature releases
+
+**Jump to 1.0.0 when:**
+- Core gameplay is complete (Jeopardy → Double Jeopardy → Final Jeopardy)
+- Friends can play full games without major bugs
+- API is stable enough to commit to backwards compatibility
+- Ready for production use
+
+### How to Update Versions
+
+**For AI Agents: Follow these steps when completing a major feature:**
+
+1. **Update package.json**
+   ```bash
+   # Edit package.json, change "version" field
+   # Example: "0.6.0" → "0.7.0"
+   ```
+
+2. **Create an annotated git tag**
+   ```bash
+   git tag -a v0.7.0 -m "Release v0.7.0: [Feature Name] complete"
+   ```
+
+3. **Update CHANGELOG.md**
+   - Add a new version section at the top
+   - Document new features under `### Added`
+   - Document changes under `### Changed`
+   - Document bug fixes under `### Fixed`
+   - Follow the existing format in CHANGELOG.md
+
+4. **Commit the changes**
+   ```bash
+   git add package.json CHANGELOG.md
+   git commit -m "chore: Release v0.7.0 - [Feature Name] complete"
+   ```
+
+5. **Optional: Push tags to GitHub**
+   ```bash
+   git push origin --tags
+   ```
+
+### Version Management Best Practices
+
+- **Document thoroughly**: Each version entry in CHANGELOG.md should clearly describe what changed
+- **Tag at completion**: Create git tags when features are complete and tested, not during development
+- **Consistent messaging**: Use clear, descriptive commit messages for version bumps
+- **Update CURRENT_STATUS.md**: Reflect the new version in project status documentation
+- **Don't skip versions**: Increment sequentially (0.6.0 → 0.7.0, not 0.6.0 → 0.8.0)
+
+### Reference Files
+
+- **package.json**: Contains current version number
+- **CHANGELOG.md**: Complete version history with features and changes
+- **Git tags**: Annotated tags marking version milestones in commit history
+
 ## Issue Management
 This document contains the static project structure and issue definitions. For current status, progress updates, and rapidly changing information, see **[CURRENT_STATUS.md](./CURRENT_STATUS.md)**.
 
