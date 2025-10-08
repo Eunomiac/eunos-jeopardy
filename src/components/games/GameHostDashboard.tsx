@@ -308,12 +308,6 @@ export function GameHostDashboard({
   /** Loading state for initial data fetch and UI feedback */
   const [loading, setLoading] = useState(true);
 
-  /** User feedback message for operations and errors */
-  const [message, setMessage] = useState("");
-
-  /** Type of message for appropriate styling (success/error) */
-  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
-
   /** Centralized alert management */
   const { alertState, showStatus, showConfirmation } = useAlert();
 
@@ -539,10 +533,8 @@ export function GameHostDashboard({
      */
     const loadGameData = async () => {
       try {
-        // Set loading state and clear previous feedback
+        // Set loading state
         setLoading(true);
-        setMessage("");
-        setMessageType("");
 
         // Fetch game details with host authorization
         // This validates that the current user is authorized to host this game
@@ -592,12 +584,12 @@ export function GameHostDashboard({
         console.error("Failed to load game data:", error);
 
         // Display user-friendly error message
-        setMessage(
+        showStatus(
           `Failed to load game: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`
+          }`,
+          "error"
         );
-        setMessageType("error");
       } finally {
         // Always clear loading state regardless of success/failure
         setLoading(false);
@@ -675,8 +667,7 @@ export function GameHostDashboard({
         // Update database with focused player (fire and forget)
         GameService.setFocusedPlayer(payload.gameId, fastestPlayerId, user!.id)
           .then(() => {
-            setMessage(`Auto-selected ${fastestNickname} (${fastestTime}ms)`);
-            setMessageType("success");
+            showStatus(`Auto-selected ${fastestNickname} (${fastestTime}ms)`, "success");
           })
           .catch((error) => {
             console.error("Failed to set focused player in database:", error);
@@ -894,10 +885,10 @@ export function GameHostDashboard({
             await GameService.startCategoryIntroductions(game.id, user.id);
           } catch (error) {
             console.error('Failed to start category introductions:', error);
-            setMessage(
-              `Failed to start category introductions: ${error instanceof Error ? error.message : "Unknown error"}`
+            showStatus(
+              `Failed to start category introductions: ${error instanceof Error ? error.message : "Unknown error"}`,
+              "error"
             );
-            setMessageType("error");
           }
         }, 2500);
       }
@@ -1009,7 +1000,7 @@ export function GameHostDashboard({
     }
 
     try {
-      setMessage("Time expired - completing clue...");
+      showStatus("Time expired - completing clue...", "info");
 
       // Mark clue as completed
       const { error: clueStateError } = await supabase
@@ -1043,14 +1034,13 @@ export function GameHostDashboard({
       setClueStates(updatedClueStates);
 
       // Show correct answer to host (non-blocking): message area handles feedback
-      setMessage("Clue completed due to timeout");
-      setMessageType("success");
+      showStatus("Clue completed due to timeout", "success");
     } catch (error) {
       console.error("Failed to handle clue timeout:", error);
-      setMessage(
-        `Failed to handle timeout: ${error instanceof Error ? error.message : "Unknown error"}`
+      showStatus(
+        `Failed to handle timeout: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error"
       );
-      setMessageType("error");
     }
   }, [user, game, focusedClue, gameId]);
 
@@ -1124,7 +1114,7 @@ export function GameHostDashboard({
     try {
       // If clicking the same clue that's already focused, unfocus it
       if (focusedClue && focusedClue.id === clueId) {
-        setMessage("Unfocusing clue...");
+        showStatus("Unfocusing clue...", "info");
 
         // Clear focused clue in game state
         const clearedGame = await GameService.setFocusedClue(
@@ -1135,12 +1125,11 @@ export function GameHostDashboard({
         setGame(clearedGame);
         setFocusedClue(null);
 
-        setMessage("Clue unfocused");
-        setMessageType("success");
+        showStatus("Clue unfocused", "success");
         return;
       }
 
-      setMessage("Selecting clue...");
+      showStatus("Selecting clue...", "info");
 
       // Set focused clue in game state
       const updatedGame = await GameService.setFocusedClue(
@@ -1165,29 +1154,29 @@ export function GameHostDashboard({
           // Pre-populate with existing wager and set state
           setWagerInput(existingWager.toString());
           setDailyDoubleWager(existingWager);
-          setMessage(
-            `🎯 Daily Double selected! Current wager: $${existingWager.toLocaleString()}`
+          showStatus(
+            `🎯 Daily Double selected! Current wager: $${existingWager.toLocaleString()}`,
+            "success"
           );
         } else {
           // Pre-populate wager input with current clue value
           setWagerInput(fullClueData.value.toString());
-          setMessage(
-            `🎯 Daily Double selected! Get player's wager before revealing.`
+          showStatus(
+            `🎯 Daily Double selected! Get player's wager before revealing.`,
+            "success"
           );
         }
-        setMessageType("success");
       } else {
-        setMessage(`Clue selected: ${clueData.prompt.substring(0, 50)}...`);
-        setMessageType("success");
+        showStatus(`Clue selected: ${clueData.prompt.substring(0, 50)}...`, "success");
       }
     } catch (error) {
       console.error("Failed to select clue:", error);
-      setMessage(
+      showStatus(
         `Failed to select clue: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1204,7 +1193,7 @@ export function GameHostDashboard({
     }
 
     try {
-      setMessage("Revealing clue...");
+      showStatus("Revealing clue...", "info");
 
       // Mark clue as revealed
       await ClueService.revealClue(gameId, focusedClue.id);
@@ -1223,16 +1212,15 @@ export function GameHostDashboard({
       const updatedClueStates = await ClueService.getGameClueStates(gameId);
       setClueStates(updatedClueStates);
 
-      setMessage("Clue revealed to all players");
-      setMessageType("success");
+      showStatus("Clue revealed to all players", "success");
     } catch (error) {
       console.error("Failed to reveal clue:", error);
-      setMessage(
+      showStatus(
         `Failed to reveal clue: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1260,7 +1248,7 @@ export function GameHostDashboard({
       }
 
       try {
-        setMessage("Selecting player...");
+        showStatus("Selecting player...", "info");
 
         // Find player name for broadcast
         const player = players.find((p) => p.user_id === playerId);
@@ -1282,16 +1270,15 @@ export function GameHostDashboard({
         );
         setGame(updatedGame);
 
-        setMessage(`Manually selected player: ${playerName}`);
-        setMessageType("success");
+        showStatus(`Manually selected player: ${playerName}`, "success");
       } catch (error) {
         console.error("Failed to select player:", error);
-        setMessage(
+        showStatus(
           `Failed to select player: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`
+          }`,
+          "error"
         );
-        setMessageType("error");
       }
     },
     [user, game, gameId, players, clearClueTimeout, buzzerResolutionTimeoutId]
@@ -1315,7 +1302,7 @@ export function GameHostDashboard({
       // Clear timeout since player answered
       clearClueTimeout();
 
-      setMessage("Marking answer correct...");
+      showStatus("Marking answer correct...", "info");
 
       // For now, use a placeholder response - in a real implementation,
       // this would come from the player's actual response
@@ -1352,16 +1339,15 @@ export function GameHostDashboard({
       setClueStates(updatedClueStates);
       setPlayers(updatedPlayers);
 
-      setMessage("Answer marked correct, score updated");
-      setMessageType("success");
+      showStatus("Answer marked correct, score updated", "success");
     } catch (error) {
       console.error("Failed to mark answer correct:", error);
-      setMessage(
+      showStatus(
         `Failed to mark answer correct: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1383,7 +1369,7 @@ export function GameHostDashboard({
       // Clear timeout since player answered
       clearClueTimeout();
 
-      setMessage("Marking answer incorrect...");
+      showStatus("Marking answer incorrect...", "info");
 
       // For now, use a placeholder response - in a real implementation,
       // this would come from the player's actual response
@@ -1411,8 +1397,9 @@ export function GameHostDashboard({
       // Only clear focused clue if it was completed (all players wrong)
       if (updatedGame.focused_clue_id === null) {
         setFocusedClue(null);
-        setMessage(
-          "Answer marked incorrect, all players have attempted - clue completed"
+        showStatus(
+          "Answer marked incorrect, all players have attempted - clue completed",
+          "success"
         );
         // Show correct answer when all players are wrong (non-blocking): message area handles feedback
       } else {
@@ -1426,8 +1413,9 @@ export function GameHostDashboard({
         // Broadcast unlock event to all players
         await BroadcastService.broadcastBuzzerUnlock(gameId, focusedClue.id);
 
-        setMessage(
-          "Answer marked incorrect, buzzer unlocked for other players"
+        showStatus(
+          "Answer marked incorrect, buzzer unlocked for other players",
+          "success"
         );
         // Restart timeout for remaining players
         startClueTimeout();
@@ -1441,16 +1429,14 @@ export function GameHostDashboard({
 
       setClueStates(updatedClueStates);
       setPlayers(updatedPlayers);
-
-      setMessageType("success");
     } catch (error) {
       console.error("Failed to mark answer wrong:", error);
-      setMessage(
+      showStatus(
         `Failed to mark answer wrong: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1492,7 +1478,7 @@ export function GameHostDashboard({
       const willUnlock = game.is_buzzer_locked;
 
       // Provide immediate user feedback
-      setMessage("Updating buzzer state...");
+      showStatus("Updating buzzer state...", "info");
 
       if (willUnlock) {
         // UNLOCK: Broadcast first for immediate UI update, then database
@@ -1511,7 +1497,7 @@ export function GameHostDashboard({
 
         // Start clue timeout
         startClueTimeout();
-        setMessage("Buzzer unlocked - players have 5 seconds to buzz in");
+        showStatus("Buzzer unlocked - players have 5 seconds to buzz in", "success");
       } else {
         // LOCK: Broadcast first for immediate UI update, then database
         console.log("🔒 Locking buzzer - broadcasting first");
@@ -1525,21 +1511,19 @@ export function GameHostDashboard({
 
         // Clear clue timeout
         clearClueTimeout();
-        setMessage("Buzzer locked");
+        showStatus("Buzzer locked", "success");
       }
-
-      setMessageType("success");
     } catch (error) {
       // Log error for debugging
       console.error("Failed to toggle buzzer:", error);
 
       // Display user-friendly error message
-      setMessage(
+      showStatus(
         `Failed to toggle buzzer: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1568,22 +1552,20 @@ export function GameHostDashboard({
       setGame(updatedGame);
 
       // Provide user feedback
-      setMessage("Game introduction started!");
-      setMessageType("success");
+      showStatus("Game introduction started!", "success");
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to start game introduction:", error);
-      setMessage(
+      showStatus(
         `Failed to start game: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1603,22 +1585,20 @@ export function GameHostDashboard({
       setCurrentIntroductionCategory(1);
 
       // Provide user feedback
-      setMessage("Category introductions started!");
-      setMessageType("success");
+      showStatus("Category introductions started!", "success");
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to start category introductions:", error);
-      setMessage(
+      showStatus(
         `Failed to start category introductions: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1638,8 +1618,7 @@ export function GameHostDashboard({
       if (updatedGame.status === 'in_progress') {
         setIsIntroducingCategories(false);
         setCurrentIntroductionCategory(0);
-        setMessage("Category introductions complete! Game started!");
-        setMessageType("success");
+        showStatus("Category introductions complete! Game started!", "success");
       } else {
         // Move to next category
         setCurrentIntroductionCategory((prev) => prev + 1);
@@ -1647,17 +1626,16 @@ export function GameHostDashboard({
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to advance category:", error);
-      setMessage(
+      showStatus(
         `Failed to advance category: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1675,22 +1653,20 @@ export function GameHostDashboard({
       setIsIntroducingCategories(false);
       setCurrentIntroductionCategory(0);
 
-      setMessage("Category introductions skipped! Game started!");
-      setMessageType("success");
+      showStatus("Category introductions skipped! Game started!", "success");
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to skip introductions:", error);
-      setMessage(
+      showStatus(
         `Failed to skip introductions: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1705,8 +1681,7 @@ export function GameHostDashboard({
     try {
       // Get the current player (who gets to answer Daily Doubles)
       if (!game.current_player_id) {
-        setMessage("No current player set. Please initialize current player first.");
-        setMessageType("error");
+        showStatus("No current player set. Please initialize current player first.", "error");
         return;
       }
 
@@ -1716,22 +1691,20 @@ export function GameHostDashboard({
       }, user.id);
 
       setGame(updatedGame);
-      setMessage(`Daily Double! Current player automatically selected.`);
-      setMessageType("success");
+      showStatus(`Daily Double! Current player automatically selected.`, "success");
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to handle Daily Double:", error);
-      setMessage(
+      showStatus(
         `Failed to handle Daily Double: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1745,8 +1718,7 @@ export function GameHostDashboard({
 
     const wagerAmount = parseInt(wagerInput, 10);
     if (isNaN(wagerAmount) || wagerAmount <= 0) {
-      setMessage("Please enter a valid wager amount");
-      setMessageType("error");
+      showStatus("Please enter a valid wager amount", "error");
       return;
     }
 
@@ -1756,22 +1728,20 @@ export function GameHostDashboard({
       // Keep the wager input showing the current wager amount
       // setWagerInput(""); // Don't clear - let it show the current wager
 
-      setMessage(`Daily Double wager set: $${wagerAmount.toLocaleString()}`);
-      setMessageType("success");
+      showStatus(`Daily Double wager set: $${wagerAmount.toLocaleString()}`, "success");
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to set Daily Double wager:", error);
-      setMessage(
+      showStatus(
         `Failed to set wager: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1792,22 +1762,20 @@ export function GameHostDashboard({
         setWagerInput(focusedClue.value.toString());
       }
 
-      setMessage("Daily Double wager cleared");
-      setMessageType("success");
+      showStatus("Daily Double wager cleared", "success");
 
       // Clear message after delay
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to clear Daily Double wager:", error);
-      setMessage(
+      showStatus(
         `Failed to clear wager: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -1970,8 +1938,7 @@ export function GameHostDashboard({
     if (!user || !game || !clueSetData) {return;}
 
     try {
-      setMessage("DEBUG: Completing all clues in current round...");
-      setMessageType("");
+      showStatus("DEBUG: Completing all clues in current round...", "info");
 
       // Get all clue IDs for current round
       const currentRoundClueIds = getCurrentRoundClueIds(clueSetData, game.current_round);
@@ -1991,14 +1958,13 @@ export function GameHostDashboard({
       const updatedClueStates = await ClueService.getGameClueStates(game.id);
       setClueStates(updatedClueStates);
 
-      setMessage(`DEBUG: Completed all ${currentRoundClueIds.length} clues in ${game.current_round} round`);
-      setMessageType("success");
+      showStatus(`DEBUG: Completed all ${currentRoundClueIds.length} clues in ${game.current_round} round`, "success");
     } catch (error) {
       console.error("Failed to complete all clues:", error);
-      setMessage(
-        `DEBUG: Failed to complete clues: ${error instanceof Error ? error.message : "Unknown error"}`
+      showStatus(
+        `DEBUG: Failed to complete clues: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -2031,7 +1997,7 @@ export function GameHostDashboard({
     }
 
     try {
-      setMessage("Adjusting player score...");
+      showStatus("Adjusting player score...", "info");
       await GameService.updatePlayerScore(
         gameId,
         playerId,
@@ -2049,21 +2015,19 @@ export function GameHostDashboard({
         [playerId]: "",
       }));
 
-      setMessage(`Added ${scoreChange} points to player score`);
-      setMessageType("success");
+      showStatus(`Added ${scoreChange} points to player score`, "success");
 
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to adjust score:", error);
-      setMessage(
+      showStatus(
         `Failed to adjust score: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -2089,7 +2053,7 @@ export function GameHostDashboard({
     const absoluteScoreChange = Math.abs(scoreChange);
 
     try {
-      setMessage("Adjusting player score...");
+      showStatus("Adjusting player score...", "info");
       await GameService.updatePlayerScore(
         gameId,
         playerId,
@@ -2107,21 +2071,19 @@ export function GameHostDashboard({
         [playerId]: "",
       }));
 
-      setMessage(`Subtracted ${absoluteScoreChange} points from player score`);
-      setMessageType("success");
+      showStatus(`Subtracted ${absoluteScoreChange} points from player score`, "success");
 
       setTimeout(() => {
-        setMessage("");
-        setMessageType("");
+        showStatus("", "");
       }, 2000);
     } catch (error) {
       console.error("Failed to adjust score:", error);
-      setMessage(
+      showStatus(
         `Failed to adjust score: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
+        "error"
       );
-      setMessageType("error");
     }
   };
 
@@ -2179,15 +2141,6 @@ export function GameHostDashboard({
       {/* User feedback messages for operations */}
       {loading && (
         <div className="alert alert-info jeopardy-alert">Loading game data...</div>
-      )}
-      {message && (
-        <div
-          className={`alert ${
-            messageType === "success" ? "alert-success" : "alert-danger"
-          } jeopardy-alert`}
-        >
-          {message}
-        </div>
       )}
 
       {/* Centralized Alert Component */}
