@@ -2,12 +2,14 @@
 import { FontAssignmentService } from './FontAssignmentService'
 import { supabase } from '../supabase/client'
 import { GameService } from '../games/GameService'
+import { createMockPlayer } from '../../test/__mocks__/commonTestData'
 
 // Mock Supabase client and GameService
 jest.mock('../supabase/client')
 jest.mock('../games/GameService')
 
 const mockSupabase = supabase as jest.Mocked<typeof supabase>
+const mockGameService = GameService as jest.Mocked<typeof GameService>
 
 describe('FontAssignmentService', () => {
   beforeEach(() => {
@@ -17,6 +19,11 @@ describe('FontAssignmentService', () => {
   describe('getPlayerFont', () => {
     const userId = 'user-123'
     const gameId = 'game-456'
+
+    beforeEach(() => {
+      // Default mock for GameService.getPlayers - return empty array (no conflicts)
+      mockGameService.getPlayers.mockResolvedValue([])
+    })
 
     it('should return existing permanent font when user has one', async () => {
       // Mock user profile with existing font
@@ -31,9 +38,6 @@ describe('FontAssignmentService', () => {
         })
       } as any)
 
-      // Mock GameService.getPlayers to return empty array (no conflicts)
-      jest.spyOn(GameService, 'getPlayers').mockResolvedValue([])
-
       const result = await FontAssignmentService.getPlayerFont(userId, gameId)
 
       expect(result).toBe('handwritten-2')
@@ -42,22 +46,76 @@ describe('FontAssignmentService', () => {
 
     it('should clear temporary font when no conflict exists', async () => {
       // Mock user profile with both permanent and temporary font
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { handwritten_font: 'handwritten-1', temp_handwritten_font: 'handwritten-3' },
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { handwritten_font: 'handwritten-1', temp_handwritten_font: 'handwritten-3' },
+                error: null
+              })
+            })
+          })
+        } as any)
+        // Mock update to clear temporary font
+        .mockReturnValueOnce({
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              data: null,
               error: null
             })
           })
-        })
-      } as any)
+        } as any)
 
       const result = await FontAssignmentService.getPlayerFont(userId, gameId)
 
       // Should return the permanent font since there's no conflict
       // (temporary font should be cleared)
       expect(result).toBe('handwritten-1')
+    })
+
+    it('should assign temporary font when permanent font conflicts with other players', async () => {
+      // Mock user profile with permanent font
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
+                error: null
+              })
+            })
+          })
+        } as any)
+        // Mock fonts in use query - another player has handwritten-1
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: [{ handwritten_font: 'handwritten-1', temp_handwritten_font: null }],
+              error: null
+            })
+          })
+        } as any)
+        // Mock temporary font assignment
+        .mockReturnValueOnce({
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              data: null,
+              error: null
+            })
+          })
+        } as any)
+
+      // Override default mock for this test - return other players
+      mockGameService.getPlayers.mockResolvedValueOnce([
+        createMockPlayer({ user_id: 'other-user-1' })
+      ])
+
+      const result = await FontAssignmentService.getPlayerFont(userId, gameId)
+
+      // Should get a different font (not handwritten-1)
+      expect(result).toMatch(/^handwritten-[2-8]$/)
+      expect(result).not.toBe('handwritten-1')
     })
 
     it('should assign permanent font when user has none', async () => {
@@ -260,6 +318,120 @@ describe('FontAssignmentService', () => {
       const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
 
       expect(result).toBe('handwritten-1') // Should return default
+    })
+
+    it('should handle all fonts in use edge case', async () => {
+      // Mock user profile with permanent font
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
+                error: null
+              })
+            })
+          })
+        } as any)
+        // Mock all 8 fonts in use
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: [
+                { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-2', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-3', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-4', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-5', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-6', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-7', temp_handwritten_font: null },
+                { handwritten_font: 'handwritten-8', temp_handwritten_font: null }
+              ],
+              error: null
+            })
+          })
+        } as any)
+        // Mock temporary font assignment
+        .mockReturnValueOnce({
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              data: null,
+              error: null
+            })
+          })
+        } as any)
+
+      // Override default mock - return 8 connected players
+      mockGameService.getPlayers.mockResolvedValueOnce(
+        Array.from({ length: 8 }, (_, i) => createMockPlayer({ user_id: `user-${i}` }))
+      )
+
+      const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
+
+      // Should still get a font (random assignment when all in use)
+      expect(result).toMatch(/^handwritten-[1-8]$/)
+    })
+
+    it('should prioritize temp_handwritten_font over permanent font for other players', async () => {
+      // Mock user profile
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
+                error: null
+              })
+            })
+          })
+        } as any)
+        // Mock other player using temp font that conflicts
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: [
+                { handwritten_font: 'handwritten-2', temp_handwritten_font: 'handwritten-1' }
+              ],
+              error: null
+            })
+          })
+        } as any)
+        // Mock temporary font assignment
+        .mockReturnValueOnce({
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              data: null,
+              error: null
+            })
+          })
+        } as any)
+
+      // Override default mock - return other player
+      mockGameService.getPlayers.mockResolvedValueOnce([
+        createMockPlayer({ user_id: 'other-user' })
+      ])
+
+      const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
+
+      // Should get a different font because other player's temp font is handwritten-1
+      expect(result).toMatch(/^handwritten-[2-8]$/)
+      expect(result).not.toBe('handwritten-1')
+    })
+
+    it('should handle errors in font assignment gracefully', async () => {
+      // Mock profile fetch error
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockRejectedValue(new Error('Database connection failed'))
+          })
+        })
+      } as any)
+
+      const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
+
+      // Should fallback to first font
+      expect(result).toBe('handwritten-1')
     })
   })
 })
