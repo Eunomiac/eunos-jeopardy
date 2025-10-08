@@ -140,6 +140,7 @@
   .dynamic-display-window {
     // Base container - no default styling, all styles applied via modifier classes
     z-index: 1000;
+    visibility: hidden; // To avoid FOUC
     position: absolute;
     top: 30px;
     left: 50%;
@@ -149,7 +150,6 @@
 
     // Clue display styling (regular clues)
     &.jeopardy-clue-display {
-      visibility: hidden; // To avoid FOUC
       position: fixed;
       top: 50px;
       left: 50%;
