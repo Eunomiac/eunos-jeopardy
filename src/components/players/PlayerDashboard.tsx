@@ -702,29 +702,42 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
     // Subscribe to broadcast channel for buzzer events
     const subscription = BroadcastService.subscribeToGameBuzzer(gameId, {
-      onBuzzerUnlock: async (payload: BuzzerUnlockPayload) => {
+      onBuzzerUnlock: (payload: BuzzerUnlockPayload) => {
         console.log(`🔓 [Player] Buzzer unlocked at ${payload.timestamp}`);
 
-        // Check if current player is locked out from this clue
-        const { data: clueData } = await supabase
-          .from('clues')
-          .select('locked_out_player_ids')
-          .eq('id', payload.clueId)
-          .single();
+        // Fire off async check for locked-out status without blocking
+        // This follows the broadcast handler pattern: immediate UI update, async validation in background
+        (async () => {
+          try {
+            // Check if current player is locked out from this clue
+            const { data: clueData } = await supabase
+              .from('clues')
+              .select('locked_out_player_ids')
+              .eq('id', payload.clueId)
+              .single();
 
-        const lockedOutPlayers = clueData?.locked_out_player_ids || [];
+            const lockedOutPlayers = clueData?.locked_out_player_ids || [];
 
-        if (lockedOutPlayers.includes(user?.id)) {
-          console.log(`🚫 [Player] Cannot unlock - player is locked out from this clue`);
-          // Keep buzzer frozen for locked-out players
-          setBuzzerState(BuzzerState.FROZEN);
-        } else {
-          // Unlock buzzer for eligible players
-          setBuzzerUnlockTime(payload.timestamp);
-          setBuzzerState(BuzzerState.UNLOCKED);
-          setFastestBuzzTime(null);
-          setFastestPlayerId(null);
-        }
+            if (lockedOutPlayers.includes(user?.id)) {
+              console.log(`🚫 [Player] Cannot unlock - player is locked out from this clue`);
+              // Keep buzzer frozen for locked-out players
+              setBuzzerState(BuzzerState.FROZEN);
+            } else {
+              // Unlock buzzer for eligible players
+              setBuzzerUnlockTime(payload.timestamp);
+              setBuzzerState(BuzzerState.UNLOCKED);
+              setFastestBuzzTime(null);
+              setFastestPlayerId(null);
+            }
+          } catch (error) {
+            console.error('🚫 [Player] Error checking locked-out status:', error);
+            // On error, default to unlocking (fail open)
+            setBuzzerUnlockTime(payload.timestamp);
+            setBuzzerState(BuzzerState.UNLOCKED);
+            setFastestBuzzTime(null);
+            setFastestPlayerId(null);
+          }
+        })();
       },
       onBuzzerLock: () => {
         console.log(`🔒 [Player] Buzzer locked`);
