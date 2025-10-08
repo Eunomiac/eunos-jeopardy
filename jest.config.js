@@ -97,6 +97,15 @@ export default {
     /* ❌ EXCLUDED: Animation Initialization - Simple setup, no business logic */
     '!src/utils/animations.ts',
 
+    /* ❌ EXCLUDED: GSAP Animation Definitions - Direct DOM manipulation with GSAP library
+     * WARNING: Contains some testable helper functions, but separating would harm code organization.
+     * The animation registration system and GSAP timeline creation are tightly coupled to DOM queries.
+     * Integration testing via E2E tests is more appropriate for validating animation behavior.
+     */
+    '!src/services/animations/AnimationDefinitions.ts',
+    '!src/services/animations/AnimationService.ts',
+    '!src/services/animations/ClueDisplayService.ts',
+
   ],
 
   // Coverage thresholds - 80% for new code, 90% global
