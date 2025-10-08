@@ -121,7 +121,9 @@ export default {
   },
 
   // Test results reporter for SonarQube
-  testResultsProcessor: 'jest-sonar-reporter',
+  // Disabled due to Windows path format incompatibility with SonarQube generic test execution format
+  // Code coverage is still reported to SonarQube via LCOV
+  // testResultsProcessor: 'jest-sonar-reporter',
 
   // ESM support
   preset: 'ts-jest/presets/default-esm',
