@@ -309,7 +309,7 @@ export function GameHostDashboard({
   const [loading, setLoading] = useState(true);
 
   /** Centralized alert management */
-  const { alertState, showStatus, showConfirmation } = useAlert();
+  const { alertState, showStatus, showNotification, showConfirmation } = useAlert();
 
   /** Connection status monitoring */
   const [connectionStatus, setConnectionStatus] = useState<
@@ -1033,8 +1033,12 @@ export function GameHostDashboard({
       const updatedClueStates = await ClueService.getGameClueStates(gameId);
       setClueStates(updatedClueStates);
 
-      // Show correct answer to host (non-blocking): message area handles feedback
-      showStatus("Clue completed due to timeout", "success");
+      // Show correct answer to host in a modal
+      await showNotification(
+        `The correct answer was: "${focusedClue.response}"`,
+        "Time Expired - Clue Completed",
+        "info"
+      );
     } catch (error) {
       console.error("Failed to handle clue timeout:", error);
       showStatus(
@@ -1042,7 +1046,7 @@ export function GameHostDashboard({
         "error"
       );
     }
-  }, [user, game, focusedClue, gameId]);
+  }, [user, game, focusedClue, gameId, showNotification]);
 
   /**
    * Creates the countdown interval for the active clue.
@@ -1396,12 +1400,25 @@ export function GameHostDashboard({
 
       // Only clear focused clue if it was completed (all players wrong)
       if (updatedGame.focused_clue_id === null) {
+        // Update clue states and player scores first
+        const [updatedClueStates, updatedPlayers] = await Promise.all([
+          ClueService.getGameClueStates(gameId),
+          GameService.getPlayers(gameId),
+        ]);
+
+        setClueStates(updatedClueStates);
+        setPlayers(updatedPlayers);
+
+        // Clear focused clue
+        const correctAnswer = focusedClue.response;
         setFocusedClue(null);
-        showStatus(
-          "Answer marked incorrect, all players have attempted - clue completed",
-          "success"
+
+        // Show correct answer to host in a modal
+        await showNotification(
+          `All players have attempted. The correct answer was: "${correctAnswer}"`,
+          "Clue Completed - All Players Wrong",
+          "info"
         );
-        // Show correct answer when all players are wrong (non-blocking): message area handles feedback
       } else {
         // Clue still active - broadcast unlock for remaining players
         console.log("🔓 Broadcasting buzzer unlock for remaining players after wrong answer");
@@ -1417,18 +1434,19 @@ export function GameHostDashboard({
           "Answer marked incorrect, buzzer unlocked for other players",
           "success"
         );
+
+        // Update clue states and player scores
+        const [updatedClueStates, updatedPlayers] = await Promise.all([
+          ClueService.getGameClueStates(gameId),
+          GameService.getPlayers(gameId),
+        ]);
+
+        setClueStates(updatedClueStates);
+        setPlayers(updatedPlayers);
+
         // Restart timeout for remaining players
         startClueTimeout();
       }
-
-      // Update clue states and player scores
-      const [updatedClueStates, updatedPlayers] = await Promise.all([
-        ClueService.getGameClueStates(gameId),
-        GameService.getPlayers(gameId),
-      ]);
-
-      setClueStates(updatedClueStates);
-      setPlayers(updatedPlayers);
     } catch (error) {
       console.error("Failed to mark answer wrong:", error);
       showStatus(
