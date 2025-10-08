@@ -57,6 +57,72 @@ Each issue entry should be interpreted as a direct instruction for diagnosing, r
 2. **Notification Pop-Ups** – Centered modal popups that pause gameplay with a single `OK` button to close and resume play.
 3. **Confirmation Pop-Ups** – Identical to Notification Pop-Ups but include both `OK` and `Cancel` buttons. Used for actions requiring confirmation (e.g. ending a round early).
 
+### Current Alert/Notification Implementations to Consolidate
+
+**Status Messages (using `setMessage` + `setMessageType`):**
+- Loading game failure (error)
+- Auto-selected player (success)
+- Failed to start category introductions (error)
+- Time expired - completing clue (info)
+- Clue completed due to timeout (success)
+- Failed to handle timeout (error)
+- Unfocusing clue (info)
+- Clue unfocused (success)
+- Selecting clue (info)
+- Daily Double selected with wager info (success)
+- Clue selected (success)
+- Failed to select clue (error)
+- Revealing clue (info)
+- Clue revealed to all players (success)
+- Failed to reveal clue (error)
+- Selecting player (info)
+- Manually selected player (success)
+- Failed to select player (error)
+- Marking answer correct (info)
+- Answer marked correct, score updated (success)
+- Failed to mark answer correct (error)
+- Marking answer incorrect (info)
+- Answer marked incorrect (various messages) (success)
+- Failed to mark answer wrong (error)
+- Updating buzzer state (info)
+- Buzzer unlocked/locked (success)
+- Failed to toggle buzzer (error)
+- Game introduction started (success)
+- Failed to start game (error)
+- Category introductions started (success)
+- Failed to start category introductions (error)
+- Category introductions complete (success)
+- Failed to advance category (error)
+- Category introductions skipped (success)
+- Failed to skip introductions (error)
+- Daily Double messages (success/error)
+- Daily Double wager set/cleared (success)
+- Failed to set/clear wager (error)
+- Ending game (info)
+- Game ended successfully (success)
+- Failed to end game (error)
+- Transitioning to next round (info)
+- Advanced to round (success)
+- Failed to advance round (error)
+- DEBUG: Completing all clues (info/success/error)
+- Adjusting player score (info/success/error)
+
+**Confirmation Dialogs (using `window.confirm`):**
+- Line 1844: "Are you sure you want to end this game?" (End Game)
+
+**Custom Confirmation Dialogs (using state + modal):**
+- Lines 2600-2627: Round Transition Confirmation Dialog
+  - Shows when advancing round with incomplete clues
+  - Displays count of remaining clues
+  - Has Cancel and "Advance Round" buttons
+  - Uses `showRoundTransitionConfirm` state
+
+**Alert Display (JSX):**
+- Lines 2181-2189: Current alert display at top of dashboard
+  - Uses `message` and `messageType` state
+  - Classes: `alert`, `alert-success`, `alert-danger`, `jeopardy-alert`
+  - Positioned absolutely at top center
+
 ## Issue 9
 **Problem:** After confirming advancement to the next round while clues are remaining, the `GameHostDashboard` jumps immediately to the fully-populated board, despite the game status reading "Round Transition. There are no category introduction controls, and the Board Control panel is active, allowing the Host to trigger clue selection.  On the `PlayerDashboard`, nothing happens _until_ the host selects a clue – this causes an update on the player side, which immediately refreshes the board to the next round, without playing any animation. (It should be noted that, during this time, the game status never advances past “Round Transition”)
 
