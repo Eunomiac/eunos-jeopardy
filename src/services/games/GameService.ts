@@ -1519,9 +1519,10 @@ export class GameService {
     // Verify authorization and get current game
     const currentGame = await this.getGame(gameId, hostId)
 
-    // Ensure game is in game_intro status
-    if ((currentGame.status as string) !== 'game_intro') {
-      throw new Error(`Cannot start category introductions: Game is not in game_intro status (current: ${currentGame.status})`)
+    // Ensure game is in game_intro or round_transition status
+    const currentStatus = currentGame.status as string;
+    if (currentStatus !== 'game_intro' && currentStatus !== 'round_transition') {
+      throw new Error(`Cannot start category introductions: Game must be in game_intro or round_transition status (current: ${currentGame.status})`)
     }
 
     // Update game to category introduction state

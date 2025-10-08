@@ -20,7 +20,6 @@ import { AnimationService } from "../../services/animations/AnimationService";
 import { BroadcastService } from "../../services/realtime/BroadcastService";
 import { BuzzerQueueManager } from "../../services/buzzer/BuzzerQueueManager";
 import type { BroadcastSubscription, PlayerBuzzPayload } from "../../types/BroadcastEvents";
-import { AnimationEvents } from "../../services/animations/AnimationEvents";
 import "./GameHostDashboard.scss";
 
 import { BuzzerQueuePanel } from "./panels/BuzzerQueuePanel";
@@ -859,43 +858,10 @@ export function GameHostDashboard({
     checkRoundCompletion();
   }, [clueStates, game?.current_round, clueSetData, game]);
 
-  /**
-   * Effect to handle round transition animation completion.
-   *
-   * Subscribes to AnimationEvents and transitions to category introduction
-   * phase after the round transition animation completes.
-   */
-  useEffect(() => {
-    if (!game || !user) {return;}
-
-    // Only handle round_transition status
-    if (game.status !== 'round_transition') {return;}
-
-    // Subscribe to animation events
-    const unsubscribe = AnimationEvents.subscribe(async (event) => {
-      if (event.type === 'RoundTransition' && event.gameId === game.id) {
-        console.log('🎬 [GameHostDashboard] Round transition animation started');
-
-        // Wait for animation to complete (approximately 2.5 seconds based on animation definition)
-        // The animation timeline includes: fade out (0.5s) + overlay show (0.6s) + hold (1.5s) + overlay fade (0.5s)
-        // Total: ~3.1 seconds, but we'll use 2.5s to start category intro slightly before overlay fully fades
-        setTimeout(async () => {
-          try {
-            console.log('🎬 [GameHostDashboard] Round transition animation complete, starting category introductions');
-            await GameService.startCategoryIntroductions(game.id, user.id);
-          } catch (error) {
-            console.error('Failed to start category introductions:', error);
-            showStatus(
-              `Failed to start category introductions: ${error instanceof Error ? error.message : "Unknown error"}`,
-              "error"
-            );
-          }
-        }, 2500);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [game?.status, game?.id, user]);
+  // Note: Round transition animation handling removed
+  // Host manually controls category introductions after round transition,
+  // just like after game start. The round_transition status shows
+  // "Introduce Categories" button in the Board Control panel.
 
   /**
    * Determines the current state of the multi-state reveal/buzzer button
@@ -2203,16 +2169,21 @@ export function GameHostDashboard({
                 </div>
               </div>
             )}
-            {/* Round Transition UI */}
+            {/* Round Transition UI - Same as Game Intro */}
             {String(game?.status) === "round_transition" && (
               <div className="game-introduction-panel">
                 <div className="introduction-header">
                   <h3>Round Transition</h3>
-                  <p>Animation in progress...</p>
+                  <p>Ready to introduce {game.current_round === "double" ? "Double Jeopardy" : "Final Jeopardy"} categories</p>
                 </div>
 
                 <div className="introduction-controls">
-                  <p className="transition-message">Transitioning to {game.current_round === "double" ? "Double Jeopardy" : "Final Jeopardy"}...</p>
+                  <button
+                    className="jeopardy-button"
+                    onClick={handleStartCategoryIntroductions}
+                  >
+                    Introduce Categories
+                  </button>
                 </div>
               </div>
             )}
