@@ -25,6 +25,65 @@ describe('GameService', () => {
     jest.clearAllMocks()
   })
 
+  describe('getActiveGame', () => {
+    it('should return active game when one exists', async () => {
+      const mockGame = {
+        id: 'game-123',
+        status: 'in_progress' as const
+      }
+
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockReturnValue({
+            order: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+              })
+            })
+          })
+        })
+      } as any)
+
+      const result = await GameService.getActiveGame()
+      expect(result).toEqual(mockGame)
+    })
+
+    it('should return null when no active game exists', async () => {
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockReturnValue({
+            order: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
+              })
+            })
+          })
+        })
+      } as any)
+
+      const result = await GameService.getActiveGame()
+      expect(result).toBeNull()
+    })
+
+    it('should throw error when database query fails', async () => {
+      const mockError = { message: 'Database connection failed' }
+
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockReturnValue({
+            order: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                maybeSingle: jest.fn().mockResolvedValue({ data: null, error: mockError })
+              })
+            })
+          })
+        })
+      } as any)
+
+      await expect(GameService.getActiveGame()).rejects.toThrow('Failed to get active game: Database connection failed')
+    })
+  })
+
   describe('createGame', () => {
     it('should create a new game successfully', async () => {
       const mockGame = {
@@ -439,6 +498,52 @@ describe('GameService', () => {
 
       await expect(GameService.getPlayers('game-123'))
         .rejects.toThrow('Failed to fetch players: Fetch failed')
+    })
+
+    it('should handle profiles fetch error gracefully', async () => {
+      const mockPlayers = [
+        {
+          id: 'player-1',
+          game_id: 'game-123',
+          user_id: 'user-456',
+          nickname: 'Player One',
+          score: 1000,
+          joined_at: '2025-01-01T00:00:00Z'
+        }
+      ]
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          order: jest.fn().mockResolvedValue({ data: mockPlayers, error: null })
+        })
+      })
+
+      // Mock the profiles query to return error
+      const mockProfilesSelect = jest.fn().mockReturnValue({
+        in: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Profiles database error' }
+        })
+      })
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'players') {
+          return { select: mockSelect } as MockSupabaseQueryBuilder
+        } else if (table === 'profiles') {
+          return { select: mockProfilesSelect } as MockSupabaseQueryBuilder
+        }
+        return {} as MockSupabaseQueryBuilder
+      })
+
+      const result = await GameService.getPlayers('game-123')
+
+      // Should still return players even though profiles failed
+      expect(result).toEqual(mockPlayers.map(player => ({ ...player, profiles: null })))
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch player profiles:', { message: 'Profiles database error' })
+
+      consoleSpy.mockRestore()
     })
 
     it('should return empty array when no players', async () => {
@@ -1029,6 +1134,306 @@ describe('GameService', () => {
 
       getGameSpy.mockRestore()
       isRoundCompleteSpy.mockRestore()
+    })
+  })
+
+  describe('endGame', () => {
+    it('should end game with completed status when Final Jeopardy is completed', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      // Mock getGame to verify authorization
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        host_id: hostId,
+        status: 'in_progress'
+      } as any)
+
+      // Mock isFinalJeopardyCompleted to return true
+      const isFinalJeopardyCompletedSpy = jest.spyOn(GameService as any, 'isFinalJeopardyCompleted')
+        .mockResolvedValue(true)
+
+      // Mock updateGame
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
+        id: gameId,
+        status: 'completed'
+      } as any)
+
+      await GameService.endGame(gameId, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(isFinalJeopardyCompletedSpy).toHaveBeenCalledWith(gameId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { status: 'completed' }, hostId)
+
+      getGameSpy.mockRestore()
+      isFinalJeopardyCompletedSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should end game with cancelled status when Final Jeopardy is not completed', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      // Mock getGame to verify authorization
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        host_id: hostId,
+        status: 'in_progress'
+      } as any)
+
+      // Mock isFinalJeopardyCompleted to return false
+      const isFinalJeopardyCompletedSpy = jest.spyOn(GameService as any, 'isFinalJeopardyCompleted')
+        .mockResolvedValue(false)
+
+      // Mock updateGame
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
+        id: gameId,
+        status: 'cancelled'
+      } as any)
+
+      await GameService.endGame(gameId, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(isFinalJeopardyCompletedSpy).toHaveBeenCalledWith(gameId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { status: 'cancelled' }, hostId)
+
+      getGameSpy.mockRestore()
+      isFinalJeopardyCompletedSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+  })
+
+  describe('isFinalJeopardyCompleted', () => {
+    it('should return true when Final Jeopardy clue is revealed and completed', async () => {
+      const gameId = 'game-123'
+      const clueSetId = 'clue-set-123'
+      const boardId = 'board-123'
+      const clueId = 'clue-123'
+
+      // Mock game query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { clue_set_id: clueSetId },
+              error: null
+            })
+          })
+        })
+      } as any)
+
+      // Mock board query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: boardId },
+                error: null
+              })
+            })
+          })
+        })
+      } as any)
+
+      // Mock clue query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue({
+              data: [{ id: clueId }],
+              error: null
+            })
+          })
+        })
+      } as any)
+
+      // Mock clue state query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { revealed: true, completed: true },
+                error: null
+              })
+            })
+          })
+        })
+      } as any)
+
+      const result = await (GameService as any).isFinalJeopardyCompleted(gameId)
+      expect(result).toBe(true)
+    })
+
+    it('should return false when Final Jeopardy clue is not completed', async () => {
+      const gameId = 'game-123'
+      const clueSetId = 'clue-set-123'
+      const boardId = 'board-123'
+      const clueId = 'clue-123'
+
+      // Mock game query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { clue_set_id: clueSetId },
+              error: null
+            })
+          })
+        })
+      } as any)
+
+      // Mock board query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: boardId },
+                error: null
+              })
+            })
+          })
+        })
+      } as any)
+
+      // Mock clue query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            limit: jest.fn().mockResolvedValue({
+              data: [{ id: clueId }],
+              error: null
+            })
+          })
+        })
+      } as any)
+
+      // Mock clue state query - revealed but not completed
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { revealed: true, completed: false },
+                error: null
+              })
+            })
+          })
+        })
+      } as any)
+
+      const result = await (GameService as any).isFinalJeopardyCompleted(gameId)
+      expect(result).toBe(false)
+    })
+
+    it('should return false when game clue set query fails', async () => {
+      const gameId = 'game-123'
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      // Mock game query with error
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Database error' }
+            })
+          })
+        })
+      } as any)
+
+      const result = await (GameService as any).isFinalJeopardyCompleted(gameId)
+      expect(result).toBe(false)
+      expect(consoleSpy).toHaveBeenCalledWith('Error getting game clue set:', { message: 'Database error' })
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should return false when Final Jeopardy board query fails', async () => {
+      const gameId = 'game-123'
+      const clueSetId = 'clue-set-123'
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+
+      // Mock game query
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { clue_set_id: clueSetId },
+              error: null
+            })
+          })
+        })
+      } as any)
+
+      // Mock board query with error
+      mockSupabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Board not found' }
+              })
+            })
+          })
+        })
+      } as any)
+
+      const result = await (GameService as any).isFinalJeopardyCompleted(gameId)
+      expect(result).toBe(false)
+      expect(consoleSpy).toHaveBeenCalledWith('Error getting Final Jeopardy board:', { message: 'Board not found' })
+
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('startGame', () => {
+    it('should start game successfully when in lobby status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      // Mock getGame to return game in lobby status
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        host_id: hostId,
+        status: 'lobby'
+      } as any)
+
+      // Mock updateGame
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
+        id: gameId,
+        status: 'in_progress'
+      } as any)
+
+      await GameService.startGame(gameId, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { status: 'in_progress' }, hostId)
+
+      getGameSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should throw error when game is not in lobby status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      // Mock getGame to return game already in progress
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        host_id: hostId,
+        status: 'in_progress'
+      } as any)
+
+      await expect(GameService.startGame(gameId, hostId))
+        .rejects.toThrow("Cannot start game: current status is 'in_progress', expected 'lobby'")
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+
+      getGameSpy.mockRestore()
     })
   })
 })
