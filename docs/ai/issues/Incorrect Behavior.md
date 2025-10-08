@@ -10,6 +10,8 @@ Each issue entry should be interpreted as a direct instruction for diagnosing, r
 
 **Resolution Strategy:** Ensure board (including clues) has the same aspect ratio as the dynamic display window, make sure they are always displayed in the same position
 
+**DEFERRED:** User will attempt to resolve this visual/layout issue themselves: Skip for now.
+
 ## Issue 2
 **Directive:** Remove the pulsing yellow border around focused elements like buttons. This is a purely cosmetic fix and should not affect focus behavior or accessibility.
 
@@ -37,6 +39,8 @@ Each issue entry should be interpreted as a direct instruction for diagnosing, r
 **Problem:** The initial position of the dynamic display window is not being set to overlay the clue cell that triggered it (so that it appears as if that cell were expanding to reveal the prompt).
 
 **Resolution Strategy:** The clue reveal and daily double animations need to determine the position of the triggering cell, and both scale and absolutely position the dynamic display window to the same location. Only then should the fade-in and scale-up animation proceed.
+
+**DEFERRED:** Resolving this issue will likely depend on successful resolution of Issue 1.  Skip for now.
 
 ## Issue 8
 **Problem:** The 'continue to next round when clues are remaining' confirmation dialog is not properly positioned.

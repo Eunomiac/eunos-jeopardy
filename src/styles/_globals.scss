@@ -163,7 +163,7 @@ a {
   }
 
   &:focus {
-    @include focus-ring;
+    outline: none; // Remove pulsing gold border per Issue #2
   }
 }
 
@@ -211,7 +211,7 @@ button {
   cursor: pointer;
 
   &:focus {
-    @include focus-ring;
+    outline: none; // Remove pulsing gold border per Issue #2
   }
 }
 
