@@ -104,7 +104,7 @@ export function Alert({
             className={`jeopardy-button ${isConfirmation ? "green" : "blue"}`}
             onClick={onConfirm}
           >
-            {isConfirmation ? "OK" : "OK"}
+            OK
           </button>
         </div>
       </div>

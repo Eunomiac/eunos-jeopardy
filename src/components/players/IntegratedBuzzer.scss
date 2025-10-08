@@ -76,13 +76,8 @@
 
     // State-specific styles
     &.buzzer-hidden {
-      background: #333;
-      border-color: #666;
-      color: #999;
-
-      .buzzer-state-icon {
-        opacity: 0.5;
-      }
+      visibility: hidden;
+      pointer-events: none;
     }
 
     &.buzzer-inactive {
