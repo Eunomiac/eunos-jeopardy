@@ -131,15 +131,27 @@ Each issue entry should be interpreted as a direct instruction for diagnosing, r
 - Old message display JSX removed
 - Build successful with no errors
 
-## Issue 9
+## Issue 9 ✅ RESOLVED
 **Problem:** After confirming advancement to the next round while clues are remaining, the `GameHostDashboard` jumps immediately to the fully-populated board, despite the game status reading "Round Transition. There are no category introduction controls, and the Board Control panel is active, allowing the Host to trigger clue selection.  On the `PlayerDashboard`, nothing happens _until_ the host selects a clue – this causes an update on the player side, which immediately refreshes the board to the next round, without playing any animation. (It should be noted that, during this time, the game status never advances past “Round Transition”)
 
-**Resolution Strategy:** The "Round Transition" state should last only as long as the round start animation takes to play (it's identical to the "Game Intro" status, used at the start of the "jeopardy" round).  Moreover, the Board Control panel should not be enabled during this state: Again, just like the "Game Intro" state, the controls for category introduction should instead display in that panel (i.e. the "Introduce Categories" button and associated text).  I suspect many of the other problems relating to the "double" round are the result of the game state never advancing past "Round Transition", so I won't elaborate on them until we get that part fixed.
+**Resolution:** Added proper handling for "round_transition" status in GameHostDashboard. The board is now hidden during round transition, and a transition UI panel is displayed instead (similar to game_intro). The board display condition now excludes "round_transition" status, preventing the board from appearing before category introductions complete.
 
-## Issue 10
+**Implementation:**
+- Added "Round Transition" UI panel to Board Control section
+- Updated board display condition to exclude "round_transition" status
+- Shows transition message: "Transitioning to [Double/Final] Jeopardy..."
+- Board remains hidden until category introductions begin
+
+## Issue 10 ✅ RESOLVED
 **Problem:** After advancing to the next round when all clues have been completed, the jeopardy board element on the player UI fades out (likely in preparation for the round transition animation, which doesn't appear to play).
 
-**Resolution Strategy:** The board should not fade out when a round transition is triggered:  All changes to the board's appearance will be handled by the round transition animation.
+**Resolution:** Modified RoundTransitionAnimation to NOT fade out the board. The board now remains visible throughout the round transition. Only the transition overlay (if present) animates in and out. The category introduction animation will handle any board visual changes.
+
+**Implementation:**
+- Removed board fade-out from RoundTransitionAnimation.execute()
+- Board remains at full opacity during round transition
+- Only transition overlay animates (fade in, hold, fade out)
+- If no overlay exists, animation just waits for visual continuity
 
 
 ---
