@@ -38,7 +38,7 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 - **[Testing Reference](../reference/TESTING_REFERENCE.md)** - Technical setup and configuration
 
 ## General References
-- **[INDEX.md](../INDEX.md)** - Navigation hub for all AI documentation]
+- **[INDEX.md](../INDEX.md)** - Navigation hub for all AI documentation
 - **[CURRENT_STATUS.md](../CURRENT_STATUS.md)** - Real-time status and active work
 - **[PROJECT_MANAGEMENT.md](../PROJECT_MANAGEMENT.md)** - Project structure and issue definitions
 

@@ -5,11 +5,11 @@
  * Each animation is self-contained with its execution logic and instant-run checks.
  */
 
-import { gsap } from 'gsap';
-import type { Game } from '../games/GameService';
-import { AnimationService } from './AnimationService';
-import type { AnimationConfig } from './AnimationService';
-import { ClueDisplayService } from './ClueDisplayService';
+import { gsap } from "gsap";
+import type { Game } from "../games/GameService";
+import { AnimationService } from "./AnimationService";
+import type { AnimationConfig } from "./AnimationService";
+import { ClueDisplayService } from "./ClueDisplayService";
 
 /**
  * Animation Definition Interface
@@ -71,23 +71,30 @@ export interface AnimationDefinition<TParams = any> {
  * Triggers: When game status changes to "game_intro"
  * Instant: When game status IS "game_intro" or beyond (page reload scenario)
  */
-export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: string }> = {
+export const BoardIntroAnimation: AnimationDefinition<{
+  round: string;
+  gameId: string;
+}> = {
   id: "BoardIntro",
 
   async execute(params, config = {}) {
     const isInstant = config.instant === true;
-    console.log(`🎬 [BoardIntroAnimation] ${isInstant ? 'Instant' : 'Animated'} board intro for round ${params.round} in game ${params.gameId}`);
+    console.log(
+      `🎬 [BoardIntroAnimation] ${
+        isInstant ? "Instant" : "Animated"
+      } board intro for round ${params.round} in game ${params.gameId}`
+    );
 
     // Wait for DOM elements to be ready
     const animationService = AnimationService.getInstance();
-    await animationService.waitForElement('.jeopardy-board', 2000);
+    await animationService.waitForElement(".jeopardy-board", 2000);
 
     if (isInstant) {
       // Instant: Set final state immediately without animation
-      gsap.set('.jeopardy-board-container', {autoAlpha: 1});
-      gsap.set('.jeopardy-board', { autoAlpha: 1 });
-      gsap.set('.clue-cell', { autoAlpha: 1 });
-      gsap.set('.player-podium', { autoAlpha: 1 });
+      gsap.set(".jeopardy-board-container", { autoAlpha: 1 });
+      gsap.set(".jeopardy-board", { autoAlpha: 1 });
+      gsap.set(".clue-cell", { autoAlpha: 1 });
+      gsap.set(".player-podium", { autoAlpha: 1 });
       console.log(`🎬 [BoardIntroAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
@@ -100,69 +107,114 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
           console.log(`🎬 [BoardIntroAnimation] Animation complete`);
           config.onComplete?.();
           resolve();
-        }
+        },
       });
 
-      // Fade in background image
-      timeline.fromTo('.player-dashboard .background-image', {
-        autoAlpha: 0,
-        scale: 1.5,
-        y: -150
-      },{
-        autoAlpha: 1,
-        scale: 1,
-        y: 0,
-        duration: 0.5,
-        ease: config.ease || 'power2.inOut'
-      });
-
+      timeline
+      // Fade in stage background image
+        .fromTo(
+          ".player-dashboard .background-image",
+          {
+            autoAlpha: 0,
+            scale: 1.5,
+            y: -150,
+          },
+          {
+            autoAlpha: 1,
+            scale: 1,
+            y: 0,
+            duration: 5,
+            ease: "power2.out",
+          }
+        )
       // Fade in board container
-      timeline.fromTo('.jeopardy-board-container, .jeopardy-board', {
-        scale: 1.25,
-        autoAlpha: 0
-      },{
-        scale: 1,
-        autoAlpha: 1,
-        duration: 0.25,
-        ease: config.ease || 'power2.inOut'
-      });
+        .fromTo(
+          ".player-dashboard .jeopardy-board-container",
+          {
+            autoAlpha: 0,
+            scale: 0.8,
+            y: -200,
+          },
+          {
+            autoAlpha: 1,
+            scale: 1,
+            y: 0,
+            duration: 4,
+            ease: "back.out",
+          },
+          1
+        )
+        // Fade in board outer frame
+        .fromTo(
+          ".player-dashboard .jeopardy-board-container .jeopardy-board-background",
+          {
+            autoAlpha: 0,
+          },
+          {
+            autoAlpha: 1,
+            duration: 3,
+            ease: "none",
+          },
+          1
+        )
+        // Fade in board background
+        .fromTo(
+          ".player-dashboard .jeopardy-board-container .jeopardy-board .splash-jeopardy",
+          {
+            autoAlpha: 0,
+          },
+          {
+            autoAlpha: 1,
+            duration: 1,
+            ease: "power2",
+          },
+          2
+        )
+        // Stagger in category headers & clue cells
+        .fromTo(
+          ".clue-cell, .category-header",
+          { autoAlpha: 0 },
+          {
+            duration: 0.15,
+            autoAlpha: 1,
+            ease: "power2.inOut",
+            stagger: {
+              amount: 2,
+              grid: [5, 6],
+              ease: "steps(7)",
+              from: "random",
+            },
+          }
+        );
 
       // Fade in competitor podiums
-      timeline.fromTo('.player-podium.competitor', {
-        autoAlpha: 0,
-        y: 50
-      },{
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.25,
-        ease: 'power2.inOut',
-        stagger: 0.05
-      });
+      timeline.fromTo(
+        ".player-podium.competitor",
+        {
+          autoAlpha: 0,
+          y: 50,
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.25,
+          ease: "power2.inOut",
+          stagger: 0.05,
+        }
+      );
 
       // Fade in main player podium
-      timeline.fromTo('.player-podium.main', {
-        autoAlpha: 0,
-        y: 50
-      },{
-        autoAlpha: 1,
-        y: 0,
-        duration: 0.25,
-        ease: 'power2.inOut'
-      });
-
-      // Stagger in clue cells with random pattern
-      timeline.fromTo('.clue-cell',
-        { autoAlpha: 0 },
+      timeline.fromTo(
+        ".player-podium.main",
         {
-          duration: 0.15,
+          autoAlpha: 0,
+          y: 50,
+        },
+        {
           autoAlpha: 1,
-          ease: 'power2.inOut',
-          stagger: {
-            amount: 2,
-            grid: [5, 6],
-            ease: 'steps(7)',
-            from: 'random'
-          }
+          y: 0,
+          duration: 0.25,
+          ease: "power2.inOut",
         }
       );
 
@@ -184,18 +236,22 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
     // Board intro is "in the past" if we're currently IN game_intro or beyond
     // (meaning the transition TO game_intro already happened)
     // The subscription is now set up before this check, so we can safely check game_intro
-    return gameState.status === 'game_intro' as GameStatus
-        || gameState.status === 'introducing_categories' as GameStatus
-        || gameState.status === 'in_progress' as GameStatus;
+    return (
+      gameState.status === ("game_intro" as GameStatus) ||
+      gameState.status === ("introducing_categories" as GameStatus) ||
+      gameState.status === ("in_progress" as GameStatus)
+    );
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.current_round || !gameState.id) {return null;}
+    if (!gameState.current_round || !gameState.id) {
+      return null;
+    }
     return {
       round: gameState.current_round,
-      gameId: gameState.id
+      gameId: gameState.id,
     };
-  }
+  },
 };
 
 /**
@@ -208,21 +264,37 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
  * Triggers: When current_introduction_category increments during "introducing_categories"
  * Instant: When game status IS "introducing_categories" (sets strip to current position)
  */
-export const CategoryIntroAnimation: AnimationDefinition<{ categoryNumber: number; gameId: string }> = {
+export const CategoryIntroAnimation: AnimationDefinition<{
+  categoryNumber: number;
+  gameId: string;
+}> = {
   id: "CategoryIntro",
 
   async execute(params, config = {}) {
     const isInstant = config.instant === true;
-    console.log(`🎬 [CategoryIntroAnimation] ${isInstant ? 'Instant' : 'Animated'} category ${params.categoryNumber} in game ${params.gameId}`);
+    console.log(
+      `🎬 [CategoryIntroAnimation] ${
+        isInstant ? "Instant" : "Animated"
+      } category ${params.categoryNumber} in game ${params.gameId}`
+    );
 
     const animationService = AnimationService.getInstance();
-    const stripElement = await animationService.waitForElement('.jeopardy-category-display-strip', 1000);
-    const targetX = -((params.categoryNumber - 1) * 100 / 6);
+    const stripElement = await animationService.waitForElement(
+      ".jeopardy-category-display-strip",
+      1000
+    );
+    const targetX = -(((params.categoryNumber - 1) * 100) / 6);
 
     if (isInstant) {
       // Instant: Set final state immediately
-      animationService.setCategoryStripInitialState(stripElement, targetX, params.categoryNumber);
-      console.log(`🎬 [CategoryIntroAnimation] Instant setup complete for category ${params.categoryNumber}`);
+      animationService.setCategoryStripInitialState(
+        stripElement,
+        targetX,
+        params.categoryNumber
+      );
+      console.log(
+        `🎬 [CategoryIntroAnimation] Instant setup complete for category ${params.categoryNumber}`
+      );
       config.onComplete?.();
       return;
     }
@@ -238,18 +310,24 @@ export const CategoryIntroAnimation: AnimationDefinition<{ categoryNumber: numbe
 
   shouldRunInstantly(gameState) {
     // Category intro is "in the past" if we're currently IN introducing_categories or beyond
-    return gameState.status === 'introducing_categories' as GameStatus
-        || gameState.status === 'in_progress' as GameStatus;
+    return (
+      gameState.status === ("introducing_categories" as GameStatus) ||
+      gameState.status === ("in_progress" as GameStatus)
+    );
   },
 
   getParamsFromGameState(gameState) {
-    const category = (gameState as Game & { current_introduction_category?: number }).current_introduction_category;
-    if (!category || !gameState.id) {return null;};
+    const category = (
+      gameState as Game & { current_introduction_category?: number }
+    ).current_introduction_category;
+    if (!category || !gameState.id) {
+      return null;
+    }
     return {
       categoryNumber: category,
-      gameId: gameState.id
+      gameId: gameState.id,
     };
-  }
+  },
 };
 
 /**
@@ -260,17 +338,27 @@ export const CategoryIntroAnimation: AnimationDefinition<{ categoryNumber: numbe
  * - Populates the clue content in the .dynamic-display-window
  * - Fades in, scales up, and centers the dynamic display window to a fixed central position
  */
-export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: string }> = {
+export const ClueRevealAnimation: AnimationDefinition<{
+  clueId: string;
+  gameId: string;
+}> = {
   id: "ClueReveal",
 
   async execute(params, config = {}) {
     const isInstant = config.instant === true;
-    console.log(`🎬 [ClueRevealAnimation] ${isInstant ? 'Instant' : 'Animated'} clue reveal for ${params.clueId} in game ${params.gameId}`);
+    console.log(
+      `🎬 [ClueRevealAnimation] ${
+        isInstant ? "Instant" : "Animated"
+      } clue reveal for ${params.clueId} in game ${params.gameId}`
+    );
 
     const animationService = AnimationService.getInstance();
     const clueDisplayService = ClueDisplayService.getInstance();
-    const displayWindow = await animationService.waitForElement('.dynamic-display-window', 2000);
-    const focusedCell = document.querySelector('.clue-cell.focused');
+    const displayWindow = await animationService.waitForElement(
+      ".dynamic-display-window",
+      2000
+    );
+    const focusedCell = document.querySelector(".clue-cell.focused");
 
     if (!focusedCell) {
       console.warn(`🎬 [ClueRevealAnimation] No focused clue cell found`);
@@ -279,14 +367,18 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
     }
 
     // Hide display window before populating to avoid flash
-    gsap.set(displayWindow, { visibility: 'hidden' });
+    gsap.set(displayWindow, { visibility: "hidden" });
 
     // Populate display window with clue content (adds .jeopardy-clue-display class)
-    await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
+    await clueDisplayService.populateDisplayWindow(
+      params.clueId,
+      params.gameId,
+      displayWindow
+    );
 
     if (isInstant) {
       // Instant: Just show at final CSS-defined position
-      gsap.set(displayWindow, { visibility: 'visible', opacity: 1 });
+      gsap.set(displayWindow, { visibility: "visible", opacity: 1 });
       console.log(`🎬 [ClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
@@ -316,7 +408,7 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
           console.log(`🎬 [ClueRevealAnimation] Animation complete`);
           config.onComplete?.();
           resolve();
-        }
+        },
       });
 
       timeline.from(displayWindow, {
@@ -326,12 +418,12 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
         scaleX,
         scaleY,
         duration: 0.3,
-        ease: config.ease || 'power2.out'
+        ease: config.ease || "power2.out",
       });
 
-      timeline.to(displayWindow, {autoAlpha: 1, duration: 0.3}, 0);
+      timeline.to(displayWindow, { autoAlpha: 1, duration: 0.3 }, 0);
 
-      (animationService).activeTimelines?.push(timeline);
+      animationService.activeTimelines?.push(timeline);
     });
   },
 
@@ -345,16 +437,21 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
     }
 
     // Clue reveal is "in the past" if there's a focused clue
-    return gameState.status === 'in_progress' as GameStatus && !!gameState.focused_clue_id;
+    return (
+      gameState.status === ("in_progress" as GameStatus) &&
+      !!gameState.focused_clue_id
+    );
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.focused_clue_id || !gameState.id) {return null;};
+    if (!gameState.focused_clue_id || !gameState.id) {
+      return null;
+    }
     return {
       clueId: gameState.focused_clue_id,
-      gameId: gameState.id
+      gameId: gameState.id,
     };
-  }
+  },
 };
 
 /**
@@ -365,33 +462,49 @@ export const ClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: 
  * - Populates the display window with the daily double splash graphic
  * - Fades in, scales up, and centers the dynamic display window to a fixed central position
  */
-export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; gameId: string }> = {
+export const DailyDoubleRevealAnimation: AnimationDefinition<{
+  clueId: string;
+  gameId: string;
+}> = {
   id: "DailyDoubleReveal",
 
   async execute(params, config = {}) {
     const isInstant = config.instant === true;
-    console.log(`🎬 [DailyDoubleRevealAnimation] ${isInstant ? 'Instant' : 'Animated'} daily double reveal for ${params.clueId} in game ${params.gameId}`);
+    console.log(
+      `🎬 [DailyDoubleRevealAnimation] ${
+        isInstant ? "Instant" : "Animated"
+      } daily double reveal for ${params.clueId} in game ${params.gameId}`
+    );
 
     const animationService = AnimationService.getInstance();
     const clueDisplayService = ClueDisplayService.getInstance();
-    const displayWindow = await animationService.waitForElement('.dynamic-display-window', 2000);
-    const focusedCell = document.querySelector('.clue-cell.focused');
+    const displayWindow = await animationService.waitForElement(
+      ".dynamic-display-window",
+      2000
+    );
+    const focusedCell = document.querySelector(".clue-cell.focused");
 
     if (!focusedCell) {
-      console.warn(`🎬 [DailyDoubleRevealAnimation] No focused clue cell found`);
+      console.warn(
+        `🎬 [DailyDoubleRevealAnimation] No focused clue cell found`
+      );
       config.onComplete?.();
       return;
     }
 
     // Hide display window before populating to avoid flash
-    gsap.set(displayWindow, { visibility: 'hidden' });
+    gsap.set(displayWindow, { visibility: "hidden" });
 
     // Populate display window with daily double content (adds both classes + splash image)
-    await clueDisplayService.populateDisplayWindow(params.clueId, params.gameId, displayWindow);
+    await clueDisplayService.populateDisplayWindow(
+      params.clueId,
+      params.gameId,
+      displayWindow
+    );
 
     if (isInstant) {
       // Instant: Just show at final CSS-defined position
-      gsap.set(displayWindow, { visibility: 'visible', opacity: 1 });
+      gsap.set(displayWindow, { visibility: "visible", opacity: 1 });
       console.log(`🎬 [DailyDoubleRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
@@ -420,7 +533,7 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
           console.log(`🎬 [DailyDoubleRevealAnimation] Animation complete`);
           config.onComplete?.();
           resolve();
-        }
+        },
       });
 
       // Set initial state: positioned at cell with cell scale, hidden
@@ -429,8 +542,8 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
         y: offsetY,
         scaleX,
         scaleY,
-        visibility: 'visible',
-        opacity: 0
+        visibility: "visible",
+        opacity: 0,
       });
 
       // Animate TO final CSS position with dramatic overshoot and fade in
@@ -441,12 +554,12 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
         scaleY: 1,
         opacity: 1,
         duration: 0.8,
-        ease: 'back.out(1.7)' // Dramatic overshoot effect for daily double
+        ease: "back.out(1.7)", // Dramatic overshoot effect for daily double
       });
 
       (animationService as any).activeTimelines?.push(timeline);
     });
-  }
+  },
 
   // Note: shouldRunInstantly and getParamsFromGameState are intentionally omitted.
   // Daily double animations are always triggered explicitly via AnimationEvents.publish()
@@ -463,26 +576,40 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{ clueId: string; g
  * - The splash image is overlaid on top, obscuring the text
  * - This animation simply hides the splash image to reveal the clue text underneath
  */
-export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: string; gameId: string }> = {
+export const DailyDoubleClueRevealAnimation: AnimationDefinition<{
+  clueId: string;
+  gameId: string;
+}> = {
   id: "DailyDoubleClueReveal",
 
   async execute(params, config = {}) {
     const isInstant = config.instant === true;
-    console.log(`🎬 [DailyDoubleClueRevealAnimation] ${isInstant ? 'Instant' : 'Animated'} daily double clue reveal for ${params.clueId} in game ${params.gameId}`);
+    console.log(
+      `🎬 [DailyDoubleClueRevealAnimation] ${
+        isInstant ? "Instant" : "Animated"
+      } daily double clue reveal for ${params.clueId} in game ${params.gameId}`
+    );
 
     const animationService = AnimationService.getInstance();
-    const displayWindow = await animationService.waitForElement('.dynamic-display-window', 2000);
-    const dailyDoubleSplash = displayWindow.querySelector('.daily-double-splash');
+    const displayWindow = await animationService.waitForElement(
+      ".dynamic-display-window",
+      2000
+    );
+    const dailyDoubleSplash = displayWindow.querySelector(
+      ".daily-double-splash"
+    );
 
     if (!dailyDoubleSplash) {
-      console.warn(`🎬 [DailyDoubleClueRevealAnimation] Daily double splash not found`);
+      console.warn(
+        `🎬 [DailyDoubleClueRevealAnimation] Daily double splash not found`
+      );
       config.onComplete?.();
       return;
     }
 
     if (isInstant) {
       // Instant: Just hide the splash
-      gsap.set(dailyDoubleSplash, { visibility: 'hidden' });
+      gsap.set(dailyDoubleSplash, { visibility: "hidden" });
       console.log(`🎬 [DailyDoubleClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
       return;
@@ -495,18 +622,18 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
           console.log(`🎬 [DailyDoubleClueRevealAnimation] Animation complete`);
           config.onComplete?.();
           resolve();
-        }
+        },
       });
 
       timeline.to(dailyDoubleSplash, {
-        visibility: 'hidden',
+        visibility: "hidden",
         duration: 0.5,
-        ease: 'power2.inOut'
+        ease: "power2.inOut",
       });
 
       (animationService as any).activeTimelines?.push(timeline);
     });
-  }
+  },
 
   // Note: shouldRunInstantly and getParamsFromGameState are intentionally omitted.
   // Daily double clue reveal animations are always triggered explicitly via AnimationEvents.publish()
@@ -532,15 +659,27 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{ clueId: strin
  * - Shows transition graphic/text
  * - Prepares for new board intro
  */
-export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; toRound: string; gameId: string }> = {
+export const RoundTransitionAnimation: AnimationDefinition<{
+  fromRound: string;
+  toRound: string;
+  gameId: string;
+}> = {
   id: "RoundTransition",
 
   async execute(params, config = {}) {
     const isInstant = config.instant === true;
-    console.log(`🎬 [RoundTransitionAnimation] ${isInstant ? 'Instant' : 'Animated'} transition from ${params.fromRound} to ${params.toRound} in game ${params.gameId}`);
+    console.log(
+      `🎬 [RoundTransitionAnimation] ${
+        isInstant ? "Instant" : "Animated"
+      } transition from ${params.fromRound} to ${params.toRound} in game ${
+        params.gameId
+      }`
+    );
 
     const animationService = AnimationService.getInstance();
-    const transitionOverlay = document.querySelector('.round-transition-overlay');
+    const transitionOverlay = document.querySelector(
+      ".round-transition-overlay"
+    );
 
     if (isInstant) {
       // Instant: Just ensure overlay is hidden
@@ -560,18 +699,19 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
           console.log(`🎬 [RoundTransitionAnimation] Animation complete`);
           config.onComplete?.();
           resolve();
-        }
+        },
       });
 
       // Show transition overlay if it exists
       if (transitionOverlay) {
-        timeline.fromTo(transitionOverlay,
+        timeline.fromTo(
+          transitionOverlay,
           { autoAlpha: 0, scale: 0.8 },
           {
             autoAlpha: 1,
             scale: 1,
             duration: 0.6,
-            ease: 'back.out(1.7)'
+            ease: "back.out(1.7)",
           }
         );
 
@@ -582,7 +722,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
         timeline.to(transitionOverlay, {
           autoAlpha: 0,
           duration: 0.5,
-          ease: 'power2.inOut'
+          ease: "power2.inOut",
         });
       } else {
         // No overlay - just wait a moment for visual continuity
@@ -604,14 +744,14 @@ export const RoundTransitionAnimation: AnimationDefinition<{ fromRound: string; 
 
     // Round transition should run instantly if status is 'round_transition'
     // This handles page reloads during round transitions
-    return gameState.status === ('round_transition' as GameStatus);
+    return gameState.status === ("round_transition" as GameStatus);
   },
 
   getParamsFromGameState(_gameState) {
     // Can't derive transition params from current state alone
     // The orchestrator provides params when publishing the event
     return null;
-  }
+  },
 };
 
 /**
@@ -648,10 +788,14 @@ export class AnimationRegistry {
    * @param gameState - Current game state
    * @returns Array of animations that should run instantly with their params
    */
-  static checkAllForInstantRun(gameState: Game): Array<{ def: AnimationDefinition; params: any }> {
+  static checkAllForInstantRun(
+    gameState: Game
+  ): Array<{ def: AnimationDefinition; params: any }> {
     const toRun: Array<{ def: AnimationDefinition; params: any }> = [];
 
-    console.log(`🎬 [AnimationRegistry] Checking ${this.definitions.size} animations for instant run`);
+    console.log(
+      `🎬 [AnimationRegistry] Checking ${this.definitions.size} animations for instant run`
+    );
 
     for (const def of this.definitions.values()) {
       // Skip animations that don't implement instant-run methods
@@ -659,7 +803,10 @@ export class AnimationRegistry {
       if (def.getParamsFromGameState && def.shouldRunInstantly?.(gameState)) {
         const params = def.getParamsFromGameState(gameState);
         if (params) {
-          console.log(`🎬 [AnimationRegistry] Animation ${def.id} should run instantly`, params);
+          console.log(
+            `🎬 [AnimationRegistry] Animation ${def.id} should run instantly`,
+            params
+          );
           toRun.push({ def, params });
         }
       }
@@ -685,7 +832,7 @@ AnimationRegistry.register(DailyDoubleClueRevealAnimation);
 AnimationRegistry.register(RoundTransitionAnimation);
 
 // Expose to window for console testing
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   (window as any).AnimationDefinitions = {
     BoardIntroAnimation,
     CategoryIntroAnimation,
@@ -694,8 +841,10 @@ if (typeof window !== 'undefined') {
     DailyDoubleClueRevealAnimation,
     RoundTransitionAnimation,
     AnimationRegistry,
-    AnimationService
+    AnimationService,
   };
-  console.log('🎬 AnimationDefinitions exposed to window for console testing');
-  console.log('🎬 Try: AnimationDefinitions.BoardIntroAnimation.execute({ round: "jeopardy", gameId: "test" })');
+  console.log("🎬 AnimationDefinitions exposed to window for console testing");
+  console.log(
+    '🎬 Try: AnimationDefinitions.BoardIntroAnimation.execute({ round: "jeopardy", gameId: "test" })'
+  );
 }

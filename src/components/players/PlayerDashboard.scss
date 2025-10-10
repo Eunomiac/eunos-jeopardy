@@ -14,7 +14,6 @@
 
 .player-dashboard {
   --jeopardy-board-width: 60vw;
-  --jeopardy-board-height: calc(var(--jeopardy-board-width) * 9 / 16);
 
   // Full viewport coverage with authentic Jeopardy background
   position: absolute;
@@ -110,28 +109,7 @@
     }
   }
 
-  // Jeopardy Board
-  .jeopardy-board-container {
-    position: absolute;
-    top: 50px;
-    left: 50%;
-    transform: translate(-50%, 0%);
-    width: var(--jeopardy-board-width);
-    box-shadow: 30px 30px 30px rgba($jeopardy-black, 0.8);
 
-    .jeopardy-board {
-      overflow: visible;
-
-      > .category-header {
-        padding: 10%;
-        font-size: 1.25rem;
-      }
-    }
-
-    .dynamic-display-window {
-      // Dynamic display window styles handled by JavaScript
-    }
-  }
 
   // Player Podiums - Styles moved to PlayerPodiums.scss
 
@@ -150,41 +128,7 @@
     height: calc(var(--jeopardy-board-height) + 100px);
 
     // Clue display styling (regular clues)
-    &.jeopardy-clue-display {
-      position: fixed;
-      top: 50px;
-      left: 50%;
-      transform: translate(-50%, 0%);
-      transform-origin: center center;
-      width: var(--jeopardy-board-width);
-      height: unset;
-      aspect-ratio: 7/4.5;
-      font-size: 3rem;
 
-      &.daily-double-display {
-        transform: translate(-50%, -50%);
-        top: 50%;
-        width: 100%;
-
-
-        .daily-double-splash {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-          }
-        }
-      }
-    }
 
     // Legacy visible class (for backwards compatibility)
     &.visible {
@@ -250,7 +194,7 @@
           position: absolute;
           top: 20px;
           right: 20px;
-          background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+          background: linear-gradient(135deg, #8b0000 0%, #dc143c 100%);
           color: $jeopardy-gold;
           padding: 0.5rem 1rem;
           border-radius: 8px;
@@ -291,14 +235,37 @@
   **/
 
   &.game_intro {
-
-
     .jeopardy-board-header,
     .jeopardy-board-container,
+    .jeopardy-board-background
+    .jeopardy-board,
+    .splash-jeopardy,
     .background-image,
-    .player-podium {
+    .player-podium,
+    .clue-cell,
+    .category-header {
       visibility: hidden;
     }
+
+    .jeopardy-board .category-header {
+      background-image: var(--jeopardy-board-bg-image-small);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+
+      .category-name {
+        visibility: hidden;
+      }
+    }
+  }
+
+  &.introducing_categories {
+    .category-header {
+      visibility: visible !important;
+    }
+
+
+
   }
 }
 
@@ -322,125 +289,132 @@
 }
 
 @keyframes buzz-glow {
-  0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0.8); }
-  50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
-  100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0.8); }
+  0% {
+    box-shadow: 0 0 0 rgba(255, 215, 0, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 215, 0, 0.8);
+  }
 }
 
 @keyframes freeze-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
 }
 
 @keyframes freeze {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(0.9); }
-}
-
-// Category Display Strip Styles
-.jeopardy-category-display-viewport {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  z-index: 10;
-
-  &[style*="visibility: visible"] {
-    visibility: visible !important;
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.9);
   }
 }
 
-.jeopardy-category-display-strip {
-  display: flex;
-  width: 600%; // 6 categories at 100% each
-  height: 100%;
-  // Transition removed - now handled by GSAP
+// // Category Display Strip Styles
+// .jeopardy-category-display-viewport {
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   height: 100%;
+//   overflow: hidden;
+//   z-index: 10;
 
-  .category-header {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+//   &[style*="visibility: visible"] {
+//     visibility: visible !important;
+//   }
+// }
 
-    background-image: url('/assets/images/bg-clue.webp');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+// .jeopardy-category-display-strip {
+//   display: flex;
+//   width: 600%; // 6 categories at 100% each
+//   height: 100%;
+//   // Transition removed - now handled by GSAP
 
-    // Splash images
-    .splash-jeopardy {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 2;
-    }
+//   .category-header {
+//     flex: 1;
+//     display: flex;
+//     flex-direction: column;
+//     align-items: center;
+//     justify-content: center;
+//     position: relative;
 
-    .category-name {
-      position: relative;
-      color: $jeopardy-white;
-      font-family: $font-family-category;
-      font-size: 8rem;
-      font-weight: bold;
-      text-align: center;
-      text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.8);
-      padding: 1rem;
-      line-height: 1;
-      text-transform: uppercase;
-    }
-  }
-  // Game Status-Based Styling
-  // Game Introduction Phase
-  &.game_intro {
+//     background-image: url("/assets/images/bg-clue.webp");
+//     background-size: cover;
+//     background-position: center;
+//     background-repeat: no-repeat;
 
-    // Hide background image
-    background-image: none !important;
+//     // Splash images
+//     .splash-jeopardy {
+//       position: absolute;
+//       top: 0;
+//       left: 0;
+//       width: 100%;
+//       height: 100%;
+//       object-fit: cover;
+//       z-index: 2;
+//     }
 
-    .jeopardy-board-container {
-      // Hide board container
-      visibility: hidden;
-      .jeopardy-board {
-        // Hide board
-        visibility: hidden;
-      }
-    }
-  }
+//     .category-name {
+//       position: relative;
+//       color: $jeopardy-white;
+//       font-family: $font-family-category;
+//       font-size: 8rem;
+//       font-weight: bold;
+//       text-align: center;
+//       text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.8);
+//       padding: 1rem;
+//       line-height: 1;
+//       text-transform: uppercase;
+//     }
+//   }
+//   // Game Status-Based Styling
+//   // Game Introduction Phase
+//   // &.game_intro {
 
-  // Category Introduction Phase - Hide board categories & money values
-  &.introducing_categories {
-    .jeopardy-board-container {
-      .jeopardy-board {
+//   //   // Hide background image
+//   //   background-image: none !important;
 
-        background-image: var(--jeopardy-board-bg-image);
-        background-size: 100% calc(100% * 5 / 6);
-        background-position: bottom;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-      .category-header {
-        background-image: var(--jeopardy-board-bg-image-small);
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        .category-name {
-          visibility: hidden;
-        }
-      }
+//   //   .jeopardy-board-container {
+//   //     // Hide board container
+//   //     visibility: hidden;
+//   //     .jeopardy-board {
+//   //       // Hide board
+//   //       visibility: hidden;
+//   //     }
+//   //   }
+//   // }
 
-      .clue-cell {
-        background: transparent;
-        .clue-value {
-          visibility: hidden;
-        }
-      }
-    }
-  }
-  }
-}
+//   // Category Introduction Phase - Hide board categories & money values
+//   &.introducing_categories {
+//     .jeopardy-board-container {
+//       .jeopardy-board {
+//         .category-header {
+//           .category-name {
+//             visibility: hidden;
+//           }
+//         }
+
+//         .clue-cell {
+//           background: transparent;
+//           .clue-value {
+//             visibility: hidden;
+//           }
+//         }
+//       }
+//     }
+//   }
+// }

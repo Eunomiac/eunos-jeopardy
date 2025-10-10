@@ -1,19 +1,71 @@
 @use 'variables' as *;
 
+// Jeopardy Board
+.jeopardy-board-container {
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  height: 78vh;
+  width: auto;
+  aspect-ratio: 1.7086;
+
+  .jeopardy-board-background,
+  .jeopardy-board-background img {
+    position: absolute;
+      height: 100%;
+      width: 100%;
+      z-index: -1;
+  }
+
+  .jeopardy-board {
+
+
+  }
+
+  .dynamic-display-window {
+    // Dynamic display window styles handled by JavaScript
+  }
+}
+
 .jeopardy-board {
   background: black;
   border: none;
   border-radius: 0;
   padding: 0; // Remove all padding for precise sizing
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: 55vh;
+  aspect-ratio: 1.7086;
+  transform: translate(-50%, -50%);
+  position: absolute;
+  top: calc(50% + 2vh);
+  left: 50%;
   display: grid;
   grid-template-columns: repeat(6, 1fr); // 6 columns for categories and clues
   grid-template-rows: repeat(6, calc(100% / 6)); // All rows equal height - authentic Jeopardy layout
   gap: 0; // Remove gaps - use borders instead for visual separation
   overflow: hidden; // Allow clipping when space is tight
+  box-shadow: inset 0px 0px 30px black;
 
-  // Category headers - direct children, first row
+  .jeopardy-clues-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+  }
+
+  .splash-jeopardy {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+  }
+
+
   .category-header {
     border: 2px solid black; // Consistent thick borders for visual separation
     border-bottom: 8px solid black; // Thicker bottom border for visual separation from clue rows
@@ -91,4 +143,104 @@
         filter: brightness(2);
       }
     }
+
+
+}
+
+.dynamic-display-window {
+  position: absolute;
+  width: auto;
+  height: 55vh;
+  aspect-ratio: 1.7086;
+  transform: translate(-50%, -50%);
+  top: calc(50% - 9vh);
+  left: 50%;
+  z-index: 1000;
+
+  &.jeopardy-clue-display {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translate(-50%, 0%);
+      transform-origin: center center;
+      width: var(--jeopardy-board-width);
+      height: unset;
+      aspect-ratio: 7/4.5;
+      font-size: 3rem;
+
+      &.daily-double-display {
+        transform: translate(-50%, -50%);
+        top: 50%;
+        width: 100%;
+
+        .daily-double-splash {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+          }
+        }
+      }
+    }
+
+  .jeopardy-category-display-viewport {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    overflow: hidden;
+
+    .jeopardy-category-display-strip {
+      height: 100%;
+      width: 600%;
+      overflow: hidden;
+      display: flex;
+
+      .category-header {
+        position: relative;
+        height: 100%;
+        width: auto;
+        aspect-ratio: 1.7086;
+        border: 2px solid black; // Consistent thick borders for visual separation
+        border-bottom: 8px solid black; // Thicker bottom border for visual separation from clue rows
+        border-radius: 0;
+        background: $jeopardy-blue;
+        color: $jeopardy-white;
+        padding: $spacing-sm;
+        text-align: center;
+        font-family: $font-family-category;
+        font-size: 8rem;
+        text-transform: $jeopardy-text-transform;
+        text-shadow: $shadow-sm;
+        word-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.2;
+        // Remove min-height to allow natural content expansion
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .splash-jeopardy {
+          height: 100%;
+          aspect-ratio: 1.7086;
+          width: auto;
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+      }
+    }
+
+  }
 }

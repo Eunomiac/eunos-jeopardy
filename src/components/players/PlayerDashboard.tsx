@@ -7,12 +7,20 @@ import { BuzzerState } from "../../types/BuzzerState";
 import { supabase } from "../../services/supabase/client";
 import { ClueService, type ClueState } from "../../services/clues/ClueService";
 import { AnimationService } from "../../services/animations/AnimationService";
-import { AnimationEvents, type AnimationIntent } from "../../services/animations/AnimationEvents";
+import {
+  AnimationEvents,
+  type AnimationIntent,
+} from "../../services/animations/AnimationEvents";
 import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
 import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
 import { BroadcastService } from "../../services/realtime/BroadcastService";
-import type { BroadcastSubscription, BuzzerUnlockPayload, PlayerBuzzPayload, FocusPlayerPayload } from "../../types/BroadcastEvents";
+import type {
+  BroadcastSubscription,
+  BuzzerUnlockPayload,
+  PlayerBuzzPayload,
+  FocusPlayerPayload,
+} from "../../types/BroadcastEvents";
 import { gsap } from "gsap";
 
 import type { ClueData, ClueSetData } from "../../services/clueSets/loader";
@@ -60,7 +68,10 @@ interface GameUpdatePayload {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGame }) => {
+const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
+  gameId,
+  game: propGame,
+}) => {
   const { user } = useAuth();
 
   // Use game from props (managed by App.tsx) or fallback to local state for backwards compatibility
@@ -82,7 +93,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   const [error, setError] = useState<string | null>(null);
 
   // Broadcast subscription for real-time buzzer events
-  const [_broadcastSubscription, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+  const [_broadcastSubscription, setBroadcastSubscription] =
+    useState<BroadcastSubscription | null>(null);
 
   // Buzzer timing for client-side reaction time calculation
   const [buzzerUnlockTime, setBuzzerUnlockTime] = useState<number | null>(null);
@@ -109,7 +121,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       // Animate clue reveal
       animationService.animateClueReveal(clueContentRef.current, currentClue, {
         duration: 0.8,
-        ease: "power2.out"
+        ease: "power2.out",
       });
     }
   }, [currentClue, animationService]);
@@ -120,7 +132,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       return () => {};
     }
 
-    console.log(`🎬 [PlayerDashboard] Setting up animation system for game ${gameId}`);
+    console.log(
+      `🎬 [PlayerDashboard] Setting up animation system for game ${gameId}`
+    );
 
     // Track which animations have been handled by subscription
     const handledBySubscription = new Set<string>();
@@ -136,15 +150,20 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       // Get the animation definition from registry
       const def = AnimationRegistry.get(intent.type);
       if (!def) {
-        console.warn(`🎬 [PlayerDashboard] No animation definition found for: ${intent.type}`);
+        console.warn(
+          `🎬 [PlayerDashboard] No animation definition found for: ${intent.type}`
+        );
       }
 
       // Convert intent to params
-      let params: Record<string, number|string> | null = null;
+      let params: Record<string, number | string> | null = null;
       if (intent.type === "BoardIntro") {
         params = { round: intent.round, gameId: intent.gameId };
       } else if (intent.type === "CategoryIntro") {
-        params = { categoryNumber: intent.categoryNumber, gameId: intent.gameId };
+        params = {
+          categoryNumber: intent.categoryNumber,
+          gameId: intent.gameId,
+        };
       } else if (intent.type === "ClueReveal") {
         params = { clueId: intent.clueId, gameId: intent.gameId };
       } else if (intent.type === "DailyDoubleReveal") {
@@ -152,11 +171,18 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       } else if (intent.type === "DailyDoubleClueReveal") {
         params = { clueId: intent.clueId, gameId: intent.gameId };
       } else if (intent.type === "RoundTransition") {
-        params = { fromRound: intent.fromRound, toRound: intent.toRound, gameId: intent.gameId };
+        params = {
+          fromRound: intent.fromRound,
+          toRound: intent.toRound,
+          gameId: intent.gameId,
+        };
       }
 
       if (!params) {
-        console.warn(`🎬 [PlayerDashboard] Could not derive params for intent:`, intent);
+        console.warn(
+          `🎬 [PlayerDashboard] Could not derive params for intent:`,
+          intent
+        );
         return;
       }
 
@@ -164,72 +190,83 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       const key = `${def?.id}:${gameId}:${JSON.stringify(params)}`;
       handledBySubscription.add(key);
 
-      console.log(`🎬 [PlayerDashboard] Handling ${intent.type} animation (animated)`, params);
+      console.log(
+        `🎬 [PlayerDashboard] Handling ${intent.type} animation (animated)`,
+        params
+      );
 
       // Execute animation (always animated when triggered by subscription)
-      await animationService.playOnce(
-        key,
-        async () => {
-          await def?.execute(params);  // No instant flag = animated
+      await animationService.playOnce(key, async () => {
+        await def?.execute(params); // No instant flag = animated
 
-          // Update tracking for category animations
-          if (intent.type === 'CategoryIntro') {
-            lastAnimatedCategory.current = params.categoryNumber as number;
-          }
+        // Update tracking for category animations
+        if (intent.type === "CategoryIntro") {
+          lastAnimatedCategory.current = params.categoryNumber as number;
         }
-      );
+      });
     });
 
     // Wait for subscription to potentially receive intents, then check for instant animations
     // This delay allows the subscription to receive any intents that were published during component mount
     const timeoutId = setTimeout(() => {
-      console.log(`🎬 [PlayerDashboard] Checking initial game state for instant animations (after subscription delay)`);
+      console.log(
+        `🎬 [PlayerDashboard] Checking initial game state for instant animations (after subscription delay)`
+      );
 
       // Check all registered animations to see which should run instantly
-      const instantAnimations = AnimationRegistry.checkAllForInstantRun(game as Game);
+      const instantAnimations = AnimationRegistry.checkAllForInstantRun(
+        game as Game
+      );
 
       for (const { def, params } of instantAnimations) {
         const key = `${def.id}:${gameId}:${JSON.stringify(params)}`;
 
         // Skip if already handled by subscription
         if (handledBySubscription.has(key)) {
-          console.log(`🎬 [PlayerDashboard] Skipping instant animation ${def.id} - already handled by subscription`);
-
-        } else if (AnimationEvents.wasRecentlyPublished(def.id as AnimationIntent["type"], gameId)) {
-          // If intent was published recently, run animated version
-          console.log(`🎬 [PlayerDashboard] Intent ${def.id} was recently published - running ANIMATED version`);
-          animationService.playOnce(
-            key,
-            async () => {
-              await def.execute(params);  // Animated, not instant
-
-              // Update tracking for category animations
-              if (def.id === 'CategoryIntro') {
-                lastAnimatedCategory.current = params.categoryNumber;
-              }
-            }
+          console.log(
+            `🎬 [PlayerDashboard] Skipping instant animation ${def.id} - already handled by subscription`
           );
+        } else if (
+          AnimationEvents.wasRecentlyPublished(
+            def.id as AnimationIntent["type"],
+            gameId
+          )
+        ) {
+          // If intent was published recently, run animated version
+          console.log(
+            `🎬 [PlayerDashboard] Intent ${def.id} was recently published - running ANIMATED version`
+          );
+          animationService.playOnce(key, async () => {
+            await def.execute(params); // Animated, not instant
+
+            // Update tracking for category animations
+            if (def.id === "CategoryIntro") {
+              lastAnimatedCategory.current = params.categoryNumber;
+            }
+          });
         } else {
-          console.log(`🎬 [PlayerDashboard] Running instant animation: ${def.id}`, params);
+          console.log(
+            `🎬 [PlayerDashboard] Running instant animation: ${def.id}`,
+            params
+          );
 
           // Use playOnce to ensure we don't re-run if already executed
-          animationService.playOnce(
-            key,
-            async () => {
-              await def.execute(params, { instant: true });
+          animationService.playOnce(key, async () => {
+            await def.execute(params, { instant: true });
 
-              // Update tracking for category animations
-              if (def.id === 'CategoryIntro') {
-                lastAnimatedCategory.current = params.categoryNumber;
-              }
+            // Update tracking for category animations
+            if (def.id === "CategoryIntro") {
+              lastAnimatedCategory.current = params.categoryNumber;
             }
-          );
+          });
         }
       }
     }, 500); // Wait 500ms for subscription to receive any pending intents
 
     return () => {
-      console.log(`🎬 [PlayerDashboard] Cleaning up animation system for game ${gameId}`);
+      console.log(
+        `🎬 [PlayerDashboard] Cleaning up animation system for game ${gameId}`
+      );
       clearTimeout(timeoutId);
       unsubscribe();
     };
@@ -260,7 +297,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
           if (player.user_id === user.id) {
             // Get or assign font for current user (pass nickname for narrow font preference)
-            font = await FontAssignmentService.getPlayerFont(user.id, gameId, player.nickname || undefined);
+            font = await FontAssignmentService.getPlayerFont(
+              user.id,
+              gameId,
+              player.nickname || undefined
+            );
           } else {
             // For other players, get their assigned font from profile
             const { data: profile } = await supabase
@@ -531,26 +572,35 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
             // Trigger animations when clue is revealed (host clicked "Reveal Prompt")
             if (clueState.revealed && !prevClueState?.revealed) {
-              console.log("🎬 [PlayerDashboard] Clue revealed, triggering animation for clue:", clueState.clue_id);
+              console.log(
+                "🎬 [PlayerDashboard] Clue revealed, triggering animation for clue:",
+                clueState.clue_id
+              );
 
               // Check if this is a daily double
-              const isDailyDouble = await ClueService.isDailyDouble(clueState.clue_id);
+              const isDailyDouble = await ClueService.isDailyDouble(
+                clueState.clue_id
+              );
 
               if (isDailyDouble) {
                 // Daily double clue reveal (fade out splash, show clue)
-                console.log("🎬 [PlayerDashboard] Publishing DailyDoubleClueReveal intent");
+                console.log(
+                  "🎬 [PlayerDashboard] Publishing DailyDoubleClueReveal intent"
+                );
                 AnimationEvents.publish({
                   type: "DailyDoubleClueReveal",
                   gameId,
-                  clueId: clueState.clue_id
+                  clueId: clueState.clue_id,
                 });
               } else {
                 // Regular clue reveal
-                console.log("🎬 [PlayerDashboard] Publishing ClueReveal intent");
+                console.log(
+                  "🎬 [PlayerDashboard] Publishing ClueReveal intent"
+                );
                 AnimationEvents.publish({
                   type: "ClueReveal",
                   gameId,
-                  clueId: clueState.clue_id
+                  clueId: clueState.clue_id,
                 });
               }
             }
@@ -576,13 +626,14 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
                 gsap.to(displayWindowRef.current, {
                   autoAlpha: 0,
                   duration: 0.3,
-                  ease: 'power2.out',
+                  ease: "power2.out",
                   onComplete: () => {
                     if (displayWindowRef.current) {
-                      displayWindowRef.current.innerHTML = '';
-                      displayWindowRef.current.className = 'dynamic-display-window';
+                      displayWindowRef.current.innerHTML = "";
+                      displayWindowRef.current.className =
+                        "dynamic-display-window";
                     }
-                  }
+                  },
                 });
               }
             }
@@ -590,8 +641,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         }
       )
       .subscribe();
-
-
 
     // Subscribe to clue changes (for locked_out_player_ids updates)
     const cluesSubscription = supabase
@@ -630,12 +679,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       clueStatesSubscription.unsubscribe();
       cluesSubscription.unsubscribe();
     };
-  }, [
-    gameId,
-    user,
-    focusedClue,
-    updateClueState,
-  ]);
+  }, [gameId, user, focusedClue, updateClueState]);
 
   /**
    * Handles player buzzer click.
@@ -654,7 +698,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
         // Get player nickname for broadcast
         const currentPlayer = players.find((p) => p.id === user.id);
-        const playerNickname = currentPlayer?.name || user.email || "Unknown Player";
+        const playerNickname =
+          currentPlayer?.name || user.email || "Unknown Player";
 
         // Broadcast buzz event immediately (no database write)
         // State will be set to BUZZED when we receive our own broadcast
@@ -677,10 +722,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       console.log("❄️ Player buzzed too early - frozen!");
     }
   }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime, players]);
-
-
-
-
 
   // Load initial data
   useEffect(() => {
@@ -710,15 +751,17 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           try {
             // Check if current player is locked out from this clue
             const { data: clueData } = await supabase
-              .from('clues')
-              .select('locked_out_player_ids')
-              .eq('id', payload.clueId)
+              .from("clues")
+              .select("locked_out_player_ids")
+              .eq("id", payload.clueId)
               .single();
 
             const lockedOutPlayers = clueData?.locked_out_player_ids || [];
 
             if (lockedOutPlayers.includes(user?.id)) {
-              console.log(`🚫 [Player] Cannot unlock - player is locked out from this clue`);
+              console.log(
+                `🚫 [Player] Cannot unlock - player is locked out from this clue`
+              );
               // Keep buzzer frozen for locked-out players
               setBuzzerState(BuzzerState.FROZEN);
             } else {
@@ -729,7 +772,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
               setFastestPlayerId(null);
             }
           } catch (err) {
-            console.error('🚫 [Player] Error checking locked-out status:', err);
+            console.error("🚫 [Player] Error checking locked-out status:", err);
             // On error, default to unlocking (fail open)
             setBuzzerUnlockTime(payload.timestamp);
             setBuzzerState(BuzzerState.UNLOCKED);
@@ -744,12 +787,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         setBuzzerState(BuzzerState.LOCKED);
       },
       onPlayerBuzz: (payload: PlayerBuzzPayload) => {
-        console.log(`⚡ [Player] Received buzz: ${payload.playerNickname} (${payload.reactionTimeMs}ms)`);
+        console.log(
+          `⚡ [Player] Received buzz: ${payload.playerNickname} (${payload.reactionTimeMs}ms)`
+        );
 
         // If this is our own buzz, set state to BUZZED
         // Otherwise, lock the buzzer
         if (payload.playerId === user?.id) {
-          console.log(`⚡ [Player] Received own buzz - setting state to BUZZED`);
+          console.log(
+            `⚡ [Player] Received own buzz - setting state to BUZZED`
+          );
           setBuzzerState(BuzzerState.BUZZED);
         } else {
           console.log(`⚡ [Player] Another player buzzed - locking buzzer`);
@@ -757,18 +804,25 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         }
 
         // Track fastest buzz for late correction handling
-        if (fastestBuzzTime === null || payload.reactionTimeMs < fastestBuzzTime) {
+        if (
+          fastestBuzzTime === null ||
+          payload.reactionTimeMs < fastestBuzzTime
+        ) {
           setFastestBuzzTime(payload.reactionTimeMs);
           setFastestPlayerId(payload.playerId);
 
           // If this is a late correction (faster buzz arrived after slower one)
           if (fastestBuzzTime !== null) {
-            console.log(`🔄 [Player] Late correction: ${payload.playerNickname} is now fastest`);
+            console.log(
+              `🔄 [Player] Late correction: ${payload.playerNickname} is now fastest`
+            );
           }
         }
       },
       onFocusPlayer: (payload: FocusPlayerPayload) => {
-        console.log(`👁️ [Player] Focus player: ${payload.playerNickname} (${payload.source})`);
+        console.log(
+          `👁️ [Player] Focus player: ${payload.playerNickname} (${payload.source})`
+        );
         setFastestPlayerId(payload.playerId);
       },
     });
@@ -777,7 +831,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
     // Cleanup on unmount
     return () => {
-      console.log(`🔌 [Player] Cleaning up broadcast channel for game: ${gameId}`);
+      console.log(
+        `🔌 [Player] Cleaning up broadcast channel for game: ${gameId}`
+      );
       subscription.unsubscribe();
       setBroadcastSubscription(null);
     };
@@ -800,7 +856,9 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
         return;
       }
 
-      console.log(`🔄 [Player] Database buzzer state override: isLocked=${isLocked}, currentState=${buzzerState}`);
+      console.log(
+        `🔄 [Player] Database buzzer state override: isLocked=${isLocked}, currentState=${buzzerState}`
+      );
 
       // Database override is ONLY for recovery when client missed broadcast events
       // The database is_buzzer_locked field is for HOST MANUAL CONTROL only
@@ -818,10 +876,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       // All unlocking is handled by broadcasts for real-time responsiveness
     };
 
-    window.addEventListener('database-buzzer-state-change', handleDatabaseBuzzerStateChange);
+    window.addEventListener(
+      "database-buzzer-state-change",
+      handleDatabaseBuzzerStateChange
+    );
 
     return () => {
-      window.removeEventListener('database-buzzer-state-change', handleDatabaseBuzzerStateChange);
+      window.removeEventListener(
+        "database-buzzer-state-change",
+        handleDatabaseBuzzerStateChange
+      );
     };
   }, [gameId, buzzerState]);
 
@@ -834,7 +898,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
     const handleFocusedClueChange = async () => {
       if (game.focused_clue_id) {
         // Only reset buzzer state if this is a NEW clue (different from current focusedClue)
-        const isNewClue = !focusedClue || focusedClue.id !== game.focused_clue_id;
+        const isNewClue =
+          !focusedClue || focusedClue.id !== game.focused_clue_id;
 
         // Only load and update if it's actually a new clue
         if (isNewClue) {
@@ -843,7 +908,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           setBuzzerState(BuzzerState.LOCKED);
           setReactionTime(null);
         }
-
       } else if (focusedClue) {
         // Clear focused clue if game doesn't have one
         setFocusedClue(null);
@@ -855,8 +919,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
     handleFocusedClueChange();
   }, [game, loadClueData, focusedClue]);
-
-
 
   // Loading state
   if (loading) {
@@ -881,9 +943,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
   }
 
   return (
-    <div className={`player-dashboard ${String(game?.status) || 'loading'}`} data-game-id={gameId}>
+    <div
+      className={`player-dashboard ${String(game?.status) || "loading"}`}
+      data-game-id={gameId}
+    >
       {/* Background Image */}
-      <img src="/assets/images/bg-stage.webp" alt="Jeopardy Stage" className="background-image" />
+      <img
+        src="/assets/images/bg-stage.webp"
+        alt="Jeopardy Stage"
+        className="background-image"
+      />
       {/* Round Header */}
       <div className="jeopardy-board-header">
         <h2>
@@ -901,21 +970,42 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
       {/* Jeopardy Board */}
       <div className="jeopardy-board-container">
+        <div className="jeopardy-board-background">
+          <img
+            src="/assets/images/bg-board.webp"
+            alt="Jeopardy Board Background"
+          />
+        </div>
         <div
           className="jeopardy-board"
-          style={{
-            "--jeopardy-board-bg-image": {
-              jeopardy: "url('/assets/images/splash-jeopardy.webp')",
-              double: "url('/assets/images/splash-double-jeopardy.webp')",
-              final: "url('/assets/images/splash-final-jeopardy.webp')"
-            }[game?.current_round as string ?? 'jeopardy'],
-            "--jeopardy-board-bg-image-small": {
-              jeopardy: "url('/assets/images/splash-jeopardy-small.webp')",
-              double: "url('/assets/images/splash-double-jeopardy-small.webp')",
-              final: "url('/assets/images/splash-final-jeopardy.webp')"
-            }[game?.current_round as string ?? 'jeopardy']
-          } as React.CSSProperties}
+          style={
+            {
+              "--jeopardy-board-bg-image-small": {
+                jeopardy: "url('/assets/images/splash-jeopardy-small.webp')",
+                double:
+                  "url('/assets/images/splash-double-jeopardy-small.webp')",
+                final: "url('/assets/images/splash-final-jeopardy-small.webp')",
+              }[(game?.current_round as string) ?? "jeopardy"],
+            } as React.CSSProperties
+          }
         >
+          <div className="jeopardy-clues-background">
+            {(() => {
+              const splashImages: Record<string, string> = {
+                jeopardy: "/assets/images/splash-jeopardy.webp",
+                double: "/assets/images/splash-double-jeopardy.webp",
+                final: "/assets/images/splash-final-jeopardy.webp",
+              };
+              const roundKey = (game?.current_round as string) ?? "jeopardy";
+              return (
+                <img
+                  src={splashImages[roundKey]}
+                  className="splash-jeopardy"
+                  alt="Jeopardy Board Background"
+                />
+              );
+            })()}
+          </div>
           {clueSetData && game ? (
             <>
               {/* Category headers */}
@@ -1036,9 +1126,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
                       style={{ pointerEvents: "none" }}
                       aria-label={ariaLabel}
                     >
-                      <span className="clue-value">
-                        ${item.clue.value}
-                      </span>
+                      <span className="clue-value">${item.clue.value}</span>
                     </button>
                   );
                 });
@@ -1066,18 +1154,18 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
             </>
           )}
         </div>
-
-
       </div>
 
       {/* Player Podiums */}
       <PlayerPodiums
         players={players.map((player) => ({
           ...player,
-          buzzerState: player.id === user?.id ? buzzerState : BuzzerState.INACTIVE,
+          buzzerState:
+            player.id === user?.id ? buzzerState : BuzzerState.INACTIVE,
           isFocused: game?.focused_player_id === player.id,
           reactionTime: player.id === user?.id ? reactionTime : null,
-          showReactionTime: player.id === user?.id && buzzerState === BuzzerState.BUZZED
+          showReactionTime:
+            player.id === user?.id && buzzerState === BuzzerState.BUZZED,
         }))}
         currentUserId={user?.id || ""}
         onBuzz={handleBuzz}
@@ -1087,22 +1175,24 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
       <div className="dynamic-display-window" ref={displayWindowRef}>
         {(() => {
           // Check game status for different display modes
-          const gameStatus = (game as GameUpdatePayload & { status?: string })?.status;
-          const isGameIntro = gameStatus === 'game_intro';
-          const isIntroducingCategories = gameStatus === 'introducing_categories';
+          const gameStatus = (game as GameUpdatePayload & { status?: string })
+            ?.status;
+          const isGameIntro = gameStatus === "game_intro";
+          const isIntroducingCategories =
+            gameStatus === "introducing_categories";
 
           if (isGameIntro) {
             // Show game introduction display
-            return (
-              <div className="game-intro-display">
-              </div>
-            );
+            return <div className="game-intro-display"></div>;
           }
 
           if (isIntroducingCategories && clueSetData && game) {
             // Show category display strip for introductions
             return (
-              <div className="jeopardy-category-display-viewport" style={{ visibility: "visible" }}>
+              <div
+                className="jeopardy-category-display-viewport"
+                style={{ visibility: "visible" }}
+              >
                 <div
                   className="jeopardy-category-display-strip"
                   // Transform now handled by GSAP animation
@@ -1117,23 +1207,41 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
                       );
                     } else {
                       // Regular rounds - 6 categories
-                      const roundKey = game.current_round as "jeopardy" | "double";
-                      const currentRoundData = clueSetData.rounds[roundKey] || [];
+                      const roundKey = game.current_round as
+                        | "jeopardy"
+                        | "double";
+                      const currentRoundData =
+                        clueSetData.rounds[roundKey] || [];
 
-                      return currentRoundData.map((category: { name: string; clues: ClueData[] }, index: number) => (
-                        <div key={`category-${index}-${category.name}`} className="category-header">
-                          <img
-                            className="splash-jeopardy"
-                            src={{
-                              jeopardy: 'assets/images/splash-jeopardy.webp',
-                              double: 'assets/images/splash-double-jeopardy.webp',
-                              final: 'assets/images/splash-final-jeopardy.webp'
-                            }[roundKey]}
-                            alt="Jeopardy Splash Screen"
-                          />
-                          <span className="category-name">{category.name}</span>
-                        </div>
-                      ));
+                      return currentRoundData.map(
+                        (
+                          category: { name: string; clues: ClueData[] },
+                          index: number
+                        ) => (
+                          <div
+                            key={`category-${index}-${category.name}`}
+                            className="category-header"
+                          >
+                            <img
+                              className="splash-jeopardy"
+                              src={
+                                {
+                                  jeopardy:
+                                    "assets/images/splash-jeopardy.webp",
+                                  double:
+                                    "assets/images/splash-double-jeopardy.webp",
+                                  final:
+                                    "assets/images/splash-final-jeopardy.webp",
+                                }[roundKey]
+                              }
+                              alt="Jeopardy Splash Screen"
+                            />
+                            <span className="category-name">
+                              {category.name}
+                            </span>
+                          </div>
+                        )
+                      );
                     }
                   })()}
                 </div>
@@ -1144,26 +1252,29 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
           if (currentClue) {
             // Show clue content
             return (
-              <div className="clue-display-content gsap-animation" ref={clueContentRef}>
+              <div
+                className="clue-display-content gsap-animation"
+                ref={clueContentRef}
+              >
                 <div className="clue-header">
                   <div className="clue-category">{currentClue.category}</div>
-                  <div className="clue-value">${currentClue.value.toLocaleString()}</div>
+                  <div className="clue-value">
+                    ${currentClue.value.toLocaleString()}
+                  </div>
                 </div>
 
-                <div className="clue-prompt">
-                  {currentClue.prompt}
-                </div>
+                <div className="clue-prompt">{currentClue.prompt}</div>
 
                 {currentClue.isDailyDouble && (
-                  <div className="daily-double-indicator">
-                    🎯 DAILY DOUBLE!
-                  </div>
+                  <div className="daily-double-indicator">🎯 DAILY DOUBLE!</div>
                 )}
 
                 {/* Integrated Buzzer Display */}
                 <div className="integrated-buzzer-display">
                   <button
-                    className={`integrated-buzzer ${buzzerStateService.getStateClassName(buzzerState)}`}
+                    className={`integrated-buzzer ${buzzerStateService.getStateClassName(
+                      buzzerState
+                    )}`}
                     onClick={handleBuzz}
                     disabled={!buzzerStateService.isInteractive(buzzerState)}
                   >
@@ -1171,9 +1282,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
                   </button>
 
                   {buzzerState === BuzzerState.BUZZED && reactionTime && (
-                    <div className="reaction-time">
-                      ⚡ {reactionTime} ms
-                    </div>
+                    <div className="reaction-time">⚡ {reactionTime} ms</div>
                   )}
                 </div>
               </div>
@@ -1182,8 +1291,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
           // Default placeholder
           return (
-            <div className="display-placeholder" ref={clueContentRef}>
-            </div>
+            <div className="display-placeholder" ref={clueContentRef}></div>
           );
         })()}
       </div>
