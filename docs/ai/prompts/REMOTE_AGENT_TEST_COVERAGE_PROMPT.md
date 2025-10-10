@@ -94,6 +94,31 @@ Before implementing any new tests, resolve any existing failing tests. Your firs
 
 ## 3. What to Exclude (With Justification)
 
+### 🔴 CRITICAL: Coverage Exclusions Must Be File-Level Only
+
+**SonarQube does NOT recognize Istanbul comments (`/* istanbul ignore next */`).**
+
+This project uses **SonarQube** as the code quality metric, which means:
+- ❌ **Line-level exclusions with Istanbul comments DO NOT WORK for SonarQube**
+- ✅ **Only entire files can be excluded from coverage requirements**
+- ✅ **Exclusions must be configured in BOTH `jest.config.js` AND `sonar-project.properties`**
+
+### How to Exclude Files from Coverage
+
+If a file contains primarily integration-heavy code that cannot be unit tested:
+
+1. **Add to `jest.config.js`** in the `collectCoverageFrom` array:
+   ```javascript
+   '!src/services/myservice/MyIntegrationFile.ts',
+   ```
+
+2. **Add to `sonar-project.properties`** in the `sonar.coverage.exclusions` section:
+   ```properties
+   **/services/myservice/MyIntegrationFile.ts,\
+   ```
+
+3. **Add a comment explaining why** in both config files
+
 ### File-Level Exclusions (Already Configured)
 The project already has comprehensive exclusions in `jest.config.js` and `sonar-project.properties`:
 - ✅ **Generated code** - Supabase types, build artifacts
@@ -101,47 +126,51 @@ The project already has comprehensive exclusions in `jest.config.js` and `sonar-
 - ✅ **Test files** - All test patterns
 - ✅ **Type definitions** - .d.ts files
 - ✅ **Development utilities** - test-schema.ts
+- ✅ **Animation services** - AnimationDefinitions.ts, AnimationService.ts, ClueDisplayService.ts
 
-### Line-Level Exclusions (Use Istanbul Comments)
-For parts of files that require integration testing:
+### Handling Mixed Testable/Untestable Code in the Same File
 
-```typescript
-export class ClueSetService {
-  // ✅ Unit testable - pure logic
-  validateData(data: ClueSetData): ValidationResult {
-    // Pure validation - test this thoroughly
-  }
+**You CANNOT use Istanbul comments to exclude parts of files.**
 
-  transformCSV(csvData: CSVRow[]): ClueSetData {
-    // Pure transformation - test this thoroughly
-  }
+When a file contains BOTH testable code AND untestable integration code:
 
-  /* istanbul ignore next - Requires Supabase integration testing */
-  async saveToDatabase(data: ClueSetData, userId: string): Promise<string> {
-    // Complex database operations with RLS, transactions
-    // Better tested with integration tests
-    const validated = this.validateData(data); // Calls unit-tested method
-    // ... database operations
-  }
+**Step 1: Try to Separate Elegantly**
+- ✅ **DO**: Extract testable pure functions/logic into a separate file if it can be done cleanly
+- ✅ **DO**: Maintain logical code organization and domain boundaries
+- ✅ **DO**: Keep related functionality together when it makes sense
+- ❌ **DON'T**: Create artificial splits that harm code readability
+- ❌ **DON'T**: Overcomplicate the codebase just to achieve coverage metrics
+- ❌ **DON'T**: Sacrifice code quality for testing convenience
 
-  /* istanbul ignore next - Requires file system integration testing */
-  async loadFromFile(filename: string): Promise<ClueSetData> {
-    // File system + network operations
-    // Better tested with integration tests
-    const content = await fs.readFile(filename);
-    return this.transformCSV(parseCSV(content)); // Calls unit-tested methods
-  }
-}
-```
+**Step 2: If Elegant Separation is Not Possible**
+- ✅ **DO**: Write tests for the testable parts of the file
+- ✅ **DO**: Accept that the file will have lower coverage (e.g., 60-70%)
+- ✅ **DO**: Move on to other files to maximize overall coverage
+- ✅ **DO**: Document why the file has lower coverage in your final report
+- ❌ **DON'T**: Exclude the entire file from coverage (it has testable code!)
+- ❌ **DON'T**: Write meaningless tests just to hit coverage numbers
 
-### When to Use Istanbul Comments
-1. **Complex integrations** - Database transactions, file I/O, network calls
-2. **Real-time operations** - WebSocket handling, race conditions
-3. **Browser-specific code** - Compatibility fallbacks
-4. **Development utilities** - Debug helpers, logging
-5. **Defensive programming** - "Should never happen" error cases
+**Important**: It's acceptable to NOT reach 90% coverage if the gap is due to untestable code that cannot be elegantly separated. Code quality and maintainability trump arbitrary coverage metrics. Report this clearly in your final summary with justification.
 
-**Note**: SonarQube may not respect Istanbul comments, but Jest will. Focus on achieving 90% in Jest - slight SonarQube differences are acceptable.
+### What This Means for Your Strategy
+
+Focus your efforts on:
+1. **Write tests for testable code** - Pure functions, React components, business logic
+2. **Accept lower coverage on mixed files** - Some files may have 60-70% coverage
+3. **Maximize overall coverage** - Focus on high-impact, highly-testable files first
+4. **Propose file exclusions sparingly** - Only for files that are >80% untestable
+
+### When to Propose File Exclusion
+Only propose excluding an entire file if it meets ALL these criteria:
+1. **Primarily integration code** - >80% of the file requires integration testing
+2. **Cannot be refactored** - Splitting would harm code organization
+3. **Low business logic** - Mostly glue code, DOM manipulation, or library wrappers
+4. **Already working** - Code is stable and well-tested manually
+
+Examples of valid exclusions:
+- Animation services with GSAP DOM manipulation
+- Real-time subscription coordinators
+- Complex file system operations
 
 ## Testing Guidelines
 
