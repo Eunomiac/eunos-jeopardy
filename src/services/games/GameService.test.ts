@@ -2,8 +2,10 @@ import { GameService } from './GameService'
 
 // Explicitly mock the supabase client
 jest.mock('../supabase/client')
+jest.mock('../clues/ClueService')
 
 import { supabase } from '../supabase/client'
+import { ClueService } from '../clues/ClueService'
 
 // Enhanced type definitions for Supabase mock objects with schema awareness
 type MockSupabaseQueryBuilder = {
@@ -1432,6 +1434,356 @@ describe('GameService', () => {
         .rejects.toThrow("Cannot start game: current status is 'in_progress', expected 'lobby'")
 
       expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+
+      getGameSpy.mockRestore()
+    })
+  })
+
+  describe('setFocusedClue', () => {
+    it('should set focused clue successfully', async () => {
+      const gameId = 'game-123'
+      const clueId = 'clue-456'
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId, focused_clue_id: clueId }
+
+      // Mock updateGame (setFocusedClue just calls updateGame)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as any)
+
+      const result = await GameService.setFocusedClue(gameId, clueId, hostId)
+
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { focused_clue_id: clueId }, hostId)
+      expect(result).toEqual(mockGame)
+
+      updateGameSpy.mockRestore()
+    })
+
+    it('should clear focused clue when clueId is null', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId, focused_clue_id: null }
+
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as any)
+
+      const result = await GameService.setFocusedClue(gameId, null, hostId)
+
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { focused_clue_id: null }, hostId)
+      expect(result).toEqual(mockGame)
+
+      updateGameSpy.mockRestore()
+    })
+  })
+
+  describe('setFocusedPlayer', () => {
+    it('should set focused player successfully', async () => {
+      const gameId = 'game-123'
+      const playerId = 'player-456'
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId, focused_player_id: playerId }
+
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as any)
+
+      const result = await GameService.setFocusedPlayer(gameId, playerId, hostId)
+
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { focused_player_id: playerId }, hostId)
+      expect(result).toEqual(mockGame)
+
+      updateGameSpy.mockRestore()
+    })
+
+    it('should clear focused player when playerId is null', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId, focused_player_id: null }
+
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as any)
+
+      const result = await GameService.setFocusedPlayer(gameId, null, hostId)
+
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { focused_player_id: null }, hostId)
+      expect(result).toEqual(mockGame)
+
+      updateGameSpy.mockRestore()
+    })
+  })
+
+  describe('markPlayerCorrect', () => {
+    it('should mark player answer as correct and update game state', async () => {
+      const gameId = 'game-123'
+      const clueId = 'clue-456'
+      const playerId = 'player-789'
+      const playerResponse = 'What is the answer?'
+      const scoreValue = 200
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId }
+
+      // Mock getGame for authorization
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as any)
+
+      // Mock database operations
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'answers') {
+          return {
+            insert: jest.fn().mockResolvedValue({ error: null })
+          } as any
+        }
+        if (table === 'buzzes') {
+          return {
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ error: null })
+              })
+            })
+          } as any
+        }
+        if (table === 'clue_states') {
+          return {
+            update: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ error: null })
+              })
+            })
+          } as any
+        }
+        return {} as any
+      })
+
+      // Mock updatePlayerScore
+      const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue({} as any)
+
+      // Mock updateGame
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as any)
+
+      const result = await GameService.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(updatePlayerScoreSpy).toHaveBeenCalledWith(gameId, playerId, scoreValue, hostId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, {
+        focused_clue_id: null,
+        focused_player_id: null,
+        current_player_id: playerId,
+        is_buzzer_locked: true
+      }, hostId)
+      expect(result).toEqual(mockGame)
+
+      getGameSpy.mockRestore()
+      updatePlayerScoreSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should handle answer insert error', async () => {
+      const gameId = 'game-123'
+      const clueId = 'clue-456'
+      const playerId = 'player-789'
+      const playerResponse = 'What is the answer?'
+      const scoreValue = 200
+      const hostId = 'host-123'
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({ id: gameId } as any)
+
+      // Mock answer insert with error
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockResolvedValue({ error: { message: 'Insert failed' } })
+      } as any)
+
+      await expect(GameService.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId))
+        .rejects.toThrow('Failed to record answer: Insert failed')
+
+      getGameSpy.mockRestore()
+    })
+  })
+
+  describe('markPlayerWrong', () => {
+    it('should mark player answer as wrong and lock out player', async () => {
+      const gameId = 'game-123'
+      const clueId = 'clue-456'
+      const playerId = 'player-789'
+      const playerResponse = 'Wrong answer'
+      const scoreValue = 200
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId }
+
+      // Mock getGame for authorization
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as any)
+
+      // Mock ClueService.isDailyDouble
+      const mockClueService = ClueService as jest.Mocked<typeof ClueService>
+      mockClueService.isDailyDouble = jest.fn().mockResolvedValue(false)
+
+      // Mock database operations
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'answers') {
+          return {
+            insert: jest.fn().mockResolvedValue({ error: null })
+          } as any
+        }
+        if (table === 'clues') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { locked_out_player_ids: null },
+                  error: null
+                })
+              })
+            }),
+            update: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ error: null })
+            })
+          } as any
+        }
+        if (table === 'clue_states') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { locked_out_player_ids: null },
+                  error: null
+                })
+              })
+            }),
+            update: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ error: null })
+              })
+            })
+          } as any
+        }
+        if (table === 'players') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({
+                data: [],
+                error: null
+              })
+            })
+          } as any
+        }
+        if (table === 'buzzes') {
+          return {
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ error: null })
+              })
+            })
+          } as any
+        }
+        return {} as any
+      })
+
+      // Mock updatePlayerScore
+      const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue({} as any)
+
+      // Mock updateGame
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as any)
+
+      const result = await GameService.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(updatePlayerScoreSpy).toHaveBeenCalledWith(gameId, playerId, -scoreValue, hostId)
+      expect(result).toEqual(mockGame)
+
+      getGameSpy.mockRestore()
+      updatePlayerScoreSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should handle answer insert error', async () => {
+      const gameId = 'game-123'
+      const clueId = 'clue-456'
+      const playerId = 'player-789'
+      const playerResponse = 'Wrong answer'
+      const scoreValue = 200
+      const hostId = 'host-123'
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({ id: gameId } as any)
+
+      // Mock answer insert with error
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockResolvedValue({ error: { message: 'Insert failed' } })
+      } as any)
+
+      await expect(GameService.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId))
+        .rejects.toThrow('Failed to record answer: Insert failed')
+
+      getGameSpy.mockRestore()
+    })
+  })
+
+  describe('startGameIntroduction', () => {
+    it('should start game introduction from lobby status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId, status: 'lobby' }
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as any)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
+        ...mockGame,
+        status: 'game_intro'
+      } as any)
+
+      const result = await GameService.startGameIntroduction(gameId, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, { status: 'game_intro' }, hostId)
+      expect(result.status).toBe('game_intro')
+
+      getGameSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should throw error when game is not in lobby status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        status: 'in_progress'
+      } as any)
+
+      await expect(GameService.startGameIntroduction(gameId, hostId))
+        .rejects.toThrow('Cannot start game introduction: Game is not in lobby status')
+
+      getGameSpy.mockRestore()
+    })
+  })
+
+  describe('startCategoryIntroductions', () => {
+    it('should start category introductions from game_intro status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+      const mockGame = { id: gameId, host_id: hostId, status: 'game_intro' }
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as any)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
+        ...mockGame,
+        status: 'introducing_categories',
+        current_introduction_category: 1
+      } as any)
+
+      await GameService.startCategoryIntroductions(gameId, hostId)
+
+      expect(getGameSpy).toHaveBeenCalledWith(gameId, hostId)
+      expect(updateGameSpy).toHaveBeenCalledWith(gameId, {
+        status: 'introducing_categories',
+        current_introduction_category: 1,
+        introduction_complete: false
+      }, hostId)
+
+      getGameSpy.mockRestore()
+      updateGameSpy.mockRestore()
+    })
+
+    it('should throw error when game is not in game_intro status', async () => {
+      const gameId = 'game-123'
+      const hostId = 'host-123'
+
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
+        id: gameId,
+        status: 'lobby'
+      } as any)
+
+      await expect(GameService.startCategoryIntroductions(gameId, hostId))
+        .rejects.toThrow('Cannot start category introductions: Game must be in game_intro or round_transition status')
 
       getGameSpy.mockRestore()
     })
