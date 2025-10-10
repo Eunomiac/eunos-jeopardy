@@ -22,7 +22,7 @@ const mockClueSetService = ClueSetService as jest.Mocked<typeof ClueSetService>
 import { BroadcastService } from '../../services/realtime/BroadcastService'
 const mockBroadcastService = BroadcastService as jest.Mocked<typeof BroadcastService>
 
-// Mock window.confirm
+// Mock window.confirm (legacy - keeping for any remaining tests that might use it)
 const mockConfirm = jest.fn()
 Object.defineProperty(window, 'confirm', {
   value: mockConfirm,
@@ -379,45 +379,69 @@ describe('GameHostDashboard', () => {
       })
 
       it('should end game successfully with confirmation', async () => {
-      mockConfirm.mockReturnValue(true)
-      mockGameService.endGame.mockResolvedValue({ ...mockGame, status: 'completed' })
+        mockGameService.endGame.mockResolvedValue({ ...mockGame, status: 'completed' })
 
-      const endGameButton = screen.getByText('End Game')
-      fireEvent.click(endGameButton)
+        const endGameButton = screen.getByRole('button', { name: 'End Game' })
+        fireEvent.click(endGameButton)
 
-      await waitFor(() => {
-        expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to end this game?')
-        expect(mockGameService.endGame).toHaveBeenCalledWith('game-123', 'user-123')
-        expect(screen.getByText('Game ended successfully')).toBeInTheDocument()
+        // Wait for confirmation modal to appear
+        await waitFor(() => {
+          expect(screen.getByText('Are you sure you want to end this game?')).toBeInTheDocument()
+        })
+
+        // Click OK button to confirm
+        const okButton = screen.getByRole('button', { name: 'OK' })
+        fireEvent.click(okButton)
+
+        // Wait for game service to be called and success message
+        await waitFor(() => {
+          expect(mockGameService.endGame).toHaveBeenCalledWith('game-123', 'user-123')
+          expect(screen.getByText('Game ended successfully')).toBeInTheDocument()
+        })
+
+        // Fast-forward timer to trigger onBackToCreator
+        jest.advanceTimersByTime(2000)
+        expect(mockProps.onBackToCreator).toHaveBeenCalled()
       })
 
-      // Fast-forward timer to trigger onBackToCreator
-      jest.advanceTimersByTime(2000)
-      expect(mockProps.onBackToCreator).toHaveBeenCalled()
-    })
+      it('should not end game when confirmation is cancelled', async () => {
+        const endGameButton = screen.getByRole('button', { name: 'End Game' })
+        fireEvent.click(endGameButton)
 
-    it('should not end game when confirmation is cancelled', async () => {
-      mockConfirm.mockReturnValue(false)
+        // Wait for confirmation modal to appear
+        await waitFor(() => {
+          expect(screen.getByText('Are you sure you want to end this game?')).toBeInTheDocument()
+        })
 
-      const endGameButton = screen.getByText('End Game')
-      fireEvent.click(endGameButton)
+        // Click Cancel button to cancel
+        const cancelButton = screen.getByRole('button', { name: 'Cancel' })
+        fireEvent.click(cancelButton)
 
-      expect(mockConfirm).toHaveBeenCalledWith('Are you sure you want to end this game?')
-      expect(mockGameService.endGame).not.toHaveBeenCalled()
-    })
-
-    it('should handle end game error', async () => {
-      mockConfirm.mockReturnValue(true)
-      const error = new Error('Database error')
-      mockGameService.endGame.mockRejectedValue(error)
-
-      const endGameButton = screen.getByText('End Game')
-      fireEvent.click(endGameButton)
-
-      await waitFor(() => {
-        expect(screen.getByText('Failed to end game: Database error')).toBeInTheDocument()
+        // Verify game service was not called
+        expect(mockGameService.endGame).not.toHaveBeenCalled()
       })
-    })
+
+      it('should handle end game error', async () => {
+        const error = new Error('Database error')
+        mockGameService.endGame.mockRejectedValue(error)
+
+        const endGameButton = screen.getByRole('button', { name: 'End Game' })
+        fireEvent.click(endGameButton)
+
+        // Wait for confirmation modal to appear
+        await waitFor(() => {
+          expect(screen.getByText('Are you sure you want to end this game?')).toBeInTheDocument()
+        })
+
+        // Click OK button to confirm
+        const okButton = screen.getByRole('button', { name: 'OK' })
+        fireEvent.click(okButton)
+
+        // Wait for error message to appear in status alert
+        await waitFor(() => {
+          expect(screen.getByText('Failed to end game: Database error')).toBeInTheDocument()
+        })
+      })
     })
 
     it('should disable end game button when game is completed', async () => {
@@ -614,7 +638,7 @@ describe('GameHostDashboard', () => {
 
       await waitFor(() => {
         const alert = screen.getByText('Failed to toggle buzzer: Test error')
-        expect(alert.closest('.alert')).toHaveClass('alert-danger')
+        expect(alert.closest('.alert')).toHaveClass('alert-error')
       })
     })
   })
