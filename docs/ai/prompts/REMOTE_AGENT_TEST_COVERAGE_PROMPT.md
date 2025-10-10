@@ -26,6 +26,15 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 ## Primary Goal
 Achieve **90% test coverage** and **100% passing tests** across the codebase while maintaining quality.
 
+### Prime Coverage Opportunities:
+Three files represent the lion's share of our coverage gaps:
+
+1. **GameHostDashboard.tsx** -- 1021 uncovered lines
+2. **PlayerDashboard.tsx** -- 516 uncovered lines
+3. **GameService.ts** -- 433 uncovered lines
+
+All other files have fewer than 100 uncovered lines, and provide minimal opportunities to improve coverage.  **You are advised to choose _one_ of these files to focus on at a time.**
+
 ## Secondary Goals
 1. **Write meaningful tests** - Focus on behavior, not implementation details
 2. **Follow established patterns** - Use existing test structure as examples
