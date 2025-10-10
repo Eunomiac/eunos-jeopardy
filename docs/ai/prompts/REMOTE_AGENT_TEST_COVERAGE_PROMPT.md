@@ -3,6 +3,27 @@ Note: These instructions are intended for remote agents tasked specifically with
 # Mission
 Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScript application while maintaining code quality and following established patterns.
 
+# 🔴 CRITICAL: Mock Usage Rules
+
+## ALWAYS Check for Existing Mocks First
+**Before creating ANY mock in your tests, you MUST:**
+
+1. **Check `src/test/__mocks__/@supabase/supabase-js.ts`** - Comprehensive global Supabase mock
+2. **Check `src/test/__mocks__/commonTestData.ts`** - Shared mock data (mockUser, mockGame, mockPlayers, etc.)
+3. **Check `src/services/<service>/__mocks__/`** - Manual service mocks for ES6 classes
+4. **Search the codebase** - Verify no duplicate mocks exist
+
+### If an Existing Mock is Insufficient:
+- ✅ **DO:** Extend the global mock by adding the missing method/field to the global mock file
+- ❌ **DON'T:** Create a custom mock or override in your test file
+
+### Valid Reasons to Override a Mock in a Test:
+- Testing error states (e.g., database errors, network failures)
+- Testing specific data scenarios (e.g., empty results, edge cases)
+- Testing timing-specific behavior (e.g., race conditions)
+
+**This is non-negotiable.** Duplicate mocks cause maintenance nightmares and test inconsistencies.
+
 # Project Context
 - **Repository**: Euno's Jeopardy - Online Jeopardy game platform
 - **Tech Stack**: React + TypeScript + Vite + Jest + Supabase
@@ -12,7 +33,7 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 # Key References
 
 ## Testing References
-- **[Testing Mocks Reference](../reference/TESTING_MOCKS_REFERENCE.md)** - Mock registry and anti-over-mocking guidelines
+- **[Testing Mocks Reference](../reference/TESTING_MOCKS_REFERENCE.md)** - Mock registry and anti-over-mocking guidelines (READ THIS FIRST!)
 - **[Testing Strategy](../reference/strategy/TESTING_STRATEGY.md)** - Testing approach and architecture
 - **[Testing Reference](../reference/TESTING_REFERENCE.md)** - Technical setup and configuration
 

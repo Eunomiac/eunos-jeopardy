@@ -2,6 +2,23 @@
 
 ## 🔴 Critical Rules
 
+### RULE #1: Always Check for Existing Mocks First
+**BEFORE creating ANY mock, you MUST:**
+
+1. **Check `src/test/__mocks__/@supabase/supabase-js.ts`** - Global Supabase mock with comprehensive database operations
+2. **Check `src/test/__mocks__/commonTestData.ts`** - Shared mock data (mockUser, mockGame, mockPlayers, etc.)
+3. **Check `src/services/<service>/__mocks__/`** - Manual service mocks for ES6 classes
+4. **Search the codebase** - Use grep/search to find if a mock already exists elsewhere
+
+**If an existing mock is insufficient:**
+- ✅ **DO:** Extend the global mock by adding missing methods/fields
+- ❌ **DON'T:** Create a duplicate mock in your test file
+
+**Valid reasons to override a mock in a specific test:**
+- Testing error states (e.g., mock a database error)
+- Testing specific data scenarios (e.g., empty results, edge cases)
+- Testing race conditions or timing-specific behavior
+
 ### Use Global Mocks Only
 **Location:** `src/test/__mocks__/`
 
@@ -9,6 +26,7 @@
 - Create local `__mocks__` adjacent to source files (except manual service mocks)
 - Use `jest.mock()` with inline implementations
 - Create test-specific mock data duplicating shared fixtures
+- Reinvent the wheel by creating custom mocks when global mocks exist
 
 **✅ ALWAYS:**
 - Use `src/test/__mocks__/@supabase/supabase-js.ts` for database
