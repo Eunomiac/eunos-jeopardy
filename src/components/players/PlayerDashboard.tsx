@@ -882,6 +882,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({ gameId, game: propGam
 
   return (
     <div className={`player-dashboard ${String(game?.status) || 'loading'}`} data-game-id={gameId}>
+      {/* Background Image */}
+      <img src="/assets/images/bg-stage.webp" alt="Jeopardy Stage" className="background-image" />
       {/* Round Header */}
       <div className="jeopardy-board-header">
         <h2>

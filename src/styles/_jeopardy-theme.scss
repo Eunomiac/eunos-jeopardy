@@ -135,6 +135,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   &.drag-active {
     // Visual feedback when dragging files over the entire app

@@ -22,14 +22,9 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-image: url("/assets/images/bg-stage.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
 
   // Fallback background color if image doesn't load
-  background-color: $jeopardy-background-blue;
+  background-color: $jeopardy-black;
 
   // Ensure content is positioned properly
   overflow: hidden;
@@ -90,6 +85,12 @@
     50% {
       opacity: 0.5;
     }
+  }
+
+  .background-image {
+    height: 100%;
+    width: 100%;
+    position: absolute;
   }
 
   // Jeopardy Round Header
@@ -290,29 +291,13 @@
   **/
 
   &.game_intro {
-    .jeopardy-board-container {
-      visibility: hidden;
-    }
+
+
+    .jeopardy-board-header,
+    .jeopardy-board-container,
+    .background-image,
     .player-podium {
       visibility: hidden;
-    }
-  }
-}
-
-// Visual Feedback Classes
-.game-board {
-  .category-cell {
-    &.focused-category {
-      background: linear-gradient(135deg, $jeopardy-gold 0%, #DAA520 100%);
-      color: $jeopardy-blue;
-      animation: category-focus-pulse 2s ease-in-out infinite alternate;
-    }
-  }
-
-  .clue-cell {
-    &.empty-category {
-      opacity: 0.3;
-      filter: grayscale(100%);
     }
   }
 }
@@ -333,15 +318,6 @@
   }
   100% {
     transform: scale(1.05);
-  }
-}
-
-@keyframes category-focus-pulse {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
   }
 }
 
@@ -421,10 +397,17 @@
     }
   }
   // Game Status-Based Styling
-  // Game Introduction Phase - Hide board initially
+  // Game Introduction Phase
   &.game_intro {
+
+    // Hide background image
+    background-image: none !important;
+
     .jeopardy-board-container {
+      // Hide board container
+      visibility: hidden;
       .jeopardy-board {
+        // Hide board
         visibility: hidden;
       }
     }

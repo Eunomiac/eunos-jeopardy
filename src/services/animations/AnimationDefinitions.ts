@@ -103,6 +103,19 @@ export const BoardIntroAnimation: AnimationDefinition<{ round: string; gameId: s
         }
       });
 
+      // Fade in background image
+      timeline.fromTo('.player-dashboard .background-image', {
+        autoAlpha: 0,
+        scale: 1.5,
+        y: -150
+      },{
+        autoAlpha: 1,
+        scale: 1,
+        y: 0,
+        duration: 0.5,
+        ease: config.ease || 'power2.inOut'
+      });
+
       // Fade in board container
       timeline.fromTo('.jeopardy-board-container, .jeopardy-board', {
         scale: 1.25,
