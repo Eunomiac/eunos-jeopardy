@@ -15,6 +15,19 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   /**
+   * Global Setup
+   *
+   * Runs ONCE before all tests start. This is where we:
+   * - Clean up test data from previous runs
+   * - Verify test users are configured
+   * - Check environment variables
+   *
+   * LEARNING NOTE: Global setup is better than beforeEach() because it runs once
+   * instead of before every test. This is faster and follows the DRY principle
+   * (Don't Repeat Yourself) - single place to manage setup.
+   */
+  globalSetup: './e2e/global-setup.ts',
+  /**
    * Test Directory
    *
    * Where Playwright looks for test files. We use 'e2e/' to separate integration
@@ -201,8 +214,9 @@ export default defineConfig({
          * LEARNING NOTE:
          * - headless: false = visible browser (for learning)
          * - headless: true = invisible browser (for CI, faster)
+         * - In CI, we automatically use headless mode (no display available)
          */
-        headless: false,
+        headless: !!process.env.CI,
 
         /**
          * Launch Options
