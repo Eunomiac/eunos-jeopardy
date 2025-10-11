@@ -72,7 +72,8 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       const nicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
       // Wait for the input to have any value (profile loaded)
       await expect(nicknameInput).not.toHaveValue('');
-      await nicknameInput.clear();
+      // Use fill('') to clear, then fill with actual value
+      await nicknameInput.fill('');
       await nicknameInput.fill('Alice');
       // Verify the nickname was set
       await expect(nicknameInput).toHaveValue('Alice');
@@ -116,7 +117,8 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       const player2NicknameInput = player2Page.getByPlaceholder('Your display name for this game...');
       // Wait for the input to have any value (profile loaded)
       await expect(player2NicknameInput).not.toHaveValue('');
-      await player2NicknameInput.clear();
+      // Use fill('') to clear, then fill with actual value
+      await player2NicknameInput.fill('');
       await player2NicknameInput.fill('Bob');
       // Verify the nickname was set
       await expect(player2NicknameInput).toHaveValue('Bob');
@@ -180,7 +182,8 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       const player3NicknameInput = player3Page.getByPlaceholder('Your display name for this game...');
       // Wait for the input to have any value (profile loaded)
       await expect(player3NicknameInput).not.toHaveValue('');
-      await player3NicknameInput.clear();
+      // Use fill('') to clear, then fill with actual value
+      await player3NicknameInput.fill('');
       await player3NicknameInput.fill('Charlie');
       // Verify the nickname was set
       await expect(player3NicknameInput).toHaveValue('Charlie');
@@ -286,7 +289,8 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       const player1NicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
       // Wait for the input to have any value (profile loaded)
       await expect(player1NicknameInput).not.toHaveValue('');
-      await player1NicknameInput.clear();
+      // Use fill('') to clear, then fill with actual value
+      await player1NicknameInput.fill('');
       await player1NicknameInput.fill('Alice');
       await expect(player1NicknameInput).toHaveValue('Alice');
 
