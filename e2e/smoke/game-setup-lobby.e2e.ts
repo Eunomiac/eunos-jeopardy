@@ -68,8 +68,10 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       await player1Page.getByRole('button', { name: 'Login' }).click();
       await expect(player1Page.getByText('Currently logged in as')).toBeVisible();
 
-      // Set nickname - clear first to ensure it's not using default
+      // Set nickname - wait for default to load, then replace it
       const nicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
+      // Wait for the input to have any value (profile loaded)
+      await expect(nicknameInput).not.toHaveValue('');
       await nicknameInput.clear();
       await nicknameInput.fill('Alice');
       // Verify the nickname was set
@@ -110,8 +112,10 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       await player2Page.getByRole('button', { name: 'Login' }).click();
       await expect(player2Page.getByText('Currently logged in as')).toBeVisible();
 
-      // Set nickname - clear first to ensure it's not using default
+      // Set nickname - wait for default to load, then replace it
       const player2NicknameInput = player2Page.getByPlaceholder('Your display name for this game...');
+      // Wait for the input to have any value (profile loaded)
+      await expect(player2NicknameInput).not.toHaveValue('');
       await player2NicknameInput.clear();
       await player2NicknameInput.fill('Bob');
       // Verify the nickname was set
@@ -172,8 +176,10 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       await player3Page.getByRole('button', { name: 'Login' }).click();
       await expect(player3Page.getByText('Currently logged in as')).toBeVisible();
 
-      // Set nickname - clear first to ensure it's not using default
+      // Set nickname - wait for default to load, then replace it
       const player3NicknameInput = player3Page.getByPlaceholder('Your display name for this game...');
+      // Wait for the input to have any value (profile loaded)
+      await expect(player3NicknameInput).not.toHaveValue('');
       await player3NicknameInput.clear();
       await player3NicknameInput.fill('Charlie');
       // Verify the nickname was set
@@ -276,8 +282,10 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       await player1Page.getByRole('button', { name: 'Login' }).click();
       await expect(player1Page.getByText('Currently logged in as')).toBeVisible();
 
-      // Set nickname - clear first to ensure it's not using default
+      // Set nickname - wait for default to load, then replace it
       const player1NicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
+      // Wait for the input to have any value (profile loaded)
+      await expect(player1NicknameInput).not.toHaveValue('');
       await player1NicknameInput.clear();
       await player1NicknameInput.fill('Alice');
       await expect(player1NicknameInput).toHaveValue('Alice');

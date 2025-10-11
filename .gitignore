@@ -96,3 +96,4 @@ lint-output.html
 playwright-report/
 index.html
 test-failed**.png
+test-results/.last-run.json
