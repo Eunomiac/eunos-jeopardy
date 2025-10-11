@@ -40,6 +40,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
   test('should allow multiple players to join game sequentially', async ({ browser }) => {
     // ============================================================
     // SETUP: Create browser contexts for host and 3 players
+    // Note: Create contexts sequentially to avoid timing issues
     // ============================================================
     const hostContext = await browser.newContext();
     const hostPage = await hostContext.newPage();
@@ -136,7 +137,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Host sees Player 1 in Player Control panel
       // ============================================================
-      await expect(hostPage.getByText('Players in Game (1)')).toBeVisible();
+      await expect(hostPage.getByText('Total Players: 1')).toBeVisible();
       await expect(hostPage.getByText('Alice')).toBeVisible();
 
       // ============================================================
@@ -159,7 +160,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Host sees both players in Player Control panel
       // ============================================================
-      await expect(hostPage.getByText('Players in Game (2)')).toBeVisible();
+      await expect(hostPage.getByText('Total Players: 2')).toBeVisible();
       await expect(hostPage.getByText('Bob')).toBeVisible();
 
       // ============================================================
@@ -207,7 +208,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Host sees all 3 players in Player Control panel
       // ============================================================
-      await expect(hostPage.getByText('Players in Game (3)')).toBeVisible();
+      await expect(hostPage.getByText('Total Players: 3')).toBeVisible();
       await expect(hostPage.getByText('Charlie')).toBeVisible();
 
       // ============================================================
@@ -311,7 +312,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Host does not see Player 2 in player list
       // ============================================================
-      await expect(hostPage.getByText('Players in Game (1)')).toBeVisible();
+      await expect(hostPage.getByText('Total Players: 1')).toBeVisible();
       await expect(hostPage.getByText('Alice')).toBeVisible();
       // Player 2 should not appear (they haven't set a nickname, so no text to check)
 
@@ -365,8 +366,9 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Message indicates minimum player requirement
       // ============================================================
-      // Look for any text that indicates players are needed
-      await expect(page.getByText(/player/i)).toBeVisible();
+      // Look for text that indicates no players have joined
+      await expect(page.getByText('No players joined yet')).toBeVisible();
+      await expect(page.getByText('Total Players: 0')).toBeVisible();
 
       // ============================================================
       // SUCCESS! 🎉

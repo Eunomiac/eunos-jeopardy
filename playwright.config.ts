@@ -212,11 +212,12 @@ export default defineConfig({
          * because you can see exactly what Playwright is doing.
          *
          * LEARNING NOTE:
-         * - headless: false = visible browser (for learning)
-         * - headless: true = invisible browser (for CI, faster)
+         * - headless: false = visible browser (for learning/debugging)
+         * - headless: true = invisible browser (default, faster)
          * - In CI, we automatically use headless mode (no display available)
+         * - Use npm run test:e2e:headed to see browser windows when debugging
          */
-        headless: !!process.env.CI,
+        headless: true,
 
         /**
          * Launch Options
@@ -230,11 +231,22 @@ export default defineConfig({
            * Adds a delay between actions so you can follow along. Measured in milliseconds.
            *
            * LEARNING NOTE:
-           * - 500ms = half-second delay (good for learning)
-           * - 0ms = full speed (for CI)
-           * - Adjust this value to your preference!
+           * - 500ms = half-second delay (good for learning with headed mode)
+           * - 0ms = full speed (for headless mode and CI)
+           * - Use test:e2e:headed to see slow motion in action
            */
-          slowMo: 500,
+          slowMo: 0,
+
+          /**
+           * Browser Arguments
+           *
+           * Additional command-line arguments passed to the browser.
+           * These fix network access issues in headless mode.
+           */
+          args: [
+            '--disable-web-security',
+            '--disable-features=IsolateOrigins,site-per-process',
+          ],
         },
       },
     },

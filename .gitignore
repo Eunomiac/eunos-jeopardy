@@ -95,3 +95,4 @@ lint-output.md
 lint-output.html
 playwright-report/
 index.html
+test-failed**.png
