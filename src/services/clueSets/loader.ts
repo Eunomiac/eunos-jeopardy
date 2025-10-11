@@ -493,6 +493,10 @@ export async function saveClueSetToDatabase(
     // Validate clue set creation
     if (clueSetError){ throw clueSetError}
 
+    if (!clueSet) {
+      throw new Error('Failed to create clue set: No data returned')
+    }
+
     const clueSetId = clueSet.id
 
     // Step 2: Create boards for each round in parallel for performance

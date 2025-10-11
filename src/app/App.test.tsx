@@ -263,8 +263,7 @@ describe('App', () => {
 
       // Wait for game creation to complete
       await waitFor(() => {
-
-        expect(() => mockGameService.createGame).toHaveBeenCalledWith('user-123', 'clue-set-1')
+        expect(mockGameService.createGame).toHaveBeenCalledWith('user-123', 'clue-set-1')
       })
 
       // Should switch to dashboard mode

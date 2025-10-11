@@ -2500,7 +2500,7 @@ export function GameHostDashboard({
                         onClick={() => { void handleAddScore(player.user_id); }}
                         disabled={
                           game.status !== "in_progress" ||
-                          !(scoreAdjustments[player.user_id].trim())
+                          !(scoreAdjustments[player.user_id]?.trim())
                         }
                         title="Add points"
                       >
@@ -2511,7 +2511,7 @@ export function GameHostDashboard({
                         onClick={() => { void handleSubtractScore(player.user_id); }}
                         disabled={
                           game.status !== "in_progress" ||
-                          !(scoreAdjustments[player.user_id].trim())
+                          !(scoreAdjustments[player.user_id]?.trim())
                         }
                         title="Subtract points"
                       >

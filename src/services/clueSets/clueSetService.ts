@@ -163,6 +163,10 @@ export class ClueSetService { // eslint-disable-line @typescript-eslint/no-extra
         return { success: false, error: `Failed to verify clue set ownership: ${fetchError.message}` }
       }
 
+      if (!clueSet) {
+        return { success: false, error: 'Unauthorized: Clue set not found' }
+      }
+
       if (clueSet.owner_id !== userId) {
         return { success: false, error: 'Unauthorized: You can only delete your own clue sets' }
       }
@@ -359,6 +363,10 @@ export class ClueSetService { // eslint-disable-line @typescript-eslint/no-extra
 
     if (boardsError) {
       throw new Error(`Failed to load board data: ${boardsError.message}`)
+    }
+
+    if (!boards) {
+      throw new Error('No board data found for clue set')
     }
 
     // Extract boards by round type

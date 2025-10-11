@@ -144,33 +144,34 @@ const mockSupabaseClient = {
       }
     }
 
+    // Refactored: Move chainable query creation to top-level for reuse across methods
+    function createChainableQuery(data: unknown): any {
+      const query: any = {};
+
+      query.eq = jest.fn().mockImplementation(() => query);
+      query.in = jest.fn().mockReturnValue(query);
+      query.order = jest.fn().mockReturnValue(query);
+      query.limit = jest.fn().mockReturnValue(query);
+      query.single = jest.fn().mockReturnValue(query);
+      query.select = jest.fn().mockReturnValue(query);
+
+      query.then = jest.fn().mockImplementation((resolve) => {
+        const wasSingleCalled = query.single.mock.calls.length > 0;
+        const resultData = wasSingleCalled && Array.isArray(data) && data.length > 0 ? data[0] : data;
+
+        return Promise.resolve({
+          data: resultData,
+          error: null
+        }).then(resolve);
+      });
+
+      return query;
+    }
+
     return {
       select: jest.fn().mockImplementation((_columns: string, options?: { head?: boolean }) => {
         if (options?.head) {
           return Promise.resolve({ data: null, error: null, count: 0 })
-        }
-
-        // Refactored: Move chainable query creation to top-level for reduced nesting
-        function createChainableQuery(data: unknown): any {
-          const query: any = {};
-
-          query.eq = jest.fn().mockImplementation(() => query);
-          query.in = jest.fn().mockReturnValue(query);
-          query.order = jest.fn().mockReturnValue(query);
-          query.limit = jest.fn().mockReturnValue(query);
-          query.single = jest.fn().mockReturnValue(query);
-
-          query.then = jest.fn().mockImplementation((resolve) => {
-            const wasSingleCalled = query.single.mock.calls.length > 0;
-            const resultData = wasSingleCalled && Array.isArray(data) && data.length > 0 ? data[0] : data;
-
-            return Promise.resolve({
-              data: resultData,
-              error: null
-            }).then(resolve);
-          });
-
-          return query;
         }
 
         const createChainableMethods = (): ChainableMethods & Promise<{ data: unknown; error: null }> => {
@@ -180,8 +181,14 @@ const mockSupabaseClient = {
 
         return createChainableMethods();
       }),
-      insert: jest.fn().mockResolvedValue({ data: getDefaultData(), error: null }),
-      update: jest.fn().mockResolvedValue({ data: getDefaultData(), error: null }),
+      insert: jest.fn().mockImplementation(() => {
+        const data = getDefaultData();
+        return createChainableQuery(data);
+      }),
+      update: jest.fn().mockImplementation(() => {
+        const data = getDefaultData();
+        return createChainableQuery(data);
+      }),
       delete: jest.fn().mockResolvedValue({ data: null, error: null }),
     }
   }),
@@ -201,6 +208,16 @@ const mockSupabaseClient = {
  * @returns Mocked client instance with proper typing
  */
 const createClient = jest.fn().mockReturnValue(mockSupabaseClient)
+
+/**
+ * Mock Supabase realtime subscription states
+ */
+export const REALTIME_SUBSCRIBE_STATES = {
+  SUBSCRIBED: 'SUBSCRIBED',
+  TIMED_OUT: 'TIMED_OUT',
+  CLOSED: 'CLOSED',
+  CHANNEL_ERROR: 'CHANNEL_ERROR'
+}
 
 // Export with proper typing
 export { createClient }

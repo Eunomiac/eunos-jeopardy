@@ -297,6 +297,10 @@ export class GameService {
       throw new Error(`Failed to create game: ${error.message}`)
     }
 
+    if (!data) {
+      throw new Error('No game data returned from database')
+    }
+
     // Initialize clue states for the new game
     try {
       await ClueService.initializeClueStates(data.id)
@@ -502,6 +506,10 @@ export class GameService {
       throw new Error(`Failed to update game: ${error.message}`)
     }
 
+    if (!data) {
+      throw new Error('No game data returned from update')
+    }
+
     return data
   }
 
@@ -648,7 +656,7 @@ export class GameService {
       throw new Error(`Failed to fetch players: ${playersError.message}`)
     }
 
-    if (players.length === 0) {
+    if (!players || players.length === 0) {
       return []
     }
 
@@ -736,6 +744,10 @@ export class GameService {
     if (error) {
       // Error may indicate duplicate player or invalid game/user IDs
       throw new Error(`Failed to add player: ${error.message}`)
+    }
+
+    if (!data) {
+      throw new Error('No player data returned from database')
     }
 
     return data
@@ -826,7 +838,7 @@ export class GameService {
       throw new Error(`Failed to fetch clue sets: ${error.message}`)
     }
 
-    return data
+    return data ?? []
   }
 
   /**
@@ -892,7 +904,7 @@ export class GameService {
       throw new Error(`Failed to fetch buzzes: ${error.message}`)
     }
 
-    if (buzzes.length === 0) {
+    if (!buzzes || buzzes.length === 0) {
       return []
     }
 
@@ -981,6 +993,10 @@ export class GameService {
     if (error) {
       // Error may indicate duplicate buzz or invalid game/clue/user IDs
       throw new Error(`Failed to record buzz: ${error.message}`)
+    }
+
+    if (!data) {
+      throw new Error('No buzz data returned from database')
     }
 
     return data
