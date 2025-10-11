@@ -99,6 +99,8 @@ interface AuthProviderProps {
  */
 async function ensureProfileExists(user: User): Promise<void> {
   try {
+    console.log('🔍 ensureProfileExists called for user:', user.id, user.email);
+
     // Check if profile already exists to avoid duplicate creation
     // Only select 'id' field for efficiency since we just need existence check
     const { data: existingProfile, error: fetchError } = await supabase
@@ -107,16 +109,19 @@ async function ensureProfileExists(user: User): Promise<void> {
       .eq('id', user.id)
       .single()
 
+    console.log('📋 Profile check result:', { existingProfile, fetchError });
+
     // Handle fetch errors - distinguish between "not found" and actual errors
     if (fetchError && fetchError.code !== 'PGRST116') {
       // PGRST116 = "not found" error code, which is expected for new users
       // Any other error indicates a real problem that should be logged
-      console.error('Error checking profile:', fetchError)
+      console.error('❌ Error checking profile:', fetchError)
       return
     }
 
     // If profile exists, no action needed
     if (existingProfile) {
+      console.log('✅ Profile already exists, no action needed');
       return
     }
 
@@ -125,24 +130,30 @@ async function ensureProfileExists(user: User): Promise<void> {
       throw new Error('Authenticated user missing required email address')
     }
 
+    console.log('🆕 Creating new profile for:', user.email);
+
     // Create new profile with sensible defaults from auth metadata
-    const { error: insertError } = await supabase
+    const { data: insertData, error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: user.id, // Use Supabase Auth user ID as primary key
-        username: user.email.split('@')[0], // Extract username from email (email is guaranteed to exist)
-        display_name: user.user_metadata.full_name as Maybe<string> ?? null, // Use full name if provided
+        username: user.email, // Use full email as username for guaranteed uniqueness
+        display_name: user.user_metadata.full_name as Maybe<string> ?? user.email.split('@')[0], // Use full name if provided, otherwise email prefix
         email: user.email, // Store email for display purposes (required field)
         role: 'player' // Default new users to player role
       })
+      .select()
+      .single()
 
     // Log profile creation errors but don't throw - authentication should continue
     if (insertError) {
-      console.error('Error creating profile:', insertError)
+      console.error('❌ Error creating profile:', insertError)
+    } else {
+      console.log('✅ Profile created successfully:', insertData);
     }
   } catch (error) {
     // Catch any unexpected errors and log them without blocking authentication
-    console.error('Error in ensureProfileExists:', error)
+    console.error('❌ Error in ensureProfileExists:', error)
   }
 }
 
@@ -209,32 +220,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Initialize authentication state on component mount
     // Get any existing session from Supabase (handles page refreshes)
-    void supabase.auth.getSession().then(({ data: { session: thisSession } }) => {
+    void supabase.auth.getSession().then(async ({ data: { session: thisSession } }) => {
       // Update state with current session data
       setSession(thisSession)
       setUser(thisSession?.user ?? null)
-      setLoading(false) // Authentication state is now determined
 
-      // Ensure user profile exists in database (non-blocking background operation)
+      // Ensure user profile exists in database BEFORE marking auth as complete
+      // This prevents race conditions where users try to join games before profile exists
       if (thisSession?.user) {
-        void ensureProfileExists(thisSession.user)
+        await ensureProfileExists(thisSession.user)
       }
+
+      setLoading(false) // Authentication state is now determined (after profile creation)
     })
 
     // Set up real-time authentication state listener
     // This handles login, logout, token refresh, and other auth events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, thisSession) => {
+    } = supabase.auth.onAuthStateChange(async (_event, thisSession) => {
       // Update state whenever authentication changes
       setSession(thisSession)
       setUser(thisSession?.user ?? null)
-      setLoading(false) // Ensure loading is false after any auth change
 
-      // Ensure user profile exists for newly authenticated users
+      // Ensure user profile exists for newly authenticated users BEFORE marking auth as complete
+      // This prevents race conditions where users try to join games before profile exists
       if (thisSession?.user) {
-        void ensureProfileExists(thisSession.user)
+        await ensureProfileExists(thisSession.user)
       }
+
+      setLoading(false) // Ensure loading is false after any auth change (after profile creation)
     })
 
     // Cleanup: unsubscribe from auth changes when component unmounts

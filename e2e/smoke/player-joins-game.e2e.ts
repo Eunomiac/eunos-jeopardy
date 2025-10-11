@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
+import { startConsoleLogger } from '../fixtures/console-logger';
 
 /**
  * Smoke Test: Player Joins Game
@@ -146,20 +147,43 @@ test.describe('Player Joins Game - Smoke Test', () => {
   /**
    * Test: Player can join an active game
    *
-   * LEARNING NOTE: Multi-User Testing
-   * This test demonstrates how to test interactions between multiple users.
-   * We need to:
-   * 1. Create a game as the host (in one browser context)
-   * 2. Join the game as a player (in the same browser context, after logout)
+   * LEARNING NOTE: Multi-User Testing with Browser Contexts
+   * This test demonstrates how to test interactions between multiple users
+   * logged in simultaneously. We use separate browser contexts (like separate
+   * incognito windows) for the host and player:
    *
-   * In more advanced tests, you might use multiple browser contexts to simulate
-   * multiple users being logged in simultaneously, but for this smoke test,
-   * we'll keep it simple by logging out and logging back in.
+   * 1. Host context: Creates and manages the game
+   * 2. Player context: Joins the game
+   *
+   * Each context has its own cookies, localStorage, and session data,
+   * allowing both users to be logged in at the same time. This is essential
+   * for testing real-time multiplayer interactions.
    */
-  test('should allow player to join an active game', async ({ page }) => {
+  test('should allow player to join an active game', async ({ browser }) => {
     // ============================================================
-    // ARRANGE: Host creates a game
+    // SETUP: Create host browser context
     // ============================================================
+
+    /**
+     * LEARNING NOTE: Browser Contexts
+     * Each context is isolated - like opening two separate incognito windows.
+     * This allows us to have the host and player logged in simultaneously.
+     *
+     * We create the player context later to avoid unnecessary overhead.
+     */
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    const hostLogger = startConsoleLogger(hostPage, 'player-joins-game-host');
+
+    // Player context will be created later when needed
+    let playerContext;
+    let playerPage;
+    let playerLogger;
+
+    try {
+      // ============================================================
+      // ARRANGE: Host creates a game
+      // ============================================================
 
     /**
      * First, we need a host to create a game for the player to join.
@@ -167,27 +191,24 @@ test.describe('Player Joins Game - Smoke Test', () => {
      */
 
     // Navigate to the application
-    await page.goto('/');
+    await hostPage.goto('/');
 
     // Log in as host
-    await page.getByPlaceholder('Email').fill(TEST_USERS.host.email);
-    await page.getByPlaceholder('Password').fill(TEST_USERS.host.password);
-    await page.getByRole('button', { name: 'Login' }).click();
+    await hostPage.getByPlaceholder('Email').fill(TEST_USERS.host.email);
+    await hostPage.getByPlaceholder('Password').fill(TEST_USERS.host.password);
+    await hostPage.getByRole('button', { name: 'Login' }).click();
 
     // Wait for login to complete
-    await expect(page.getByText('Currently logged in as')).toBeVisible();
+    await expect(hostPage.getByText('Currently logged in as')).toBeVisible();
 
     // Select a clue set and create game
-    const clueSetDropdown = page.getByRole('combobox');
+    const clueSetDropdown = hostPage.getByRole('combobox');
     await expect(clueSetDropdown).toBeVisible();
     await clueSetDropdown.selectOption({ index: 1 });
-    await page.getByText('Host Game').click();
+    await hostPage.getByText('Host Game').click();
 
     // Verify game dashboard appears (game is now active)
-    await expect(page.getByText('Game Host Dashboard')).toBeVisible();
-
-    // Log out so player can log in
-    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(hostPage.getByText('Game Host Dashboard')).toBeVisible();
 
     // ============================================================
     // ACT: Player logs in and joins the game
@@ -195,15 +216,28 @@ test.describe('Player Joins Game - Smoke Test', () => {
 
     /**
      * Now that there's an active game, the player should be able to join it.
+     * Note: The player uses a separate browser context, so they can be
+     * logged in at the same time as the host.
+     *
+     * We create the player context here (not at the start) to avoid
+     * unnecessary overhead during test initialization.
      */
 
+    // Create player context and page
+    playerContext = await browser.newContext();
+    playerPage = await playerContext.newPage();
+    playerLogger = startConsoleLogger(playerPage, 'player-joins-game-player');
+
+    // Navigate to the application in player context
+    await playerPage.goto('/');
+
     // Log in as player1
-    await page.getByPlaceholder('Email').fill(TEST_USERS.player1.email);
-    await page.getByPlaceholder('Password').fill(TEST_USERS.player1.password);
-    await page.getByRole('button', { name: 'Login' }).click();
+    await playerPage.getByPlaceholder('Email').fill(TEST_USERS.player1.email);
+    await playerPage.getByPlaceholder('Password').fill(TEST_USERS.player1.password);
+    await playerPage.getByRole('button', { name: 'Login' }).click();
 
     // Wait for login to complete
-    await expect(page.getByText('Currently logged in as')).toBeVisible();
+    await expect(playerPage.getByText('Currently logged in as')).toBeVisible();
 
     // ============================================================
     // ASSERT: Player sees the join interface with active game
@@ -215,13 +249,13 @@ test.describe('Player Joins Game - Smoke Test', () => {
      */
 
     // Verify nickname field is visible
-    await expect(page.getByPlaceholder('Your display name for this game...')).toBeVisible();
+    await expect(playerPage.getByPlaceholder('Your display name for this game...')).toBeVisible();
 
     // Enter a nickname
-    await page.getByPlaceholder('Your display name for this game...').fill('Test Player');
+    await playerPage.getByPlaceholder('Your display name for this game...').fill('Test Player');
 
     // Verify "Join Game" button is enabled (not "Waiting for Game")
-    const joinButton = page.getByRole('button', { name: 'Join Game' });
+    const joinButton = playerPage.getByRole('button', { name: 'Join Game' });
     await expect(joinButton).toBeVisible();
     await expect(joinButton).toBeEnabled();
 
@@ -235,23 +269,40 @@ test.describe('Player Joins Game - Smoke Test', () => {
     /**
      * LEARNING NOTE: After joining, the player should see the lobby
      * with their nickname and the game code.
+     *
+     * We use .first() because "Test Player" appears twice:
+     * 1. "Playing as: Test Player" (under game code)
+     * 2. "Test Player (You)" (in players list)
      */
 
-    await expect(page.getByText('Game Lobby')).toBeVisible();
-    await expect(page.getByText('Test Player')).toBeVisible();
-    await expect(page.getByText(/Game Code:/)).toBeVisible();
+    await expect(playerPage.getByText('Game Lobby')).toBeVisible();
+    await expect(playerPage.getByText('Test Player').first()).toBeVisible();
+    await expect(playerPage.getByText(/Game Code:/)).toBeVisible();
 
     // ============================================================
     // SUCCESS! 🎉
     // ============================================================
 
-    /**
-     * This test validates the complete player journey:
-     * 1. Host creates a game ✅
-     * 2. Player logs in ✅
-     * 3. Player sees active game ✅
-     * 4. Player joins game ✅
-     * 5. Player appears in lobby ✅
-     */
+      /**
+       * This test validates the complete player journey:
+       * 1. Host creates a game ✅
+       * 2. Player logs in ✅
+       * 3. Player sees active game ✅
+       * 4. Player joins game ✅
+       * 5. Player appears in lobby ✅
+       */
+    } finally {
+      // Save console logs to file for debugging (even if test fails)
+      hostLogger.save();
+      if (playerLogger) {
+        playerLogger.save();
+      }
+
+      // Clean up browser contexts to free resources
+      await hostContext.close();
+      if (playerContext) {
+        await playerContext.close();
+      }
+    }
   });
 });

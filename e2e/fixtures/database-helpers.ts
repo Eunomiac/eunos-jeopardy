@@ -144,8 +144,11 @@ export function verifyTestUsers(): {
   missing: string[];
 } {
   const allUsers = Object.entries(TEST_USERS);
-  const configured = allUsers;
+
+  // All test users should have valid UUIDs (non-empty strings)
+  const configured = allUsers.filter(([_, user]) => user.id && user.id.length > 0);
   const missing = allUsers
+    .filter(([_, user]) => !user.id || user.id.length === 0)
     .map(([key]) => key);
 
   return {
