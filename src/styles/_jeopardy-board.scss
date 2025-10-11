@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 // Jeopardy Board
 .jeopardy-board-container {
@@ -13,151 +13,22 @@
   .jeopardy-board-background,
   .jeopardy-board-background img {
     position: absolute;
-      height: 100%;
-      width: 100%;
-      z-index: -1;
-  }
-
-  .jeopardy-board {
-
-
+    height: 100%;
+    width: 100%;
+    z-index: -1;
   }
 
   .dynamic-display-window {
-    // Dynamic display window styles handled by JavaScript
-  }
-}
-
-.jeopardy-board {
-  background: black;
-  border: none;
-  border-radius: 0;
-  padding: 0; // Remove all padding for precise sizing
-  width: auto;
-  height: 55vh;
-  aspect-ratio: 1.7086;
-  transform: translate(-50%, -50%);
-  position: absolute;
-  top: calc(50% + 2vh);
-  left: 50%;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr); // 6 columns for categories and clues
-  grid-template-rows: repeat(6, calc(100% / 6)); // All rows equal height - authentic Jeopardy layout
-  gap: 0; // Remove gaps - use borders instead for visual separation
-  overflow: hidden; // Allow clipping when space is tight
-  box-shadow: inset 0px 0px 30px black;
-
-  .jeopardy-clues-background {
     position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    z-index: -1;
-  }
+    width: auto;
+    height: 55vh;
+    aspect-ratio: 1.7086;
+    transform: translate(-50%, -50%);
+    top: calc(50% - 9vh);
+    left: 50%;
+    z-index: 1000;
 
-  .splash-jeopardy {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    z-index: -1;
-  }
-
-
-  .category-header {
-    border: 2px solid black; // Consistent thick borders for visual separation
-    border-bottom: 8px solid black; // Thicker bottom border for visual separation from clue rows
-    border-radius: 0;
-    background: $jeopardy-blue;
-    color: $jeopardy-white;
-    padding: $spacing-sm;
-    text-align: center;
-    font-family: $font-family-category;
-    font-size: $font-size-md;
-    text-transform: $jeopardy-text-transform;
-    text-shadow: $shadow-sm;
-    word-wrap: break-word;
-    hyphens: auto;
-    line-height: 1.2;
-    // Remove min-height to allow natural content expansion
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  // Clue cells - direct children, rows 2-6
-  .clue-cell {
-      border: 2px solid black; // Consistent thick borders for visual separation
-      background: $jeopardy-blue;
-      color: $jeopardy-gold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: $font-family-money;
-      font-size: $font-size-board-money;
-      text-transform: $jeopardy-text-transform;
-      text-shadow: $shadow-sm;
-      cursor: pointer;
-      transition: all $transition-fast;
-      min-height: 2em; // Minimum height for readability
-      line-height: 1.2;
-
-      // Reset button styling when used as button element
-      &[type="button"] {
-        // Keep the border from parent .clue-cell - don't override it
-        outline: none;
-        padding: 0;
-        margin: 0;
-        text-decoration: none;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        // Don't use font: inherit - let the parent .clue-cell styles apply
-        // Don't use color: inherit - let the parent .clue-cell styles apply
-        // Don't use background: inherit - let the parent .clue-cell styles apply
-        // Don't use text-align: inherit - let the parent .clue-cell styles apply
-      }
-
-      &:hover {
-        filter: brightness(1.1);
-        transform: scale(1.02);
-      }
-
-      &.revealed {
-        color: transparent;
-        pointer-events: none;
-        text-shadow: none;
-
-        &:hover {
-          filter: none;
-          transform: none;
-        }
-      }
-
-      &.focused {
-        transform: scale(1.05); // Reduced scale for smaller containers
-        position: relative;
-        z-index: 1;
-        filter: brightness(2);
-      }
-    }
-
-
-}
-
-.dynamic-display-window {
-  position: absolute;
-  width: auto;
-  height: 55vh;
-  aspect-ratio: 1.7086;
-  transform: translate(-50%, -50%);
-  top: calc(50% - 9vh);
-  left: 50%;
-  z-index: 1000;
-
-  &.jeopardy-clue-display {
+    &.jeopardy-clue-display {
       position: fixed;
       top: 50px;
       left: 50%;
@@ -192,55 +63,174 @@
       }
     }
 
-  .jeopardy-category-display-viewport {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
-    overflow: hidden;
-
-    .jeopardy-category-display-strip {
+    .jeopardy-category-display-viewport {
+      position: absolute;
       height: 100%;
-      width: 600%;
+      width: 100%;
+      transform: translate(-50%, -50%);
+      top: 50%;
+      left: 50%;
       overflow: hidden;
-      display: flex;
 
-      .category-header {
-        position: relative;
+      .jeopardy-category-display-strip {
         height: 100%;
-        width: auto;
-        aspect-ratio: 1.7086;
-        border: 2px solid black; // Consistent thick borders for visual separation
-        border-bottom: 8px solid black; // Thicker bottom border for visual separation from clue rows
-        border-radius: 0;
-        background: $jeopardy-blue;
-        color: $jeopardy-white;
-        padding: $spacing-sm;
-        text-align: center;
-        font-family: $font-family-category;
-        font-size: 8rem;
-        text-transform: $jeopardy-text-transform;
-        text-shadow: $shadow-sm;
-        word-wrap: break-word;
-        hyphens: auto;
-        line-height: 1.2;
-        // Remove min-height to allow natural content expansion
+        width: 600%;
+        overflow: hidden;
         display: flex;
-        align-items: center;
-        justify-content: center;
 
-        .splash-jeopardy {
+        .category-header {
+          position: relative;
           height: 100%;
-          aspect-ratio: 1.7086;
           width: auto;
-          position: absolute;
-          top: 0;
-          left: 0;
+          aspect-ratio: 1.7086;
+          border: 2px solid black; // Consistent thick borders for visual separation
+          border-bottom: 8px solid black; // Thicker bottom border for visual separation from clue rows
+          border-radius: 0;
+          background: $jeopardy-blue;
+          color: $jeopardy-white;
+          padding: $spacing-sm;
+          text-align: center;
+          font-family: $font-family-category;
+          font-size: 8rem;
+          text-transform: $jeopardy-text-transform;
+          text-shadow: $shadow-sm;
+          word-wrap: break-word;
+          hyphens: auto;
+          line-height: 1.2;
+          // Remove min-height to allow natural content expansion
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .splash-jeopardy {
+            height: 100%;
+            aspect-ratio: 1.7086;
+            width: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+          }
         }
       }
     }
+  }
+}
 
+.jeopardy-board {
+  background: black;
+  border: none;
+  border-radius: 0;
+  padding: 0; // Remove all padding for precise sizing
+  width: auto;
+  height: 55vh;
+  aspect-ratio: 1.7086;
+  transform: translate(-50%, -50%);
+  position: absolute;
+  top: calc(50% + 2vh);
+  left: 50%;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); // 6 columns for categories and clues
+  grid-template-rows: repeat(
+    6,
+    calc(100% / 6)
+  ); // All rows equal height - authentic Jeopardy layout
+  gap: 0; // Remove gaps - use borders instead for visual separation
+  overflow: hidden; // Allow clipping when space is tight
+  box-shadow: inset 0px 0px 30px black;
+
+  .jeopardy-clues-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+  }
+
+  .splash-jeopardy {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+  }
+
+  .category-header {
+    border: 2px solid black; // Consistent thick borders for visual separation
+    border-bottom: 8px solid black; // Thicker bottom border for visual separation from clue rows
+    border-radius: 0;
+    background: $jeopardy-blue;
+    color: $jeopardy-white;
+    padding: $spacing-sm;
+    text-align: center;
+    font-family: $font-family-category;
+    font-size: $font-size-md;
+    text-transform: $jeopardy-text-transform;
+    text-shadow: $shadow-sm;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+    // Remove min-height to allow natural content expansion
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Clue cells - direct children, rows 2-6
+  .clue-cell {
+    border: 2px solid black; // Consistent thick borders for visual separation
+    background: $jeopardy-blue;
+    color: $jeopardy-gold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-family-money;
+    font-size: $font-size-board-money;
+    text-transform: $jeopardy-text-transform;
+    text-shadow: $shadow-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+    min-height: 2em; // Minimum height for readability
+    line-height: 1.2;
+
+    // Reset button styling when used as button element
+    &[type="button"] {
+      // Keep the border from parent .clue-cell - don't override it
+      outline: none;
+      padding: 0;
+      margin: 0;
+      text-decoration: none;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      // Don't use font: inherit - let the parent .clue-cell styles apply
+      // Don't use color: inherit - let the parent .clue-cell styles apply
+      // Don't use background: inherit - let the parent .clue-cell styles apply
+      // Don't use text-align: inherit - let the parent .clue-cell styles apply
+    }
+
+    &:hover {
+      filter: brightness(1.1);
+      transform: scale(1.02);
+    }
+
+    &.revealed {
+      color: transparent;
+      pointer-events: none;
+      text-shadow: none;
+
+      &:hover {
+        filter: none;
+        transform: none;
+      }
+    }
+
+    &.focused {
+      transform: scale(1.05); // Reduced scale for smaller containers
+      position: relative;
+      z-index: 1;
+      filter: brightness(2);
+    }
   }
 }

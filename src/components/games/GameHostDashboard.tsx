@@ -35,7 +35,7 @@ const isPanelDisabled = (game: Game | null): boolean =>
 /**
  * Helper function to get the appropriate button configuration for Start/End Game.
  */
-const getGameControlButton = (game: Game | null) => {
+const getGameControlButton = (game: Game | null, playerCount: number) => {
   if (!game) {
     return { text: "Loading...", handler: () => { /* Loading state */ }, disabled: true };
   }
@@ -44,7 +44,7 @@ const getGameControlButton = (game: Game | null) => {
     return {
       text: "Start Game",
       handler: "start" as const,
-      disabled: false,
+      disabled: playerCount === 0, // Disable if no players have joined
     };
   }
 
@@ -2402,16 +2402,16 @@ export function GameHostDashboard({
               <button
                 className="jeopardy-button flex-1"
                 onClick={() => {
-                  const buttonConfig = getGameControlButton(game);
+                  const buttonConfig = getGameControlButton(game, players.length);
                   if (buttonConfig.handler === "start") {
                     void handleStartGame();
                   } else if (buttonConfig.handler === "end") {
                     void handleEndGame();
                   }
                 }}
-                disabled={getGameControlButton(game).disabled}
+                disabled={getGameControlButton(game, players.length).disabled}
               >
-                {getGameControlButton(game).text}
+                {getGameControlButton(game, players.length).text}
               </button>
               <button
                 className="jeopardy-button flex-1"
