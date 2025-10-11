@@ -1,9 +1,9 @@
 /**
  * Merge Coverage Reports
- * 
+ *
  * This script merges Jest unit test coverage with Playwright E2E test coverage
  * into a single report for SonarQube.
- * 
+ *
  * Process:
  * 1. Load Jest coverage from coverage/coverage-final.json
  * 2. Load all Playwright coverage files from .nyc_output/coverage-e2e-*.json
@@ -12,12 +12,17 @@
  * 5. Generate HTML report for viewing
  */
 
-const { createCoverageMap } = require('istanbul-lib-coverage');
-const { createContext } = require('istanbul-lib-report');
-const { create } = require('istanbul-reports');
-const fs = require('fs');
-const path = require('path');
-const glob = require('glob');
+import { createCoverageMap } from 'istanbul-lib-coverage';
+import { createContext } from 'istanbul-lib-report';
+import { create } from 'istanbul-reports';
+import fs from 'fs';
+import path from 'path';
+import { glob } from 'glob';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function mergeCoverage() {
   console.log('🔄 Merging coverage reports...\n');
@@ -35,7 +40,7 @@ async function mergeCoverage() {
       const jestData = JSON.parse(fs.readFileSync(jestCoveragePath, 'utf8'));
       coverageMap.merge(jestData);
       jestCoverageLoaded = true;
-      
+
       const fileCount = Object.keys(jestData).length;
       console.log(`✅ Merged Jest coverage (${fileCount} files)`);
     } catch (error) {
@@ -50,7 +55,7 @@ async function mergeCoverage() {
   // Load Playwright E2E coverage
   // ============================================================
   const e2eCoveragePattern = path.join(__dirname, '../.nyc_output/coverage-e2e-*.json');
-  const e2eCoverageFiles = glob.sync(e2eCoveragePattern);
+  const e2eCoverageFiles = await glob(e2eCoveragePattern);
 
   if (e2eCoverageFiles.length > 0) {
     e2eCoverageFiles.forEach(file => {
@@ -138,4 +143,3 @@ mergeCoverage().catch(error => {
   console.error('\n❌ Fatal error during coverage merge:', error);
   process.exit(1);
 });
-
