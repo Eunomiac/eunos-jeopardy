@@ -16,7 +16,7 @@
   "include": [
     "src/**/*",
     "src/**/*.test.*",
-    "src/**/*.spec.*",
+    "src/**/*.e2e.*",
     "src/test/setup.ts"
   ],
   "exclude": [

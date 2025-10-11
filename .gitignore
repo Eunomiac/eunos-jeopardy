@@ -90,3 +90,8 @@ docs/ai/prompts/Local Prompts Library.md
 # Archived Documentation
 docs/archive/
 docs/design-images/Jeopardy Board.psb
+src/components/clueSets/ClueSetSelector.test.tsx
+lint-output.md
+lint-output.html
+playwright-report/
+index.html

@@ -23,7 +23,7 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@supabase/supabase-js$': '<rootDir>/src/test/__mocks__/@supabase/supabase-js.ts',
     '^.*\\/services\\/supabase\\/connection$': '<rootDir>/src/test/__mocks__/supabase-connection.ts',
-    '^@test/mocks/commonTestData$': '<rootDir>/src/test/__mocks__/commonTestData.ts',
+    '^@test/testUtils$': '<rootDir>/src/test/testUtils.ts',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': 'jest-transform-stub',
   },
