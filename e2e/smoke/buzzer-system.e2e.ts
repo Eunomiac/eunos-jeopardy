@@ -16,6 +16,15 @@ import { startConsoleLogger } from '../fixtures/console-logger';
 
 test.describe('Buzzer System - Smoke Tests', () => {
 
+  test.beforeEach(async () => {
+    // Cleanup before test to ensure clean state
+    await Promise.all([
+      cleanupTestUser(TEST_USERS.host.id),
+      cleanupTestUser(TEST_USERS.player1.id),
+      cleanupTestUser(TEST_USERS.player2.id)
+    ]);
+  });
+
   test.afterEach(async () => {
     // Cleanup all test users
     await Promise.all([

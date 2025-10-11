@@ -5,7 +5,7 @@ import { startConsoleLogger } from '../fixtures/console-logger';
 
 /**
  * E2E Smoke Tests: Final Jeopardy
- * 
+ *
  * Tests the Final Jeopardy round including:
  * - Category reveal
  * - Simultaneous wager entry by all players
@@ -16,6 +16,15 @@ import { startConsoleLogger } from '../fixtures/console-logger';
  */
 
 test.describe('Final Jeopardy - Smoke Tests', () => {
+
+  test.beforeEach(async () => {
+    // Cleanup before each test to ensure clean starting state
+    await Promise.all([
+      cleanupTestUser(TEST_USERS.host.id),
+      cleanupTestUser(TEST_USERS.player1.id),
+      cleanupTestUser(TEST_USERS.player2.id)
+    ]);
+  });
 
   test.afterEach(async () => {
     // Cleanup all test users
@@ -114,7 +123,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
       if (await finalJeopardyButton.isVisible({ timeout: 2000 }).catch(() => false)) {
         await finalJeopardyButton.click();
         await hostPage.waitForTimeout(1000);
-        
+
         // Click through any additional transitions
         for (let i = 0; i < 3; i++) {
           const nextButton = hostPage.getByRole('button', { name: /Next|Continue|Start/i }).first();
@@ -238,4 +247,3 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
   });
 
 });
-

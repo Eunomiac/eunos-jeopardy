@@ -5,7 +5,7 @@ import { startConsoleLogger } from '../fixtures/console-logger';
 
 /**
  * E2E Smoke Tests: Game Introduction & Board Display
- * 
+ *
  * Tests the game introduction flow including:
  * - Game intro animation
  * - Category introduction sequence
@@ -14,6 +14,15 @@ import { startConsoleLogger } from '../fixtures/console-logger';
  */
 
 test.describe('Game Introduction & Board Display - Smoke Tests', () => {
+
+  test.beforeEach(async () => {
+    // Cleanup before each test to ensure clean starting state
+    await Promise.all([
+      cleanupTestUser(TEST_USERS.host.id),
+      cleanupTestUser(TEST_USERS.player1.id),
+      cleanupTestUser(TEST_USERS.player2.id)
+    ]);
+  });
 
   test.afterEach(async () => {
     // Cleanup all test users
@@ -136,7 +145,7 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
         const nextButton = hostPage.getByRole('button', { name: /Next Category|Next/i });
         await expect(nextButton).toBeVisible({ timeout: 5000 });
         await nextButton.click();
-        
+
         // Wait a moment for animation/transition
         await hostPage.waitForTimeout(1000);
       }
@@ -179,4 +188,3 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
   });
 
 });
-

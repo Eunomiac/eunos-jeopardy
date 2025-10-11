@@ -5,7 +5,7 @@ import { startConsoleLogger } from '../fixtures/console-logger';
 
 /**
  * E2E Smoke Tests: Round Transitions
- * 
+ *
  * Tests transitions between game rounds:
  * - Jeopardy → Double Jeopardy
  * - Double Jeopardy → Final Jeopardy
@@ -14,6 +14,15 @@ import { startConsoleLogger } from '../fixtures/console-logger';
  */
 
 test.describe('Round Transitions - Smoke Tests', () => {
+
+  test.beforeEach(async () => {
+    // Cleanup before each test to ensure clean starting state
+    await Promise.all([
+      cleanupTestUser(TEST_USERS.host.id),
+      cleanupTestUser(TEST_USERS.player1.id),
+      cleanupTestUser(TEST_USERS.player2.id)
+    ]);
+  });
 
   test.afterEach(async () => {
     // Cleanup all test users
@@ -114,15 +123,15 @@ test.describe('Round Transitions - Smoke Tests', () => {
           const unlockButton = hostPage.getByRole('button', { name: /Unlock|Enable Buzzer/i });
           if (await unlockButton.isVisible({ timeout: 2000 }).catch(() => false)) {
             await unlockButton.click();
-            
+
             // Alternate between players
-            const buzzer = i === 0 
+            const buzzer = i === 0
               ? player1Page.locator('.buzzer-button, button[class*="buzzer"]')
               : player2Page.locator('.buzzer-button, button[class*="buzzer"]');
-            
+
             await expect(buzzer).toBeEnabled({ timeout: 2000 });
             await buzzer.click();
-            
+
             const correctButton = hostPage.getByRole('button', { name: /Correct|✓/i });
             await expect(correctButton).toBeVisible({ timeout: 5000 });
             await correctButton.click();
@@ -136,7 +145,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
       // ============================================================
       const player1ScoreBefore = await player1Page.locator('.player-score, .score-display').textContent();
       const player2ScoreBefore = await player2Page.locator('.player-score, .score-display').textContent();
-      
+
       console.log(`Scores before transition - Alice: ${player1ScoreBefore}, Bob: ${player2ScoreBefore}`);
 
       // ============================================================
@@ -152,7 +161,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
       // ============================================================
       // Note: Adjust selector based on actual transition animation
       await hostPage.waitForTimeout(2000);
-      
+
       // Players should see transition animation or new board
       await expect(player1Page.locator('.round-transition, .animation-container, .game-board')).toBeVisible({ timeout: 10000 });
       await expect(player2Page.locator('.round-transition, .animation-container, .game-board')).toBeVisible({ timeout: 10000 });
@@ -188,9 +197,9 @@ test.describe('Round Transitions - Smoke Tests', () => {
       // ============================================================
       const player1ScoreAfter = await player1Page.locator('.player-score, .score-display').textContent();
       const player2ScoreAfter = await player2Page.locator('.player-score, .score-display').textContent();
-      
+
       console.log(`Scores after transition - Alice: ${player1ScoreAfter}, Bob: ${player2ScoreAfter}`);
-      
+
       // Scores should be the same (or at least not reset to 0)
       expect(player1ScoreAfter).toBe(player1ScoreBefore);
       expect(player2ScoreAfter).toBe(player2ScoreBefore);
@@ -225,4 +234,3 @@ test.describe('Round Transitions - Smoke Tests', () => {
   });
 
 });
-

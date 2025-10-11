@@ -18,6 +18,20 @@ import { startConsoleLogger } from '../fixtures/console-logger';
  */
 test.describe('Game Setup & Lobby - Smoke Tests', () => {
   /**
+   * Clean up before each test to ensure clean starting state.
+   * This is critical because if a previous test failed or was interrupted,
+   * the afterEach cleanup might not have run.
+   */
+  test.beforeEach(async () => {
+    await Promise.all([
+      cleanupTestUser(TEST_USERS.host.id),
+      cleanupTestUser(TEST_USERS.player1.id),
+      cleanupTestUser(TEST_USERS.player2.id),
+      cleanupTestUser(TEST_USERS.player3.id)
+    ]);
+  });
+
+  /**
    * Clean up after each test to ensure test isolation.
    */
   test.afterEach(async () => {

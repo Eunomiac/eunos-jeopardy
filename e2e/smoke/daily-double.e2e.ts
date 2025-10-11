@@ -5,7 +5,7 @@ import { startConsoleLogger } from '../fixtures/console-logger';
 
 /**
  * E2E Smoke Tests: Daily Double Flow
- * 
+ *
  * Tests the Daily Double functionality including:
  * - Daily Double reveal animation
  * - Wager entry and validation
@@ -15,6 +15,15 @@ import { startConsoleLogger } from '../fixtures/console-logger';
  */
 
 test.describe('Daily Double - Smoke Tests', () => {
+
+  test.beforeEach(async () => {
+    // Cleanup before each test to ensure clean starting state
+    await Promise.all([
+      cleanupTestUser(TEST_USERS.host.id),
+      cleanupTestUser(TEST_USERS.player1.id),
+      cleanupTestUser(TEST_USERS.player2.id)
+    ]);
+  });
 
   test.afterEach(async () => {
     // Cleanup all test users
@@ -117,7 +126,7 @@ test.describe('Daily Double - Smoke Tests', () => {
         const player1Buzzer = player1Page.locator('.buzzer-button, button[class*="buzzer"]');
         await expect(player1Buzzer).toBeEnabled({ timeout: 2000 });
         await player1Buzzer.click();
-        
+
         const correctButton = hostPage.getByRole('button', { name: /Correct|✓/i });
         await expect(correctButton).toBeVisible({ timeout: 5000 });
         await correctButton.click();
@@ -131,7 +140,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       // You may need to select a specific clue that's marked as DD
       // Or the test may need to be run with a known clue set
       const dailyDoubleClue = hostPage.locator('.clue-cell.daily-double, .board-cell[data-daily-double="true"]').first();
-      
+
       // If no specific DD marker, just select another clue and hope it's a DD
       // Or you might need to set up test data with known DD positions
       if (await dailyDoubleClue.isVisible({ timeout: 1000 }).catch(() => false)) {
@@ -203,7 +212,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       // ASSERT: Game should return to normal board state
       // ============================================================
       await expect(hostPage.locator('.game-board')).toBeVisible({ timeout: 5000 });
-      
+
       // Daily Double clue should be marked as completed
       await expect(hostPage.locator('.clue-cell.completed, .clue-cell.answered').nth(1)).toBeVisible({ timeout: 5000 });
 
@@ -284,11 +293,11 @@ test.describe('Daily Double - Smoke Tests', () => {
       const revealButton = hostPage.getByRole('button', { name: /Daily Double|Reveal|Continue/i });
       if (await revealButton.isVisible({ timeout: 2000 }).catch(() => false)) {
         await revealButton.click();
-        
+
         const wagerInput = hostPage.locator('input[type="number"], input[placeholder*="wager" i]');
         await wagerInput.fill('300');
         await hostPage.getByRole('button', { name: /Submit|Confirm/i }).click();
-        
+
         // Mark wrong
         const wrongButton = hostPage.getByRole('button', { name: /Wrong|✗|Incorrect/i });
         await expect(wrongButton).toBeVisible({ timeout: 5000 });
@@ -299,7 +308,7 @@ test.describe('Daily Double - Smoke Tests', () => {
         // ============================================================
         await hostPage.waitForTimeout(1000);
         const newScore = await player1Page.locator('.player-score, .score-display').textContent();
-        
+
         // Score should be lower than initial (or negative)
         // Note: Exact validation depends on score format
         console.log(`Score changed from ${initialScore} to ${newScore}`);
@@ -316,4 +325,3 @@ test.describe('Daily Double - Smoke Tests', () => {
   });
 
 });
-
