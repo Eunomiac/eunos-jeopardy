@@ -43,8 +43,9 @@ docs/local/
 .eslintcache
 .stylelintcache
 
-# Coverage directory
+# Coverage directories
 coverage/
+coverage-merged/
 *.lcov
 .nyc_output/
 
