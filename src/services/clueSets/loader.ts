@@ -140,7 +140,7 @@ export async function loadClueSetFromFile(file: File, customName?: string): Prom
 
     // Step 4: Structure data by rounds for game use
     const clueSetData: ClueSetData = {
-      name: customName || filenameToDisplayName(file.name), // Use custom name or derive from filename
+      name: customName ?? filenameToDisplayName(file.name), // Use custom name or derive from filename
       filename: file.name, // Preserve original filename
       rounds: {
         // Filter and structure each round type
@@ -289,7 +289,7 @@ function structureRoundData(rows: CSVRow[]): CategoryData[] {
     }
 
     // Add clue to appropriate category with calculated position
-    categoryMap.get(row.category)!.push({
+    categoryMap.get(row.category)?.push({
       value: row.value,
       prompt: row.prompt,
       response: row.response,
@@ -419,13 +419,8 @@ function getCluePosition(value: number, round: RoundType): number {
   }
 
   // Double Jeopardy round: standard values 400, 800, 1200, 1600, 2000
-  if (round === 'double') {
-    // Divide by 400 to get positions 1, 2, 3, 4, 5
-    return value / 400
-  }
-
-  // Unknown round type - this should not happen with validated data
-  throw new Error(`Unknown round type: ${round}`)
+  // Divide by 400 to get positions 1, 2, 3, 4, 5
+  return value / 400
 }
 
 /**
@@ -489,7 +484,7 @@ export async function saveClueSetToDatabase(
     const { data: clueSet, error: clueSetError } = await supabase
       .from('clue_sets')
       .insert({
-        name: customName || clueSetData.name,
+        name: customName ?? clueSetData.name,
         owner_id: userId // Associate with user for RLS
       })
       .select('id')
@@ -497,7 +492,6 @@ export async function saveClueSetToDatabase(
 
     // Validate clue set creation
     if (clueSetError){ throw clueSetError}
-    if (!clueSet) { throw new Error('Failed to create clue set') }
 
     const clueSetId = clueSet.id
 
@@ -568,7 +562,6 @@ async function createBoard(clueSetId: string, round: RoundType) {
 
   // Validate board creation
   if (boardError) { throw boardError}
-  if (!board) { throw new Error(`Failed to create ${round} board`) }
 
   return board
 }
@@ -679,7 +672,6 @@ async function saveCategoryAndClues(
 
   // Validate category creation
   if (categoryError) { throw categoryError }
-  if (!category) { throw new Error('Failed to create category') }
 
   // Step 2: Prepare clues for batch insertion
   const cluesToInsert = categoryData.clues.map((clue) => ({

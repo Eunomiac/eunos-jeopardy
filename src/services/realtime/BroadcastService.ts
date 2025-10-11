@@ -41,7 +41,7 @@
  * @author Euno's Jeopardy Team
  */
 
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 import {
   BROADCAST_EVENTS,
@@ -56,7 +56,7 @@ import {
 /**
  * Service for managing real-time broadcast channels for buzzer events.
  */
-export class BroadcastService {
+export class BroadcastService { // eslint-disable-line @typescript-eslint/no-extraneous-class
   /**
    * Active channels by game ID for cleanup tracking.
    */
@@ -77,7 +77,7 @@ export class BroadcastService {
     // Remove existing channel if present
     const existingChannel = this.activeChannels.get(gameId);
     if (existingChannel) {
-      existingChannel.unsubscribe();
+      void existingChannel.unsubscribe();
       this.activeChannels.delete(gameId);
     }
 
@@ -114,42 +114,42 @@ export class BroadcastService {
     // Set up event handlers
     if (handlers.onBuzzerUnlock) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.BUZZER_UNLOCK }, (message) => {
-        handlers.onBuzzerUnlock!(message.payload as BuzzerUnlockPayload);
+        handlers.onBuzzerUnlock?.(message.payload as BuzzerUnlockPayload);
       });
     }
 
     if (handlers.onBuzzerLock) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.BUZZER_LOCK }, (message) => {
-        handlers.onBuzzerLock!(message.payload as BuzzerLockPayload);
+        handlers.onBuzzerLock?.(message.payload as BuzzerLockPayload);
       });
     }
 
     if (handlers.onPlayerBuzz) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.PLAYER_BUZZ }, (message) => {
-        handlers.onPlayerBuzz!(message.payload as PlayerBuzzPayload);
+        handlers.onPlayerBuzz?.(message.payload as PlayerBuzzPayload);
       });
     }
 
     if (handlers.onFocusPlayer) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.FOCUS_PLAYER }, (message) => {
-        handlers.onFocusPlayer!(message.payload as FocusPlayerPayload);
+        handlers.onFocusPlayer?.(message.payload as FocusPlayerPayload);
       });
     }
 
     // Subscribe to channel
     channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
+      if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
         console.log(`✅ Subscribed to buzzer channel: ${gameId}`);
-      } else if (status === 'CHANNEL_ERROR') {
+      } else if (status === REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR) {
         console.error(`❌ Error subscribing to buzzer channel: ${gameId}`);
-      } else if (status === 'TIMED_OUT') {
+      } else if (status === REALTIME_SUBSCRIBE_STATES.TIMED_OUT) {
         console.error(`⏱️ Timeout subscribing to buzzer channel: ${gameId}`);
       }
     });
 
     return {
       unsubscribe: () => {
-        channel.unsubscribe();
+        void channel.unsubscribe();
         this.activeChannels.delete(gameId);
         console.log(`🔌 Unsubscribed from buzzer channel: ${gameId}`);
       },
@@ -315,7 +315,7 @@ export class BroadcastService {
    */
   static cleanup(): void {
     this.activeChannels.forEach((channel, gameId) => {
-      channel.unsubscribe();
+      void channel.unsubscribe();
       console.log(`🧹 Cleaned up channel for game: ${gameId}`);
     });
     this.activeChannels.clear();

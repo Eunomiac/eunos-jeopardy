@@ -86,7 +86,7 @@ export interface DeleteResult {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export class ClueSetService {
+export class ClueSetService { // eslint-disable-line @typescript-eslint/no-extraneous-class
   /**
    * Retrieves all clue sets owned by a specific user.
    *
@@ -163,7 +163,7 @@ export class ClueSetService {
         return { success: false, error: `Failed to verify clue set ownership: ${fetchError.message}` }
       }
 
-      if (!clueSet || clueSet.owner_id !== userId) {
+      if (clueSet.owner_id !== userId) {
         return { success: false, error: 'Unauthorized: You can only delete your own clue sets' }
       }
 
@@ -213,8 +213,8 @@ export class ClueSetService {
       .eq('id', clueSetId)
       .single()
 
-    if (clueSetError || !clueSet) {
-      throw new Error(`Failed to retrieve clue set: ${clueSetError?.message || 'Not found'}`)
+    if (clueSetError) {
+      throw new Error(`Failed to retrieve clue set: ${clueSetError.message || 'Not found'}`)
     }
 
     // Get boards and their categories
@@ -236,28 +236,28 @@ export class ClueSetService {
     }
 
     // Organize categories by round
-    const jeopardyBoard = boardsWithCategories?.find((b) => b.round === 'jeopardy')
-    const doubleJeopardyBoard = boardsWithCategories?.find((b) => b.round === 'double')
-    const finalBoard = boardsWithCategories?.find((b) => b.round === 'final')
+    const jeopardyBoard = boardsWithCategories.find((b) => b.round === 'jeopardy')
+    const doubleJeopardyBoard = boardsWithCategories.find((b) => b.round === 'double')
+    const finalBoard = boardsWithCategories.find((b) => b.round === 'final')
 
     const jeopardyCategories = jeopardyBoard?.categories
-      ?.sort((a, b) => a.position - b.position)
-      ?.map((c) => c.name) || []
+      .sort((a, b) => a.position - b.position)
+      .map((c) => c.name) ?? []
 
     const doubleJeopardyCategories = doubleJeopardyBoard?.categories
-      ?.sort((a, b) => a.position - b.position)
-      ?.map((c) => c.name) || []
+      .sort((a, b) => a.position - b.position)
+      .map((c) => c.name) ?? []
 
-    const finalJeopardyCategory = finalBoard?.categories?.[0]?.name || 'Final Jeopardy'
+    const finalJeopardyCategory = finalBoard?.categories[0]?.name ?? 'Final Jeopardy'
 
     // Get total clue count
     const { count: totalClues } = await supabase
       .from('clues')
       .select('*', { count: 'exact', head: true })
       .in('category_id', [
-        ...(jeopardyBoard?.categories?.map((c) => c.id) || []),
-        ...(doubleJeopardyBoard?.categories?.map((c) => c.id) || []),
-        ...(finalBoard?.categories?.map((c) => c.id) || [])
+        ...(jeopardyBoard?.categories.map((c) => c.id) ?? []),
+        ...(doubleJeopardyBoard?.categories.map((c) => c.id) ?? []),
+        ...(finalBoard?.categories.map((c) => c.id) ?? [])
       ])
 
     return {
@@ -269,7 +269,7 @@ export class ClueSetService {
         finalJeopardy: finalJeopardyCategory
       },
       createdAt: clueSet.created_at,
-      totalClues: totalClues || 0
+      totalClues: totalClues ?? 0
     }
   }
 
@@ -338,10 +338,6 @@ export class ClueSetService {
       throw new Error(`Failed to load clue set: ${clueSetError.message}`)
     }
 
-    if (!clueSet) {
-      throw new Error('Clue set not found')
-    }
-
     // Load boards with their categories and clues
     const { data: boards, error: boardsError } = await supabase
       .from('boards')
@@ -365,10 +361,6 @@ export class ClueSetService {
       throw new Error(`Failed to load board data: ${boardsError.message}`)
     }
 
-    if (!boards) {
-      throw new Error('No board data found for clue set')
-    }
-
     // Extract boards by round type
     const typedBoards = boards as DatabaseBoard[]
     const jeopardyBoard = typedBoards.find((b) => b.round === 'jeopardy')
@@ -384,7 +376,7 @@ export class ClueSetService {
       const sortedCategories = [...board.categories].sort((a, b) => a.position - b.position)
       return sortedCategories.map((category) => ({
         name: category.name,
-        clues: [...(category.clues || [])]
+        clues: [...category.clues]
           .sort((a, b) => a.position - b.position)
           .map((clue) => ({
             id: clue.id,
@@ -398,7 +390,7 @@ export class ClueSetService {
 
     // Transform final jeopardy (single category)
     const transformFinalRound = (board: DatabaseBoard | undefined): CategoryData => {
-      if (!board?.categories?.[0]) {
+      if (!board?.categories[0]) {
         return {
           name: 'Final Jeopardy',
           clues: []
@@ -408,7 +400,7 @@ export class ClueSetService {
       const category = board.categories[0]
       return {
         name: category.name,
-        clues: [...(category.clues || [])]
+        clues: [...category.clues]
           .sort((a, b) => a.position - b.position)
           .map((clue) => ({
             id: clue.id,
