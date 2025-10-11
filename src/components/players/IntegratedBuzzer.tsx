@@ -78,7 +78,7 @@ export function IntegratedBuzzer({
    */
   useEffect(() => {
     if (buzzerRef.current) {
-      animationService.animateBuzzerStateChange(buzzerRef.current, state, {
+      void animationService.animateBuzzerStateChange(buzzerRef.current, state, {
         duration: 0.3,
         ease: "power2.out"
       });

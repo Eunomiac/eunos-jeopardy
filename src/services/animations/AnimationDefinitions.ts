@@ -20,7 +20,7 @@ import { ClueDisplayService } from "./ClueDisplayService";
  * - shouldRunInstantly: Check if animation is "in the past" based on game state
  * - getParamsFromGameState: Derive animation parameters from current game state
  */
-export interface AnimationDefinition<TParams = any> {
+export interface AnimationDefinition<TParams = unknown> {
   /** Unique identifier for this animation */
   id: string;
 
@@ -97,7 +97,7 @@ export const BoardIntroAnimation: AnimationDefinition<{
       gsap.set(".player-podium", { autoAlpha: 1 });
       console.log(`🎬 [BoardIntroAnimation] Instant setup complete`);
       config.onComplete?.();
-      return;
+      return Promise.resolve();
     }
 
     // Animated: Run full GSAP timeline
@@ -219,7 +219,7 @@ export const BoardIntroAnimation: AnimationDefinition<{
       );
 
       // Track timeline in AnimationService
-      (animationService as any).activeTimelines?.push(timeline);
+      animationService.activeTimelines.push(timeline);
     });
   },
 
@@ -244,7 +244,7 @@ export const BoardIntroAnimation: AnimationDefinition<{
   },
 
   getParamsFromGameState(gameState) {
-    if (!gameState.current_round || !gameState.id) {
+    if (!gameState.id) {
       return null;
     }
     return {
@@ -296,7 +296,7 @@ export const CategoryIntroAnimation: AnimationDefinition<{
         `🎬 [CategoryIntroAnimation] Instant setup complete for category ${params.categoryNumber}`
       );
       config.onComplete?.();
-      return;
+      return Promise.resolve();
     }
 
     // Animated: Run full animation
@@ -363,7 +363,7 @@ export const ClueRevealAnimation: AnimationDefinition<{
     if (!focusedCell) {
       console.warn(`🎬 [ClueRevealAnimation] No focused clue cell found`);
       config.onComplete?.();
-      return;
+      return Promise.reject(new Error(`🎬 [ClueRevealAnimation] No focused clue cell found`));
     }
 
     // Hide display window before populating to avoid flash
@@ -372,7 +372,6 @@ export const ClueRevealAnimation: AnimationDefinition<{
     // Populate display window with clue content (adds .jeopardy-clue-display class)
     await clueDisplayService.populateDisplayWindow(
       params.clueId,
-      params.gameId,
       displayWindow
     );
 
@@ -381,7 +380,7 @@ export const ClueRevealAnimation: AnimationDefinition<{
       gsap.set(displayWindow, { visibility: "visible", opacity: 1 });
       console.log(`🎬 [ClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
-      return;
+      return Promise.resolve();
     }
 
     // Animated: Position at cell, then animate to center
@@ -418,12 +417,12 @@ export const ClueRevealAnimation: AnimationDefinition<{
         scaleX,
         scaleY,
         duration: 0.3,
-        ease: config.ease || "power2.out",
+        ease: config.ease ?? "power2.out",
       });
 
       timeline.to(displayWindow, { autoAlpha: 1, duration: 0.3 }, 0);
 
-      animationService.activeTimelines?.push(timeline);
+      animationService.activeTimelines.push(timeline);
     });
   },
 
@@ -489,7 +488,9 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{
         `🎬 [DailyDoubleRevealAnimation] No focused clue cell found`
       );
       config.onComplete?.();
-      return;
+      return Promise.reject(
+        new Error(`🎬 [DailyDoubleRevealAnimation] No focused clue cell found`)
+      );
     }
 
     // Hide display window before populating to avoid flash
@@ -498,7 +499,6 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{
     // Populate display window with daily double content (adds both classes + splash image)
     await clueDisplayService.populateDisplayWindow(
       params.clueId,
-      params.gameId,
       displayWindow
     );
 
@@ -507,7 +507,7 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{
       gsap.set(displayWindow, { visibility: "visible", opacity: 1 });
       console.log(`🎬 [DailyDoubleRevealAnimation] Instant setup complete`);
       config.onComplete?.();
-      return;
+      return Promise.resolve();
     }
 
     // Animated: Position at cell, then animate to center with dramatic easing
@@ -557,7 +557,7 @@ export const DailyDoubleRevealAnimation: AnimationDefinition<{
         ease: "back.out(1.7)", // Dramatic overshoot effect for daily double
       });
 
-      (animationService as any).activeTimelines?.push(timeline);
+      animationService.activeTimelines.push(timeline);
     });
   },
 
@@ -604,7 +604,11 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{
         `🎬 [DailyDoubleClueRevealAnimation] Daily double splash not found`
       );
       config.onComplete?.();
-      return;
+      return Promise.reject(
+        new Error(
+          `🎬 [DailyDoubleClueRevealAnimation] Daily double splash not found`
+        )
+      );
     }
 
     if (isInstant) {
@@ -612,7 +616,7 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{
       gsap.set(dailyDoubleSplash, { visibility: "hidden" });
       console.log(`🎬 [DailyDoubleClueRevealAnimation] Instant setup complete`);
       config.onComplete?.();
-      return;
+      return Promise.resolve();
     }
 
     // Animated: Fade out splash to reveal clue text underneath
@@ -631,7 +635,7 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{
         ease: "power2.inOut",
       });
 
-      (animationService as any).activeTimelines?.push(timeline);
+      animationService.activeTimelines.push(timeline);
     });
   },
 
@@ -688,7 +692,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{
       }
       console.log(`🎬 [RoundTransitionAnimation] Instant setup complete`);
       config.onComplete?.();
-      return;
+      return Promise.resolve();
     }
 
     // Animated: Show transition overlay, then fade it out
@@ -729,7 +733,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{
         timeline.to({}, { duration: 2.0 });
       }
 
-      (animationService as any).activeTimelines?.push(timeline);
+      animationService.activeTimelines.push(timeline);
     });
   },
 
@@ -747,7 +751,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{
     return gameState.status === ("round_transition" as GameStatus);
   },
 
-  getParamsFromGameState(_gameState) {
+  getParamsFromGameState() {
     // Can't derive transition params from current state alone
     // The orchestrator provides params when publishing the event
     return null;
@@ -760,7 +764,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{
  * Central registry for all animation definitions.
  * Provides methods to register, retrieve, and check animations.
  */
-export class AnimationRegistry {
+export class AnimationRegistry { // eslint-disable-line @typescript-eslint/no-extraneous-class
   private static readonly definitions = new Map<string, AnimationDefinition>();
 
   /**
@@ -790,8 +794,8 @@ export class AnimationRegistry {
    */
   static checkAllForInstantRun(
     gameState: Game
-  ): Array<{ def: AnimationDefinition; params: any }> {
-    const toRun: Array<{ def: AnimationDefinition; params: any }> = [];
+  ): { def: AnimationDefinition; params: Record<string, unknown> }[] {
+    const toRun: { def: AnimationDefinition; params: Record<string, unknown> }[] = [];
 
     console.log(
       `🎬 [AnimationRegistry] Checking ${this.definitions.size} animations for instant run`
@@ -801,7 +805,7 @@ export class AnimationRegistry {
       // Skip animations that don't implement instant-run methods
 
       if (def.getParamsFromGameState && def.shouldRunInstantly?.(gameState)) {
-        const params = def.getParamsFromGameState(gameState);
+        const params = def.getParamsFromGameState(gameState) as Maybe<Record<string, unknown>>;
         if (params) {
           console.log(
             `🎬 [AnimationRegistry] Animation ${def.id} should run instantly`,
@@ -833,7 +837,7 @@ AnimationRegistry.register(RoundTransitionAnimation);
 
 // Expose to window for console testing
 if (typeof window !== "undefined") {
-  (window as any).AnimationDefinitions = {
+  const AnimationDefinitions = {
     BoardIntroAnimation,
     CategoryIntroAnimation,
     ClueRevealAnimation,
@@ -843,6 +847,7 @@ if (typeof window !== "undefined") {
     AnimationRegistry,
     AnimationService,
   };
+  Object.assign(globalThis, { AnimationDefinitions });
   console.log("🎬 AnimationDefinitions exposed to window for console testing");
   console.log(
     '🎬 Try: AnimationDefinitions.BoardIntroAnimation.execute({ round: "jeopardy", gameId: "test" })'

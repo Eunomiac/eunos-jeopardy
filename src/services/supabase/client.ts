@@ -52,15 +52,6 @@ const supabaseUrl = SUPABASE_URL;
 /** Supabase anonymous public key from environment configuration */
 const supabaseAnonKey = SUPABASE_ANON_KEY;
 
-// Validate required configuration values
-if (!supabaseUrl) {
-  throw new Error("Missing SUPABASE_URL configuration");
-}
-
-if (!supabaseAnonKey) {
-  throw new Error("Missing SUPABASE_ANON_KEY configuration");
-}
-
 /**
  * Main Supabase client instance for the Euno's Jeopardy application.
  *

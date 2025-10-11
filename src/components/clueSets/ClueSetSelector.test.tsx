@@ -4,7 +4,7 @@ import { AuthProvider } from '../../contexts/AuthContext'
 import * as AuthContext from '../../contexts/AuthContext'
 import * as clueSetUtils from '../../utils/clueSetUtils'
 import type { Database } from '../../services/supabase/types'
-import { mockUser, mockSession, mockClueSets } from '../../test/__mocks__/commonTestData'
+import { mockUser, mockSession, mockClueSets } from '../../test/testUtils'
 
 // Type definitions for better mock typing
 type ClueSetRow = Database['public']['Tables']['clue_sets']['Row']

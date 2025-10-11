@@ -9,7 +9,7 @@ export interface ClueControlPanelProps {
   readonly game: Game | null;
   readonly focusedClue: Clue | null;
   readonly clueSetData: ClueSetData | null;
-  readonly dailyDoublePositions: Array<{ category: number; row: number }>;
+  readonly dailyDoublePositions: { category: number; row: number }[];
   readonly getRevealBuzzerButtonState: () => RevealBuzzerButtonState;
   readonly handleRevealBuzzerButton: () => void | Promise<void>;
   readonly clueTimeRemaining: number | null;
@@ -42,7 +42,7 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
 
   const isDailyDoubleForFocused = useMemo(() => {
     if (!focusedClue || !game) {return false;}
-    const clueData = clueSetData?.rounds[game.current_round || "jeopardy"];
+    const clueData = clueSetData?.rounds[game.current_round];
     if (!Array.isArray(clueData)) {return false;}
 
     for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
@@ -101,7 +101,7 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
 
             {/* Multi-state Reveal/Buzzer Button */}
             <div className="clue-control-button">
-              <button className={`jeopardy-button ${buttonClass}`} onClick={handleRevealBuzzerButton} disabled={isDisabled}>
+              <button className={`jeopardy-button ${buttonClass}`} onClick={() => { void handleRevealBuzzerButton(); /* NOSONAR (Void return is intentional) */ }} disabled={isDisabled}>
                 {buttonText}
               </button>
             </div>
@@ -124,7 +124,7 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
                   <div className="wager-amount">
                     Wager: <strong>${dailyDoubleWager.toLocaleString()}</strong>
                   </div>
-                  <button className="jeopardy-button-small" onClick={handleClearDailyDoubleWager}>
+                  <button className="jeopardy-button-small" onClick={() => { void handleClearDailyDoubleWager(); /* NOSONAR (Void return is intentional) */  }}>
                     Clear Wager
                   </button>
                 </div>
@@ -136,12 +136,12 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
                       className="wager-input"
                       placeholder="Enter wager amount"
                       value={wagerInput}
-                      onChange={(e) => setWagerInput(e.target.value)}
+                      onChange={(e) => { setWagerInput(e.target.value); }}
                       min={1}
                     />
                     <button
                       className="jeopardy-button-small"
-                      onClick={handleDailyDoubleWager}
+                      onClick={() => { void handleDailyDoubleWager(); /* NOSONAR (Void return is intentional) */ }}
                       disabled={!wagerInput || parseInt(wagerInput, 10) <= 0}
                     >
                       Set Wager
@@ -163,10 +163,10 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
           {/* Adjudication Control Buttons */}
           <div className="clue-control-buttons">
             <div className="d-flex gap-2">
-              <button className="jeopardy-button flex-1" onClick={handleMarkCorrect} disabled={!focusedClue || !game?.focused_player_id}>
+              <button className="jeopardy-button flex-1" onClick={() => { void handleMarkCorrect(); /* NOSONAR (Void return is intentional) */ }} disabled={!focusedClue || !game?.focused_player_id}>
                 Mark Correct
               </button>
-              <button className="jeopardy-button flex-1" onClick={handleMarkWrong} disabled={!focusedClue || !game?.focused_player_id}>
+              <button className="jeopardy-button flex-1" onClick={() => { void handleMarkWrong(); /* NOSONAR (Void return is intentional) */ }} disabled={!focusedClue || !game?.focused_player_id}>
                 Mark Wrong
               </button>
             </div>

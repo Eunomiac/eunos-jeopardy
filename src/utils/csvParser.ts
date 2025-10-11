@@ -370,8 +370,7 @@ function validateRoundCategories(rows: CSVRow[], roundName: string): void {
     if (!categoryGroups.has(row.category)) {
       categoryGroups.set(row.category, [])
     }
-    // Non-null assertion safe because we just created the array above
-    categoryGroups.get(row.category)!.push(row)
+    categoryGroups.get(row.category)?.push(row)
   }
 
   // Validate total category count (must be exactly 6 for Jeopardy)

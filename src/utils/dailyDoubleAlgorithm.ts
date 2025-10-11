@@ -87,7 +87,7 @@ export interface RoundData {
   categories: string[];
 
   /** Array of 30 clues with position and content data */
-  clues: Array<{
+  clues: {
     /** Category number (1-6) */
     category: number;
     /** Row number (1-5) */
@@ -98,7 +98,7 @@ export interface RoundData {
     prompt: string;
     /** Correct answer/response */
     response: string;
-  }>;
+  }[];
 }
 
 /**

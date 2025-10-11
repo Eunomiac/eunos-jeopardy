@@ -53,7 +53,7 @@ export interface UploadResult {
 /**
  * Upload Service class for handling clue set file uploads
  */
-export class UploadService {
+export class UploadService { // eslint-disable-line @typescript-eslint/no-extraneous-class
   /**
    * Validates a dropped file for CSV upload.
    *
@@ -200,7 +200,7 @@ export class UploadService {
     }
 
     // Step 2: Prompt user for clue set name
-    const clueSetName = await onNamePrompt(validation.suggestedName!)
+    const clueSetName = await onNamePrompt(validation.suggestedName ?? '')
     if (!clueSetName) {
       return {
         success: false,

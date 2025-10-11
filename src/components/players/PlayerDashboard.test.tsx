@@ -3,7 +3,7 @@ import PlayerDashboard from './PlayerDashboard'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { FontAssignmentService } from '../../services/fonts/FontAssignmentService'
-import { mockUser, mockGame, mockPlayers } from '../../test/__mocks__/commonTestData'
+import { mockUser, mockGame, mockPlayers } from '../../test/testUtils'
 import type { PlayerInfo } from './PlayerPodiums'
 import type { Database } from '../../services/supabase/types'
 import { supabase } from '../../services/supabase/client'
@@ -195,7 +195,7 @@ describe('PlayerDashboard', () => {
   describe('Loading States', () => {
     it('should show loading state initially', async () => {
       // Set up loading state - GameService calls never resolve
-      mockGameService.getPlayers.mockImplementation(() => new Promise(() => {})) // Never resolves
+      mockGameService.getPlayers.mockImplementation(() => new Promise(() => { /* empty */ })) // Never resolves
 
       renderWithAuth(<PlayerDashboard {...mockProps} />)
 

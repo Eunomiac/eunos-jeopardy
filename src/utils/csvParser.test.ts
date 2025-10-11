@@ -150,7 +150,7 @@ jeopardy,Science,-200,What is H2O?,Water`
   describe('validateJeopardyStructure', () => {
     const createMockRows = (jeopardyCount: number, doubleCount: number, finalCount: number): CSVRow[] => {
       const rows: CSVRow[] = []
-      
+
       // Add jeopardy rows
       for (let i = 0; i < jeopardyCount; i++) {
         rows.push({
@@ -161,7 +161,7 @@ jeopardy,Science,-200,What is H2O?,Water`
           response: `Jeopardy response ${i + 1}`
         })
       }
-      
+
       // Add double rows
       for (let i = 0; i < doubleCount; i++) {
         rows.push({
@@ -172,7 +172,7 @@ jeopardy,Science,-200,What is H2O?,Water`
           response: `Double response ${i + 1}`
         })
       }
-      
+
       // Add final rows
       for (let i = 0; i < finalCount; i++) {
         rows.push({
@@ -183,38 +183,38 @@ jeopardy,Science,-200,What is H2O?,Water`
           response: `Final response ${i + 1}`
         })
       }
-      
+
       return rows
     }
 
     it('should validate correct Jeopardy structure', () => {
       const rows = createMockRows(30, 30, 1)
-      
-      expect(() => validateJeopardyStructure(rows)).not.toThrow()
+
+      expect(() => { validateJeopardyStructure(rows); }).not.toThrow()
     })
 
     it('should throw error for incorrect Jeopardy round count', () => {
       const rows = createMockRows(25, 30, 1)
-      
-      expect(() => validateJeopardyStructure(rows)).toThrow('Jeopardy round should have 30 clues, found 25')
+
+      expect(() => { validateJeopardyStructure(rows); }).toThrow('Jeopardy round should have 30 clues, found 25')
     })
 
     it('should throw error for incorrect Double Jeopardy round count', () => {
       const rows = createMockRows(30, 25, 1)
-      
-      expect(() => validateJeopardyStructure(rows)).toThrow('Double Jeopardy round should have 30 clues, found 25')
+
+      expect(() => { validateJeopardyStructure(rows); }).toThrow('Double Jeopardy round should have 30 clues, found 25')
     })
 
     it('should throw error for incorrect Final Jeopardy count', () => {
       const rows = createMockRows(30, 30, 2)
-      
-      expect(() => validateJeopardyStructure(rows)).toThrow('Final Jeopardy should have 1 clue, found 2')
+
+      expect(() => { validateJeopardyStructure(rows); }).toThrow('Final Jeopardy should have 1 clue, found 2')
     })
 
     it('should throw error for missing Final Jeopardy', () => {
       const rows = createMockRows(30, 30, 0)
 
-      expect(() => validateJeopardyStructure(rows)).toThrow('Final Jeopardy should have 1 clue, found 0')
+      expect(() => { validateJeopardyStructure(rows); }).toThrow('Final Jeopardy should have 1 clue, found 0')
     })
 
     it('should throw error for wrong category count in Jeopardy', () => {
@@ -234,7 +234,7 @@ jeopardy,Science,-200,What is H2O?,Water`
       // Add complete Double Jeopardy and Final
       rows.push(...createMockRows(0, 30, 1))
 
-      expect(() => validateJeopardyStructure(rows)).toThrow('Jeopardy should have 6 categories, found 5')
+      expect(() => { validateJeopardyStructure(rows); }).toThrow('Jeopardy should have 6 categories, found 5')
     })
 
     it('should throw error for wrong clue count per category in Double Jeopardy', () => {
@@ -278,7 +278,7 @@ jeopardy,Science,-200,What is H2O?,Water`
       rows.push(...createMockRows(0, 0, 1))
 
       // Should fail on the first category with wrong count (Category 5 with 6 clues)
-      expect(() => validateJeopardyStructure(rows)).toThrow('Category "Double Category 5" in Double Jeopardy should have 5 clues, found 6')
+      expect(() => { validateJeopardyStructure(rows); }).toThrow('Category "Double Category 5" in Double Jeopardy should have 5 clues, found 6')
     })
   })
 })

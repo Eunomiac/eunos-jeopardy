@@ -2,7 +2,7 @@
 import { FontAssignmentService } from './FontAssignmentService'
 import { supabase } from '../supabase/client'
 import { GameService } from '../games/GameService'
-import { createMockPlayer } from '../../test/__mocks__/commonTestData'
+import { createMockPlayer } from '../../test/testUtils'
 
 // Mock Supabase client and GameService
 jest.mock('../supabase/client')

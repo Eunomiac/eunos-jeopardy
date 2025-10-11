@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './AuthContext'
 import { supabase } from '../services/supabase/client'
 import type { Session } from '@supabase/supabase-js'
 import type { Database } from '../services/supabase/types'
-import { mockUser, mockSession } from '../test/__mocks__/commonTestData'
+import { mockUser, mockSession } from '../test/testUtils'
 
 // Mock Supabase client with proper typing (simplified approach)
 jest.mock('../services/supabase/client', () => ({
@@ -243,18 +243,25 @@ describe('AuthContext', () => {
       error: logoutError
     })
 
-    // Test the logout function directly
-    let logoutFunction: (() => Promise<void>) | null = null
+    let testError: unknown = null
 
     function TestComponentForLogoutError() {
       const { user, session, loading, logout } = useAuth()
-      logoutFunction = logout
+
+      const handleLogout = async () => {
+        try {
+          await logout()
+        } catch (error) {
+          testError = error
+        }
+      }
 
       return (
         <div>
           <div data-testid="loading">{loading ? 'loading' : 'not-loading'}</div>
           <div data-testid="user">{user ? user.email : 'no-user'}</div>
           <div data-testid="session">{session ? 'has-session' : 'no-session'}</div>
+          <button onClick={handleLogout}>Logout</button>
         </div>
       )
     }
@@ -269,8 +276,16 @@ describe('AuthContext', () => {
       expect(screen.getByTestId('loading')).toHaveTextContent('not-loading')
     })
 
-    // Test the logout function directly
-    await expect(logoutFunction!()).rejects.toEqual(logoutError)
+    // Trigger logout by clicking the button
+    await act(async () => {
+      screen.getByText('Logout').click()
+    })
+
+    // Wait for the error to be caught
+    await waitFor(() => {
+      expect(testError).toEqual(logoutError)
+    })
+
     expect(supabase.auth.signOut).toHaveBeenCalled()
   })
 

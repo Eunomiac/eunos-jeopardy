@@ -129,7 +129,7 @@ export function SimpleLogin() {
    * - Component automatically re-renders to show login form
    */
   const handleLogout = () => {
-    logout()
+    void logout()
   }
 
   // Loading state: Show loading indicator during authentication
@@ -166,14 +166,14 @@ export function SimpleLogin() {
       </h3>
 
       {/* Login form with email/password fields */}
-      <form onSubmit={handleLogin}>
+      <form onSubmit={(e) => { void handleLogin(e) }}>
         {/* Email input field */}
         <div className="form-group">
           <input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); }}
             required
             className="jeopardy-input"
           />
@@ -185,7 +185,7 @@ export function SimpleLogin() {
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => { setPassword(e.target.value); }}
             required
             className="jeopardy-input"
           />

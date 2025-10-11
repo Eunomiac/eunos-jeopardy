@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { SimpleLogin } from './SimpleLogin'
 import { useAuth } from '../../contexts/AuthContext'
-import { mockUser, mockSession } from '../../test/__mocks__/commonTestData'
+import { mockUser, mockSession } from '../../test/testUtils'
 
 // Mock the useAuth hook
 jest.mock('../../contexts/AuthContext', () => ({

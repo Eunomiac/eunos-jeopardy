@@ -61,8 +61,8 @@ export async function getSample<T extends keyof DefaultSchema["Tables"]>(
     return [];
   }
 
-  console.log(`✅ Fetched ${data?.length || 0} sample ${tableName}`);
-  return (data as Tables<T>[]) || [];
+  console.log(`✅ Fetched ${data.length || 0} sample ${tableName}`);
+  return data as Tables<T>[];
 }
 
 /**
@@ -99,7 +99,7 @@ export async function testAuthUsers(): Promise<void> {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", authData.user!.id)
+        .eq("id", authData.user?.id ?? "")
         .single();
 
       if (profileError) {
@@ -126,7 +126,7 @@ export async function testAuthUsers(): Promise<void> {
       await supabase.auth.signOut();
       console.log(`   🚪 Logged out\n`);
     } catch (error) {
-      console.log(`   ❌ Test failed: ${error}`);
+      console.log(`   ❌ Test failed: ${String(error)}`);
     }
   }
 }

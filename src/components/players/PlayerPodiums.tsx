@@ -78,7 +78,6 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
     const timeoutId = setTimeout(() => {
       try {
         nameRefs.current.forEach((nameElement) => {
-          if (!nameElement) {return}
 
           // Get the container width (parent element)
           const container = nameElement.parentElement
@@ -124,7 +123,7 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
       }
     }, 100) // Small delay to ensure fonts are loaded
 
-    return () => clearTimeout(timeoutId)
+    return () => { clearTimeout(timeoutId); }
   }, [players]) // Re-run when players change
 
   /**
@@ -198,13 +197,13 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
           {player.id === currentUserId ? (
             // Show integrated buzzer only for current user (main podium)
             <IntegratedBuzzer
-              state={player.buzzerState || BuzzerState.INACTIVE}
+              state={player.buzzerState ?? BuzzerState.INACTIVE}
               playerNickname={player.name}
               isCurrentUser={true}
-              isFocused={player.isFocused || false}
+              isFocused={player.isFocused ?? false}
               onBuzz={() => onBuzz?.(player.id)}
               reactionTime={player.reactionTime}
-              showReactionTime={player.showReactionTime || false}
+              showReactionTime={player.showReactionTime ?? false}
             />
           ) : (
             // Show just player name for other players

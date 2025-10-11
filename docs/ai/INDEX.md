@@ -11,6 +11,7 @@ This folder contains documentation specifically designed for AI code assistants 
 - **[SUPABASE_REFERENCE.md](./reference/SUPABASE_REFERENCE.md)** - Database configuration and connection details
 - **[DEPLOYMENT_REFERENCE.md](./reference/DEPLOYMENT_REFERENCE.md)** - Deployment procedures and environment setup
 - **[TESTING_REFERENCE.md](./reference/TESTING_REFERENCE.md)** - Testing configuration and technical setup
+- **[PLAYWRIGHT_CI_INTEGRATION.md](./reference/PLAYWRIGHT_CI_INTEGRATION.md)** - E2E testing with Playwright and GitHub Actions
 
 ## 📋 **Strategy & Best Practices**
 - **[SCSS_STYLING_GUIDELINES.md](./SCSS_STYLING_GUIDELINES.md)** - SCSS styling conventions and best practices
@@ -25,6 +26,8 @@ This folder contains documentation specifically designed for AI code assistants 
   - Active issues in the root of the `issues` folder
   - Completed issues in the `issues/completed` folder
   - Future issues in the `issues/future` folder
+- **[/coaching/](./coaching/)** - Learning guides for educational initiatives
+  - **[LEARNING_E2E_INTEGRATION_TESTING.md](./coaching/LEARNING_E2E_INTEGRATION_TESTING.md)** - Playwright E2E testing learning plan
 
 ## 📁 **Archive**
 - **[archive/](./archive/)** - Historical documents and outdated prompts

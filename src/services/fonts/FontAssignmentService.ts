@@ -19,7 +19,7 @@ import { GameService } from '../games/GameService'
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export class FontAssignmentService {
+export class FontAssignmentService { // eslint-disable-line @typescript-eslint/no-extraneous-class
   /**
    * Available handwritten font families.
    */
@@ -76,7 +76,7 @@ export class FontAssignmentService {
 
       if (fontsInUse.includes(userProfile.handwritten_font)) {
         // Assign temporary override (doesn't overwrite permanent assignment)
-        const tempFont = await this.assignTemporaryFont(userId, fontsInUse)
+        const tempFont = this.assignTemporaryFont(userId, fontsInUse)
         await this.setTemporaryFont(userId, tempFont)
         return tempFont
       }
@@ -108,7 +108,7 @@ export class FontAssignmentService {
       throw new Error(`Failed to get user profile: ${error.message}`)
     }
 
-    return profile || { handwritten_font: null, temp_handwritten_font: null }
+    return profile;
   }
 
   /**
@@ -171,7 +171,7 @@ export class FontAssignmentService {
     })
 
     // Count actual assignments
-    profiles?.forEach((profile) => {
+    profiles.forEach((profile) => {
       if (profile.handwritten_font && profile.handwritten_font in counts) {
         counts[profile.handwritten_font]++
       }
@@ -183,7 +183,7 @@ export class FontAssignmentService {
   /**
    * Gets fonts currently in use by connected players (excluding current user).
    */
-  private static async getFontsInUse(connectedPlayers: Array<{ user_id: string }>, excludeUserId: string): Promise<string[]> {
+  private static async getFontsInUse(connectedPlayers: { user_id: string }[], excludeUserId: string): Promise<string[]> {
     const otherPlayerIds = connectedPlayers
       .filter((player) => player.user_id !== excludeUserId)
       .map((player) => player.user_id)
@@ -204,9 +204,9 @@ export class FontAssignmentService {
 
     const fontsInUse: string[] = []
 
-    profiles?.forEach((profile) => {
+    profiles.forEach((profile) => {
       // Use temporary font if assigned, otherwise use permanent font
-      const activeFont = profile.temp_handwritten_font || profile.handwritten_font
+      const activeFont = profile.temp_handwritten_font ?? profile.handwritten_font
       if (activeFont) {
         fontsInUse.push(activeFont)
       }
@@ -218,7 +218,7 @@ export class FontAssignmentService {
   /**
    * Assigns a temporary font that doesn't conflict with fonts in use.
    */
-  private static async assignTemporaryFont(userId: string, fontsInUse: string[]): Promise<string> {
+  private static assignTemporaryFont(userId: string, fontsInUse: string[]): string {
     const availableFonts = this.AVAILABLE_FONTS.filter((font) => !fontsInUse.includes(font))
 
     if (availableFonts.length === 0) {

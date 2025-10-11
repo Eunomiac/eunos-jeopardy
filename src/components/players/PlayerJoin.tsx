@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { supabase } from '../../services/supabase/client'
 import './PlayerJoin.scss'
+import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
 /**
  * Props for the PlayerJoin component.
@@ -62,16 +63,16 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
         }
 
         // Set nickname to profile display_name or default to email prefix
-        const currentNickname = profile?.display_name || getDefaultNicknameFromEmail(user.email || '')
+        const currentNickname = profile?.display_name ?? getDefaultNicknameFromEmail(user.email ?? '')
         setNickname(currentNickname)
       } catch (err) {
         console.warn('Error loading user nickname:', err)
         // Fallback to email prefix
-        setNickname(getDefaultNicknameFromEmail(user.email || ''))
+        setNickname(getDefaultNicknameFromEmail(user.email ?? ''))
       }
     }
 
-    loadUserNickname()
+    void loadUserNickname()
 
     const checkForAvailableGame = async () => {
       try {
@@ -90,7 +91,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
           setError('Failed to check for available games')
           setAvailableGame(null)
         } else {
-          const foundGame = games && games.length > 0 ? games[0] : null
+          const foundGame = games.length > 0 ? games[0] : null
           setAvailableGame(foundGame)
         }
       } catch (err) {
@@ -102,7 +103,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
       }
     }
 
-    checkForAvailableGame()
+    void checkForAvailableGame()
 
     // Set up real-time subscription to monitor for new lobby games
     const subscription = supabase
@@ -117,19 +118,19 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
           table: payload.table,
           schema: payload.schema
         })
-        checkForAvailableGame()
+        void checkForAvailableGame()
       })
       .subscribe((status, subscriptionErr) => {
         if (subscriptionErr) {
           console.error('📡 Subscription error:', subscriptionErr)
         }
-        if (status === 'SUBSCRIBED') {
+        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
           console.log('✅ Real-time subscription active')
         }
       })
 
     return () => {
-      subscription.unsubscribe()
+      void subscription.unsubscribe()
     }
   }, [user])
 
@@ -151,7 +152,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
     setError('')
 
     try {
-      const finalNickname = nickname.trim() || getDefaultNicknameFromEmail(user.email || '')
+      const finalNickname = nickname.trim() || getDefaultNicknameFromEmail(user.email ?? '')
 
       // Save nickname to user profile for future games
       const { error: profileError } = await supabase
@@ -182,7 +183,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
    */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    handleJoinGame()
+    void handleJoinGame()
   }
 
   // Determine button state and text
@@ -220,7 +221,7 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
               type="text"
               className="form-control"
               value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
+              onChange={(e) => { setNickname(e.target.value); }}
               placeholder="Your display name for this game..."
               disabled={loading || checkingForGame}
               maxLength={50}

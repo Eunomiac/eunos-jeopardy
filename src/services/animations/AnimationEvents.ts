@@ -11,9 +11,10 @@ export type AnimationIntent =
 
 export type AnimationSubscriber = (intent: AnimationIntent) => void | Promise<void>;
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AnimationEvents {
-  private static readonly subscribers: Set<AnimationSubscriber> = new Set();
-  private static readonly recentIntents: Map<string, { intent: AnimationIntent; timestamp: number }> = new Map();
+  static readonly subscribers = new Set<AnimationSubscriber>();
+  static readonly recentIntents = new Map<string, { intent: AnimationIntent; timestamp: number }>();
   private static readonly INTENT_CACHE_DURATION = 2000; // Keep intents for 2 seconds
 
   static subscribe(cb: AnimationSubscriber): () => void {
@@ -35,7 +36,7 @@ export class AnimationEvents {
 
     for (const cb of this.subscribers) {
       try {
-        cb(intent);
+        void cb(intent); // NOSONAR (Void return is intentional)
       } catch (err) {
         console.warn("🎬 [AnimationEvents] Subscriber error:", err);
       }

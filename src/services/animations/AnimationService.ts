@@ -43,7 +43,7 @@ export interface AnimationConfig {
  * Animation Service class for PlayerDashboard.
  */
 export class AnimationService {
-  private static instance: AnimationService;
+  private static instance: Maybe<AnimationService>;
   activeTimelines: gsap.core.Timeline[] = [];
   private readonly playedKeys = new Set<string>();
   private readonly playingKeys = new Set<string>();  // Track currently playing animations
@@ -52,9 +52,7 @@ export class AnimationService {
    * Gets the singleton instance of AnimationService.
    */
   static getInstance(): AnimationService {
-    if (!AnimationService.instance) {
-      AnimationService.instance = new AnimationService();
-    }
+    AnimationService.instance ??= new AnimationService();
     return AnimationService.instance;
   }
 
@@ -162,8 +160,8 @@ export class AnimationService {
       timeline
         .to(stripElement, {
           x: `${targetX}%`,
-          duration: config.duration || 0.8,
-          ease: config.ease || 'power2.inOut'
+          duration: config.duration ?? 0.8,
+          ease: config.ease ?? 'power2.inOut'
         })
         .to(splashImage, {
           autoAlpha: 0,
@@ -230,9 +228,9 @@ export class AnimationService {
         .to(element, {
           autoAlpha: 1,
           scale: 1,
-          duration: config.duration || 0.8,
-          ease: config.ease || "power2.out",
-          delay: config.delay || 0
+          duration: config.duration ?? 0.8,
+          ease: config.ease ?? "power2.out",
+          delay: config.delay ?? 0
         })
         .to(element.querySelector('.clue-category'), {
           y: 0,
@@ -280,9 +278,9 @@ export class AnimationService {
         .to(element, {
           autoAlpha: 1,
           y: 0,
-          duration: config.duration || 1.2,
-          ease: config.ease || "power2.out",
-          delay: config.delay || 0
+          duration: config.duration ?? 1.2,
+          ease: config.ease ?? "power2.out",
+          delay: config.delay ?? 0
         })
         .to(element.querySelector('.category-name'), {
           scale: 1.1,
@@ -334,9 +332,9 @@ export class AnimationService {
       timeline.to(toElement, {
         autoAlpha: 1,
         scale: 1,
-        duration: config.duration || 0.5,
-        ease: config.ease || "power2.out",
-        delay: config.delay || 0.1
+        duration: config.duration ?? 0.5,
+        ease: config.ease ?? "power2.out",
+        delay: config.delay ?? 0.1
       });
 
       this.activeTimelines.push(timeline);
@@ -401,8 +399,8 @@ export class AnimationService {
         default:
           timeline.to(element, {
             scale: 1,
-            duration: config.duration || 0.3,
-            ease: config.ease || "power2.out"
+            duration: config.duration ?? 0.3,
+            ease: config.ease ?? "power2.out"
           });
       }
 
@@ -459,8 +457,8 @@ export class AnimationService {
         .set('.game-host-dashboard', { opacity: 0.8 })
         .to('.game-host-dashboard', {
           opacity: 1,
-          duration: config.duration || 5,
-          ease: config.ease || 'power2.inOut'
+          duration: config.duration ?? 5,
+          ease: config.ease ?? 'power2.inOut'
         });
 
       this.activeTimelines.push(timeline);

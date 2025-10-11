@@ -7,7 +7,7 @@ import { loadClueSetFromCSV, saveClueSetToDatabase } from '../services/clueSets/
 import { ClueSetService, type UserClueSet } from '../services/clueSets/clueSetService'
 import { UploadService } from '../services/clueSets/uploadService'
 import type { Database } from '../services/supabase/types'
-import { mockUser, mockSession, createMockGame } from '../test/__mocks__/commonTestData'
+import { mockUser, mockSession, createMockGame } from '../test/testUtils'
 import { supabase } from '../services/supabase/client'
 
 // Mock the services
@@ -263,7 +263,8 @@ describe('App', () => {
 
       // Wait for game creation to complete
       await waitFor(() => {
-        expect(mockGameService.createGame).toHaveBeenCalledWith('user-123', 'clue-set-1')
+
+        expect(() => mockGameService.createGame).toHaveBeenCalledWith('user-123', 'clue-set-1')
       })
 
       // Should switch to dashboard mode
@@ -321,10 +322,11 @@ describe('App', () => {
       expect(hostButton).toBeDisabled()
 
       // Services should not be called
+
       expect(mockGameService.createGame).not.toHaveBeenCalled()
     })
 
-    it('should not create game when user is not authenticated', async () => {
+    it('should not create game when user is not authenticated', () => {
       // Override mock to return no user
       jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: null,
@@ -390,7 +392,7 @@ describe('App', () => {
       })
 
       // Clue set should be cleared
-      const dropdownAfterBack = screen.getByRole('combobox') as HTMLSelectElement
+      const dropdownAfterBack: HTMLInputElement = screen.getByRole('combobox');
       expect(dropdownAfterBack.value).toBe('')
     })
 
@@ -575,8 +577,8 @@ describe('App', () => {
       })
 
       // Mock slow profile fetch
-      let resolveProfile: (value: { data: Database['public']['Tables']['profiles']['Row'] | null; error: Error | null }) => void
-      const profilePromise = new Promise((resolve) => {
+      let resolveProfile!: (value: { data: Database['public']['Tables']['profiles']['Row'] | null; error: Error | null }) => void
+      const profilePromise = new Promise<{ data: Database['public']['Tables']['profiles']['Row'] | null; error: Error | null }>((resolve) => {
         resolveProfile = resolve
       })
 
@@ -600,7 +602,7 @@ describe('App', () => {
       expect(screen.getByText('Determining your interface...')).toBeInTheDocument()
 
       // Resolve the profile fetch
-      resolveProfile!({
+      resolveProfile({
         data: { role: 'host' } as Database['public']['Tables']['profiles']['Row'],
         error: null
       })
@@ -827,7 +829,7 @@ describe('App', () => {
       })
     })
 
-    it('should handle file drop with unauthenticated user', async () => {
+    it('should handle file drop with unauthenticated user', () => {
       // Mock unauthenticated user
       jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
         user: null,
@@ -842,7 +844,7 @@ describe('App', () => {
       const appContainer = screen.getByRole('application')
 
       // Mock window.alert
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => { /* empty */ })
 
       // Simulate file drop
       fireEvent.drop(appContainer, {
@@ -865,7 +867,7 @@ describe('App', () => {
       const appContainer = screen.getByRole('application')
 
       // Mock window.alert
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => { /* empty */ })
 
       // Simulate non-CSV file drop
       fireEvent.drop(appContainer, {
@@ -888,7 +890,7 @@ describe('App', () => {
       const appContainer = screen.getByRole('application')
 
       // Mock window.alert
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => { /* empty */ })
 
       // Simulate multiple CSV files drop
       fireEvent.drop(appContainer, {
@@ -946,6 +948,7 @@ describe('App', () => {
       })
 
       // Verify subscription was set up
+
       expect(mockSupabase.channel).toHaveBeenCalledWith(`player-game-state:${mockGame.id}`)
     })
   })
@@ -999,10 +1002,10 @@ describe('App', () => {
       })
 
       // Mock window.alert
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => { /* empty */ })
 
       // Test error handling by simulating console.error call
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { /* empty */ })
 
       // Simulate an error scenario - we'll test this through the drag and drop error path
       const appContainer = screen.getByRole('application')

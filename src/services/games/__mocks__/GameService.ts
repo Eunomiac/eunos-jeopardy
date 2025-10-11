@@ -35,9 +35,7 @@ export const GameService = {
   setCurrentPlayer: jest.fn(),
   initializeCurrentPlayerRandomly: jest.fn(),
   transitionToNextRound: jest.fn(),
-  getGameByJoinCode: jest.fn(),
-  generateUniqueJoinCode: jest.fn(),
-}
+} as const
 
 // Re-export types (these don't need to be mocked)
 export type { Game, GameInsert, GameUpdate, Player, PlayerInsert, Buzz, BuzzInsert, AnswerInsert, WagerInsert, ClueState, ClueStateInsert } from '../GameService'

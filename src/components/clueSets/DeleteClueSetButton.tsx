@@ -98,7 +98,7 @@ export function DeleteClueSetButton({
       if (result.success) {
         onDeleted()
       } else {
-        onError?.(result.error || 'Failed to delete clue set')
+        onError?.(result.error ?? 'Failed to delete clue set')
       }
     } catch (error) {
       onError?.(error instanceof Error ? error.message : 'Unknown error occurred')
@@ -110,7 +110,7 @@ export function DeleteClueSetButton({
   return (
     <button
       className="delete-clue-set-button"
-      onClick={handleDeleteClick}
+      onClick={() => { void handleDeleteClick() }}
       disabled={isDeleting}
       title={`Delete "${clueSetName}"`}
       aria-label={`Delete clue set "${clueSetName}"`}

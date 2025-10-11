@@ -37,7 +37,7 @@ const isPanelDisabled = (game: Game | null): boolean =>
  */
 const getGameControlButton = (game: Game | null) => {
   if (!game) {
-    return { text: "Loading...", handler: () => {}, disabled: true };
+    return { text: "Loading...", handler: () => { /* Loading state */ }, disabled: true };
   }
 
   if (game.status === "lobby") {
@@ -48,7 +48,7 @@ const getGameControlButton = (game: Game | null) => {
     };
   }
 
-  if (String(game.status) === "game_intro") {
+  if (game.status === "game_intro") {
     return {
       text: "End Game",
       handler: "end" as const,
@@ -56,7 +56,7 @@ const getGameControlButton = (game: Game | null) => {
     };
   }
 
-  if (String(game.status) === "introducing_categories") {
+  if (game.status === "introducing_categories") {
     return {
       text: "End Game",
       handler: "end" as const,
@@ -72,7 +72,7 @@ const getGameControlButton = (game: Game | null) => {
     };
   }
 
-  return { text: "Game Complete", handler: () => {}, disabled: true };
+  return { text: "Game Complete", handler: () => { /* Game complete state */ }, disabled: true };
 };
 
 /**
@@ -90,7 +90,7 @@ const getCurrentRoundClueIds = (
   round: string
 ): string[] => {
   if (round === "final") {
-    return (clueSetData.rounds.final.clues?.map((c) => c.id).filter((id): id is string => id !== undefined)) || [];
+    return clueSetData.rounds.final.clues.map((c) => c.id).filter((id): id is string => id !== undefined);
   }
 
   const roundData = clueSetData.rounds[round as "jeopardy" | "double"];
@@ -301,7 +301,7 @@ export function GameHostDashboard({
 
   /** Daily Double positions for the current round */
   const [dailyDoublePositions, setDailyDoublePositions] = useState<
-    Array<{ category: number; row: number }>
+    { category: number; row: number }[]
   >([]);
 
   /** Loading state for initial data fetch and UI feedback */
@@ -350,13 +350,13 @@ export function GameHostDashboard({
   const [gameIntroComplete, setGameIntroComplete] = useState(false);
 
   /** Broadcast subscription for real-time buzzer events */
-  const [, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null);
+  const [, setBroadcastSubscription] = useState<BroadcastSubscription | null>(null); // NOSONAR (No pairing needed, value unused)
 
   /** Buzzer queue manager for tracking buzzes and determining fastest player */
   const [buzzerQueueManager] = useState(() => new BuzzerQueueManager());
 
   /** Timestamp when buzzer was unlocked (for debugging) */
-  const [, setBuzzerUnlockTime] = useState<number | null>(null);
+  const [, setBuzzerUnlockTime] = useState<number | null>(null); // NOSONAR (No pairing needed, value unused)
 
   /** Animation service instance */
   const animationService = AnimationService.getInstance();
@@ -384,7 +384,7 @@ export function GameHostDashboard({
       return;
     }
 
-    const gameStatus = String(game.status);
+    const gameStatus = game.status;
 
     // Sync category introduction state
     const isIntroducing = gameStatus === "introducing_categories";
@@ -411,7 +411,7 @@ export function GameHostDashboard({
    */
   useEffect(() => {
     if (!gameId) {
-      return () => {};
+      return () => { /* No cleanup needed */ };
     }
 
     const subscription = supabase
@@ -422,8 +422,8 @@ export function GameHostDashboard({
         table: 'games',
         filter: `id=eq.${gameId}`
       }, (payload) => {
-        const oldStatus = payload.old?.status;
-        const newStatus = payload.new?.status;
+        const oldStatus = (payload.old as { status?: string }).status;
+        const newStatus = (payload.new as { status?: string }).status;
 
         // Trigger game introduction animation
         if (oldStatus === 'lobby' && newStatus === 'game_intro') {
@@ -432,7 +432,7 @@ export function GameHostDashboard({
           setGameIntroComplete(false);
 
           // Play host dashboard intro animation through AnimationService
-          animationService.animateHostDashboardIntro({
+          void animationService.animateHostDashboardIntro({
             onComplete: () => {
               console.log('🎬 Host game introduction animation complete');
               setIsPlayingGameIntro(false);
@@ -449,7 +449,7 @@ export function GameHostDashboard({
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      void subscription.unsubscribe();
     };
   }, [gameId, animationService]);
 
@@ -484,10 +484,10 @@ export function GameHostDashboard({
     };
 
     // Initial check
-    checkConnection();
+    void checkConnection();
 
     // Set up periodic checks every 30 seconds
-    const intervalId = setInterval(checkConnection, 30000);
+    const intervalId = setInterval(() => { void checkConnection(); }, 30000);
 
     return () => {
       clearInterval(intervalId);
@@ -596,7 +596,7 @@ export function GameHostDashboard({
     };
 
     // Execute the data loading process
-    loadGameData();
+    void loadGameData();
   }, [user, gameId]);
 
   /**
@@ -650,7 +650,7 @@ export function GameHostDashboard({
       const fastestNickname = buzzerQueueManager.getFastestPlayerNickname();
       const fastestTime = buzzerQueueManager.getFastestReactionTime();
 
-      if (fastestPlayerId && fastestNickname) {
+      if (fastestPlayerId && fastestNickname && user) {
         console.log(`🎯 Auto-focusing fastest player: ${fastestNickname} (${fastestTime}ms)`);
 
         // Broadcast focus change to all clients (fire and forget)
@@ -659,16 +659,16 @@ export function GameHostDashboard({
           fastestPlayerId,
           fastestNickname,
           queueEntries.length > 1 ? 'correction' : 'auto'
-        ).catch((error) => {
+        ).catch((error: unknown) => {
           console.error("Failed to broadcast focus player:", error);
         });
 
         // Update database with focused player (fire and forget)
-        GameService.setFocusedPlayer(payload.gameId, fastestPlayerId, user!.id)
+        void GameService.setFocusedPlayer(payload.gameId, fastestPlayerId, user.id)
           .then(() => {
             showStatus(`Auto-selected ${fastestNickname} (${fastestTime}ms)`, "success");
           })
-          .catch((error) => {
+          .catch((error: unknown) => {
             console.error("Failed to set focused player in database:", error);
           });
 
@@ -678,7 +678,7 @@ export function GameHostDashboard({
           payload.clueId,
           payload.playerId,
           payload.reactionTimeMs
-        ).catch((error) => {
+        ).catch((error: unknown) => {
           console.error("Failed to record buzz in database:", error);
         });
       }
@@ -689,7 +689,7 @@ export function GameHostDashboard({
         payload.clueId,
         payload.playerId,
         payload.reactionTimeMs
-      ).catch((error) => {
+      ).catch((error: unknown) => {
         console.error("Failed to record buzz in database:", error);
       });
     }
@@ -700,7 +700,7 @@ export function GameHostDashboard({
    */
   useEffect(() => {
     if (!gameId || !user) {
-      return () => {};
+      return () => { /* No cleanup needed */ };
     }
 
     console.log(`📡 Setting up broadcast channel for game: ${gameId}`);
@@ -736,7 +736,7 @@ export function GameHostDashboard({
    */
   useEffect(() => {
     if (!gameId) {
-      return () => {};
+      return () => { /* No cleanup needed */ };
     }
 
     // Set up real-time subscription for this game
@@ -750,16 +750,18 @@ export function GameHostDashboard({
           table: "players",
           filter: `game_id=eq.${gameId}`,
         },
-        async () => {
+        () => {
+          void (async () => {
           console.log("🎮 Player change detected via real-time");
           // Refresh player list when players join/leave
           try {
             const updatedPlayers = await GameService.getPlayers(gameId);
             console.log("🎮 Updated players:", updatedPlayers);
             setPlayers(updatedPlayers);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error("❌ Failed to refresh players:", error);
           }
+          })();
         }
       )
       .on(
@@ -770,7 +772,8 @@ export function GameHostDashboard({
           table: "games",
           filter: `id=eq.${gameId}`,
         },
-        async () => {
+        () => {
+          void (async () => {
           console.log("Game state change detected");
           // Refresh game state when host makes changes from another session
           try {
@@ -778,16 +781,17 @@ export function GameHostDashboard({
               const updatedGame = await GameService.getGame(gameId, user.id);
               setGame(updatedGame);
             }
-          } catch (error) {
+          } catch (error: unknown) {
             console.error("Failed to refresh game state:", error);
           }
+          })();
         }
       )
       .subscribe();
 
     // Cleanup subscription on unmount
     return () => {
-      subscription.unsubscribe();
+      void subscription.unsubscribe();
     };
   }, [gameId, user]);
 
@@ -838,7 +842,7 @@ export function GameHostDashboard({
 
   // Load buzzer queue when focused clue changes
   useEffect(() => {
-    loadBuzzerQueue();
+    void loadBuzzerQueue();
   }, [loadBuzzerQueue]);
 
   /**
@@ -867,20 +871,20 @@ export function GameHostDashboard({
    * Determines the current state of the multi-state reveal/buzzer button
    */
   const getRevealBuzzerButtonState = () => {
-    if (!focusedClue || !game) {
+    if (!focusedClue || !game || !clueSetData) {
       return "disabled";
     }
 
     const clueState = clueStates.find(
       (state) => state.clue_id === focusedClue.id
     );
-    const isRevealed = clueState?.revealed || false;
+    const isRevealed = clueState?.revealed ?? false;
 
     // Check if this is a Daily Double
     const isDailyDouble = dailyDoublePositions.some(
       (position) => {
         // Find the clue's position in the board
-        const clueData = clueSetData?.rounds[game?.current_round || 'jeopardy'];
+        const clueData = clueSetData.rounds[game.current_round];
         if (!Array.isArray(clueData)) {
           return false;
         }
@@ -1035,10 +1039,10 @@ export function GameHostDashboard({
    * Creates the main timeout that fires when the clue time expires.
    */
   const createClueResolutionTimeout = useCallback(
-    (countdownInterval: NodeJS.Timeout): NodeJS.Timeout => setTimeout(async () => {
+    (countdownInterval: NodeJS.Timeout): NodeJS.Timeout => setTimeout(() => {
       clearInterval(countdownInterval);
       setClueTimeRemaining(null);
-      await handleClueTimeout();
+      void handleClueTimeout();
     }, CLUE_TIMEOUT_SECONDS * 1000),
     [handleClueTimeout, CLUE_TIMEOUT_SECONDS]
   );
@@ -1222,7 +1226,7 @@ export function GameHostDashboard({
 
         // Find player name for broadcast
         const player = players.find((p) => p.user_id === playerId);
-        const playerName = player?.nickname || "Unknown Player";
+        const playerName = player?.nickname ?? "Unknown Player";
 
         // Broadcast focus change first (manual override)
         await BroadcastService.broadcastFocusPlayer(
@@ -2122,11 +2126,6 @@ export function GameHostDashboard({
         <p className="text-muted mb-0">Game ID: {gameId}</p>
       </header>
 
-      {/* User feedback messages for operations */}
-      {loading && (
-        <div className="alert alert-info jeopardy-alert">Loading game data...</div>
-      )}
-
       {/* Centralized Alert Component */}
       <Alert
         type={alertState.type}
@@ -2151,7 +2150,7 @@ export function GameHostDashboard({
           </div>
           <div className="panel-content">
             {/* Game Introduction UI */}
-            {String(game?.status) === "game_intro" && (
+            {game.status === "game_intro" && (
               <div className="game-introduction-panel">
                 <div className="introduction-header">
                   <h3>Game Introduction</h3>
@@ -2161,7 +2160,7 @@ export function GameHostDashboard({
                 <div className="introduction-controls">
                   <button
                     className="jeopardy-button"
-                    onClick={handleStartCategoryIntroductions}
+                    onClick={() => { void handleStartCategoryIntroductions(); }}
                     disabled={!gameIntroComplete}
                   >
                     {gameIntroComplete ? "Introduce Categories" : "Animation Playing..."}
@@ -2170,7 +2169,7 @@ export function GameHostDashboard({
               </div>
             )}
             {/* Round Transition UI - Same as Game Intro */}
-            {String(game?.status) === "round_transition" && (
+            {game.status === "round_transition" && (
               <div className="game-introduction-panel">
                 <div className="introduction-header">
                   <h3>Round Transition</h3>
@@ -2180,14 +2179,14 @@ export function GameHostDashboard({
                 <div className="introduction-controls">
                   <button
                     className="jeopardy-button"
-                    onClick={handleStartCategoryIntroductions}
+                    onClick={() => { void handleStartCategoryIntroductions(); }}
                   >
                     Introduce Categories
                   </button>
                 </div>
               </div>
             )}
-            {String(game?.status) === "introducing_categories" && clueSetData && (
+            {game.status === "introducing_categories" && clueSetData && (
               <div className="category-introduction-panel">
                 <div className="introduction-header">
                   <h3>Introducing Categories</h3>
@@ -2220,25 +2219,25 @@ export function GameHostDashboard({
                 <div className="introduction-controls">
                   <button
                     className="jeopardy-button"
-                    onClick={handleNextCategory}
+                    onClick={() => { void handleNextCategory(); }}
                     disabled={currentIntroductionCategory > 6}
                   >
                     {currentIntroductionCategory >= 6 ? "Start Game" : "Next Category"}
                   </button>
                   <button
                     className="jeopardy-button-small"
-                    onClick={handleSkipIntroductions}
+                    onClick={() => { void handleSkipIntroductions(); }}
                   >
                     Skip Introductions
                   </button>
                 </div>
               </div>
             )}
-            {String(game?.status) !== "game_intro" && String(game?.status) !== "round_transition" && String(game?.status) !== "introducing_categories" && (
+            {game.status !== "game_intro" && game.status !== "round_transition" && game.status !== "introducing_categories" && (
               <div className="board-scale-wrapper">
                 <div className="jeopardy-board">
                   {/* Game board with real clue set data */}
-                  {clueSetData && game ? (
+                  {clueSetData ? (
                   <>
                     {/* Category headers from current round - direct children of jeopardy-board */}
                     {(() => {
@@ -2253,7 +2252,7 @@ export function GameHostDashboard({
                       } else {
                         // Regular rounds have array of categories
                         const currentRoundData =
-                          clueSetData.rounds[game.current_round] || [];
+                          clueSetData.rounds[game.current_round];
                         return currentRoundData.map((category, index) => (
                           <div
                             key={`category-${index}-${category.name}`}
@@ -2269,21 +2268,20 @@ export function GameHostDashboard({
                     {(() => {
                       if (game.current_round === "final") {
                         // Final Jeopardy has only one clue
-                        const finalClue = clueSetData.rounds.final.clues?.[0];
-                        return finalClue ? (
+                        return (
                           <div className="clue-cell final-jeopardy">
                             Final Jeopardy
                           </div>
-                        ) : null;
+                        );
                       }
 
                       // Regular rounds: create grid of all clues
                       const currentRoundData =
-                        clueSetData.rounds[game.current_round] || [];
-                      const allClues: Array<{
+                        clueSetData.rounds[game.current_round];
+                      const allClues: {
                         categoryIndex: number;
                         clue: ClueData;
-                      }> = [];
+                      }[] = [];
 
                       currentRoundData.forEach((category, categoryIndex) => {
                         category.clues.forEach((clue) => {
@@ -2305,8 +2303,8 @@ export function GameHostDashboard({
                           (state) => state.clue_id === item.clue.id
                         );
 
-                        const isRevealed = clueState?.revealed || false;
-                        const isCompleted = clueState?.completed || false;
+                        const isRevealed = clueState?.revealed ?? false;
+                        const isCompleted = clueState?.completed ?? false;
                         const isFocused =
                           focusedClue && focusedClue.id === item.clue.id;
 
@@ -2332,7 +2330,7 @@ export function GameHostDashboard({
 
                         const handleClick = () => {
                           if (!isCompleted && !isRevealed && item.clue.id) {
-                            handleClueSelection(item.clue.id, item.clue);
+                            void handleClueSelection(item.clue.id, item.clue);
                           }
                         };
 
@@ -2351,7 +2349,7 @@ export function GameHostDashboard({
 
                         return (
                           <button
-                            key={`clue-${item.clue.id || index}-${
+                            key={`clue-${item.clue.id ?? index}-${
                               item.clue.value
                             }`}
                             type="button"
@@ -2406,9 +2404,9 @@ export function GameHostDashboard({
                 onClick={() => {
                   const buttonConfig = getGameControlButton(game);
                   if (buttonConfig.handler === "start") {
-                    handleStartGame();
+                    void handleStartGame();
                   } else if (buttonConfig.handler === "end") {
-                    handleEndGame();
+                    void handleEndGame();
                   }
                 }}
                 disabled={getGameControlButton(game).disabled}
@@ -2417,8 +2415,8 @@ export function GameHostDashboard({
               </button>
               <button
                 className="jeopardy-button flex-1"
-                onClick={handleNextRound}
-                disabled={!game || game.status !== 'in_progress' || game.current_round === 'final'}
+                onClick={() => { void handleNextRound(); }}
+                disabled={game.status !== 'in_progress' || game.current_round === 'final'}
                 title="Advance to next round"
               >
                 Next Round
@@ -2428,8 +2426,8 @@ export function GameHostDashboard({
               {process.env.NODE_ENV === 'development' && (
                 <button
                   className="jeopardy-button flex-1"
-                  onClick={handleDebugCompleteAllClues}
-                  disabled={!game || game.status !== 'in_progress'}
+                  onClick={() => { void handleDebugCompleteAllClues(); }}
+                  disabled={game.status !== 'in_progress'}
                   title="DEBUG: Mark all clues in current round as completed"
                   style={{ opacity: 0.7, fontSize: '0.85em' }}
                 >
@@ -2446,7 +2444,7 @@ export function GameHostDashboard({
             ) : (
               <div className="player-scores-list">
                 {players.map((player, index) => {
-                  const isCurrentPlayer = game?.current_player_id === player.user_id;
+                  const isCurrentPlayer = game.current_player_id === player.user_id;
                   const playerItemClass = `player-score-item${isCurrentPlayer ? ' current-player' : ''}`;
 
                   return (
@@ -2455,7 +2453,7 @@ export function GameHostDashboard({
                         {/* <SimplePlayerConnectionStatus playerId={player.user_id} /> */}
                         <strong>
                           {isCurrentPlayer && "👑 "}
-                          {player.nickname || `Player ${index + 1}`}
+                          {player.nickname ?? `Player ${index + 1}`}
                           {isCurrentPlayer && " (Current)"}
                         </strong>
                       <small className="player-email">
@@ -2469,7 +2467,7 @@ export function GameHostDashboard({
                             };
                           };
                           return (
-                            playerWithProfile.profiles?.email ||
+                            playerWithProfile.profiles?.email ??
                             "No email available"
                           );
                         })()}
@@ -2487,22 +2485,22 @@ export function GameHostDashboard({
                         type="number"
                         className="form-control form-control-sm"
                         placeholder=""
-                        value={scoreAdjustments[player.user_id] || ""}
+                        value={scoreAdjustments[player.user_id] ?? ""}
                         onChange={(e) =>
-                          handleScoreAdjustmentChange(
+                          { handleScoreAdjustmentChange(
                             player.user_id,
                             e.target.value
-                          )
+                          ); }
                         }
-                        disabled={game?.status !== "in_progress"}
+                        disabled={game.status !== "in_progress"}
                         style={{ width: "60px" }}
                       />
                       <button
                         className="btn btn-success btn-sm"
-                        onClick={() => handleAddScore(player.user_id)}
+                        onClick={() => { void handleAddScore(player.user_id); }}
                         disabled={
-                          game?.status !== "in_progress" ||
-                          !scoreAdjustments[player.user_id]?.trim()
+                          game.status !== "in_progress" ||
+                          !(scoreAdjustments[player.user_id].trim())
                         }
                         title="Add points"
                       >
@@ -2510,10 +2508,10 @@ export function GameHostDashboard({
                       </button>
                       <button
                         className="btn btn-danger btn-sm"
-                        onClick={() => handleSubtractScore(player.user_id)}
+                        onClick={() => { void handleSubtractScore(player.user_id); }}
                         disabled={
-                          game?.status !== "in_progress" ||
-                          !scoreAdjustments[player.user_id]?.trim()
+                          game.status !== "in_progress" ||
+                          !(scoreAdjustments[player.user_id].trim())
                         }
                         title="Subtract points"
                       >
@@ -2542,8 +2540,8 @@ export function GameHostDashboard({
           setBuzzerTimeoutMs={setBuzzerTimeoutMs}
           buzzerQueue={buzzerQueue}
           autoSelectedPlayerId={autoSelectedPlayerId}
-          onSelectPlayer={handlePlayerSelection}
-          onClearQueue={() => setBuzzerQueue([])}
+          onSelectPlayer={(playerId: string) => { void handlePlayerSelection(playerId); }}
+          onClearQueue={() => { setBuzzerQueue([]); }}
         />
 
         {/* Bottom Row - Panel 3: Clue Control */}
@@ -2553,15 +2551,15 @@ export function GameHostDashboard({
           clueSetData={clueSetData}
           dailyDoublePositions={dailyDoublePositions}
           getRevealBuzzerButtonState={getRevealBuzzerButtonState}
-          handleRevealBuzzerButton={handleRevealBuzzerButton}
+          handleRevealBuzzerButton={() => { void handleRevealBuzzerButton(); }}
           clueTimeRemaining={clueTimeRemaining}
           dailyDoubleWager={dailyDoubleWager}
           handleClearDailyDoubleWager={handleClearDailyDoubleWager}
           wagerInput={wagerInput}
           setWagerInput={setWagerInput}
-          handleDailyDoubleWager={handleDailyDoubleWager}
-          handleMarkCorrect={handleMarkCorrect}
-          handleMarkWrong={handleMarkWrong}
+          handleDailyDoubleWager={() => { void handleDailyDoubleWager(); }}
+          handleMarkCorrect={() => { void handleMarkCorrect(); }}
+          handleMarkWrong={() => { void handleMarkWrong(); }}
         />
       </div>
 

@@ -8,7 +8,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { ClueSetSummary } from './ClueSetSummary'
 import { ClueSetService } from '../../services/clueSets/clueSetService'
-import { mockUser } from '../../test/__mocks__/commonTestData'
+import { mockUser } from '../../test/testUtils'
 
 // Mock dependencies
 jest.mock('../../services/clueSets/clueSetService')
@@ -84,7 +84,7 @@ describe('ClueSetSummary', () => {
 
   describe('Loading States', () => {
     it('should show loading state initially', () => {
-      mockClueSetService.getClueSetSummary.mockImplementation(() => new Promise(() => {}))
+      mockClueSetService.getClueSetSummary.mockImplementation(() => new Promise(() => { /* empty */ }))
 
       render(<ClueSetSummary {...mockProps} />)
 

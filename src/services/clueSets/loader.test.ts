@@ -1,6 +1,6 @@
 import { loadClueSetFromCSV, saveClueSetToDatabase } from './loader'
 import { supabase } from '../supabase/client'
-import { testCSVFiles } from '../../test/__mocks__/commonTestData'
+import { testCSVFiles } from '../../test/testUtils'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 

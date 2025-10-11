@@ -53,7 +53,7 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
 
   // Load initial data
   useEffect(() => {
-    loadGameData()
+    void loadGameData()
   }, [gameId, loadGameData])
 
   // Set up real-time subscriptions for player changes
@@ -65,19 +65,20 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
         schema: 'public',
         table: 'players',
         filter: `game_id=eq.${gameId}`
-      }, async () => {
+      }, () => {
         console.log('Player change detected in lobby')
-        try {
-          const updatedPlayers = await GameService.getPlayers(gameId)
-          setPlayers(updatedPlayers)
-        } catch (err) {
-          console.error('Failed to refresh players:', err)
-        }
+        void GameService.getPlayers(gameId)
+          .then((updatedPlayers) => {
+            setPlayers(updatedPlayers)
+          })
+          .catch((err: unknown) => {
+            console.error('Failed to refresh players:', err)
+          })
       })
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
+      void subscription.unsubscribe()
     }
   }, [gameId])
 
@@ -135,7 +136,7 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
           <p className="game-code">Game Code: <strong>{gameId}</strong></p>
           {currentPlayer && (
             <p className="player-info">
-              Playing as: <strong>{currentPlayer.nickname || 'Player'}</strong>
+              Playing as: <strong>{currentPlayer.nickname ?? 'Player'}</strong>
             </p>
           )}
         </header>
@@ -159,7 +160,7 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
                   >
                     <div className="player-info">
                       <span className="player-name">
-                        {player.nickname || `Player ${index + 1}`}
+                        {player.nickname ?? `Player ${index + 1}`}
                       </span>
                       {player.user_id === user?.id && (
                         <span className="you-indicator">(You)</span>
@@ -176,7 +177,7 @@ export function PlayerLobby({ gameId, onLeaveGame }: Readonly<PlayerLobbyProps>)
         <div className="lobby-actions">
           <button
             className="btn btn-outline-secondary"
-            onClick={handleLeaveGame}
+            onClick={() => { void handleLeaveGame(); /* NOSONAR (Void return is intentional) */ }}
           >
             Leave Game
           </button>

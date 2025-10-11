@@ -131,7 +131,7 @@ async function ensureProfileExists(user: User): Promise<void> {
       .insert({
         id: user.id, // Use Supabase Auth user ID as primary key
         username: user.email.split('@')[0], // Extract username from email (email is guaranteed to exist)
-        display_name: user.user_metadata?.full_name || null, // Use full name if provided
+        display_name: user.user_metadata.full_name as Maybe<string> ?? null, // Use full name if provided
         email: user.email, // Store email for display purposes (required field)
         role: 'player' // Default new users to player role
       })
@@ -209,7 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Initialize authentication state on component mount
     // Get any existing session from Supabase (handles page refreshes)
-    supabase.auth.getSession().then(({ data: { session: thisSession } }) => {
+    void supabase.auth.getSession().then(({ data: { session: thisSession } }) => {
       // Update state with current session data
       setSession(thisSession)
       setUser(thisSession?.user ?? null)
@@ -217,7 +217,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Ensure user profile exists in database (non-blocking background operation)
       if (thisSession?.user) {
-        ensureProfileExists(thisSession.user)
+        void ensureProfileExists(thisSession.user)
       }
     })
 
@@ -233,12 +233,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Ensure user profile exists for newly authenticated users
       if (thisSession?.user) {
-        ensureProfileExists(thisSession.user)
+        void ensureProfileExists(thisSession.user)
       }
     })
 
     // Cleanup: unsubscribe from auth changes when component unmounts
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); }
   }, []) // Empty dependency array - only run on mount/unmount
 
   // Login function with useCallback for stable reference and performance
@@ -337,7 +337,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-// eslint-disable-next-line react-refresh/only-export-components -- Standard React pattern: Context providers commonly export both the provider component and associated hook in the same file for cohesion and convenience
+
 export function useAuth() {
   // Get authentication context
   const context = useContext(AuthContext)

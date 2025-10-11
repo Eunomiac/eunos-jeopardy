@@ -88,15 +88,15 @@ export function BuzzerQueuePanel(props: Readonly<BuzzerQueuePanelProps>) {
                 playerNickname?: string | null;
               };
 
-              const gameNickname = buzzWithPlayerData.playerNickname || player?.nickname;
+              const gameNickname = buzzWithPlayerData.playerNickname ?? player?.nickname;
               const profileName =
-                buzzWithPlayerData.profiles?.display_name ||
+                buzzWithPlayerData.profiles?.display_name ??
                 buzzWithPlayerData.profiles?.username;
-              const playerName = gameNickname || profileName || "Unknown Player";
+              const playerName = (gameNickname ?? profileName) ?? "Unknown Player";
 
               const reactionTime = buzz.reaction_time;
               let timingText: string;
-              if (reactionTime !== null && reactionTime !== undefined) {
+              if (typeof reactionTime === "number") {
                 timingText = index === 0 ? `${reactionTime} ms` : `+${reactionTime} ms`;
               } else {
                 const buzzTime = new Date(buzz.created_at);
@@ -114,7 +114,7 @@ export function BuzzerQueuePanel(props: Readonly<BuzzerQueuePanelProps>) {
                   className={`queue-item ${
                     game?.focused_player_id === buzz.user_id ? "selected" : ""
                   } ${autoSelectedPlayerId === buzz.user_id ? "auto-selected" : ""}`}
-                  onClick={() => onSelectPlayer(buzz.user_id)}
+                  onClick={() => { onSelectPlayer(buzz.user_id); }}
                   data-player-id={buzz.user_id}
                   aria-label={ariaLabel}
                   style={{ cursor: "pointer" }}

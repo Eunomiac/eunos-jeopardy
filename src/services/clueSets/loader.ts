@@ -589,7 +589,7 @@ async function createBoard(clueSetId: string, round: RoundType) {
  * @author Euno's Jeopardy Team
  */
 async function saveAllBoardsData(
-  boards: Array<{ id: string }>,
+  boards: { id: string }[],
   clueSetData: ClueSetData
 ): Promise<void> {
   for (let i = 0; i < boards.length; i++) {

@@ -26,7 +26,7 @@ describe('AnimationOrchestrator', () => {
   beforeEach(() => {
     orchestrator = AnimationOrchestrator.getInstance();
     // Clear any persisted state from previous tests
-    (orchestrator as any).lastStateByGame.clear();
+    orchestrator.lastStateByGame.clear();
     mockPublish = jest.spyOn(AnimationEvents, 'publish').mockImplementation();
     consoleSpy = jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'error').mockImplementation();
@@ -48,7 +48,7 @@ describe('AnimationOrchestrator', () => {
   describe('ingestGameUpdate - Round Transitions', () => {
     it('should publish RoundTransition when round changes during round_transition status', () => {
       const gameId = 'game-123';
-      
+
       // First update - establish initial state
       orchestrator.ingestGameUpdate({
         id: gameId,
@@ -73,7 +73,7 @@ describe('AnimationOrchestrator', () => {
 
     it('should NOT publish RoundTransition when round changes but status is not round_transition', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'in_progress',
@@ -105,7 +105,7 @@ describe('AnimationOrchestrator', () => {
   describe('ingestGameUpdate - Board Intro', () => {
     it('should publish BoardIntro when entering game_intro status', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'lobby',
@@ -127,7 +127,7 @@ describe('AnimationOrchestrator', () => {
 
     it('should NOT publish BoardIntro when already in game_intro', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'game_intro',
@@ -151,7 +151,7 @@ describe('AnimationOrchestrator', () => {
   describe('ingestGameUpdate - Category Intro', () => {
     it('should publish CategoryIntro when category number changes during introducing_categories', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'introducing_categories',
@@ -173,7 +173,7 @@ describe('AnimationOrchestrator', () => {
 
     it('should publish CategoryIntro for each category change', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'introducing_categories',
@@ -206,7 +206,7 @@ describe('AnimationOrchestrator', () => {
 
     it('should NOT publish CategoryIntro when category is 0', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'introducing_categories',
@@ -218,7 +218,7 @@ describe('AnimationOrchestrator', () => {
 
     it('should NOT publish CategoryIntro when status is not introducing_categories', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'in_progress',
@@ -233,7 +233,7 @@ describe('AnimationOrchestrator', () => {
     it('should publish DailyDoubleReveal when focused_player_id is set for daily double clue', async () => {
       const gameId = 'game-123';
       const clueId = 'clue-456';
-      
+
       (ClueService.isDailyDouble as jest.Mock).mockResolvedValue(true);
 
       orchestrator.ingestGameUpdate({
@@ -262,7 +262,7 @@ describe('AnimationOrchestrator', () => {
     it('should NOT publish DailyDoubleReveal for regular clue', async () => {
       const gameId = 'game-123';
       const clueId = 'clue-456';
-      
+
       (ClueService.isDailyDouble as jest.Mock).mockResolvedValue(false);
 
       orchestrator.ingestGameUpdate({
@@ -311,7 +311,7 @@ describe('AnimationOrchestrator', () => {
   describe('clear', () => {
     it('should clear game state', () => {
       const gameId = 'game-123';
-      
+
       orchestrator.ingestGameUpdate({
         id: gameId,
         status: 'in_progress',
@@ -333,4 +333,3 @@ describe('AnimationOrchestrator', () => {
     });
   });
 });
-

@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase/client';
+import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
 interface PlayerConnectionStatusProps {
   playerId: string;
@@ -60,9 +61,9 @@ export function PlayerConnectionStatus({ playerId, playerName }: Readonly<Player
     const activityChannel = supabase.channel(`player-activity-${playerId}`);
 
     presenceChannel
-      .on("presence", { event: "sync" }, () => handlePresenceSync(presenceChannel))
-      .on("presence", { event: "join" }, ({ newPresences }) => handlePresenceJoin(newPresences))
-      .on("presence", { event: "leave" }, ({ leftPresences }) => handlePresenceLeave(leftPresences))
+      .on("presence", { event: "sync" }, () => { handlePresenceSync(presenceChannel); })
+      .on("presence", { event: "join" }, ({ newPresences }) => { handlePresenceJoin(newPresences); })
+      .on("presence", { event: "leave" }, ({ leftPresences }) => { handlePresenceLeave(leftPresences); })
       .subscribe(handlePresenceSubscribe);
 
     activityChannel
@@ -82,8 +83,8 @@ export function PlayerConnectionStatus({ playerId, playerName }: Readonly<Player
       .subscribe();
 
     return () => {
-      presenceChannel.unsubscribe();
-      activityChannel.unsubscribe();
+      void presenceChannel.unsubscribe();
+      void activityChannel.unsubscribe();
     };
   }, [playerId]);
 
@@ -142,11 +143,11 @@ export function SimplePlayerConnectionStatus({ playerId }: Readonly<{ playerId: 
 
     testChannel
       .subscribe((status) => {
-        setIsSubscribed(status === 'SUBSCRIBED');
+        setIsSubscribed(status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED);
       });
 
     return () => {
-      testChannel.unsubscribe();
+      void testChannel.unsubscribe();
     };
   }, [playerId]);
 

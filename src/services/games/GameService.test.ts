@@ -8,7 +8,7 @@ import { supabase } from '../supabase/client'
 import { ClueService } from '../clues/ClueService'
 
 // Enhanced type definitions for Supabase mock objects with schema awareness
-type MockSupabaseQueryBuilder = {
+interface MockSupabaseQueryBuilder {
   insert: jest.Mock
   select: jest.Mock
   update: jest.Mock

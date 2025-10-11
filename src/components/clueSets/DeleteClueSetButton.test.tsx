@@ -9,7 +9,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { DeleteClueSetButton } from './DeleteClueSetButton'
 import { useAuth } from '../../contexts/AuthContext'
 import { ClueSetService } from '../../services/clueSets/clueSetService'
-import { mockUser } from '../../test/__mocks__/commonTestData'
+import { mockUser } from '../../test/testUtils'
 
 // Mock dependencies
 jest.mock('../../contexts/AuthContext')
@@ -170,7 +170,7 @@ describe('DeleteClueSetButton', () => {
     })
 
     it('should show loading state during deletion', async () => {
-      let resolveDelete: (value: { success: boolean }) => void
+      let resolveDelete: ((value: { success: boolean }) => void) | undefined
       const deletePromise = new Promise<{ success: boolean }>((resolve) => {
         resolveDelete = resolve
       })
@@ -188,7 +188,9 @@ describe('DeleteClueSetButton', () => {
       })
 
       // Resolve the promise
-      resolveDelete!({ success: true })
+      if (resolveDelete) {
+        resolveDelete({ success: true })
+      }
 
       await waitFor(() => {
         expect(button).toHaveTextContent('Delete Clue Set')

@@ -21,7 +21,7 @@ describe('UploadService', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     // Suppress console.error for expected error tests
-    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'error').mockImplementation(() => { /* empty */ })
   })
 
   afterEach(() => {

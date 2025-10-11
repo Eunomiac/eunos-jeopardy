@@ -18,23 +18,21 @@ export interface ClueDisplayContent {
 }
 
 export class ClueDisplayService {
-  private static instance: ClueDisplayService;
-  private readonly clueCache: Map<string, ClueDisplayContent> = new Map();
+  private static instance: Maybe<ClueDisplayService>;
+  private readonly clueCache = new Map<string, ClueDisplayContent>();
 
   static getInstance(): ClueDisplayService {
-    if (!this.instance) {
-      this.instance = new ClueDisplayService();
-    }
-    return this.instance;
+    ClueDisplayService.instance ??= new ClueDisplayService();
+    return ClueDisplayService.instance;
   }
 
   /**
    * Get clue content for display
    */
-  async getClueContent(clueId: string, _gameId: string): Promise<ClueDisplayContent | null> {
+  async getClueContent(clueId: string): Promise<ClueDisplayContent | null> {
     // Check cache first
     if (this.clueCache.has(clueId)) {
-      return this.clueCache.get(clueId)!;
+      return this.clueCache.get(clueId) ?? null;
     }
 
     try {
@@ -58,7 +56,7 @@ export class ClueDisplayService {
         .eq('id', clueId)
         .single();
 
-      if (error || !clue) {
+      if (error) {
         console.error('Failed to fetch clue content:', error);
         return null;
       }
@@ -90,10 +88,9 @@ export class ClueDisplayService {
    */
   async populateDisplayWindow(
     clueId: string,
-    gameId: string,
     displayWindow: HTMLElement
   ): Promise<void> {
-    const content = await this.getClueContent(clueId, gameId);
+    const content = await this.getClueContent(clueId);
     if (!content) {
       console.warn('Could not get clue content for display');
       return;

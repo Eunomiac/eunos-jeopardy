@@ -107,7 +107,7 @@ export function ClueSetSelector({ selectedClueSetId, onClueSetSelected, refreshT
       }
     }
 
-    loadClueSets()
+    void loadClueSets()
   }, [user, refreshTrigger])
 
   return (
@@ -138,7 +138,7 @@ export function ClueSetSelector({ selectedClueSetId, onClueSetSelected, refreshT
             id="clue-set-select"
             className="jeopardy-input jeopardy-dropdown"
             value={selectedClueSetId}
-            onChange={(e) => onClueSetSelected(e.target.value)}
+            onChange={(e) => { onClueSetSelected(e.target.value); }}
           >
             {/* Default placeholder option */}
             <option value="">

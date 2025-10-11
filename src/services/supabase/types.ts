@@ -9,7 +9,7 @@ export type Json =
 export type GameStatus = "lobby" | "game_intro" | "introducing_categories" | "in_progress" | "round_transition" | "completed" | "cancelled";
 export type RoundType = "jeopardy" | "double" | "final";
 
-export type Database = {
+export interface Database {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
@@ -530,9 +530,7 @@ export type Database = {
         ]
       }
     }
-    Views: {
-      [_ in never]: never
-    }
+    Views: Record<never, never>
     Functions: {
       create_game_report: {
         Args: { p_game_id: string }
@@ -548,9 +546,7 @@ export type Database = {
       game_status: GameStatus
       round_type: RoundType
     }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+    CompositeTypes: Record<never, never>
   }
 }
 

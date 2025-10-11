@@ -9,12 +9,12 @@ import { ClueService } from "../clues/ClueService";
  * publishes semantic AnimationEvents that components can react to safely.
  */
 export class AnimationOrchestrator {
-  private static instance: AnimationOrchestrator;
-  private readonly lastStateByGame: Map<string, Partial<Game>> = new Map();
+  private static instance: Maybe<AnimationOrchestrator>;
+  readonly lastStateByGame = new Map<string, Partial<Game>>();
 
   static getInstance(): AnimationOrchestrator {
-    if (!this.instance) {this.instance = new AnimationOrchestrator();}
-    return this.instance;
+    AnimationOrchestrator.instance ??= new AnimationOrchestrator();
+    return AnimationOrchestrator.instance;
   }
 
   /**
@@ -78,9 +78,12 @@ export class AnimationOrchestrator {
       ClueService.isDailyDouble(next.focused_clue_id).then((isDailyDouble) => {
         if (isDailyDouble) {
           console.log(`🎬 [AnimationOrchestrator] Detected DailyDoubleReveal trigger (player focused for daily double)`);
-          AnimationEvents.publish({ type: "DailyDoubleReveal", gameId, clueId: next.focused_clue_id! });
+          if (!next.focused_clue_id) {
+            throw new Error('No focused clue ID found in game state');
+          }
+          AnimationEvents.publish({ type: "DailyDoubleReveal", gameId, clueId: next.focused_clue_id });
         }
-      }).catch((error) => {
+      }).catch((error: unknown) => {
         console.error(`🎬 [AnimationOrchestrator] Error checking daily double status:`, error);
       });
     }

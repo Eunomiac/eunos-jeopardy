@@ -15,9 +15,9 @@ describe('AnimationEvents', () => {
 
   beforeEach(() => {
     // Clear all subscribers before each test
-    (AnimationEvents as any).subscribers.clear();
-    (AnimationEvents as any).recentIntents.clear();
-    
+    AnimationEvents.subscribers.clear();
+    AnimationEvents.recentIntents.clear();
+
     // Suppress console logs in tests
     consoleSpy = jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'warn').mockImplementation();
@@ -259,7 +259,7 @@ describe('AnimationEvents', () => {
       AnimationEvents.publish(intent);
 
       // Verify it's cached
-      expect((AnimationEvents as any).recentIntents.size).toBe(1);
+      expect(AnimationEvents.recentIntents.size).toBe(1);
 
       // Fast-forward past cache duration
       jest.advanceTimersByTime(2001);
@@ -267,7 +267,7 @@ describe('AnimationEvents', () => {
       // Check should clean up expired intent
       AnimationEvents.wasRecentlyPublished('RoundTransition', 'game-123');
 
-      expect((AnimationEvents as any).recentIntents.size).toBe(0);
+      expect(AnimationEvents.recentIntents.size).toBe(0);
 
       jest.useRealTimers();
     });
@@ -315,4 +315,3 @@ describe('AnimationEvents', () => {
     });
   });
 });
-

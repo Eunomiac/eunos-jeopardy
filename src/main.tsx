@@ -66,14 +66,17 @@ initializeAnimations()
  *
  * **DOM Target:**
  * - Renders into #root element in index.html
- * - Uses non-null assertion as root element is guaranteed to exist
  *
  * **Development Features:**
  * - StrictMode enables additional checks and warnings
  * - Hot module replacement support via Vite
  * - Source maps for debugging
  */
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  throw new Error('Failed to find root element for React rendering')
+}
+createRoot(rootElement).render(
   <StrictMode>
     <AuthProvider>
       <App />

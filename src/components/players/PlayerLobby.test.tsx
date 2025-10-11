@@ -2,7 +2,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { PlayerLobby } from './PlayerLobby'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
-import { mockUser, mockSession } from '../../test/__mocks__/commonTestData'
+import { mockUser, mockSession } from '../../test/testUtils'
 import type { Player } from '../../services/games/GameService'
 
 // Mock GameService

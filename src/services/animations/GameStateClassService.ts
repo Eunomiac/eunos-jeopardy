@@ -67,7 +67,7 @@ export interface PodiumState {
  * Game State Class Service class.
  */
 export class GameStateClassService {
-  private static instance: GameStateClassService;
+  private static instance: Maybe<GameStateClassService>;
 
   /**
    * CSS class name constants.
@@ -95,9 +95,7 @@ export class GameStateClassService {
    * Gets the singleton instance of GameStateClassService.
    */
   static getInstance(): GameStateClassService {
-    if (!GameStateClassService.instance) {
-      GameStateClassService.instance = new GameStateClassService();
-    }
+    GameStateClassService.instance ??= new GameStateClassService();
     return GameStateClassService.instance;
   }
 
@@ -227,14 +225,14 @@ export class GameStateClassService {
     buzzerStates: Map<string, BuzzerState>
   ): PodiumState[] {
     return players.map((player) => {
-      const buzzerState = buzzerStates.get(player.user_id) || BuzzerState.INACTIVE;
+      const buzzerState = buzzerStates.get(player.user_id) ?? BuzzerState.INACTIVE;
       const isFocused = player.user_id === focusedPlayerId;
       const hasBuzzed = buzzerState === BuzzerState.BUZZED;
       const isFrozen = buzzerState === BuzzerState.FROZEN;
 
       return {
         playerId: player.user_id,
-        nickname: player.nickname || 'Unknown Player',
+        nickname: player.nickname ?? 'Unknown Player',
         buzzerState,
         isFocused,
         hasBuzzed,

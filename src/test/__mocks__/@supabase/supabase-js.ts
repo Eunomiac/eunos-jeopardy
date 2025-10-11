@@ -9,7 +9,7 @@
  */
 
 import type { Database } from '../../../services/supabase/types'
-import { mockGame, mockPlayers } from '../commonTestData'
+import { mockGame, mockPlayers } from '../../testUtils'
 
 interface ChainableMethods {
   eq: jest.MockedFunction<(column: string, value: unknown) => ChainableMethods>

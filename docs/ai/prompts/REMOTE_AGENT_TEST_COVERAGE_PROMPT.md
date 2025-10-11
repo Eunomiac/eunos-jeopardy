@@ -9,7 +9,7 @@ Your task is to achieve 90% test coverage for the Euno's Jeopardy React/TypeScri
 **Before creating ANY mock in your tests, you MUST:**
 
 1. **Check `src/test/__mocks__/@supabase/supabase-js.ts`** - Comprehensive global Supabase mock
-2. **Check `src/test/__mocks__/commonTestData.ts`** - Shared mock data (mockUser, mockGame, mockPlayers, etc.)
+2. **Check `src/test/testUtils.ts`** - Shared mock data (mockUser, mockGame, mockPlayers, etc.)
 3. **Check `src/services/<service>/__mocks__/`** - Manual service mocks for ES6 classes
 4. **Search the codebase** - Verify no duplicate mocks exist
 

@@ -78,7 +78,7 @@ export function ClueSetSummary({ clueSetId, onDeleted, onError }: Readonly<ClueS
       }
     }
 
-    loadSummary()
+    void loadSummary()
   }, [clueSetId])
 
   // Don't render if no clue set selected
@@ -131,8 +131,8 @@ export function ClueSetSummary({ clueSetId, onDeleted, onError }: Readonly<ClueS
                 <DeleteClueSetButton
                   clueSetId={clueSetId}
                   clueSetName={summary.name}
-                  onDeleted={onDeleted || (() => {})}
-                  onError={onError || (() => {})}
+                  onDeleted={onDeleted ?? (() => { /* empty */ })}
+                  onError={onError ?? (() => { /* empty */ })}
                 />
               </div>
 

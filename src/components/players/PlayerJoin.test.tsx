@@ -3,7 +3,7 @@ import { PlayerJoin } from './PlayerJoin'
 import { GameService } from '../../services/games/GameService'
 import { supabase } from '../../services/supabase/client'
 import { useAuth } from '../../contexts/AuthContext'
-import { mockUser } from '../../test/__mocks__/commonTestData'
+import { mockUser } from '../../test/testUtils'
 
 // Mock services
 jest.mock('../../services/games/GameService')
@@ -355,7 +355,7 @@ describe('PlayerJoin', () => {
     it('should show loading state during join process', async () => {
       const mockGames = [{ id: 'game-123', host_id: 'host-456' }]
       mockSupabase.from.mockReturnValue(createMockQueryBuilder(mockGames, null))
-      mockGameService.addPlayer.mockImplementation(() => new Promise(() => {})) // Never resolves
+      mockGameService.addPlayer.mockImplementation(() => new Promise(() => { /* empty */ })) // Never resolves
 
       render(<PlayerJoin {...mockProps} />)
 

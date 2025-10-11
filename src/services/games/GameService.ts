@@ -67,6 +67,7 @@ export type ClueStateInsert = TablesInsert<'clue_states'>
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class GameService {
   /**
    * Gets the currently active game (lobby, game_intro, introducing_categories, in_progress, or round_transition status).
@@ -176,7 +177,7 @@ export class GameService {
         .eq('id', gameId)
         .single()
 
-      if (gameError || !game?.clue_set_id) {
+      if (gameError || !game.clue_set_id) {
         console.warn('Error getting game clue set:', gameError)
         return false
       }
@@ -189,7 +190,7 @@ export class GameService {
         .eq('round', 'final')
         .single()
 
-      if (boardError || !finalBoard) {
+      if (boardError) {
         console.warn('Error getting Final Jeopardy board:', boardError)
         return false
       }
@@ -206,7 +207,7 @@ export class GameService {
         .eq('categories.board_id', finalBoard.id)
         .limit(1)
 
-      if (clueError || !finalClues?.[0]) {
+      if (clueError || !finalClues[0]) {
         console.warn('Error getting Final Jeopardy clue:', clueError)
         return false
       }
@@ -225,7 +226,7 @@ export class GameService {
       }
 
       // Final Jeopardy is completed if it was both revealed and completed
-      return clueState?.revealed === true && clueState?.completed === true
+      return clueState.revealed && clueState.completed
     } catch (error) {
       console.warn('Error in isFinalJeopardyCompleted:', error)
       return false
@@ -294,11 +295,6 @@ export class GameService {
     if (error) {
       // Provide context-specific error message for debugging
       throw new Error(`Failed to create game: ${error.message}`)
-    }
-
-    // Defensive programming: ensure database returned expected data
-    if (!data) {
-      throw new Error('No game data returned from database')
     }
 
     // Initialize clue states for the new game
@@ -437,11 +433,6 @@ export class GameService {
       throw new Error(`Failed to fetch game: ${error.message}`)
     }
 
-    // Ensure game exists before authorization check
-    if (!data) {
-      throw new Error('Game not found')
-    }
-
     // Critical security check: only game host can access game data
     // This prevents players from accessing host-only information
     if (data.host_id !== userId) {
@@ -509,11 +500,6 @@ export class GameService {
     if (error) {
       // Provide context for debugging update failures
       throw new Error(`Failed to update game: ${error.message}`)
-    }
-
-    // Defensive check: ensure database returned updated data
-    if (!data) {
-      throw new Error('No game data returned from update')
     }
 
     return data
@@ -662,7 +648,7 @@ export class GameService {
       throw new Error(`Failed to fetch players: ${playersError.message}`)
     }
 
-    if (!players || players.length === 0) {
+    if (players.length === 0) {
       return []
     }
 
@@ -683,7 +669,7 @@ export class GameService {
     // Merge player data with profile data
     return players.map((player) => ({
       ...player,
-      profiles: profiles?.find((profile) => profile.id === player.user_id) || null
+      profiles: profiles?.find((profile) => profile.id === player.user_id) ?? null
     }))
   }
 
@@ -735,7 +721,7 @@ export class GameService {
     const playerData: PlayerInsert = {
       game_id: gameId,
       user_id: userId,
-      nickname: nickname || null, // Use null for database consistency
+      nickname: nickname ?? null, // Use null for database consistency
       score: 0 // All players start with zero score
     }
 
@@ -750,11 +736,6 @@ export class GameService {
     if (error) {
       // Error may indicate duplicate player or invalid game/user IDs
       throw new Error(`Failed to add player: ${error.message}`)
-    }
-
-    // Defensive programming: ensure database returned expected data
-    if (!data) {
-      throw new Error('No player data returned from database')
     }
 
     return data
@@ -845,8 +826,7 @@ export class GameService {
       throw new Error(`Failed to fetch clue sets: ${error.message}`)
     }
 
-    // Return empty array instead of null for easier array operations
-    return data || []
+    return data
   }
 
   /**
@@ -912,7 +892,7 @@ export class GameService {
       throw new Error(`Failed to fetch buzzes: ${error.message}`)
     }
 
-    if (!buzzes || buzzes.length === 0) {
+    if (buzzes.length === 0) {
       return []
     }
 
@@ -930,7 +910,7 @@ export class GameService {
     // Enhance buzz records with player nicknames
     return buzzes.map((buzz) => ({
       ...buzz,
-      playerNickname: players?.find((p) => p.user_id === buzz.user_id)?.nickname || null
+      playerNickname: players?.find((p) => p.user_id === buzz.user_id)?.nickname ?? null
     }))
   }
 
@@ -987,7 +967,7 @@ export class GameService {
       game_id: gameId,
       clue_id: clueId,
       user_id: userId,
-      reaction_time: reactionTime || null
+      reaction_time: reactionTime ?? null
     }
 
     // Insert buzz with immediate return of created record
@@ -1001,11 +981,6 @@ export class GameService {
     if (error) {
       // Error may indicate duplicate buzz or invalid game/clue/user IDs
       throw new Error(`Failed to record buzz: ${error.message}`)
-    }
-
-    // Defensive programming: ensure database returned expected data
-    if (!data) {
-      throw new Error('No buzz data returned from database')
     }
 
     return data
@@ -1277,7 +1252,7 @@ export class GameService {
     }
 
     // Add this player to the locked-out list
-    const currentLockedOut = currentClue.locked_out_player_ids || []
+    const currentLockedOut = currentClue.locked_out_player_ids ?? []
     const updatedLockedOut = [...currentLockedOut, playerId]
 
     // Update clue with new locked-out player
@@ -1405,11 +1380,6 @@ export class GameService {
       throw new Error(`Failed to fetch player: ${fetchError.message}`)
     }
 
-    // Ensure player exists in the game before score update
-    if (!currentPlayer) {
-      throw new Error('Player not found')
-    }
-
     // Calculate new score (supports positive and negative changes)
     // Allows for correct answers (+points) and incorrect answers (-points)
     const newScore = currentPlayer.score + scoreChange
@@ -1426,11 +1396,6 @@ export class GameService {
     if (error) {
       // Provide context for debugging score update failures
       throw new Error(`Failed to update score: ${error.message}`)
-    }
-
-    // Defensive programming: ensure database returned updated data
-    if (!data) {
-      throw new Error('No player data returned from update')
     }
 
     return data

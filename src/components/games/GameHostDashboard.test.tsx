@@ -3,7 +3,7 @@ import { GameHostDashboard } from './GameHostDashboard'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { ClueService } from '../../services/clues/ClueService'
-import { mockUser, mockPlayers, createMockGame } from '../../test/__mocks__/commonTestData'
+import { mockUser, mockPlayers, createMockGame } from '../../test/testUtils'
 
 // Mock services
 jest.mock('../../services/games/GameService')

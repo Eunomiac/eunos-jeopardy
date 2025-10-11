@@ -58,7 +58,7 @@ export interface BuzzerStateContext {
  * Buzzer State Service class.
  */
 export class BuzzerStateService {
-  private static instance: BuzzerStateService;
+  private static instance: Maybe<BuzzerStateService>;
 
   /**
    * Valid state transitions map.
@@ -76,9 +76,7 @@ export class BuzzerStateService {
    * Gets the singleton instance of BuzzerStateService.
    */
   static getInstance(): BuzzerStateService {
-    if (!BuzzerStateService.instance) {
-      BuzzerStateService.instance = new BuzzerStateService();
-    }
+    BuzzerStateService.instance ??= new BuzzerStateService();
     return BuzzerStateService.instance;
   }
 
@@ -131,7 +129,7 @@ export class BuzzerStateService {
    * @returns Transition validation result
    */
   validateTransition(from: BuzzerState, to: BuzzerState): BuzzerStateTransition {
-    const validTargets = BuzzerStateService.VALID_TRANSITIONS[from] || [];
+    const validTargets = BuzzerStateService.VALID_TRANSITIONS[from];
     const valid = validTargets.includes(to);
 
     return {

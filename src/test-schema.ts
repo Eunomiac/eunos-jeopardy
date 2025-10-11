@@ -140,7 +140,7 @@ async function testTable(tableName: 'clue_sets' | 'clues' | 'categories', emoji:
  */
 function checkClueColumns(clues: Tables<'clues'>[]) {
   // Handle empty data gracefully
-  if (!clues || clues.length === 0) {
+  if (clues.length === 0) {
     console.log('No clues data to check columns')
     return
   }

@@ -7,8 +7,8 @@
  */
 
 import type { User, Session } from '@supabase/supabase-js'
-import type { Database } from '../../services/supabase/types'
-import { parseCSV } from '../../utils/csvParser'
+import type { Database } from '../services/supabase/types'
+import { parseCSV } from '../utils/csvParser'
 
 // Type aliases for cleaner code
 export type GameRow = Database['public']['Tables']['games']['Row']

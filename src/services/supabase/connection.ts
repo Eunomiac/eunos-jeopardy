@@ -26,7 +26,7 @@ import { supabase } from "./client";
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export class SupabaseConnection {
+export class SupabaseConnection { // eslint-disable-line @typescript-eslint/no-extraneous-class
   /**
    * Tests the connection to Supabase with latency measurement.
    *
@@ -145,7 +145,7 @@ export class SupabaseConnection {
 
     return {
       // Note: Uses import.meta.env for environment validation purposes
-      url: import.meta.env.VITE_SUPABASE_URL ?? "Not configured",
+      url: import.meta.env.VITE_SUPABASE_URL,
       connected,
       error,
       timestamp: new Date().toISOString(),
@@ -214,13 +214,13 @@ export class SupabaseConnection {
     }
 
     // Check for placeholder values that weren't replaced
-    if (url?.includes("your_supabase_project_url")) {
+    if (url.includes("your_supabase_project_url")) {
       warnings.push("VITE_SUPABASE_URL appears to be a placeholder value");
     }
 
     // Validate anonymous key content
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (anonKey?.includes("your_supabase_anon_key")) {
+    if (anonKey.includes("your_supabase_anon_key")) {
       warnings.push("VITE_SUPABASE_ANON_KEY appears to be a placeholder value");
     }
 

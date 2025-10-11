@@ -6,7 +6,7 @@
 **BEFORE creating ANY mock, you MUST:**
 
 1. **Check `src/test/__mocks__/@supabase/supabase-js.ts`** - Global Supabase mock with comprehensive database operations
-2. **Check `src/test/__mocks__/commonTestData.ts`** - Shared mock data (mockUser, mockGame, mockPlayers, etc.)
+2. **Check `src/test/testUtils.ts`** - Shared mock data (mockUser, mockGame, mockPlayers, etc.)
 3. **Check `src/services/<service>/__mocks__/`** - Manual service mocks for ES6 classes
 4. **Search the codebase** - Use grep/search to find if a mock already exists elsewhere
 
@@ -30,12 +30,12 @@
 
 **✅ ALWAYS:**
 - Use `src/test/__mocks__/@supabase/supabase-js.ts` for database
-- Import from `src/test/__mocks__/commonTestData.ts` for test data
+- Import from `src/test/testUtils.ts` for test data
 - Use factory functions for variations: `createMockGame({ status: 'in_progress' })`
 - Override in `beforeEach`: `mockGameService.getGame.mockResolvedValue(mockGame)`
 
 ### Mocks Must Match Real Behavior
-- Return full database rows from `commonTestData.ts`, not partial data
+- Return full database rows from `testUtils.ts`, not partial data
 - Support method chaining: `.from().select().eq().single()`
 - Include all real-time subscription methods
 
@@ -52,12 +52,12 @@ Jest auto-mock fails on ES6 class static methods. Create manual mocks:
 ## Mock Registry
 
 ### Global Mocks (`src/test/__mocks__/`)
-- **@supabase/supabase-js.ts** - Database client with method chaining, returns mockGame/mockPlayers. Add `jest.mock('@supabase/supabase-js')` to tests for proper hoisting.
+- **@supabase/supabase-js.ts** - Database client with method chaining, returns mockGame/mockPlayers from testUtils.ts. Add `jest.mock('@supabase/supabase-js')` to tests for proper hoisting.
 
 ### Manual Service Mocks (`src/services/<service>/__mocks__/`)
 - **GameService.ts** - 33 static methods as `jest.fn()`. Use `jest.mock('../../services/games/GameService')`.
 
-### Shared Test Data (`src/test/__mocks__/commonTestData.ts`)
+### Shared Test Data (`src/test/testUtils.ts`)
 **Core Data:**
 - mockUser, mockSession, mockGame (id: 'game-123'), mockPlayers (2 players), mockClueSets
 
@@ -73,7 +73,7 @@ Jest auto-mock fails on ES6 class static methods. Create manual mocks:
 ## Troubleshooting
 
 ### Categories Show "Loading..." Instead of Real Data
-**Cause:** Global Supabase mock returning partial data instead of full rows from `commonTestData.ts`
+**Cause:** Global Supabase mock returning partial data instead of full rows from `testUtils.ts`
 **Fix:** Update mock to return `mockGame`, `mockPlayers`, etc. from shared test data
 
 ### "from() is not a function" or Mock Not Called
