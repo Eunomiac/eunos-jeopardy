@@ -12,13 +12,19 @@
  * 5. Generate HTML report for viewing
  */
 
-import { createCoverageMap } from 'istanbul-lib-coverage';
-import { createContext } from 'istanbul-lib-report';
-import { create } from 'istanbul-reports';
+// Import CommonJS modules using default import
+import libCoverage from 'istanbul-lib-coverage';
+import libReport from 'istanbul-lib-report';
+import reports from 'istanbul-reports';
 import fs from 'fs';
 import path from 'path';
 import { glob } from 'glob';
 import { fileURLToPath } from 'url';
+
+// Extract named exports from CommonJS modules
+const { createCoverageMap } = libCoverage;
+const { createContext } = libReport;
+const { create } = reports;
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
