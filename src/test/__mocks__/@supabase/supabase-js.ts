@@ -14,8 +14,10 @@ import { mockGame, mockPlayers } from '../../testUtils'
 interface ChainableMethods {
   eq: jest.MockedFunction<(column: string, value: unknown) => ChainableMethods>
   in: jest.MockedFunction<(column: string, values: unknown[]) => ChainableMethods>
-  single: jest.MockedFunction<() => Promise<{ data: unknown; error: unknown }>>
+  order: jest.MockedFunction<(column: string, options?: { ascending?: boolean }) => ChainableMethods>
   limit: jest.MockedFunction<(count: number) => ChainableMethods>
+  single: jest.MockedFunction<() => ChainableMethods>
+  select: jest.MockedFunction<(columns?: string) => ChainableMethods>
 }
 
 /**
@@ -145,27 +147,33 @@ const mockSupabaseClient = {
     }
 
     // Refactored: Move chainable query creation to top-level for reuse across methods
-    function createChainableQuery(data: unknown): any {
-      const query: any = {};
+    type ChainableQueryResult = ChainableMethods & Promise<{ data: unknown; error: null }>
 
-      query.eq = jest.fn().mockImplementation(() => query);
-      query.in = jest.fn().mockReturnValue(query);
-      query.order = jest.fn().mockReturnValue(query);
-      query.limit = jest.fn().mockReturnValue(query);
-      query.single = jest.fn().mockReturnValue(query);
-      query.select = jest.fn().mockReturnValue(query);
+    function createChainableQuery(data: unknown): ChainableQueryResult {
+      // Create a promise that resolves with the data
+      const basePromise = Promise.resolve({ data, error: null })
 
-      query.then = jest.fn().mockImplementation((resolve) => {
-        const wasSingleCalled = query.single.mock.calls.length > 0;
-        const resultData = wasSingleCalled && Array.isArray(data) && data.length > 0 ? data[0] : data;
+      // Create chainable methods that return the query object itself
+      const query = basePromise as ChainableQueryResult
 
-        return Promise.resolve({
-          data: resultData,
-          error: null
-        }).then(resolve);
-      });
+      query.eq = jest.fn().mockImplementation(() => query)
+      query.in = jest.fn().mockReturnValue(query)
+      query.order = jest.fn().mockReturnValue(query)
+      query.limit = jest.fn().mockReturnValue(query)
+      query.single = jest.fn().mockImplementation(() => {
+        // When single is called, wrap the data to return first element if array
+        // Type guard to safely extract first element
+        let singleData: unknown
+        if (Array.isArray(data) && data.length > 0) {
+          singleData = data[0] as unknown
+        } else {
+          singleData = data
+        }
+        return Promise.resolve({ data: singleData, error: null }) as ChainableQueryResult
+      })
+      query.select = jest.fn().mockReturnValue(query)
 
-      return query;
+      return query
     }
 
     return {
@@ -174,20 +182,16 @@ const mockSupabaseClient = {
           return Promise.resolve({ data: null, error: null, count: 0 })
         }
 
-        const createChainableMethods = (): ChainableMethods & Promise<{ data: unknown; error: null }> => {
-          const data = getDefaultData();
-          return createChainableQuery(data);
-        }
-
-        return createChainableMethods();
+        const data = getDefaultData()
+        return createChainableQuery(data)
       }),
       insert: jest.fn().mockImplementation(() => {
-        const data = getDefaultData();
-        return createChainableQuery(data);
+        const data = getDefaultData()
+        return createChainableQuery(data)
       }),
       update: jest.fn().mockImplementation(() => {
-        const data = getDefaultData();
-        return createChainableQuery(data);
+        const data = getDefaultData()
+        return createChainableQuery(data)
       }),
       delete: jest.fn().mockResolvedValue({ data: null, error: null }),
     }

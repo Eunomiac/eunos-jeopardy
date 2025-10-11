@@ -9,7 +9,7 @@ import { PlayerLobby } from '../components/players/PlayerLobby'
 import PlayerDashboard from '../components/players/PlayerDashboard'
 import { ConnectionDebugger } from '../components/debug/ConnectionDebugger'
 import { useAuth } from '../contexts/AuthContext'
-import { GameService } from '../services/games/GameService'
+import { GameService, type Game } from '../services/games/GameService'
 import { supabase } from '../services/supabase/client'
 import { AnimationOrchestrator } from '../services/animations/AnimationOrchestrator'
 import { AnimationEvents } from '../services/animations/AnimationEvents'
@@ -96,7 +96,7 @@ export function App() {
   const [playerGameId, setPlayerGameId] = useState<string | null>(null)
 
   /** Current game data for player dashboard, managed by App.tsx subscription */
-  const [playerGameData, setPlayerGameData] = useState<any | null>(null)
+  const [playerGameData, setPlayerGameData] = useState<Game | null>(null)
 
   /** Identifier of the selected clue set from database, empty string when none selected */
   const [selectedClueSetId, setSelectedClueSetId] = useState<string>('')
@@ -174,7 +174,7 @@ export function App() {
       return 'player'
     }
 
-    const role = (profile?.role as 'host' | 'player') || 'player'
+    const role = profile.role as 'host' | 'player';
     console.log('👤 Detected role:', role)
     return role
   }, [user])
@@ -278,7 +278,7 @@ export function App() {
       }
     }
 
-    detectUserRole()
+    void detectUserRole()
   }, [user, getUserRole, handlePlayerRoleSetup, handleHostRoleSetup])
 
 
@@ -314,7 +314,7 @@ export function App() {
       }
     }
 
-    loadInitialGameData()
+    void loadInitialGameData()
 
     // Set up animation intent subscription (persists across component mounts)
     console.log('🎬 [App] Setting up animation intent subscription for player game');
@@ -332,23 +332,26 @@ export function App() {
         schema: 'public',
         table: 'games',
         filter: `id=eq.${playerGameId}`
-      }, async (payload) => {
+      }, (payload) => {
         console.log('Player detected game state change:', payload)
 
+        // Type assertion for payload - Supabase real-time payloads match our Game type
+        const newGameData = payload.new as Game
+        const oldGameData = payload.old as Game | undefined
+
         // Store the updated game data for PlayerDashboard
-        if (payload.new) {
-          setPlayerGameData(payload.new)
+          setPlayerGameData(newGameData)
 
           // Publish database buzzer state change event for PlayerDashboard to handle
           // This allows database to override broadcast state when needed
-          if (payload.old && payload.new.is_buzzer_locked !== payload.old.is_buzzer_locked) {
-            console.log(`🔄 [App] Database buzzer state changed: ${payload.old.is_buzzer_locked} → ${payload.new.is_buzzer_locked}`)
+          if (oldGameData && newGameData.is_buzzer_locked !== oldGameData.is_buzzer_locked) {
+            console.log(`🔄 [App] Database buzzer state changed: ${oldGameData.is_buzzer_locked} → ${newGameData.is_buzzer_locked}`)
             // Dispatch custom event that PlayerDashboard can listen to
             window.dispatchEvent(new CustomEvent('database-buzzer-state-change', {
               detail: {
                 gameId: playerGameId,
-                isLocked: payload.new.is_buzzer_locked,
-                hasFocusedClue: !!payload.new.focused_clue_id
+                isLocked: newGameData.is_buzzer_locked,
+                hasFocusedClue: !!newGameData.focused_clue_id
               }
             }))
           }
@@ -356,12 +359,11 @@ export function App() {
           // Feed the orchestrator to publish animation intents
           // if (FEATURE_ANIMATION_EVENTS) {
             const orchestrator = AnimationOrchestrator.getInstance()
-            orchestrator.ingestGameUpdate(payload.new as any)
+            orchestrator.ingestGameUpdate(newGameData)
           // }
-        }
 
         // Check the new game status
-        const newStatus = payload.new?.status
+        const newStatus = newGameData.status
 
         if ((newStatus === 'in_progress' || newStatus === 'introducing_categories' || newStatus === 'game_intro') && mode === 'player-lobby') {
           // Game started - transition to player dashboard
@@ -382,7 +384,7 @@ export function App() {
 
     return () => {
       unsubscribeAnimations();
-      subscription.unsubscribe()
+      void subscription.unsubscribe()
       // Clear orchestrator memory for this game
       // if (FEATURE_ANIMATION_EVENTS) {
         AnimationOrchestrator.getInstance().clear(playerGameId)
@@ -625,25 +627,25 @@ export function App() {
       const result = await UploadService.handleDragAndDropUpload(
         file,
         user.id,
-        // Name prompt callback
-        async (suggestedName: string) => prompt(`Enter a name for this clue set:`, suggestedName),
-        // Duplicate handling prompt callback
-        async (existingName: string) => {
+        // Name prompt callback - wrap synchronous prompt in Promise
+        (suggestedName: string) => Promise.resolve(prompt(`Enter a name for this clue set:`, suggestedName)),
+        // Duplicate handling prompt callback - wrap synchronous confirm in Promise
+        (existingName: string) => {
           const overwrite = confirm(
             `A clue set named "${existingName}" already exists.\n\nClick OK to overwrite it, or Cancel to abort the upload.`
           )
-          return overwrite ? 'overwrite' : 'cancel'
+          return Promise.resolve(overwrite ? 'overwrite' : 'cancel')
         }
       )
 
       if (result.success) {
         // Select the newly uploaded clue set
-        setSelectedClueSetId(result.clueSetId!)
+        setSelectedClueSetId(result.clueSetId ?? "")
         // Refresh the clue set list
         setRefreshTrigger((prev) => prev + 1)
         // No success dialog - automatic selection makes success clear
       } else {
-        handleClueSetError(result.error || 'Upload failed')
+        handleClueSetError(result.error ?? 'Upload failed')
       }
     } catch (error) {
       handleClueSetError(error instanceof Error ? error.message : 'Upload failed')
@@ -750,7 +752,7 @@ export function App() {
       <div className="host-game-section">
         <button
           className={`jeopardy-button jeopardy-button-large ${!selectedClueSetId ? 'inactive' : ''}`}
-          onClick={handleHostGame}
+          onClick={() => void handleHostGame()}
           disabled={!selectedClueSetId}
         >
           Host Game
@@ -774,7 +776,7 @@ export function App() {
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDrop={(e) => { void handleDrop(e) }}
       role="application"
       aria-label="Jeopardy game creation interface with drag and drop file upload"
     >
@@ -803,8 +805,11 @@ export function App() {
           {/* Main application content for authenticated users */}
           {user && (
             <>
-              {/* Debug info */}
-              {console.log('🔍 Render state:', { user: !!user, roleLoading, userRole, mode })}
+              {/* Debug info - moved to separate statement */}
+              {(() => {
+                console.log('🔍 Render state:', { user: !!user, roleLoading, userRole, mode })
+                return null
+              })()}
 
               {/* Show loading screen while determining user role */}
               {roleLoading && renderRoleLoadingScreen()}
