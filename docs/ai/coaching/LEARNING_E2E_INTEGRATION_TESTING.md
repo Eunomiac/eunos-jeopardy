@@ -374,6 +374,215 @@ After each step:
 - Tests should be independent and isolated
 - Flaky tests are worse than no tests
 
+## Troubleshooting Guide: Lessons Learned
+
+This section documents real issues encountered during E2E test development and their solutions. These are valuable learning experiences that help avoid common pitfalls.
+
+### Issue 1: Race Condition - Profile Creation Not Awaited
+
+**Problem**: Test failed with foreign key constraint violation when player tried to join game:
+```
+Failed to add player: insert or update on table 'players' violates foreign key constraint 'players_user_id_fkey'
+```
+
+**Root Cause**:
+- `ensureProfileExists()` was called with `void` (fire-and-forget)
+- Profile creation was asynchronous and non-blocking
+- Players attempted to join games before their profiles existed in database
+
+**Solution**:
+```typescript
+// BEFORE (WRONG):
+void ensureProfileExists(thisSession.user)
+setLoading(false)
+
+// AFTER (CORRECT):
+if (thisSession?.user) {
+  await ensureProfileExists(thisSession.user)
+}
+setLoading(false) // Only after profile exists
+```
+
+**Lesson**: Always await async operations that create database records before allowing dependent operations. Fire-and-forget (`void`) is dangerous when order matters.
+
+---
+
+### Issue 2: Username Conflicts from Email Prefix
+
+**Problem**: Multiple test users with similar emails created duplicate usernames:
+- `player1@e2e.com` → username: `player1`
+- `player1@test.com` → username: `player1` (conflict!)
+
+**Root Cause**: Username generation used `email.split('@')[0]`, which only takes the part before `@`
+
+**Solution**:
+```typescript
+// BEFORE (WRONG):
+username: user.email.split('@')[0]
+
+// AFTER (CORRECT):
+username: user.email  // Use full email for guaranteed uniqueness
+```
+
+**Lesson**: When generating unique identifiers, use the full unique value (email) rather than a substring that might not be unique.
+
+---
+
+### Issue 3: Headless Mode Network Access Denied
+
+**Problem**: Tests worked in headed mode (visible browser) but failed in headless mode with:
+```
+ERR_NETWORK_ACCESS_DENIED
+Failed to fetch
+```
+
+**Root Cause**: Chromium has security restrictions in headless mode that block certain network requests
+
+**Solution**: Add browser launch arguments to disable web security:
+```typescript
+launchOptions: {
+  args: [
+    '--disable-web-security',
+    '--disable-features=IsolateOrigins,site-per-process',
+  ],
+}
+```
+
+**Lesson**: Headless mode has stricter security policies. For E2E tests against real backends, you may need to relax these restrictions. This is safe for testing but should NEVER be used in production.
+
+---
+
+### Issue 4: Nickname Not Saving - Timing Issue
+
+**Problem**: Test filled in nickname "Alice" but player appeared as "Test Player" (default)
+
+**Root Cause**:
+- Test filled nickname immediately after page load
+- Component loaded default nickname from profile asynchronously
+- Default nickname overwrote the test's custom nickname
+
+**Solution**: Wait for profile to load before setting custom nickname:
+```typescript
+// BEFORE (WRONG):
+await nicknameInput.fill('Alice');
+
+// AFTER (CORRECT):
+const nicknameInput = page.getByPlaceholder('Your display name...');
+await expect(nicknameInput).not.toHaveValue(''); // Wait for default to load
+await nicknameInput.clear();
+await nicknameInput.fill('Alice');
+await expect(nicknameInput).toHaveValue('Alice'); // Verify it stuck
+```
+
+**Lesson**: When testing forms that load default values asynchronously, wait for the default to appear before modifying it. This ensures your changes don't get overwritten.
+
+---
+
+### Issue 5: Blank Browser Window During Multi-Context Tests
+
+**Problem**: When opening 4 browser contexts quickly, the 4th window remained blank/white and never loaded the app
+
+**Root Cause**: Creating too many browser contexts simultaneously can cause timing issues and resource contention
+
+**Solution**:
+- Create contexts sequentially (already done with `await`)
+- Run in headless mode to reduce resource overhead
+- Set `slowMo: 0` for headless mode (no need for delays)
+
+**Lesson**: Multi-context tests are resource-intensive. Headless mode is more reliable for tests with many simultaneous users. Save headed mode for debugging specific issues.
+
+---
+
+### Issue 6: Test Assertions Using Wrong UI Text
+
+**Problem**: Test looked for "Players in Game (1)" but UI actually showed "Total Players: 1"
+
+**Root Cause**: Test was written based on assumption rather than actual UI implementation
+
+**Solution**:
+1. Run test in headed mode to see actual UI
+2. Use browser DevTools to inspect exact text
+3. Update assertions to match reality:
+```typescript
+// BEFORE (WRONG):
+await expect(page.getByText('Players in Game (1)')).toBeVisible();
+
+// AFTER (CORRECT):
+await expect(page.getByText('Total Players: 1')).toBeVisible();
+```
+
+**Lesson**: Always verify the actual UI text before writing assertions. Use headed mode or screenshots to see what's really rendered. Don't assume text based on component names or logic.
+
+---
+
+### Issue 7: Start Button Not Disabled When No Players
+
+**Problem**: Test expected "Start Game" button to be disabled with no players, but it was enabled
+
+**Root Cause**: Button's `disabled` property was hardcoded to `false` instead of checking player count
+
+**Solution**: Update button logic to check player count:
+```typescript
+// BEFORE (WRONG):
+const getGameControlButton = (game: Game | null) => {
+  if (game.status === "lobby") {
+    return { text: "Start Game", handler: "start", disabled: false };
+  }
+}
+
+// AFTER (CORRECT):
+const getGameControlButton = (game: Game | null, playerCount: number) => {
+  if (game.status === "lobby") {
+    return {
+      text: "Start Game",
+      handler: "start",
+      disabled: playerCount === 0  // Disable if no players
+    };
+  }
+}
+```
+
+**Lesson**: E2E tests often reveal missing business logic validation. When a test fails because the app doesn't enforce a rule, fix the app, not the test. This is a valuable benefit of E2E testing!
+
+---
+
+### Issue 8: Playwright Startup Delay (~75 seconds)
+
+**Problem**: Long delay between running `npm run test:e2e` and seeing any output
+
+**Root Cause**: Playwright compiles all TypeScript test files before execution. This is normal overhead.
+
+**Why Vite is Faster**:
+- Vite uses esbuild (written in Go, extremely fast)
+- Vite does on-demand compilation (only what you use)
+- Playwright uses ts-node (slower, compiles everything upfront)
+
+**Solution**: Accept it as normal. Subsequent runs without code changes are faster due to caching.
+
+**Lesson**: First test run after changes will be slow (~75s). This is TypeScript compilation, not your tests. Plan accordingly - run tests in batches rather than individually. The lack of feedback during this time is frustrating but normal.
+
+---
+
+### Best Practices Summary
+
+**✅ DO:**
+- Always `await` async operations that create database records
+- Use full unique values (like email) for identifiers, not substrings
+- Wait for async-loaded defaults before modifying form values
+- Verify actual UI text before writing assertions
+- Run in headless mode for multi-context tests
+- Use headed mode for debugging specific issues
+- Let E2E tests drive business logic improvements
+
+**❌ DON'T:**
+- Use fire-and-forget (`void`) for critical async operations
+- Assume UI text matches component names or logic
+- Create many browser contexts in headed mode
+- Expect instant Playwright startup (TypeScript compilation takes time)
+- Write tests based on assumptions - verify the actual behavior first
+
+---
+
 ## Notes
 
 - **Coverage is not the goal**: Learning is the goal, coverage is a side effect
@@ -381,3 +590,4 @@ After each step:
 - **Real-world skills**: Teach patterns used in production applications
 - **Progressive learning**: Each phase builds on the previous
 - **User-paced**: Don't rush, ensure understanding at each step
+- **Troubleshooting is learning**: Every bug fixed teaches valuable lessons
