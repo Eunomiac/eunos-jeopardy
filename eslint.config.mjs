@@ -23,6 +23,12 @@ export default defineConfig(
       },
     },
     rules: {
+      "prefer-const": [
+        "error",
+        {
+          destructuring: "all"
+        }
+      ],
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/restrict-template-expressions': [
         'error',
