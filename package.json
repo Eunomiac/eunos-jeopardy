@@ -23,7 +23,7 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:coverage": "cross-env VITE_COVERAGE=true playwright test",
     "coverage:merge": "node scripts/merge-coverage.js",
-    "coverage:all": "npm run test:coverage && npm run test:e2e:coverage && npm run coverage:merge"
+    "coverage:all": "node scripts/run-all-coverage.js"
   },
   "dependencies": {
     "@sentry/react": "^10.10.0",
