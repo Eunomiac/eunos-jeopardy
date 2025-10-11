@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase/client';
-import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
+import { REALTIME_SUBSCRIBE_STATES, type RealtimeChannel } from '@supabase/supabase-js';
 
 interface PlayerConnectionStatusProps {
   playerId: string;
@@ -16,34 +16,62 @@ interface PlayerConnectionStatusProps {
 
 type ConnectionState = 'connected' | 'disconnected' | 'connecting' | 'error';
 
+/**
+ * Presence payload structure from Supabase Realtime.
+ * The actual user data is nested within the presence object.
+ */
+interface PresencePayload {
+  user_id: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Supabase Presence wrapper type.
+ * Presence objects contain the actual payload data.
+ */
+interface Presence {
+  presence_ref?: string;
+  [key: string]: unknown;
+}
+
 export function PlayerConnectionStatus({ playerId, playerName }: Readonly<PlayerConnectionStatusProps>) {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [lastSeen, setLastSeen] = useState<Date | null>(null);
 
   // Helper: Check if player is present in presence state
-  function isPlayerPresent(presenceState: Record<string, any[]>): boolean {
+  function isPlayerPresent(presenceState: Record<string, Presence[]>): boolean {
     return Object.keys(presenceState).some((key) =>
-      presenceState[key].some((presence: any) => presence.user_id === playerId)
+      presenceState[key].some((presence) => {
+        // Presence data can be in different locations depending on Supabase version
+        const userData = presence as unknown as PresencePayload;
+        return userData.user_id === playerId;
+      })
     );
   }
 
   // Presence event handlers
-  function handlePresenceSync(presenceChannel: any) {
-    const presenceState = presenceChannel.presenceState();
+  function handlePresenceSync(presenceChannel: RealtimeChannel) {
+    const presenceState = presenceChannel.presenceState<PresencePayload>();
     const present = isPlayerPresent(presenceState);
     setConnectionState(present ? "connected" : "disconnected");
     if (present) {setLastSeen(new Date())};
   }
 
-  function handlePresenceJoin(newPresences: any[]) {
-    if (newPresences.some((presence: any) => presence.user_id === playerId)) {
+  function handlePresenceJoin(newPresences: Presence[]) {
+    if (newPresences.some((presence) => {
+      const userData = presence as unknown as PresencePayload;
+      return userData.user_id === playerId;
+    })) {
       setConnectionState("connected");
       setLastSeen(new Date());
     }
   }
 
-  function handlePresenceLeave(leftPresences: any[]) {
-    if (leftPresences.some((presence: any) => presence.user_id === playerId)) {
+  function handlePresenceLeave(leftPresences: Presence[]) {
+    if (leftPresences.some((presence) => {
+      const userData = presence as unknown as PresencePayload;
+      return userData.user_id === playerId;
+    })) {
       setConnectionState("disconnected");
     }
   }
