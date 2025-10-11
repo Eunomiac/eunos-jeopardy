@@ -17,7 +17,7 @@
       - generic [ref=e19]:
         - generic [ref=e20]:
           - generic [ref=e21]: Nickname
-          - textbox "Nickname" [active] [ref=e22]:
+          - textbox "Nickname" [ref=e22]:
             - /placeholder: Your display name for this game...
             - text: Alice
           - text: This will be your display name in the game
@@ -34,6 +34,7 @@
     - generic [ref=e33]: ⚪ Supabase
     - generic [ref=e34]: "Status: SUBSCRIBED"
     - generic [ref=e35]: "User: fab88c6a..."
-    - generic [ref=e36]: "Game: None"
-    - generic [ref=e37]: "Updated: 11:28:00 AM"
+    - generic [ref=e36]: "Game: 9b700966..."
+    - generic [ref=e37]: "Updated: 11:34:08 AM"
+    - button "📋 Copy Channel" [ref=e39] [cursor=pointer]
 ```
