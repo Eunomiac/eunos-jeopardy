@@ -76,7 +76,7 @@ export async function saveCoverage(page: Page, testName: string) {
   const coverage = await page.evaluate(() => {
     return (window as any).__coverage__;
   });
-  
+
   // Save to .nyc_output/coverage-e2e-{testName}-{timestamp}.json
   fs.writeFileSync(coverageFile, JSON.stringify(coverage));
 }
@@ -141,20 +141,16 @@ npm run coverage:all
 
 ### In CI/CD
 
-```yaml
-# .github/workflows/ci.yml
-- name: Run Jest tests
-  run: npm run test:coverage
+The GitHub workflow `.github/workflows/build.yml` is configured to:
 
-- name: Run E2E tests
-  run: npm run test:e2e:coverage
+1. Run Jest tests with coverage
+2. Install Playwright browsers
+3. Run E2E tests with coverage
+4. Merge coverage reports
+5. Upload merged coverage as artifact
+6. Run SonarQube scan with merged coverage
 
-- name: Merge coverage
-  run: npm run coverage:merge
-
-- name: SonarQube Scan
-  run: npm run sonar
-```
+All steps use `continue-on-error: true` to ensure the workflow completes even if individual tests fail (e.g., coverage thresholds not met).
 
 ---
 
@@ -175,7 +171,7 @@ import { saveCoverage } from '../fixtures/coverage-helpers';
 
 test('my test', async ({ page }) => {
   // ... test code ...
-  
+
   // Save coverage at end
   await saveCoverage(page, 'my-test');
 });
@@ -190,9 +186,9 @@ test('multi-user test', async ({ browser }) => {
   const hostPage = await hostContext.newPage();
   const player1Page = await player1Context.newPage();
   const player2Page = await player2Context.newPage();
-  
+
   // ... test code ...
-  
+
   // Save coverage from all contexts
   await saveMultiContextCoverage(
     [hostPage, player1Page, player2Page],
@@ -382,4 +378,3 @@ E2E tests generate large coverage files (1-5MB each).
 2. Review merged HTML report
 3. Push changes and verify SonarQube updates
 4. Monitor coverage trends over time
-

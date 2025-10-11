@@ -9,8 +9,8 @@ on:
 
 jobs:
   sonarqube:
-    name: SonarQube
-    runs-on: windows-latest
+    name: SonarQube with Merged Coverage
+    runs-on: ubuntu-latest  # Changed to Ubuntu for better performance
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,12 +25,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with coverage
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Jest tests with coverage
         run: npm run test:ci
         continue-on-error: true
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Run E2E tests with coverage
+        run: npm run test:e2e:coverage
+        continue-on-error: true
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          CI: true
+
+      - name: Merge coverage reports
+        run: npm run coverage:merge
+        continue-on-error: true
+
+      - name: Upload merged coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-merged
+          path: coverage-merged/
+          retention-days: 30
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
