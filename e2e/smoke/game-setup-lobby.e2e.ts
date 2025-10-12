@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
 import { startConsoleLogger } from '../fixtures/console-logger';
+import {
+  loginAsPlayer,
+  createGameAsHost,
+  joinGame
+} from '../fixtures/test-helpers';
 
 /**
  * Smoke Test: Game Setup & Lobby
@@ -76,21 +81,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: Player 1 logs in before game exists
       // ============================================================
-      await player1Page.goto('/');
-      await player1Page.getByPlaceholder('Email').fill(TEST_USERS.player1.email);
-      await player1Page.getByPlaceholder('Password').fill(TEST_USERS.player1.password);
-      await player1Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player1Page.getByText('Currently logged in as')).toBeVisible();
-
-      // Set nickname - wait for default to load, then replace it
-      const nicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
-      // Wait for the input to have any value (profile loaded)
-      await expect(nicknameInput).not.toHaveValue('');
-      // Use fill('') to clear, then fill with actual value
-      await nicknameInput.fill('');
-      await nicknameInput.fill('Alice');
-      // Verify the nickname was set
-      await expect(nicknameInput).toHaveValue('Alice');
+      await loginAsPlayer(player1Page, TEST_USERS.player1.email, 'Alice');
 
       // Confirm "Waiting for Game" button is disabled
       await expect(player1Page.getByRole('button', { name: 'Waiting for Game' })).toBeVisible();
@@ -99,18 +90,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ACT: Host creates game
       // ============================================================
-      await hostPage.goto('/');
-      await hostPage.getByPlaceholder('Email').fill(TEST_USERS.host.email);
-      await hostPage.getByPlaceholder('Password').fill(TEST_USERS.host.password);
-      await hostPage.getByRole('button', { name: 'Login' }).click();
-      await expect(hostPage.getByText('Currently logged in as')).toBeVisible();
-
-      // Select clue set and create game
-      const clueSetDropdown = hostPage.getByRole('combobox');
-      await expect(clueSetDropdown).toBeVisible();
-      await clueSetDropdown.selectOption({ index: 1 });
-      await hostPage.getByText('Host Game').click();
-      await expect(hostPage.getByText('Game Host Dashboard')).toBeVisible();
+      await createGameAsHost(hostPage);
 
       // ============================================================
       // ASSERT: Player 1's button changes to "Join Game"
@@ -121,21 +101,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: Player 2 logs in (game exists but no one joined yet)
       // ============================================================
-      await player2Page.goto('/');
-      await player2Page.getByPlaceholder('Email').fill(TEST_USERS.player2.email);
-      await player2Page.getByPlaceholder('Password').fill(TEST_USERS.player2.password);
-      await player2Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player2Page.getByText('Currently logged in as')).toBeVisible();
-
-      // Set nickname - wait for default to load, then replace it
-      const player2NicknameInput = player2Page.getByPlaceholder('Your display name for this game...');
-      // Wait for the input to have any value (profile loaded)
-      await expect(player2NicknameInput).not.toHaveValue('');
-      // Use fill('') to clear, then fill with actual value
-      await player2NicknameInput.fill('');
-      await player2NicknameInput.fill('Bob');
-      // Verify the nickname was set
-      await expect(player2NicknameInput).toHaveValue('Bob');
+      await loginAsPlayer(player2Page, TEST_USERS.player2.email, 'Bob');
 
       // Confirm "Join Game" button is enabled and NO players listed
       await expect(player2Page.getByRole('button', { name: 'Join Game' })).toBeVisible();
@@ -146,7 +112,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ACT: Player 1 joins game
       // ============================================================
-      await player1Page.getByRole('button', { name: 'Join Game' }).click();
+      await joinGame(player1Page);
 
       // ============================================================
       // ASSERT: Player 1 sees game lobby with only themselves
@@ -163,7 +129,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ACT: Player 2 joins game
       // ============================================================
-      await player2Page.getByRole('button', { name: 'Join Game' }).click();
+      await joinGame(player2Page);
 
       // ============================================================
       // ASSERT: Player 2 sees game lobby with Alice and Bob
@@ -186,21 +152,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: Player 3 logs in (2 players already in game)
       // ============================================================
-      await player3Page.goto('/');
-      await player3Page.getByPlaceholder('Email').fill(TEST_USERS.player3.email);
-      await player3Page.getByPlaceholder('Password').fill(TEST_USERS.player3.password);
-      await player3Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player3Page.getByText('Currently logged in as')).toBeVisible();
-
-      // Set nickname - wait for default to load, then replace it
-      const player3NicknameInput = player3Page.getByPlaceholder('Your display name for this game...');
-      // Wait for the input to have any value (profile loaded)
-      await expect(player3NicknameInput).not.toHaveValue('');
-      // Use fill('') to clear, then fill with actual value
-      await player3NicknameInput.fill('');
-      await player3NicknameInput.fill('Charlie');
-      // Verify the nickname was set
-      await expect(player3NicknameInput).toHaveValue('Charlie');
+      await loginAsPlayer(player3Page, TEST_USERS.player3.email, 'Charlie');
 
       // Confirm "Join Game" button is enabled and NO players listed
       await expect(player3Page.getByRole('button', { name: 'Join Game' })).toBeVisible();
@@ -212,7 +164,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ACT: Player 3 joins game
       // ============================================================
-      await player3Page.getByRole('button', { name: 'Join Game' }).click();
+      await joinGame(player3Page);
 
       // ============================================================
       // ASSERT: Player 3 sees game lobby with all 3 players
@@ -276,40 +228,11 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
 
     try {
       // ============================================================
-      // ARRANGE: Host creates game
+      // ARRANGE: Host creates game and Player 1 joins
       // ============================================================
-      await hostPage.goto('/');
-      await hostPage.getByPlaceholder('Email').fill(TEST_USERS.host.email);
-      await hostPage.getByPlaceholder('Password').fill(TEST_USERS.host.password);
-      await hostPage.getByRole('button', { name: 'Login' }).click();
-      await expect(hostPage.getByText('Currently logged in as')).toBeVisible();
-
-      const clueSetDropdown = hostPage.getByRole('combobox');
-      await expect(clueSetDropdown).toBeVisible();
-      await clueSetDropdown.selectOption({ index: 1 });
-      await hostPage.getByText('Host Game').click();
-      await expect(hostPage.getByText('Game Host Dashboard')).toBeVisible();
-
-      // ============================================================
-      // ARRANGE: Player 1 logs in and joins game
-      // ============================================================
-      await player1Page.goto('/');
-      await player1Page.getByPlaceholder('Email').fill(TEST_USERS.player1.email);
-      await player1Page.getByPlaceholder('Password').fill(TEST_USERS.player1.password);
-      await player1Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player1Page.getByText('Currently logged in as')).toBeVisible();
-
-      // Set nickname - wait for default to load, then replace it
-      const player1NicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
-      // Wait for the input to have any value (profile loaded)
-      await expect(player1NicknameInput).not.toHaveValue('');
-      // Use fill('') to clear, then fill with actual value
-      await player1NicknameInput.fill('');
-      await player1NicknameInput.fill('Alice');
-      await expect(player1NicknameInput).toHaveValue('Alice');
-
-      await player1Page.getByRole('button', { name: 'Join Game' }).click();
-      await expect(player1Page.getByText('Game Lobby')).toBeVisible();
+      await createGameAsHost(hostPage);
+      await loginAsPlayer(player1Page, TEST_USERS.player1.email, 'Alice');
+      await joinGame(player1Page);
 
       // ============================================================
       // ACT: Host starts game
@@ -323,11 +246,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: Player 2 logs in after game has started
       // ============================================================
-      await player2Page.goto('/');
-      await player2Page.getByPlaceholder('Email').fill(TEST_USERS.player2.email);
-      await player2Page.getByPlaceholder('Password').fill(TEST_USERS.player2.password);
-      await player2Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player2Page.getByText('Currently logged in as')).toBeVisible();
+      await loginAsPlayer(player2Page, TEST_USERS.player2.email, 'Bob');
 
       // ============================================================
       // ASSERT: Player 2 sees "Waiting for Game" button disabled
@@ -370,17 +289,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: Host creates game
       // ============================================================
-      await page.goto('/');
-      await page.getByPlaceholder('Email').fill(TEST_USERS.host.email);
-      await page.getByPlaceholder('Password').fill(TEST_USERS.host.password);
-      await page.getByRole('button', { name: 'Login' }).click();
-      await expect(page.getByText('Currently logged in as')).toBeVisible();
-
-      const clueSetDropdown = page.getByRole('combobox');
-      await expect(clueSetDropdown).toBeVisible();
-      await clueSetDropdown.selectOption({ index: 1 });
-      await page.getByText('Host Game').click();
-      await expect(page.getByText('Game Host Dashboard')).toBeVisible();
+      await createGameAsHost(page);
 
       // ============================================================
       // ASSERT: "Start Game" button is disabled
