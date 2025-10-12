@@ -1,4 +1,4 @@
-import { test, expect, Browser, BrowserContext, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
 import { startConsoleLogger } from '../fixtures/console-logger';
@@ -222,9 +222,9 @@ test.describe('Round Transitions - Smoke Tests', () => {
 
     } finally {
       // Save console logs
-      await hostLogger.save();
-      await player1Logger.save();
-      await player2Logger.save();
+      hostLogger.save();
+      player1Logger.save();
+      player2Logger.save();
 
       // Close contexts
       await hostContext.close();

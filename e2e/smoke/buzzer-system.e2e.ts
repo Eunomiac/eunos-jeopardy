@@ -1,14 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
-import {
-  setupTestInProgress,
-  cleanupTestContext,
-  selectClue,
-  unlockBuzzer,
-  buzzIn,
-  markCorrect
-} from '../fixtures/test-helpers';
+import { startConsoleLogger } from '../fixtures/console-logger';
 
 /**
  * E2E Smoke Tests: Buzzer System
@@ -219,9 +212,9 @@ test.describe('Buzzer System - Smoke Tests', () => {
 
     } finally {
       // Save console logs
-      await hostLogger.save();
-      await player1Logger.save();
-      await player2Logger.save();
+      hostLogger.save();
+      player1Logger.save();
+      player2Logger.save();
 
       // Close contexts
       await hostContext.close();
@@ -392,9 +385,9 @@ test.describe('Buzzer System - Smoke Tests', () => {
 
     } finally {
       // Save console logs
-      await hostLogger.save();
-      await player1Logger.save();
-      await player2Logger.save();
+      hostLogger.save();
+      player1Logger.save();
+      player2Logger.save();
 
       // Close contexts
       await hostContext.close();

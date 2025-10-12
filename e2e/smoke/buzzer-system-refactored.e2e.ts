@@ -94,7 +94,7 @@ test.describe('Buzzer System - Smoke Tests', () => {
     try {
       const { hostPage, playerPages, playerContexts } = ctx;
       const [player1Page, player2Page] = playerPages;
-      const [player1Context, player2Context] = playerContexts;
+      const [, player2Context] = playerContexts;
 
       // ============================================================
       // ARRANGE: Add network delay to Player 2 to create race condition
@@ -144,4 +144,3 @@ test.describe('Buzzer System - Smoke Tests', () => {
     }
   });
 });
-

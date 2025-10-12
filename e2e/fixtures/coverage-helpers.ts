@@ -4,11 +4,11 @@ import path from 'path';
 
 /**
  * Save coverage data from a Playwright page to disk
- * 
+ *
  * This extracts the Istanbul coverage object from the browser window
  * and saves it to the .nyc_output directory for later merging with
  * Jest coverage.
- * 
+ *
  * @param page - Playwright page object
  * @param testName - Name of the test (used in filename)
  */
@@ -16,9 +16,8 @@ export async function saveCoverage(page: Page, testName: string): Promise<void> 
   try {
     // Get coverage from the page's window object
     // Istanbul instruments code and stores coverage in window.__coverage__
-    const coverage = await page.evaluate(() => {
-      return (window as any).__coverage__;
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const coverage = await page.evaluate(() => (globalThis as any).__coverage__);
 
     if (coverage) {
       // Create .nyc_output directory if it doesn't exist
@@ -48,7 +47,7 @@ export async function saveCoverage(page: Page, testName: string): Promise<void> 
 
 /**
  * Save coverage from multiple pages (for multi-context tests)
- * 
+ *
  * @param pages - Array of Playwright page objects
  * @param testName - Name of the test
  */
@@ -60,4 +59,3 @@ export async function saveMultiContextCoverage(
     await saveCoverage(pages[i], `${testName}-context${i + 1}`);
   }
 }
-
