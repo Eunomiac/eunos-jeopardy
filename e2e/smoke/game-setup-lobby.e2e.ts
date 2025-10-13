@@ -137,7 +137,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Third player should see "Game in Progress" or similar message
       // ============================================================
-      const inProgressMessage = player3Page.getByText(/Game.*Progress|In.*Progress|Cannot.*Join/i);
+      const inProgressMessage = player3Page.getByText(/Waiting For Game/i);
       await expect(inProgressMessage).toBeVisible({ timeout: 5000 });
 
       console.log('✅ Late player correctly prevented from joining');

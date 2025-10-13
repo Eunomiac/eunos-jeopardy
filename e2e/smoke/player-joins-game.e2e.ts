@@ -45,7 +45,7 @@ test.describe('Player Joins Game - Smoke Test', () => {
     // ============================================================
     // ASSERT: Player should see "Waiting for Game" or "No Active Game"
     // ============================================================
-    const waitingMessage = page.getByText(/Waiting.*Game|No.*Active.*Game|Join.*Game/i);
+    const waitingMessage = page.getByText(/Waiting for Game/i);
     await expect(waitingMessage).toBeVisible({ timeout: 5000 });
 
     console.log('✅ Player successfully logged in and is waiting for game');
@@ -74,7 +74,7 @@ test.describe('Player Joins Game - Smoke Test', () => {
       // ============================================================
       // ASSERT: Player should see "Waiting for Game"
       // ============================================================
-      await expect(playerPage.getByText(/Waiting.*Game|No.*Active.*Game/i)).toBeVisible({ timeout: 5000 });
+      await expect(playerPage.getByText(/Waiting for Game/i)).toBeVisible({ timeout: 5000 });
 
       // ============================================================
       // ACT: Host creates game
