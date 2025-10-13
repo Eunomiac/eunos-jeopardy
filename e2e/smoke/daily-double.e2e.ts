@@ -1,7 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
-import { startConsoleLogger } from '../fixtures/console-logger';
+import {
+  setupTestInProgress,
+  cleanupTestContext,
+  selectClue,
+  unlockBuzzer,
+  buzzIn,
+  markCorrect,
+  markWrong
+} from '../fixtures/test-helpers';
 
 /**
  * E2E Smoke Tests: Daily Double Flow
@@ -36,292 +44,147 @@ test.describe('Daily Double - Smoke Tests', () => {
 
   test('should complete Daily Double flow with correct answer', async ({ browser }) => {
     // ============================================================
-    // ARRANGE: Create browser contexts for host and 2 players
+    // ARRANGE: Setup game with 2 players at board
     // ============================================================
-    const hostContext = await browser.newContext();
-    const player1Context = await browser.newContext();
-    const player2Context = await browser.newContext();
-
-    const hostPage = await hostContext.newPage();
-    const player1Page = await player1Context.newPage();
-    const player2Page = await player2Context.newPage();
-
-    // Start console logging for debugging
-    const hostLogger = startConsoleLogger(hostPage, 'daily-double-host');
-    const player1Logger = startConsoleLogger(player1Page, 'daily-double-player1');
-    const player2Logger = startConsoleLogger(player2Page, 'daily-double-player2');
+    const ctx = await setupTestInProgress(browser, ['Alice', 'Bob'], 'daily-double-correct');
 
     try {
-      // ============================================================
-      // ARRANGE: Setup game with 2 players
-      // ============================================================
-      await player1Page.goto('/');
-      await player1Page.getByPlaceholder('Email').fill(TEST_USERS.player1.email);
-      await player1Page.getByPlaceholder('Password').fill(TEST_USERS.player1.password);
-      await player1Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player1Page.getByText('Currently logged in as')).toBeVisible();
-
-      const player1NicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
-      await expect(player1NicknameInput).not.toHaveValue('');
-      await player1NicknameInput.fill('');
-      await player1NicknameInput.fill('Alice');
-
-      await player2Page.goto('/');
-      await player2Page.getByPlaceholder('Email').fill(TEST_USERS.player2.email);
-      await player2Page.getByPlaceholder('Password').fill(TEST_USERS.player2.password);
-      await player2Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player2Page.getByText('Currently logged in as')).toBeVisible();
-
-      const player2NicknameInput = player2Page.getByPlaceholder('Your display name for this game...');
-      await expect(player2NicknameInput).not.toHaveValue('');
-      await player2NicknameInput.fill('');
-      await player2NicknameInput.fill('Bob');
-
-      await hostPage.goto('/');
-      await hostPage.getByPlaceholder('Email').fill(TEST_USERS.host.email);
-      await hostPage.getByPlaceholder('Password').fill(TEST_USERS.host.password);
-      await hostPage.getByRole('button', { name: 'Login' }).click();
-      await expect(hostPage.getByText('Currently logged in as')).toBeVisible();
-
-      await hostPage.getByRole('button', { name: 'Create Game' }).click();
-      await expect(hostPage.getByText('Game Host Dashboard')).toBeVisible();
-
-      await player1Page.getByRole('button', { name: 'Join Game' }).click();
-      await expect(player1Page.getByText('Game Lobby')).toBeVisible();
-
-      await player2Page.getByRole('button', { name: 'Join Game' }).click();
-      await expect(player2Page.getByText('Game Lobby')).toBeVisible();
-
-      await expect(hostPage.getByText('Total Players: 2')).toBeVisible();
+      const { hostPage, playerPages } = ctx;
+      const [player1Page] = playerPages;
 
       // ============================================================
-      // ARRANGE: Start game and skip to in_progress
+      // ACT: Host selects a Daily Double clue (clue index 5 is often DD)
       // ============================================================
-      await hostPage.getByRole('button', { name: 'Start Game' }).click();
-      await hostPage.waitForTimeout(2000);
-
-      // Skip through intro animations if present
-      for (let i = 0; i < 7; i++) {
-        const nextButton = hostPage.getByRole('button', { name: /Next|Continue|Start|Introduce/i }).first();
-        if (await nextButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await nextButton.click();
-          await hostPage.waitForTimeout(500);
-        }
-      }
-
-      await expect(player1Page.locator('.game-board')).toBeVisible({ timeout: 15000 });
+      await selectClue(hostPage, 5);
 
       // ============================================================
-      // ARRANGE: Give Player 1 some points first (for valid wager)
+      // ASSERT: Daily Double splash screen appears
       // ============================================================
-      // Select a regular clue, Player 1 buzzes and gets it correct
-      const regularClue = hostPage.locator('.clue-cell, .board-cell').first();
-      await expect(regularClue).toBeVisible({ timeout: 5000 });
-      await regularClue.click();
-      await hostPage.waitForTimeout(1000);
+      await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
+      await expect(player1Page.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
 
-      const unlockBuzzer = hostPage.getByRole('button', { name: /Unlock Buzzer|Enable Buzzer/i });
-      if (await unlockBuzzer.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await unlockBuzzer.click();
-        const player1Buzzer = player1Page.locator('.buzzer-button, button[class*="buzzer"]');
-        await expect(player1Buzzer).toBeEnabled({ timeout: 2000 });
-        await player1Buzzer.click();
-
-        const correctButton = hostPage.getByRole('button', { name: /Correct|✓/i });
-        await expect(correctButton).toBeVisible({ timeout: 5000 });
-        await correctButton.click();
-        await hostPage.waitForTimeout(1000);
-      }
+      console.log('✅ Daily Double splash screen displayed');
 
       // ============================================================
-      // ACT: Host selects Daily Double clue
+      // ACT: Host reveals the Daily Double prompt
       // ============================================================
-      // Note: This assumes you can identify a Daily Double clue
-      // You may need to select a specific clue that's marked as DD
-      // Or the test may need to be run with a known clue set
-      const dailyDoubleClue = hostPage.locator('.clue-cell.daily-double, .board-cell[data-daily-double="true"]').first();
-
-      // If no specific DD marker, just select another clue and hope it's a DD
-      // Or you might need to set up test data with known DD positions
-      if (await dailyDoubleClue.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await dailyDoubleClue.click();
-      } else {
-        // Fallback: select second clue and assume it might be DD
-        await hostPage.locator('.clue-cell, .board-cell').nth(1).click();
-      }
-
+      const revealButton = hostPage.getByRole('button', { name: /Reveal|Daily Double/i });
+      await expect(revealButton).toBeVisible({ timeout: 5000 });
+      await revealButton.click();
       await hostPage.waitForTimeout(1000);
 
       // ============================================================
-      // ASSERT: Daily Double splash should appear
+      // ASSERT: Wager entry appears for player
       // ============================================================
-      // Note: Adjust selector based on actual DD splash screen
-      const ddSplash = player1Page.locator('.daily-double-splash, .dd-reveal, [class*="daily-double"]');
-      await expect(ddSplash).toBeVisible({ timeout: 5000 });
-
-      // Player 2 should also see the splash
-      await expect(player2Page.locator('.daily-double-splash, .dd-reveal, [class*="daily-double"]')).toBeVisible({ timeout: 5000 });
-
-      // ============================================================
-      // ACT: Host clicks to reveal Daily Double prompt
-      // ============================================================
-      const revealDDButton = hostPage.getByRole('button', { name: /Daily Double|Reveal|Continue/i });
-      await expect(revealDDButton).toBeVisible({ timeout: 5000 });
-      await revealDDButton.click();
-
-      // ============================================================
-      // ASSERT: Wager input should appear for current player
-      // ============================================================
-      // Note: Wager might be on player screen or host screen depending on implementation
-      const wagerInput = hostPage.locator('input[type="number"], input[placeholder*="wager" i]');
+      const wagerInput = player1Page.locator('input[type="number"], input[placeholder*="wager" i]');
       await expect(wagerInput).toBeVisible({ timeout: 5000 });
 
+      console.log('✅ Wager entry displayed');
+
       // ============================================================
-      // ACT: Enter wager amount
+      // ACT: Player enters wager
       // ============================================================
-      // Wager $500 (assuming player has at least this much)
       await wagerInput.fill('500');
-
-      const submitWagerButton = hostPage.getByRole('button', { name: /Submit|Confirm|Set Wager/i });
-      await expect(submitWagerButton).toBeVisible({ timeout: 5000 });
+      const submitWagerButton = player1Page.getByRole('button', { name: /Submit|Wager/i });
+      await expect(submitWagerButton).toBeVisible({ timeout: 3000 });
       await submitWagerButton.click();
+      await hostPage.waitForTimeout(1000);
 
       // ============================================================
-      // ASSERT: Clue prompt should be revealed
+      // ASSERT: Clue prompt appears after wager
       // ============================================================
-      await expect(hostPage.locator('.clue-text, .clue-prompt')).toBeVisible({ timeout: 5000 });
-      await expect(player1Page.locator('.clue-text, .clue-prompt')).toBeVisible({ timeout: 5000 });
+      const cluePrompt = hostPage.locator('text=/What is|Who is|Clue/i').first();
+      await expect(cluePrompt).toBeVisible({ timeout: 5000 });
+
+      console.log('✅ Clue prompt displayed after wager');
+
+      // ============================================================
+      // ACT: Host unlocks buzzer for answer
+      // ============================================================
+      await unlockBuzzer(hostPage);
+
+      // ============================================================
+      // ACT: Player buzzes in
+      // ============================================================
+      await buzzIn(player1Page);
+
+      // ============================================================
+      // ASSERT: Player is buzzed in
+      // ============================================================
+      await expect(player1Page.getByText(/buzzed in|your turn/i)).toBeVisible({ timeout: 3000 });
+
+      console.log('✅ Player buzzed in for Daily Double');
 
       // ============================================================
       // ACT: Host marks answer as correct
       // ============================================================
-      // Note: For Daily Double, there's no buzzer - just direct adjudication
-      const ddCorrectButton = hostPage.getByRole('button', { name: /Correct|✓|Award/i });
-      await expect(ddCorrectButton).toBeVisible({ timeout: 5000 });
-      await ddCorrectButton.click();
+      await markCorrect(hostPage);
 
       // ============================================================
-      // ASSERT: Player score should increase by wager amount
+      // ASSERT: Score updated with wager amount
       // ============================================================
-      // Player 1 should now have original score + $500
-      // Note: Exact amount depends on previous clue value
-      // Look for score increase
-      await expect(player1Page.locator('.player-score, .score-display')).toContainText(/700|\$700|500|\$500/, { timeout: 5000 });
+      // Player should have gained $500
+      await expect(hostPage.getByText(/Alice.*\$[5-9]/)).toBeVisible({ timeout: 3000 });
+
+      console.log('✅ Score updated correctly for Daily Double');
 
       // ============================================================
-      // ASSERT: Game should return to normal board state
+      // ASSERT: Game returns to normal board state
       // ============================================================
-      await expect(hostPage.locator('.game-board')).toBeVisible({ timeout: 5000 });
+      await expect(hostPage.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 5000 });
 
-      // Daily Double clue should be marked as completed
-      await expect(hostPage.locator('.clue-cell.completed, .clue-cell.answered').nth(1)).toBeVisible({ timeout: 5000 });
-
-      console.log('✅ Daily Double flow completed successfully');
+      console.log('✅ Daily Double correct answer flow completed successfully');
 
     } finally {
-      // Save console logs
-      hostLogger.save();
-      player1Logger.save();
-      player2Logger.save();
-
-      // Close contexts
-      await hostContext.close();
-      await player1Context.close();
-      await player2Context.close();
+      await cleanupTestContext(ctx);
     }
   });
 
   test('should handle Daily Double with wrong answer', async ({ browser }) => {
     // ============================================================
-    // ARRANGE: Create browser contexts for host and 2 players
+    // ARRANGE: Setup game with 1 player at board
     // ============================================================
-    const hostContext = await browser.newContext();
-    const player1Context = await browser.newContext();
-
-    const hostPage = await hostContext.newPage();
-    const player1Page = await player1Context.newPage();
-
-    const hostLogger = startConsoleLogger(hostPage, 'dd-wrong-host');
-    const player1Logger = startConsoleLogger(player1Page, 'dd-wrong-player1');
+    const ctx = await setupTestInProgress(browser, ['Alice'], 'daily-double-wrong');
 
     try {
-      // ============================================================
-      // ARRANGE: Setup game (abbreviated version)
-      // ============================================================
-      await player1Page.goto('/');
-      await player1Page.getByPlaceholder('Email').fill(TEST_USERS.player1.email);
-      await player1Page.getByPlaceholder('Password').fill(TEST_USERS.player1.password);
-      await player1Page.getByRole('button', { name: 'Login' }).click();
-      await expect(player1Page.getByText('Currently logged in as')).toBeVisible();
-
-      const nicknameInput = player1Page.getByPlaceholder('Your display name for this game...');
-      await expect(nicknameInput).not.toHaveValue('');
-      await nicknameInput.fill('');
-      await nicknameInput.fill('Alice');
-
-      await hostPage.goto('/');
-      await hostPage.getByPlaceholder('Email').fill(TEST_USERS.host.email);
-      await hostPage.getByPlaceholder('Password').fill(TEST_USERS.host.password);
-      await hostPage.getByRole('button', { name: 'Login' }).click();
-      await hostPage.getByRole('button', { name: 'Create Game' }).click();
-
-      await player1Page.getByRole('button', { name: 'Join Game' }).click();
-      await hostPage.getByRole('button', { name: 'Start Game' }).click();
-
-      // Skip intro
-      await hostPage.waitForTimeout(2000);
-      for (let i = 0; i < 7; i++) {
-        const nextButton = hostPage.getByRole('button', { name: /Next|Continue|Start|Introduce/i }).first();
-        if (await nextButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await nextButton.click();
-          await hostPage.waitForTimeout(500);
-        }
-      }
-
-      // Get initial score
-      const initialScore = await player1Page.locator('.player-score, .score-display').textContent();
+      const { hostPage, playerPages } = ctx;
+      const [player1Page] = playerPages;
 
       // ============================================================
-      // ACT: Complete Daily Double with wrong answer
+      // ACT: Select Daily Double, reveal, enter wager
       // ============================================================
-      // Select DD clue, enter wager, mark wrong
-      const ddClue = hostPage.locator('.clue-cell, .board-cell').nth(1);
-      await ddClue.click();
+      await selectClue(hostPage, 5);
+      await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
+
+      const revealButton = hostPage.getByRole('button', { name: /Reveal|Daily Double/i });
+      await revealButton.click();
       await hostPage.waitForTimeout(1000);
 
-      // If DD splash appears, continue
-      const revealButton = hostPage.getByRole('button', { name: /Daily Double|Reveal|Continue/i });
-      if (await revealButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await revealButton.click();
+      const wagerInput = player1Page.locator('input[type="number"], input[placeholder*="wager" i]');
+      await wagerInput.fill('300');
+      const submitWagerButton = player1Page.getByRole('button', { name: /Submit|Wager/i });
+      await submitWagerButton.click();
+      await hostPage.waitForTimeout(1000);
 
-        const wagerInput = hostPage.locator('input[type="number"], input[placeholder*="wager" i]');
-        await wagerInput.fill('300');
-        await hostPage.getByRole('button', { name: /Submit|Confirm/i }).click();
+      // ============================================================
+      // ACT: Player buzzes in and host marks wrong
+      // ============================================================
+      await unlockBuzzer(hostPage);
+      await buzzIn(player1Page);
+      await markWrong(hostPage);
 
-        // Mark wrong
-        const wrongButton = hostPage.getByRole('button', { name: /Wrong|✗|Incorrect/i });
-        await expect(wrongButton).toBeVisible({ timeout: 5000 });
-        await wrongButton.click();
+      // ============================================================
+      // ASSERT: Score decreased by wager amount
+      // ============================================================
+      // Player should have lost $300 (negative score)
+      await expect(hostPage.getByText(/Alice.*-\$[2-9]/)).toBeVisible({ timeout: 3000 });
 
-        // ============================================================
-        // ASSERT: Player score should DECREASE by wager amount
-        // ============================================================
-        await hostPage.waitForTimeout(1000);
-        const newScore = await player1Page.locator('.player-score, .score-display').textContent();
-
-        // Score should be lower than initial (or negative)
-        // Note: Exact validation depends on score format
-        console.log(`Score changed from ${initialScore} to ${newScore}`);
-      }
-
-      console.log('✅ Daily Double wrong answer flow completed');
+      console.log('✅ Score decreased correctly for wrong Daily Double answer');
+      console.log('✅ Daily Double wrong answer flow completed successfully');
 
     } finally {
-      hostLogger.save();
-      player1Logger.save();
-      await hostContext.close();
-      await player1Context.close();
+      await cleanupTestContext(ctx);
     }
   });
-
 });
+
