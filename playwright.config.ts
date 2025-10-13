@@ -284,7 +284,7 @@ export default defineConfig({
      * Command to start the dev server
      * When VITE_COVERAGE=true, the istanbul plugin will instrument the code
      */
-    command: `cross-env VITE_COVERAGE=${  process.env['VITE_COVERAGE'] || 'false'  } npm run dev`,
+    command: `cross-env VITE_COVERAGE=${  process.env['VITE_COVERAGE'] ?? 'false'  } npm run dev`,
 
     /**
      * URL to check if server is ready

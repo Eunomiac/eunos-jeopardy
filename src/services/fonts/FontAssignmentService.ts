@@ -125,7 +125,7 @@ export class FontAssignmentService {
     // Find fonts with lowest assignment count
     const minCount = Math.min(...Object.values(fontCounts))
     let availableFonts = this.AVAILABLE_FONTS.filter(
-      (font) => (fontCounts[font] || 0) === minCount
+      (font) => (fontCounts[font] ?? 0) === minCount
     )
 
     // If player has a long name, prefer narrow fonts

@@ -214,7 +214,7 @@ export async function testCurrentSchema() {
     // Test clue_sets table for clue set storage
     const clueSets = await testTable('clue_sets', '📋')
     if (clueSets) {
-      console.log('Columns:', Object.keys(clueSets[0] || {}))
+      console.log('Columns:', Object.keys(clueSets[0] ?? {}))
     }
 
     // Test clues table with comprehensive column analysis

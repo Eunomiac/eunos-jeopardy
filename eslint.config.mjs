@@ -7,6 +7,19 @@ export default defineConfig(
   {
     ignores: ['**/build/**', '**/dist/**', '**/node_modules/**'],
   },
+  // Node.js scripts configuration
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+      },
+    },
+  },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,

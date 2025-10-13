@@ -196,6 +196,11 @@ function parseCSVLine(line: string): string[] {
   while (i < line.length) {
     const char = line[i]
 
+    // Defensive check for array access (TypeScript guard)
+    if (!char) {
+      throw new Error(`Unexpected undefined character at position ${i}`)
+    }
+
     if (char === '"') {
       // Handle quote characters and escaping
       if (inQuotes && line[i + 1] === '"') {
