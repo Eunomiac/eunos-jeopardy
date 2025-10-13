@@ -98,3 +98,10 @@ playwright-report/
 index.html
 test-failed**.png
 test-results/.last-run.json
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
