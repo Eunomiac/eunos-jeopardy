@@ -61,7 +61,9 @@
     "src/**/*.test.tsx",
     "src/**/*.spec.ts",
     "src/**/*.spec.tsx",
-    "src/test/**/*"
+    "src/test/**/*",
+    "src/shared/types/**/*.d.ts",
+    "src/types/**/*.d.ts"
   ],
   "exclude": ["dist", "build"]
 }
