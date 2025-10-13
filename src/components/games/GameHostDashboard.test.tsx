@@ -3,7 +3,7 @@ import { GameHostDashboard } from './GameHostDashboard'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { ClueService } from '../../services/clues/ClueService'
-import { mockUser, mockPlayers, createMockGame } from '../../test/testUtils'
+import { mockUser, mockPlayersData, createMockGame } from '../../test/testUtils'
 
 // Mock services
 jest.mock('../../services/games/GameService')
@@ -66,7 +66,7 @@ describe('GameHostDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockGameService.getGame.mockResolvedValue(mockGame)
-    mockGameService.getPlayers.mockResolvedValue(mockPlayers)
+    mockGameService.getPlayers.mockResolvedValue(mockPlayersData)
     mockGameService.getBuzzesForClue.mockResolvedValue([]) // Mock buzzer queue
     mockGameService.startGame.mockResolvedValue(mockGame)
     mockGameService.setFocusedClue.mockResolvedValue(mockGame)
@@ -296,7 +296,7 @@ describe('GameHostDashboard', () => {
 
       // Set up mocks for lobby state - don't clear, just override
       mockGameService.getGame.mockResolvedValue(lobbyGame)
-      mockGameService.getPlayers.mockResolvedValue(mockPlayers)
+      mockGameService.getPlayers.mockResolvedValue(mockPlayersData)
       mockGameService.startGame.mockResolvedValue(startedGame)
       mockClueSetService.loadClueSetFromDatabase.mockResolvedValue({
         name: 'Test Clue Set',
@@ -339,7 +339,7 @@ describe('GameHostDashboard', () => {
 
       // Set up mocks for lobby state - don't clear, just override
       mockGameService.getGame.mockResolvedValue(lobbyGame)
-      mockGameService.getPlayers.mockResolvedValue(mockPlayers)
+      mockGameService.getPlayers.mockResolvedValue(mockPlayersData)
       mockGameService.startGameIntroduction.mockRejectedValue(error)
       mockClueSetService.loadClueSetFromDatabase.mockResolvedValue({
         name: 'Test Clue Set',

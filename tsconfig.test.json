@@ -48,9 +48,9 @@
     "jsx": "react-jsx",
 
     /* Modules */
-    // Note: Using ESNext instead of Node16 for module to allow ts-jest to handle transformation
-    // moduleResolution stays as node16 for proper Node.js module resolution
-    "module": "ESNext",
+    // Note: Must use Node16 for both module and moduleResolution to satisfy TypeScript
+    // ts-jest handles the transformation regardless of this setting
+    "module": "Node16",
     "moduleResolution": "node16",
 
     /* Type Checking */

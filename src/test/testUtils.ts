@@ -8,12 +8,32 @@
 
 import type { User, Session } from '@supabase/supabase-js'
 import type { Database } from '../services/supabase/types'
+import { type Player } from '../services/games/GameService'
 import { parseCSV } from '../utils/csvParser'
 
 // Type aliases for cleaner code
 export type GameRow = Database['public']['Tables']['games']['Row']
 type PlayerRow = Database['public']['Tables']['players']['Row']
 type ClueSetRow = Database['public']['Tables']['clue_sets']['Row']
+
+
+/**
+ * Factory functions for creating variations of common mock objects
+ */
+export const createMockGame = (overrides: Partial<GameRow> = {}): GameRow => ({
+  ...mockGame,
+  ...overrides
+})
+
+export const createMockUser = (overrides: Partial<User> = {}): User => ({
+  ...mockUser,
+  ...overrides
+})
+
+export const createMockPlayer = (overrides: Partial<PlayerRow> = {}): Player => ({
+  ...mockPlayersData[0],
+  ...overrides
+} as Player)
 
 /**
  * Standard mock user for testing authentication flows
@@ -69,7 +89,7 @@ export const mockGame: GameRow = {
  * Standard mock players array for testing multiplayer functionality
  * Used across: GameService.test.ts, GameHostDashboard.test.tsx
  */
-export const mockPlayers: PlayerRow[] = [
+export const mockPlayersData: PlayerRow[] = [
   {
     game_id: 'game-123',
     user_id: 'user-456',
@@ -84,7 +104,7 @@ export const mockPlayers: PlayerRow[] = [
     score: 500,
     joined_at: '2023-01-01T00:01:00Z'
   }
-]
+];
 
 /**
  * Standard mock clue sets for testing clue set selection
@@ -132,21 +152,3 @@ final,Geography,0,Largest country?,Russia`
  * Used across: loader.test.ts, csvParser.test.ts
  */
 export const expectedParsedRows = parseCSV(testCSVText)
-
-/**
- * Factory functions for creating variations of common mock objects
- */
-export const createMockGame = (overrides: Partial<GameRow> = {}): GameRow => ({
-  ...mockGame,
-  ...overrides
-})
-
-export const createMockUser = (overrides: Partial<User> = {}): User => ({
-  ...mockUser,
-  ...overrides
-})
-
-export const createMockPlayer = (overrides: Partial<PlayerRow> = {}): PlayerRow => ({
-  ...mockPlayers[0],
-  ...overrides
-})

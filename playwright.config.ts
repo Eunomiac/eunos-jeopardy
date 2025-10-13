@@ -97,7 +97,7 @@ export default defineConfig({
    * - Local: 1 worker (easier to watch and debug)
    * - CI: All CPU cores (speed matters more than observability)
    */
-  workers: process.env['CI'] ? undefined : 1,
+  workers: process.env['CI'] ? 10 : 1,
 
   /**
    * Test Reporter

@@ -7,6 +7,7 @@ jest.mock('../clues/ClueService')
 import { supabase } from '../supabase/client'
 import { ClueService } from '../clues/ClueService'
 import { createMockQueryBuilder } from '../../test/supabaseMockHelpers'
+import { createMockGame, createMockPlayer } from '../../test/testUtils'
 
 // Enhanced type definitions for Supabase mock objects with schema awareness
 interface MockSupabaseQueryBuilder {
@@ -1147,21 +1148,18 @@ describe('GameService', () => {
       const hostId = 'host-123'
 
       // Mock getGame to verify authorization
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
-        id: gameId,
-        host_id: hostId,
-        status: 'in_progress'
-      } as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(
+        createMockGame({ id: gameId, host_id: hostId, status: 'in_progress' })
+      )
 
       // Mock isFinalJeopardyCompleted to return true
       const isFinalJeopardyCompletedSpy = jest.spyOn(GameService as GameServiceInternal, 'isFinalJeopardyCompleted')
         .mockResolvedValue(true)
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
-        id: gameId,
-        status: 'completed'
-      } as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(
+        createMockGame({ id: gameId, status: 'completed' })
+      )
 
       await GameService.endGame(gameId, hostId)
 
@@ -1179,21 +1177,18 @@ describe('GameService', () => {
       const hostId = 'host-123'
 
       // Mock getGame to verify authorization
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
-        id: gameId,
-        host_id: hostId,
-        status: 'in_progress'
-      } as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(
+        createMockGame({ id: gameId, host_id: hostId, status: 'in_progress' })
+      )
 
       // Mock isFinalJeopardyCompleted to return false
       const isFinalJeopardyCompletedSpy = jest.spyOn(GameService as GameServiceInternal, 'isFinalJeopardyCompleted')
         .mockResolvedValue(false)
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
-        id: gameId,
-        status: 'cancelled'
-      } as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(
+        createMockGame({ id: gameId, status: 'cancelled' })
+      )
 
       await GameService.endGame(gameId, hostId)
 
@@ -1224,7 +1219,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock board query
       mockSupabase.from.mockReturnValueOnce({
@@ -1238,7 +1233,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock clue query
       mockSupabase.from.mockReturnValueOnce({
@@ -1250,7 +1245,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock clue state query
       mockSupabase.from.mockReturnValueOnce({
@@ -1264,7 +1259,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       const result = await (GameService as GameServiceInternal).isFinalJeopardyCompleted(gameId)
       expect(result).toBe(true)
@@ -1286,7 +1281,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock board query
       mockSupabase.from.mockReturnValueOnce({
@@ -1300,7 +1295,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock clue query
       mockSupabase.from.mockReturnValueOnce({
@@ -1312,7 +1307,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock clue state query - revealed but not completed
       mockSupabase.from.mockReturnValueOnce({
@@ -1326,7 +1321,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       const result = await (GameService as GameServiceInternal).isFinalJeopardyCompleted(gameId)
       expect(result).toBe(false)
@@ -1346,7 +1341,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       const result = await (GameService as GameServiceInternal).isFinalJeopardyCompleted(gameId)
       expect(result).toBe(false)
@@ -1370,7 +1365,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       // Mock board query with error
       mockSupabase.from.mockReturnValueOnce({
@@ -1384,7 +1379,7 @@ describe('GameService', () => {
             })
           })
         })
-      } as Partial<Game>)
+      })
 
       const result = await (GameService as GameServiceInternal).isFinalJeopardyCompleted(gameId)
       expect(result).toBe(false)
@@ -1400,17 +1395,14 @@ describe('GameService', () => {
       const hostId = 'host-123'
 
       // Mock getGame to return game in lobby status
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
-        id: gameId,
-        host_id: hostId,
-        status: 'lobby'
-      } as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(
+        createMockGame({ id: gameId, host_id: hostId, status: 'lobby' })
+      )
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
-        id: gameId,
-        status: 'in_progress'
-      } as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(
+        createMockGame({ id: gameId, status: 'in_progress' })
+      )
 
       await GameService.startGame(gameId, hostId)
 
@@ -1426,11 +1418,9 @@ describe('GameService', () => {
       const hostId = 'host-123'
 
       // Mock getGame to return game already in progress
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
-        id: gameId,
-        host_id: hostId,
-        status: 'in_progress'
-      } as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(
+        createMockGame({ id: gameId, host_id: hostId, status: 'in_progress' })
+      )
 
       await expect(GameService.startGame(gameId, hostId))
         .rejects.toThrow("Cannot start game: current status is 'in_progress', expected 'lobby'")
@@ -1449,7 +1439,7 @@ describe('GameService', () => {
       const mockGame = { id: gameId, host_id: hostId, focused_clue_id: clueId }
 
       // Mock updateGame (setFocusedClue just calls updateGame)
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
 
       const result = await GameService.setFocusedClue(gameId, clueId, hostId)
 
@@ -1464,7 +1454,7 @@ describe('GameService', () => {
       const hostId = 'host-123'
       const mockGame = { id: gameId, host_id: hostId, focused_clue_id: null }
 
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
 
       const result = await GameService.setFocusedClue(gameId, null, hostId)
 
@@ -1482,7 +1472,7 @@ describe('GameService', () => {
       const hostId = 'host-123'
       const mockGame = { id: gameId, host_id: hostId, focused_player_id: playerId }
 
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
 
       const result = await GameService.setFocusedPlayer(gameId, playerId, hostId)
 
@@ -1497,7 +1487,7 @@ describe('GameService', () => {
       const hostId = 'host-123'
       const mockGame = { id: gameId, host_id: hostId, focused_player_id: null }
 
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
 
       const result = await GameService.setFocusedPlayer(gameId, null, hostId)
 
@@ -1519,7 +1509,7 @@ describe('GameService', () => {
       const mockGame = { id: gameId, host_id: hostId }
 
       // Mock getGame for authorization
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(createMockGame(mockGame))
 
       // Mock database operations
       mockSupabase.from.mockImplementation((table: string) => {
@@ -1550,10 +1540,10 @@ describe('GameService', () => {
       })
 
       // Mock updatePlayerScore
-      const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue({} as Partial<Game>)
+      const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue(createMockPlayer({}))
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
 
       const result = await GameService.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
 
@@ -1580,12 +1570,12 @@ describe('GameService', () => {
       const scoreValue = 200
       const hostId = 'host-123'
 
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({ id: gameId } as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({ id: gameId } as Game)
 
       // Mock answer insert with error
       mockSupabase.from.mockReturnValue({
         insert: jest.fn().mockResolvedValue({ error: { message: 'Insert failed' } })
-      } as Partial<Game>)
+      })
 
       await expect(GameService.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId))
         .rejects.toThrow('Failed to record answer: Insert failed')
@@ -1605,7 +1595,7 @@ describe('GameService', () => {
       const mockGame = { id: gameId, host_id: hostId }
 
       // Mock getGame for authorization
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(createMockGame(mockGame))
 
       // Mock ClueService.isDailyDouble
       const mockClueService = ClueService as jest.Mocked<typeof ClueService>
@@ -1673,10 +1663,10 @@ describe('GameService', () => {
       })
 
       // Mock updatePlayerScore
-      const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue({} as Partial<Game>)
+      const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue(createMockPlayer({}))
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame as Partial<Game>)
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
 
       const result = await GameService.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
 
@@ -1697,12 +1687,12 @@ describe('GameService', () => {
       const scoreValue = 200
       const hostId = 'host-123'
 
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({ id: gameId } as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({ id: gameId } as Game)
 
       // Mock answer insert with error
       mockSupabase.from.mockReturnValue({
         insert: jest.fn().mockResolvedValue({ error: { message: 'Insert failed' } })
-      } as Partial<Game>)
+      })
 
       await expect(GameService.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId))
         .rejects.toThrow('Failed to record answer: Insert failed')
@@ -1715,13 +1705,13 @@ describe('GameService', () => {
     it('should start game introduction from lobby status', async () => {
       const gameId = 'game-123'
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId, status: 'lobby' }
+      const mockGame = { id: gameId, host_id: hostId, status: 'lobby' as GameStatus }
 
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(createMockGame(mockGame))
       const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
         ...mockGame,
         status: 'game_intro'
-      } as Partial<Game>)
+      } as Game)
 
       const result = await GameService.startGameIntroduction(gameId, hostId)
 
@@ -1740,7 +1730,7 @@ describe('GameService', () => {
       const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
         id: gameId,
         status: 'in_progress'
-      } as Partial<Game>)
+      } as Game)
 
       await expect(GameService.startGameIntroduction(gameId, hostId))
         .rejects.toThrow('Cannot start game introduction: Game is not in lobby status')
@@ -1753,14 +1743,14 @@ describe('GameService', () => {
     it('should start category introductions from game_intro status', async () => {
       const gameId = 'game-123'
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId, status: 'game_intro' }
+      const mockGame = { id: gameId, host_id: hostId, status: 'game_intro' as GameStatus }
 
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame as Partial<Game>)
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(createMockGame(mockGame))
       const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue({
         ...mockGame,
         status: 'introducing_categories',
         current_introduction_category: 1
-      } as Partial<Game>)
+      } as Game)
 
       await GameService.startCategoryIntroductions(gameId, hostId)
 
@@ -1782,7 +1772,7 @@ describe('GameService', () => {
       const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue({
         id: gameId,
         status: 'lobby'
-      } as Partial<Game>)
+      } as Game)
 
       await expect(GameService.startCategoryIntroductions(gameId, hostId))
         .rejects.toThrow('Cannot start category introductions: Game must be in game_intro or round_transition status')

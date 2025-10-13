@@ -3,7 +3,7 @@ import PlayerDashboard from './PlayerDashboard'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { GameService } from '../../services/games/GameService'
 import { FontAssignmentService } from '../../services/fonts/FontAssignmentService'
-import { mockUser, mockGame, mockPlayers } from '../../test/testUtils'
+import { mockUser, mockGame, mockPlayersData } from '../../test/testUtils'
 import type { PlayerInfo } from './PlayerPodiums'
 import type { Database } from '../../services/supabase/types'
 import { supabase } from '../../services/supabase/client'
@@ -138,8 +138,8 @@ describe('PlayerDashboard', () => {
 
     // Mock successful game loading
     mockGameService.getGame.mockResolvedValue(mockGame)
-    mockGameService.getPlayers.mockResolvedValue(mockPlayers)
-    mockGameService.addPlayer.mockResolvedValue(mockPlayers[0])
+    mockGameService.getPlayers.mockResolvedValue(mockPlayersData)
+    mockGameService.addPlayer.mockResolvedValue(mockPlayersData[0])
 
     // Mock font assignment
     mockFontAssignmentService.getPlayerFont.mockResolvedValue('handwriting-1')

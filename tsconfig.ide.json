@@ -1,0 +1,49 @@
+/**
+ * IDE TypeScript Configuration - For VSCode Language Service
+ *
+ * This configuration is specifically for the VSCode TypeScript language service
+ * to provide proper IntelliSense, error checking, and diagnostics across ALL
+ * files in the project, including test files.
+ *
+ * **Why This Exists:**
+ * The root tsconfig.json uses project references with "files": [], which means
+ * the VSCode language service doesn't load test files into its context. This
+ * causes the IDE to not show TypeScript errors in test files, even though
+ * `tsc --noEmit` with specific project configs works fine.
+ *
+ * **Purpose:**
+ * - Enable IDE diagnostics for all TypeScript files (app, tests, e2e, tooling)
+ * - Provide IntelliSense and type checking in the VSCode editor
+ * - Show TypeScript errors in the Problems panel
+ *
+ * **Usage:**
+ * Set this as the TypeScript project in VSCode settings:
+ * "typescript.tsdk": "node_modules/typescript/lib"
+ *
+ * **Note:**
+ * This config is ONLY for the IDE. Actual compilation and type checking
+ * should still use the specific project configs (tsconfig.app.json,
+ * tsconfig.test.json, etc.) via `tsc --noEmit --project <config>`.
+ */
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    /* Language and Environment */
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+
+    /* Modules */
+    "moduleResolution": "bundler",
+
+    /* Type Checking */
+    "types": ["@jest/globals", "@testing-library/jest-dom", "@playwright/test", "node", "vite/client"]
+  },
+  "include": [
+    "src/**/*",
+    "*.config.ts",
+    "*.config.js",
+    "*.config.mjs"
+  ],
+  "exclude": ["dist", "build", "node_modules"]
+}
+

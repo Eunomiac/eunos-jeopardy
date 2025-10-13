@@ -9,7 +9,7 @@
  */
 
 import type { Database } from '../../../services/supabase/types'
-import { mockGame, mockPlayers } from '../../testUtils'
+import { mockGame, mockPlayersData } from '../../testUtils'
 
 interface ChainableMethods {
   eq: jest.MockedFunction<(column: string, value: unknown) => ChainableMethods>
@@ -50,7 +50,7 @@ const mockSupabaseClient = {
         case 'games':
           return mockGame // Return full game object from shared mocks
         case 'players':
-          return mockPlayers // Return players from shared mocks
+          return mockPlayersData // Return players from shared mocks
         case 'clue_sets':
           return [] as Database['public']['Tables']['clue_sets']['Row'][]
         case 'clues':
