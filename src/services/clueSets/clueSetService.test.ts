@@ -1,5 +1,6 @@
 import { ClueSetService } from './clueSetService'
 import { supabase } from '../supabase/client'
+import { createMockQueryBuilder } from '../../test/supabaseMockHelpers'
 
 // Mock Supabase client
 jest.mock('../supabase/client')
@@ -37,16 +38,13 @@ describe('ClueSetService', () => {
         }
       ]
 
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
-              data: mockClueSets,
-              error: null
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .order()
+          .withData(mockClueSets)
+      )
 
       const result = await ClueSetService.getUserClueSets(userId)
 
@@ -60,31 +58,25 @@ describe('ClueSetService', () => {
     })
 
     it('should handle database errors', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' }
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .order()
+          .withError({ message: 'Database error', details: '', hint: '', code: '500' })
+      )
 
       await expect(ClueSetService.getUserClueSets(userId)).rejects.toThrow('Database error')
     })
 
     it('should return empty array when no clue sets found', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            order: jest.fn().mockResolvedValue({
-              data: [],
-              error: null
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .order()
+          .withData([])
+      )
 
       const result = await ClueSetService.getUserClueSets(userId)
 
@@ -99,25 +91,19 @@ describe('ClueSetService', () => {
     it('should delete clue set', async () => {
       // Mock ownership verification
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { owner_id: userId },
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ owner_id: userId })
+        )
         // Mock deletion
-        .mockReturnValueOnce({
-          delete: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .delete()
+            .eq()
+            .withSingleData(null)
+        )
 
       const result = await ClueSetService.deleteClueSet(clueSetId, userId)
 
@@ -127,16 +113,12 @@ describe('ClueSetService', () => {
 
     it('should handle ownership verification errors', async () => {
       // Mock ownership verification failure
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Not found' }
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withError({ message: 'Not found', details: '', hint: '', code: '404' })
+      )
 
       const result = await ClueSetService.deleteClueSet(clueSetId, userId)
 
@@ -146,16 +128,12 @@ describe('ClueSetService', () => {
 
     it('should reject unauthorized deletion attempts', async () => {
       // Mock ownership verification - different owner
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { owner_id: 'different-user' },
-              error: null
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withSingleData({ owner_id: 'different-user' })
+      )
 
       const result = await ClueSetService.deleteClueSet(clueSetId, userId)
 
@@ -165,16 +143,12 @@ describe('ClueSetService', () => {
 
     it('should handle clue set not found during ownership check', async () => {
       // Mock ownership verification - no data returned
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withSingleData(null)
+      )
 
       const result = await ClueSetService.deleteClueSet(clueSetId, userId)
 
