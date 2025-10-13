@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['**/build/**', '**/dist/**', '**/node_modules/**'],
+    ignores: ['**/build/**', '**/dist/**', '**/node_modules/**', 'eslint.config.mjs'],
   },
   // Node.js scripts configuration
   {

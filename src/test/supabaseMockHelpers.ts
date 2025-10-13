@@ -1,17 +1,20 @@
 /**
  * Type-safe Supabase mock helpers for tests
- * 
+ *
  * These utilities create properly-typed mock query builders that match the Supabase API
  * without requiring `as any` type assertions.
  */
+
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
+// Type parameters are necessary for proper type inference in test mocks
 
 import type { PostgrestError, PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js'
 
 /**
  * Creates a type-safe mock for a Supabase query builder chain
- * 
+ *
  * This allows tests to mock Supabase queries without using `as any`:
- * 
+ *
  * @example
  * ```typescript
  * mockSupabase.from.mockReturnValue(
@@ -72,6 +75,7 @@ export function createMockQueryBuilder() {
      */
     withSingleResponse<T>(response: PostgrestSingleResponse<T>) {
       builder.single.mockResolvedValue(response)
+      builder.maybeSingle.mockResolvedValue(response)
       return builder
     },
 
@@ -87,14 +91,14 @@ export function createMockQueryBuilder() {
      * Convenience method for successful single responses
      */
     withSingleData<T>(data: T) {
-      return helpers.withSingleResponse({ data, error: null, count: null, status: 200, statusText: 'OK' })
+      return helpers.withSingleResponse<T>({ data, error: null, count: null, status: 200, statusText: 'OK' })
     },
 
     /**
      * Convenience method for successful array responses
      */
     withData<T>(data: T[]) {
-      return helpers.withResponse({ data, error: null, count: data.length, status: 200, statusText: 'OK' })
+      return helpers.withResponse<T>({ data, error: null, count: data.length, status: 200, statusText: 'OK' })
     },
 
     /**
@@ -102,6 +106,7 @@ export function createMockQueryBuilder() {
      */
     withError(error: PostgrestError) {
       builder.single.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code) : 500, statusText: error.message })
+      builder.maybeSingle.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code) : 500, statusText: error.message })
       return builder
     },
   }
@@ -137,4 +142,3 @@ export function createMockRealtime() {
  * Type for a mocked Supabase from() call that returns a query builder
  */
 export type MockQueryBuilder = ReturnType<typeof createMockQueryBuilder>
-

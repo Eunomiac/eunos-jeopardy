@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Disabled for test file: We need 'any' to access private methods for testing
+// and to create partial mock objects without full type definitions
+
 import { GameService } from './GameService'
 
 // Explicitly mock the supabase client
@@ -6,6 +10,7 @@ jest.mock('../clues/ClueService')
 
 import { supabase } from '../supabase/client'
 import { ClueService } from '../clues/ClueService'
+import { createMockQueryBuilder } from '../../test/supabaseMockHelpers'
 
 // Enhanced type definitions for Supabase mock objects with schema awareness
 interface MockSupabaseQueryBuilder {
@@ -34,53 +39,42 @@ describe('GameService', () => {
         status: 'in_progress' as const
       }
 
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          in: jest.fn().mockReturnValue({
-            order: jest.fn().mockReturnValue({
-              limit: jest.fn().mockReturnValue({
-                maybeSingle: jest.fn().mockResolvedValue({ data: mockGame, error: null })
-              })
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .in()
+          .order()
+          .limit()
+          .withSingleData(mockGame)
+      )
 
       const result = await GameService.getActiveGame()
       expect(result).toEqual(mockGame)
     })
 
     it('should return null when no active game exists', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          in: jest.fn().mockReturnValue({
-            order: jest.fn().mockReturnValue({
-              limit: jest.fn().mockReturnValue({
-                maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
-              })
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .in()
+          .order()
+          .limit()
+          .withSingleData(null)
+      )
 
       const result = await GameService.getActiveGame()
       expect(result).toBeNull()
     })
 
     it('should throw error when database query fails', async () => {
-      const mockError = { message: 'Database connection failed' }
-
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          in: jest.fn().mockReturnValue({
-            order: jest.fn().mockReturnValue({
-              limit: jest.fn().mockReturnValue({
-                maybeSingle: jest.fn().mockResolvedValue({ data: null, error: mockError })
-              })
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .in()
+          .order()
+          .limit()
+          .withError({ message: 'Database connection failed', details: '', hint: '', code: '500' })
+      )
 
       await expect(GameService.getActiveGame()).rejects.toThrow('Failed to get active game: Database connection failed')
     })
