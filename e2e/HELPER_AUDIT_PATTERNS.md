@@ -137,22 +137,27 @@ If found outside of `test-helpers.ts`, investigate whether the helper should be 
 
 ## Audit Results
 
-### ✅ PASS: No Issues Found
+### ✅ PASS: All Tests Use Helpers Consistently
 - `getByPlaceholder('Email')` - All logins use `loginAs()` helper
 - `getByPlaceholder('Your display name')` - All nickname setting uses `setNickname()` helper
 - `browser.newContext()` - All context creation uses `createTestContext()` helper
 - `getByRole('combobox')` - All game creation uses `createGame()` helper
+- `.clue-cell` locator - All clue selection uses `selectClue()` helper
 - `Unlock Buzzer` button - All uses `unlockBuzzer()` helper
 - `Correct|✓` button - All uses `markCorrect()` helper
 - `Wrong|✗` button - All uses `markWrong()` helper
 
-### ❌ FAIL: Issues Found
+### ✅ RESOLVED: Issues Fixed During Audit
 
-#### 1. Manual Clue Selection (should use `selectClue()`)
-- **game-intro-board.e2e.ts:107-119** - Manual `.clue-cell` locator and click
-- **round-transition.e2e.ts:67-70** - Manual `.clue-cell` locator in loop (3 times)
-- **round-transition.e2e.ts:132-133** - Manual `.clue-cell` locator and click
+#### Manual Clue Selection → Now Uses `selectClue()`
+- ✅ **game-intro-board.e2e.ts:107-119** - Replaced manual `.clue-cell` locator with `selectClue(hostPage, 0)`
+- ✅ **round-transition.e2e.ts:67-70** - Replaced manual `.clue-cell` locator in loop with `selectClue(hostPage, i)`
+- ✅ **round-transition.e2e.ts:132-133** - Replaced manual `.clue-cell` locator with `selectClue(hostPage, 0)`
 
-#### 2. Manual Buzzer Clicks (should use `buzzIn()`)
-- **buzzer-system.e2e.ts:120-121** - Manual `.buzzer-button` locator for race condition test
-  - **Note:** This is intentional for testing simultaneous clicks, but could still use helper for consistency
+### ✅ JUSTIFIED EXCEPTION: Intentional Manual Code
+
+#### Race Condition Test - Manual Buzzer Clicks
+- **buzzer-system.e2e.ts:120-124** - Manual `.buzzer-button` locators for simultaneous clicks
+- **Justification:** Test specifically validates race condition handling by using `Promise.all()` to trigger truly simultaneous buzzer clicks from two players. Using the `buzzIn()` helper would add unnecessary abstraction that might mask timing issues.
+- **Documentation:** Added explanatory comment in code explaining why helper isn't used
+- **Status:** This is the ONLY place in all 8 test files where manual locators are intentionally used instead of helpers
