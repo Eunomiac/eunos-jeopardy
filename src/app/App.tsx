@@ -618,7 +618,10 @@ export function App() {
       return
     }
 
-    const file = csvFiles[0]
+    const file = csvFiles[0];
+    if (!file) {
+      throw new Error('No file found in drag and drop event');
+    }
 
     try {
       setIsUploading(true)

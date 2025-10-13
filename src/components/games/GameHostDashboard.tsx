@@ -891,6 +891,9 @@ export function GameHostDashboard({
 
         for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
           const categoryData = clueData[categoryIndex];
+          if (!categoryData) {
+            throw new Error(`Category data at index ${categoryIndex} is undefined`);
+          }
           const clueInCategory = categoryData.clues.find((c) => c.id === focusedClue.id);
           if (clueInCategory) {
             return position.category === categoryIndex + 1 &&
@@ -2132,9 +2135,9 @@ export function GameHostDashboard({
         severity={alertState.severity}
         message={alertState.message}
         isVisible={alertState.isVisible}
-        onConfirm={alertState.onConfirm}
-        onCancel={alertState.onCancel}
-        title={alertState.title}
+        {...(alertState.onConfirm && { onConfirm: alertState.onConfirm })}
+        {...(alertState.onCancel && { onCancel: alertState.onCancel })}
+        {...(alertState.title && { title: alertState.title })}
       />
 
       {/* 4-panel dashboard grid layout */}
