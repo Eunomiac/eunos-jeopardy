@@ -2426,7 +2426,7 @@ export function GameHostDashboard({
               </button>
 
               {/* DEBUG BUTTON - Remove before production */}
-              {process.env["NODE_ENV"] === 'development' && (
+              {import.meta.env.DEV && (
                 <button
                   className="jeopardy-button flex-1"
                   onClick={() => { void handleDebugCompleteAllClues(); }}

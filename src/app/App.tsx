@@ -838,7 +838,7 @@ export function App() {
       </footer>
 
       {/* Debug connection status (only in development) */}
-      {process.env['NODE_ENV'] === 'development' && <ConnectionDebugger />}
+      {import.meta.env.DEV && <ConnectionDebugger />}
     </div>
   )
 }

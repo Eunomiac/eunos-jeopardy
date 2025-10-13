@@ -32,7 +32,7 @@ test.describe('Host Creates Game - Smoke Test', () => {
     // ============================================================
     // ASSERT: Host should see game creation interface
     // ============================================================
-    await expect(page.getByRole('heading', { name: /Create.*Game|Host.*Game/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Create.*Game|Host.*Game/i })).toBeVisible();
 
     // ============================================================
     // ACT: Create game
@@ -52,4 +52,3 @@ test.describe('Host Creates Game - Smoke Test', () => {
     console.log('✅ Host successfully created game and reached dashboard');
   });
 });
-
