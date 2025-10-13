@@ -11,7 +11,6 @@ export type AnimationIntent =
 
 export type AnimationSubscriber = (intent: AnimationIntent) => void | Promise<void>;
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AnimationEvents {
   static readonly subscribers = new Set<AnimationSubscriber>();
   static readonly recentIntents = new Map<string, { intent: AnimationIntent; timestamp: number }>();

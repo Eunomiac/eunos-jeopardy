@@ -1697,7 +1697,7 @@ export class GameService {
       .eq('user_id', game.focused_player_id)
 
     // Return the first wager amount if found, otherwise null
-    return wagers && wagers.length > 0 ? wagers[0].amount : null
+    return wagers && wagers.length > 0 && wagers[0] ? wagers[0].amount : null
   }
 
   /**
@@ -1733,7 +1733,7 @@ export class GameService {
       .eq('user_id', playerId)
 
     // Return wager amount if it exists, otherwise original clue value
-    return wagers && wagers.length > 0 ? wagers[0].amount : clue.value
+    return wagers && wagers.length > 0 && wagers[0] ? wagers[0].amount : clue.value
   }
 
   /**
@@ -1776,6 +1776,10 @@ export class GameService {
     // Select a random player
     const randomIndex = Math.floor(Math.random() * players.length)
     const randomPlayer = players[randomIndex]
+
+    if (!randomPlayer) {
+      throw new Error('Failed to select random player - players array access returned undefined')
+    }
 
     return this.setCurrentPlayer(gameId, randomPlayer.user_id, hostId)
   }

@@ -53,7 +53,7 @@ export interface UploadResult {
 /**
  * Upload Service class for handling clue set file uploads
  */
-export class UploadService { // eslint-disable-line @typescript-eslint/no-extraneous-class
+export class UploadService {
   /**
    * Validates a dropped file for CSV upload.
    *

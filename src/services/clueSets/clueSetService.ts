@@ -86,7 +86,7 @@ export interface DeleteResult {
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export class ClueSetService { // eslint-disable-line @typescript-eslint/no-extraneous-class
+export class ClueSetService {
   /**
    * Retrieves all clue sets owned by a specific user.
    *

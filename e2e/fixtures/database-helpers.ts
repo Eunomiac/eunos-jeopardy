@@ -25,12 +25,12 @@ import { TEST_USERS } from './test-users';
  * in global-setup.ts, which runs before this file is imported.
  */
 function getSupabaseClient() {
-  if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+  if (!process.env["VITE_SUPABASE_URL"] || !process.env["VITE_SUPABASE_ANON_KEY"]) {
     throw new Error('Supabase credentials not configured');
   }
   return createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.VITE_SUPABASE_ANON_KEY
+    process.env["VITE_SUPABASE_URL"],
+    process.env["VITE_SUPABASE_ANON_KEY"]
   );
 }
 
@@ -146,9 +146,9 @@ export function verifyTestUsers(): {
   const allUsers = Object.entries(TEST_USERS);
 
   // All test users should have valid UUIDs (non-empty strings)
-  const configured = allUsers.filter(([_, user]) => user.id && user.id.length > 0);
+  const configured = allUsers.filter(([, user]) => user.id.length > 0);
   const missing = allUsers
-    .filter(([_, user]) => !user.id || user.id.length === 0)
+    .filter(([, user]) => user.id.length === 0)
     .map(([key]) => key);
 
   return {

@@ -50,6 +50,11 @@ test.describe('Round Transitions - Smoke Tests', () => {
       const { hostPage, playerPages } = ctx;
       const [player1Page, player2Page] = playerPages;
 
+      // Defensive checks for player pages
+      if (!player1Page || !player2Page) {
+        throw new Error('Failed to setup player pages');
+      }
+
       // ============================================================
       // ARRANGE: Record initial scores
       // ============================================================

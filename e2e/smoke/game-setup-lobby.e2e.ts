@@ -48,6 +48,11 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       const { hostPage, playerPages } = ctx;
       const [player1Page, player2Page, player3Page] = playerPages;
 
+      // Defensive checks for array destructuring
+      if (!player1Page || !player2Page || !player3Page) {
+        throw new Error('Failed to setup all player pages');
+      }
+
       // ============================================================
       // ASSERT: All players should see lobby
       // ============================================================
@@ -88,6 +93,11 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: First 2 players join
       // ============================================================
+      // Defensive checks for player pages
+      if (!player1Page || !player2Page) {
+        throw new Error('Failed to setup player pages');
+      }
+
       await loginAsPlayer(player1Page, TEST_USERS.player1.email, 'Alice');
       await loginAsPlayer(player2Page, TEST_USERS.player2.email, 'Bob');
 
@@ -110,6 +120,11 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ARRANGE: Third player tries to join after game started
       // ============================================================
+      // Defensive check for player3Page
+      if (!player3Page) {
+        throw new Error('Failed to setup player3 page');
+      }
+
       await loginAsPlayer(player3Page, TEST_USERS.player3.email, 'Charlie');
 
       // ============================================================
@@ -147,17 +162,16 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
     // ASSERT: "Start Game" button should be disabled or not visible
     // ============================================================
     const startButton = page.getByRole('button', { name: /Start.*Game/i });
-    
+
     // Check if button is disabled
     const isDisabled = await startButton.isDisabled().catch(() => false);
-    
+
     // Or check if button is not visible
     const isVisible = await startButton.isVisible({ timeout: 2000 }).catch(() => false);
-    
+
     // Button should either be disabled or not visible
     expect(isDisabled || !isVisible).toBe(true);
 
     console.log('✅ Host correctly prevented from starting game without players');
   });
 });
-

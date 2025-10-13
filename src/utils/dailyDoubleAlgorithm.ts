@@ -152,7 +152,11 @@ function weightedRandomSelect<T extends { weight: number }>(items: readonly T[])
   }
 
   // Fallback for edge cases (should never happen with proper weights > 0)
-  return items[items.length - 1];
+  const fallback = items[items.length - 1]
+  if (!fallback) {
+    throw new Error('weightedRandom: items array is empty or all weights are 0')
+  }
+  return fallback;
 }
 
 /**
@@ -195,7 +199,11 @@ function selectDailyDoubleCategories(roundType: 'jeopardy' | 'double'): number[]
   if (roundType === 'jeopardy') {
     // Jeopardy round: 1 Daily Double in random category
     const randomIndex = Math.floor(Math.random() * categories.length);
-    return [categories[randomIndex]];
+    const selectedCategory = categories[randomIndex]
+    if (!selectedCategory) {
+      throw new Error('Failed to select category for Daily Double - categories array access returned undefined')
+    }
+    return [selectedCategory];
   } else {
     // Double Jeopardy round: 2 Daily Doubles in different categories
     // Use Fisher-Yates shuffle for fair random selection

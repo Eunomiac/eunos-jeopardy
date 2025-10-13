@@ -351,6 +351,10 @@ function structureFinalRoundData(rows: CSVRow[]): CategoryData {
 
   // Extract the single Final Jeopardy clue
   const row = rows[0]
+  if (!row) {
+    throw new Error('Final Jeopardy round has no clues')
+  }
+
   return {
     name: row.category,
     clues: [{
@@ -591,6 +595,10 @@ async function saveAllBoardsData(
 ): Promise<void> {
   for (let i = 0; i < boards.length; i++) {
     const board = boards[i]
+    if (!board) {
+      throw new Error(`Board at index ${i} is undefined`)
+    }
+
     const roundType = ['jeopardy', 'double', 'final'][i] as RoundType
     const roundData = clueSetData.rounds[roundType]
 
@@ -623,8 +631,12 @@ async function saveRegularRoundCategories(
   categories: CategoryData[]
 ): Promise<void> {
   for (let j = 0; j < categories.length; j++) {
+    const category = categories[j]
+    if (!category) {
+      throw new Error(`Category at index ${j} is undefined`)
+    }
     // Save each category with its position (1-6)
-    await saveCategoryAndClues(boardId, categories[j], j + 1)
+    await saveCategoryAndClues(boardId, category, j + 1)
   }
 }
 

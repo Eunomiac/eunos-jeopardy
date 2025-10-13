@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClueSetService } from './clueSetService'
 import { supabase } from '../supabase/client'
 

@@ -56,6 +56,11 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Game intro animation appears
       // ============================================================
+      // Defensive checks for player pages
+      if (!player1Page || !player2Page) {
+        throw new Error('Failed to setup player pages');
+      }
+
       await expect(hostPage.getByText(/Welcome to|Let's Play/i)).toBeVisible({ timeout: 10000 });
       await expect(player1Page.getByText(/Welcome to|Let's Play/i)).toBeVisible({ timeout: 10000 });
       await expect(player2Page.getByText(/Welcome to|Let's Play/i)).toBeVisible({ timeout: 10000 });
@@ -96,6 +101,7 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Game board is displayed
       // ============================================================
+      // player1Page and player2Page already checked above, safe to use
       await expect(hostPage.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 15000 });
       await expect(player1Page.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 15000 });
       await expect(player2Page.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 15000 });

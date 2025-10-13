@@ -54,7 +54,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
       // In a real game, we'd complete all Double Jeopardy clues
       // For smoke test, look for Final Jeopardy trigger button
       const finalJeopardyButton = hostPage.getByRole('button', { name: /Final Jeopardy|Final Round/i });
-      
+
       // Try to trigger Final Jeopardy
       if (await finalJeopardyButton.isVisible({ timeout: 5000 }).catch(() => false)) {
         await finalJeopardyButton.click();
@@ -92,6 +92,11 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         // ============================================================
         // ASSERT: Wager entry appears for all players
         // ============================================================
+        // Defensive checks for player pages
+        if (!player1Page || !player2Page) {
+          throw new Error('Failed to setup player pages');
+        }
+
         const player1WagerInput = player1Page.locator('input[type="number"], input[placeholder*="wager" i]');
         const player2WagerInput = player2Page.locator('input[type="number"], input[placeholder*="wager" i]');
 
@@ -155,7 +160,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         const correctButton = hostPage.getByRole('button', { name: /Correct/i }).first();
         const wrongButton = hostPage.getByRole('button', { name: /Wrong|Incorrect/i }).first();
 
-        const hasAdjudicationButtons = 
+        const hasAdjudicationButtons =
           await correctButton.isVisible({ timeout: 5000 }).catch(() => false) ||
           await wrongButton.isVisible({ timeout: 5000 }).catch(() => false);
 
@@ -204,4 +209,3 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
     }
   });
 });
-

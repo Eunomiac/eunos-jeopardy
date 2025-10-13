@@ -26,7 +26,7 @@ import { supabase } from "./client";
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export class SupabaseConnection { // eslint-disable-line @typescript-eslint/no-extraneous-class
+export class SupabaseConnection {
   /**
    * Tests the connection to Supabase with latency measurement.
    *

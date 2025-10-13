@@ -145,7 +145,7 @@ declare global {
    * @author Euno's Jeopardy Team
    */
   // Generic variable required to merge with existing Array<T> definition
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- T is required for interface merging with built-in Array<T>
   interface Array<T> {
     includes(searchElement: unknown, fromIndex?: number): boolean;
   }
@@ -176,7 +176,7 @@ declare global {
    * @author Euno's Jeopardy Team
    */
   // Generic variable required to merge with existing ReadonlyArray<T> definition
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- T is required for interface merging with built-in ReadonlyArray<T>
   interface ReadonlyArray<T> {
     includes(searchElement: unknown, fromIndex?: number): boolean;
   }

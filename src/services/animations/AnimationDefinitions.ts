@@ -764,7 +764,7 @@ export const RoundTransitionAnimation: AnimationDefinition<{
  * Central registry for all animation definitions.
  * Provides methods to register, retrieve, and check animations.
  */
-export class AnimationRegistry { // eslint-disable-line @typescript-eslint/no-extraneous-class
+export class AnimationRegistry {
   private static readonly definitions = new Map<string, AnimationDefinition>();
 
   /**

@@ -64,6 +64,11 @@ test.describe('Player Joins Game - Smoke Test', () => {
       // ============================================================
       // ARRANGE: Player logs in and sets nickname
       // ============================================================
+      // Defensive check for playerPage
+      if (!playerPage) {
+        throw new Error('Failed to setup player page');
+      }
+
       await loginAsPlayer(playerPage, TEST_USERS.player1.email, 'Alice');
 
       // ============================================================
@@ -105,4 +110,3 @@ test.describe('Player Joins Game - Smoke Test', () => {
     }
   });
 });
-

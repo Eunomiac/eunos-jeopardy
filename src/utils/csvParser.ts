@@ -116,6 +116,11 @@ export function parseCSV(csvText: string): CSVRow[] {
       // Destructure fields for clarity and type safety
       const [round, category, valueStr, prompt, response] = fields
 
+      // Validate all fields are present (TypeScript guard)
+      if (!round || !category || !valueStr || !prompt || !response) {
+        throw new Error(`Row ${i + 2} has missing fields. All 5 fields are required.`)
+      }
+
       // Validate round type against allowed Jeopardy rounds
       if (!isValidRoundType(round)) {
         throw new Error(`Invalid round type "${round}" in row ${i + 2}. Expected: jeopardy, double, or final`)

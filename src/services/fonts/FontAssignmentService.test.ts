@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FontAssignmentService } from './FontAssignmentService'
 import { supabase } from '../supabase/client'
 import { GameService } from '../games/GameService'

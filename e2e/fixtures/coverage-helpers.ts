@@ -16,8 +16,7 @@ export async function saveCoverage(page: Page, testName: string): Promise<void> 
   try {
     // Get coverage from the page's window object
     // Istanbul instruments code and stores coverage in window.__coverage__
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const coverage = await page.evaluate(() => (globalThis as any).__coverage__);
+    const coverage = await page.evaluate(() => (globalThis as { __coverage__?: unknown }).__coverage__);
 
     if (coverage) {
       // Create .nyc_output directory if it doesn't exist
@@ -56,6 +55,11 @@ export async function saveMultiContextCoverage(
   testName: string
 ): Promise<void> {
   for (let i = 0; i < pages.length; i++) {
-    await saveCoverage(pages[i], `${testName}-context${i + 1}`);
+    const page = pages[i];
+    // Defensive check for array access - protects against undefined
+    if (!page) {
+      throw new Error(`Page at index ${i} is undefined`);
+    }
+    await saveCoverage(page, `${testName}-context${i + 1}`);
   }
 }

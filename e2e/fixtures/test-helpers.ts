@@ -379,7 +379,16 @@ export async function setupGameWithPlayers(
   // Players log in and set nicknames first
   const playerEmails = [TEST_USERS.player1.email, TEST_USERS.player2.email, TEST_USERS.player3.email];
   for (let i = 0; i < playerPages.length; i++) {
-    await loginAsPlayer(playerPages[i], playerEmails[i], playerNicknames[i]);
+    const playerPage = playerPages[i];
+    const playerEmail = playerEmails[i];
+    const playerNickname = playerNicknames[i];
+
+    // Defensive check for array access - protects against undefined even in bounded iteration
+    if (!playerPage || !playerEmail || !playerNickname) {
+      throw new Error(`Missing player data at index ${i}`);
+    }
+
+    await loginAsPlayer(playerPage, playerEmail, playerNickname);
   }
 
   // Host creates game
@@ -387,6 +396,10 @@ export async function setupGameWithPlayers(
 
   // Players join game
   for (const playerPage of playerPages) {
+    // Defensive check - protects against undefined elements in array
+    if (!playerPage) {
+      throw new Error('Player page is undefined in join loop');
+    }
     await joinGame(playerPage);
   }
 
@@ -409,7 +422,14 @@ export async function setupGameInProgress(
 ): Promise<void> {
   await setupGameWithPlayers(hostPage, playerPages, playerNicknames);
   await startGameAndSkipIntro(hostPage);
-  await waitForGameBoard(playerPages[0]);
+
+  const firstPlayerPage = playerPages[0];
+  // Defensive check for array access - protects against empty array
+  if (!firstPlayerPage) {
+    throw new Error('No player pages provided to setupGameInProgress');
+  }
+
+  await waitForGameBoard(firstPlayerPage);
 }
 
 /**

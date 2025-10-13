@@ -56,7 +56,7 @@ import {
 /**
  * Service for managing real-time broadcast channels for buzzer events.
  */
-export class BroadcastService { // eslint-disable-line @typescript-eslint/no-extraneous-class
+export class BroadcastService {
   /**
    * Active channels by game ID for cleanup tracking.
    */

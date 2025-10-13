@@ -19,7 +19,7 @@ import { GameService } from '../games/GameService'
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-export class FontAssignmentService { // eslint-disable-line @typescript-eslint/no-extraneous-class
+export class FontAssignmentService {
   /**
    * Available handwritten font families.
    */
@@ -145,6 +145,11 @@ export class FontAssignmentService { // eslint-disable-line @typescript-eslint/n
     // Random selection from available fonts
     const selectedFont = availableFonts[Math.floor(Math.random() * availableFonts.length)]
 
+    // TypeScript guard: availableFonts is non-empty due to check above, but TS doesn't track array access
+    if (!selectedFont) {
+      throw new Error('Failed to select font from available fonts')
+    }
+
     console.log(`🎨 Assigned permanent font "${selectedFont}" to user ${userId}`)
     return selectedFont
   }
@@ -172,8 +177,12 @@ export class FontAssignmentService { // eslint-disable-line @typescript-eslint/n
 
     // Count actual assignments
     profiles.forEach((profile) => {
-      if (profile.handwritten_font && profile.handwritten_font in counts) {
-        counts[profile.handwritten_font]++
+      const font = profile.handwritten_font
+      if (font && font in counts) {
+        const currentCount = counts[font]
+        if (currentCount !== undefined) {
+          counts[font] = currentCount + 1
+        }
       }
     })
 
@@ -224,11 +233,19 @@ export class FontAssignmentService { // eslint-disable-line @typescript-eslint/n
     if (availableFonts.length === 0) {
       // All fonts in use, assign random font (rare edge case with 8+ players)
       console.warn('⚠️ All fonts in use, assigning random font')
-      return this.AVAILABLE_FONTS[Math.floor(Math.random() * this.AVAILABLE_FONTS.length)]
+      const fallbackFont = this.AVAILABLE_FONTS[Math.floor(Math.random() * this.AVAILABLE_FONTS.length)]
+      if (!fallbackFont) {
+        throw new Error('Failed to select fallback font - AVAILABLE_FONTS array is empty')
+      }
+      return fallbackFont
     }
 
     // Random selection from available fonts
     const tempFont = availableFonts[Math.floor(Math.random() * availableFonts.length)]
+
+    if (!tempFont) {
+      throw new Error('Failed to select temporary font from available fonts')
+    }
 
     console.log(`🎨 Assigned temporary font "${tempFont}" to user ${userId}`)
     return tempFont

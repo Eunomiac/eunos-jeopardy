@@ -60,6 +60,11 @@ test.describe('Daily Double - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Daily Double splash screen appears
       // ============================================================
+      // Defensive check for player1Page
+      if (!player1Page) {
+        throw new Error('Failed to setup player1 page');
+      }
+
       await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
       await expect(player1Page.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
 
@@ -150,6 +155,11 @@ test.describe('Daily Double - Smoke Tests', () => {
       const { hostPage, playerPages } = ctx;
       const [player1Page] = playerPages;
 
+      // Defensive check for player1Page
+      if (!player1Page) {
+        throw new Error('Failed to setup player1 page');
+      }
+
       // ============================================================
       // ACT: Select Daily Double, reveal, enter wager
       // ============================================================
@@ -187,4 +197,3 @@ test.describe('Daily Double - Smoke Tests', () => {
     }
   });
 });
-

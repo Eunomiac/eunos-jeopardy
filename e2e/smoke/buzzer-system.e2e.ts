@@ -61,6 +61,11 @@ test.describe('Buzzer System - Smoke Tests', () => {
       // ============================================================
       // ACT: Player 1 buzzes in
       // ============================================================
+      // Defensive check for player1Page
+      if (!player1Page) {
+        throw new Error('Failed to setup player1 page');
+      }
+
       await buzzIn(player1Page);
 
       // ============================================================
@@ -95,6 +100,11 @@ test.describe('Buzzer System - Smoke Tests', () => {
       const { hostPage, playerPages, playerContexts } = ctx;
       const [player1Page, player2Page] = playerPages;
       const [, player2Context] = playerContexts;
+
+      // Defensive checks for player pages and context
+      if (!player1Page || !player2Page || !player2Context) {
+        throw new Error('Failed to setup player pages or context');
+      }
 
       // ============================================================
       // ARRANGE: Add network delay to Player 2 to create race condition
