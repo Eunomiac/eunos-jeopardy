@@ -132,13 +132,21 @@ async function ensureProfileExists(user: User): Promise<void> {
 
     console.log('🆕 Creating new profile for:', user.email);
 
+    // Extract display name from metadata or use email prefix
+    const fullName = user.user_metadata['full_name'] as Maybe<string>;
+    const emailPrefix = user.email.split('@')[0];
+    if (!emailPrefix) {
+      throw new Error('Invalid email format - cannot extract prefix');
+    }
+    const displayName: string = fullName ?? emailPrefix;
+
     // Create new profile with sensible defaults from auth metadata
     const { data: insertData, error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: user.id, // Use Supabase Auth user ID as primary key
         username: user.email, // Use full email as username for guaranteed uniqueness
-        display_name: user.user_metadata['full_name'] as Maybe<string> ?? user.email.split('@')[0], // Use full name if provided, otherwise email prefix
+        display_name: displayName, // Use full name if provided, otherwise email prefix
         email: user.email, // Store email for display purposes (required field)
         role: 'player' // Default new users to player role
       })
