@@ -90,7 +90,7 @@ describe('BroadcastService', () => {
       await BroadcastService.broadcastBuzzerUnlock(gameId, clueId);
 
       // Get the mock channel that was returned by the global mock
-      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0].value;
+      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0]?.value;
 
       expect(mockChannel.send).toHaveBeenCalledWith({
         type: 'broadcast',
@@ -112,7 +112,7 @@ describe('BroadcastService', () => {
       await BroadcastService.broadcastBuzzerLock(gameId);
 
       // Get the mock channel that was returned by the global mock
-      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0].value;
+      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0]?.value;
 
       expect(mockChannel.send).toHaveBeenCalledWith({
         type: 'broadcast',
@@ -133,9 +133,9 @@ describe('BroadcastService', () => {
       await BroadcastService.broadcastPlayerBuzz(gameId, clueId, playerId, playerNickname, 450);
 
       // Get the mock channel that was returned by the global mock
-      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0].value;
+      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0]?.value;
 
-      expect(mockChannel.send).toHaveBeenCalledWith({
+      expect(mockChannel?.send).toHaveBeenCalledWith({
         type: 'broadcast',
         event: BROADCAST_EVENTS.PLAYER_BUZZ,
         payload: expect.objectContaining({
@@ -158,9 +158,9 @@ describe('BroadcastService', () => {
       await BroadcastService.broadcastFocusPlayer(gameId, playerId, playerNickname, 'auto');
 
       // Get the mock channel that was returned by the global mock
-      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0].value;
+      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0]?.value;
 
-      expect(mockChannel.send).toHaveBeenCalledWith({
+      expect(mockChannel?.send).toHaveBeenCalledWith({
         type: 'broadcast',
         event: BROADCAST_EVENTS.FOCUS_PLAYER,
         payload: expect.objectContaining({
@@ -179,7 +179,7 @@ describe('BroadcastService', () => {
       await BroadcastService.broadcastFocusPlayer(gameId, playerId, playerNickname);
 
       // Get the mock channel that was returned by the global mock
-      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0].value;
+      const mockChannel = (supabase.channel as jest.MockedFunction<typeof supabase.channel>).mock.results[0]?.value;
 
       expect(mockChannel.send).toHaveBeenCalledWith({
         type: 'broadcast',

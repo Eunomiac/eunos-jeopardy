@@ -1,0 +1,71 @@
+src/services/buzzer/BuzzerQueueManager.test.ts(32,14): error TS2532: Object is possibly 'undefined'.
+src/services/buzzer/BuzzerQueueManager.test.ts(33,14): error TS2532: Object is possibly 'undefined'.
+src/services/buzzer/BuzzerQueueManager.test.ts(34,14): error TS2532: Object is possibly 'undefined'.
+src/services/buzzer/BuzzerQueueManager.test.ts(174,14): error TS2532: Object is possibly 'undefined'.
+src/services/buzzer/BuzzerQueueManager.test.ts(175,14): error TS2532: Object is possibly 'undefined'.
+src/services/clues/ClueService.test.ts(84,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(100,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(116,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(139,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(162,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(192,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(222,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(259,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(296,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(368,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(385,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(402,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(419,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(445,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(468,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(490,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(512,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(530,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(564,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(581,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(597,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(622,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(641,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(660,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(695,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(710,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(725,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(748,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(769,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(789,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(818,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(839,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(859,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(886,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(903,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(920,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(958,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(1011,44): error TS7030: Not all code paths return a value.
+src/services/clues/ClueService.test.ts(1064,44): error TS7030: Not all code paths return a value.
+src/services/clueSets/loader.test.ts(109,14): error TS2532: Object is possibly 'undefined'.
+src/services/clueSets/loader.test.ts(111,14): error TS2532: Object is possibly 'undefined'.
+src/services/realtime/BroadcastService.test.ts(93,27): error TS2532: Object is possibly 'undefined'.
+src/services/realtime/BroadcastService.test.ts(115,27): error TS2532: Object is possibly 'undefined'.
+src/services/realtime/BroadcastService.test.ts(136,27): error TS2532: Object is possibly 'undefined'.
+src/services/realtime/BroadcastService.test.ts(161,27): error TS2532: Object is possibly 'undefined'.
+src/services/realtime/BroadcastService.test.ts(182,27): error TS2532: Object is possibly 'undefined'.
+src/utils/csvParser.test.ts(96,14): error TS2532: Object is possibly 'undefined'.
+src/utils/csvParser.test.ts(97,14): error TS2532: Object is possibly 'undefined'.
+src/utils/csvParser.test.ts(136,14): error TS2532: Object is possibly 'undefined'.
+src/utils/csvParser.test.ts(146,14): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(15,14): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(16,14): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(17,14): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(18,14): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(35,14): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(35,46): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(42,16): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(53,9): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(53,36): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(54,9): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(54,31): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(55,9): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(55,36): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(56,9): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(56,31): error TS2532: Object is possibly 'undefined'.
+src/utils/dailyDoubleAlgorithm.test.ts(68,19): error TS2532: Object is possibly 'undefined'.

@@ -12,10 +12,10 @@ describe('dailyDoubleAlgorithm', () => {
       expect(positions).toHaveLength(1)
       expect(positions[0]).toHaveProperty('category')
       expect(positions[0]).toHaveProperty('row')
-      expect(positions[0].category).toBeGreaterThanOrEqual(1)
-      expect(positions[0].category).toBeLessThanOrEqual(6)
-      expect(positions[0].row).toBeGreaterThanOrEqual(1)
-      expect(positions[0].row).toBeLessThanOrEqual(5)
+      expect(positions[0]?.category).toBeGreaterThanOrEqual(1)
+      expect(positions[0]?.category).toBeLessThanOrEqual(6)
+      expect(positions[0]?.row).toBeGreaterThanOrEqual(1)
+      expect(positions[0]?.row).toBeLessThanOrEqual(5)
     })
 
     it('should generate 2 Daily Doubles for Double Jeopardy round', () => {
@@ -32,14 +32,14 @@ describe('dailyDoubleAlgorithm', () => {
       })
 
       // Check that Daily Doubles are in different categories
-      expect(positions[0].category).not.toBe(positions[1].category)
+      expect(positions[0]?.category).not.toBe(positions[1]?.category)
     })
 
     it('should never place Daily Double in row 1', () => {
       // Run multiple times to ensure row 1 is never selected
       for (let i = 0; i < 100; i++) {
         const positions = generateDailyDoublePositions('jeopardy')
-        expect(positions[0].row).not.toBe(1)
+        expect(positions[0]?.row).not.toBe(1)
       }
     })
 
@@ -50,10 +50,10 @@ describe('dailyDoubleAlgorithm', () => {
 
       // With randomness, at least one should be different
       const allSame = (
-        positions1[0].category === positions2[0].category &&
-        positions1[0].row === positions2[0].row &&
-        positions2[0].category === positions3[0].category &&
-        positions2[0].row === positions3[0].row
+        positions1[0]?.category === positions2[0]?.category &&
+        positions1[0]?.row === positions2[0]?.row &&
+        positions2[0]?.category === positions3[0]?.category &&
+        positions2[0]?.row === positions3[0]?.row
       )
 
       expect(allSame).toBe(false)
@@ -65,7 +65,7 @@ describe('dailyDoubleAlgorithm', () => {
 
       for (let i = 0; i < runs; i++) {
         const positions = generateDailyDoublePositions('jeopardy')
-        rowCounts[positions[0].row as keyof typeof rowCounts]++
+        rowCounts[positions[0]?.row as keyof typeof rowCounts]++
       }
 
       // Row 4 should be most common (39% probability)

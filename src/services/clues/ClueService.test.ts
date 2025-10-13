@@ -30,44 +30,42 @@ describe('ClueService', () => {
     it('should initialize clue states successfully', async () => {
       // Mock the chain of database calls
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
+              })
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+              })
+            }
+          case 'clues':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
+              })
+            }
+          case 'clue_states':
+            return {
+              insert: jest.fn().mockReturnValue({
+                select: jest.fn().mockResolvedValue({ data: mockClueStates, error: null })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
-            })
-          }
-        }
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
-            })
-          }
-        }
-        if (table === 'clue_states') {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockResolvedValue({ data: mockClueStates, error: null })
-            })
-          }
-        }
-        throw new Error(`Unexpected table: ${table}`)
       })
 
       const result = await ClueService.initializeClueStates('game-123')
@@ -82,14 +80,15 @@ describe('ClueService', () => {
 
     it('should handle game fetch error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Game not found' } })
-              })
+        if (table !== 'games') {
+          throw new Error(`Unexpected table: ${table}`);
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Game not found' } })
             })
-          }
+          })
         }
       })
 
@@ -98,14 +97,15 @@ describe('ClueService', () => {
 
     it('should handle missing clue set ID', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: { clue_set_id: null }, error: null })
-              })
+        if (table !== 'games') {
+          throw new Error(`Unexpected table: ${table}`);
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: { clue_set_id: null }, error: null })
             })
-          }
+          })
         }
       })
 
@@ -114,21 +114,23 @@ describe('ClueService', () => {
 
     it('should handle boards fetch error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Boards not found' } })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Boards not found' } })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`);
         }
       })
 
@@ -137,21 +139,23 @@ describe('ClueService', () => {
 
     it('should handle empty boards', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: [], error: null })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: [], error: null })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`);
         }
       })
 
@@ -160,28 +164,29 @@ describe('ClueService', () => {
 
     it('should handle categories fetch error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: null, error: { message: 'Categories not found' } })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
+              })
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: null, error: { message: 'Categories not found' } })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -190,28 +195,29 @@ describe('ClueService', () => {
 
     it('should handle empty categories', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: [], error: null })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
+              })
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: [], error: null })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -220,35 +226,35 @@ describe('ClueService', () => {
 
     it('should handle clues fetch error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
-            })
-          }
-        }
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: null, error: { message: 'Clues not found' } })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
+              })
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+              })
+            }
+          case 'clues':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: null, error: { message: 'Clues not found' } })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -257,35 +263,35 @@ describe('ClueService', () => {
 
     it('should handle empty clues', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
-            })
-          }
-        }
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: [], error: null })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
+              })
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+              })
+            }
+          case 'clues':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: [], error: null })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -294,42 +300,41 @@ describe('ClueService', () => {
 
     it('should handle clue states insert error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
+                })
               })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
-            })
-          }
-        }
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
-            })
-          }
-        }
-        if (table === 'clue_states') {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockResolvedValue({ data: null, error: { message: 'Insert failed' } })
-            })
-          }
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBoards, error: null })
+              })
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+              })
+            }
+          case 'clues':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
+              })
+            }
+          case 'clue_states':
+            return {
+              insert: jest.fn().mockReturnValue({
+                select: jest.fn().mockResolvedValue({ data: null, error: { message: 'Insert failed' } })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -366,14 +371,15 @@ describe('ClueService', () => {
 
     it('should return true for Daily Double clue', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockClueWithDailyDouble, error: null })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: mockClueWithDailyDouble, error: null })
             })
-          }
+          })
         }
       })
 
@@ -383,14 +389,15 @@ describe('ClueService', () => {
 
     it('should return false for non-Daily Double clue', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockClueWithoutDailyDouble, error: null })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: mockClueWithoutDailyDouble, error: null })
             })
-          }
+          })
         }
       })
 
@@ -400,14 +407,15 @@ describe('ClueService', () => {
 
     it('should return false when no category data', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: { position: 1, category: null }, error: null })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: { position: 1, category: null }, error: null })
             })
-          }
+          })
         }
       })
 
@@ -417,23 +425,24 @@ describe('ClueService', () => {
 
     it('should return false when no Daily Double positions', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: {
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  position: 1,
+                  category: {
                     position: 1,
-                    category: {
-                      position: 1,
-                      board: { daily_double_cells: null }
-                    }
-                  },
-                  error: null
-                })
+                    board: { daily_double_cells: null }
+                  }
+                },
+                error: null
               })
             })
-          }
+          })
         }
       })
 
@@ -443,14 +452,15 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
             })
-          }
+          })
         }
       })
 
@@ -466,19 +476,20 @@ describe('ClueService', () => {
 
     it('should return Daily Double positions for valid board', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'boards') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: { daily_double_cells: mockDailyDoublePositions },
-                    error: null
-                  })
+                single: jest.fn().mockResolvedValue({
+                  data: { daily_double_cells: mockDailyDoublePositions },
+                  error: null
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -488,19 +499,20 @@ describe('ClueService', () => {
 
     it('should return empty array when no Daily Double positions', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'boards') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: { daily_double_cells: null },
-                    error: null
-                  })
+                single: jest.fn().mockResolvedValue({
+                  data: { daily_double_cells: null },
+                  error: null
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -510,16 +522,17 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'boards') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Board not found' } })
-                })
+                single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Board not found' } })
               })
             })
-          }
+          })
         }
       })
 
@@ -528,19 +541,20 @@ describe('ClueService', () => {
 
     it('should handle invalid Daily Double positions format', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'boards') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: { daily_double_cells: 'invalid format' },
-                    error: null
-                  })
+                single: jest.fn().mockResolvedValue({
+                  data: { daily_double_cells: 'invalid format' },
+                  error: null
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -562,14 +576,15 @@ describe('ClueService', () => {
 
     it('should return clue by ID', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockClue, error: null })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: mockClue, error: null })
             })
-          }
+          })
         }
       })
 
@@ -579,14 +594,15 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
             })
-          }
+          })
         }
       })
 
@@ -595,14 +611,15 @@ describe('ClueService', () => {
 
     it('should handle clue not found', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: null, error: null })
-              })
+        if (table !== 'clues') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: null, error: null })
             })
-          }
+          })
         }
       })
 
@@ -620,16 +637,17 @@ describe('ClueService', () => {
 
     it('should return clue state when found', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({ data: mockClueState, error: null })
-                })
+                single: jest.fn().mockResolvedValue({ data: mockClueState, error: null })
               })
             })
-          }
+          })
         }
       })
 
@@ -639,16 +657,17 @@ describe('ClueService', () => {
 
     it('should return null when clue state not found', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
-                })
+                single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
               })
             })
-          }
+          })
         }
       })
 
@@ -658,16 +677,17 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
-                })
+                single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
               })
             })
-          }
+          })
         }
       })
 
@@ -693,12 +713,13 @@ describe('ClueService', () => {
 
     it('should return all clue states for game', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockClueStates, error: null })
-            })
-          }
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ data: mockClueStates, error: null })
+          })
         }
       })
 
@@ -708,12 +729,13 @@ describe('ClueService', () => {
 
     it('should return empty array when no clue states', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: null, error: null })
-            })
-          }
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ data: null, error: null })
+          })
         }
       })
 
@@ -723,12 +745,13 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
-            })
-          }
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
+          })
         }
       })
 
@@ -746,18 +769,19 @@ describe('ClueService', () => {
 
     it('should reveal clue successfully', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            update: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({ data: mockUpdatedClueState, error: null })
-                  })
+                select: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockUpdatedClueState, error: null })
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -767,18 +791,19 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            update: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } })
-                  })
+                select: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } })
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -787,18 +812,19 @@ describe('ClueService', () => {
 
     it('should handle no clue state found', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            update: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({ data: null, error: null })
-                  })
+                select: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: null, error: null })
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -816,18 +842,19 @@ describe('ClueService', () => {
 
     it('should mark clue as completed successfully', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            update: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({ data: mockCompletedClueState, error: null })
-                  })
+                select: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: mockCompletedClueState, error: null })
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -837,18 +864,19 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            update: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } })
-                  })
+                select: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Update failed' } })
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -857,18 +885,19 @@ describe('ClueService', () => {
 
     it('should handle no clue state found', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            update: jest.fn().mockReturnValue({
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  select: jest.fn().mockReturnValue({
-                    single: jest.fn().mockResolvedValue({ data: null, error: null })
-                  })
+                select: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({ data: null, error: null })
                 })
               })
             })
-          }
+          })
         }
       })
 
@@ -884,14 +913,15 @@ describe('ClueService', () => {
 
     it('should return count of completed clues', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockResolvedValue({ data: mockCompletedClueStates, error: null })
-              })
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ data: mockCompletedClueStates, error: null })
             })
-          }
+          })
         }
       })
 
@@ -901,14 +931,15 @@ describe('ClueService', () => {
 
     it('should return 0 when no completed clues', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockResolvedValue({ data: null, error: null })
-              })
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ data: null, error: null })
             })
-          }
+          })
         }
       })
 
@@ -918,14 +949,15 @@ describe('ClueService', () => {
 
     it('should handle database error', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
-              })
+        if (table !== 'clue_states') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
             })
-          }
+          })
         }
       })
 
@@ -956,50 +988,49 @@ describe('ClueService', () => {
 
     it('should return count of completed clues for jeopardy round', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
-              })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
                 eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({ data: mockBoard, error: null })
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
                 })
               })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
-            })
-          }
-        }
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
-            })
-          }
-        }
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                in: jest.fn().mockReturnValue({
-                  eq: jest.fn().mockResolvedValue({ data: mockCompletedClueStates, error: null })
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockReturnValue({
+                    single: jest.fn().mockResolvedValue({ data: mockBoard, error: null })
+                  })
                 })
               })
-            })
-          }
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+              })
+            }
+          case 'clues':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
+              })
+            }
+          case 'clue_states':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  in: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockResolvedValue({ data: mockCompletedClueStates, error: null })
+                  })
+                })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -1009,50 +1040,49 @@ describe('ClueService', () => {
 
     it('should return 0 when no clues completed in round', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
-              })
-            })
-          }
-        }
-        if (table === 'boards') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
+        switch (table) {
+          case 'games':
+            return {
+              select: jest.fn().mockReturnValue({
                 eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({ data: mockBoard, error: null })
+                  single: jest.fn().mockResolvedValue({ data: mockGame, error: null })
                 })
               })
-            })
-          }
-        }
-        if (table === 'categories') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
-            })
-          }
-        }
-        if (table === 'clues') {
-          return {
-            select: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
-            })
-          }
-        }
-        if (table === 'clue_states') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                in: jest.fn().mockReturnValue({
-                  eq: jest.fn().mockResolvedValue({ data: [], error: null })
+            }
+          case 'boards':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  eq: jest.fn().mockReturnValue({
+                    single: jest.fn().mockResolvedValue({ data: mockBoard, error: null })
+                  })
                 })
               })
-            })
-          }
+            }
+          case 'categories':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockCategories, error: null })
+              })
+            }
+          case 'clues':
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockClues, error: null })
+              })
+            }
+          case 'clue_states':
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  in: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockResolvedValue({ data: [], error: null })
+                  })
+                })
+              })
+            }
+          default:
+            throw new Error(`Unexpected table: ${table}`)
         }
       })
 
@@ -1062,14 +1092,15 @@ describe('ClueService', () => {
 
     it('should handle game without clue set', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
-        if (table === 'games') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: { clue_set_id: null }, error: null })
-              })
+        if (table !== 'games') {
+          throw new Error(`Unexpected table: ${table}`)
+        }
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: { clue_set_id: null }, error: null })
             })
-          }
+          })
         }
       })
 

@@ -93,8 +93,8 @@ double,History,400,Who was the first president?,George Washington
       const result = parseCSV(csvText)
 
       expect(result).toHaveLength(2)
-      expect(result[0].round).toBe('jeopardy')
-      expect(result[1].round).toBe('double')
+      expect(result[0]?.round).toBe('jeopardy')
+      expect(result[1]?.round).toBe('double')
     })
 
     it('should handle empty CSV gracefully', () => {
@@ -133,7 +133,7 @@ final,Geography,0,What is the largest country?,Russia`
       const result = parseCSV(csvText)
 
       expect(result).toHaveLength(1)
-      expect(result[0].value).toBe(0)
+      expect(result[0]?.value).toBe(0)
     })
 
     it('should handle negative values correctly', () => {
@@ -143,7 +143,7 @@ jeopardy,Science,-200,What is H2O?,Water`
       const result = parseCSV(csvText)
 
       expect(result).toHaveLength(1)
-      expect(result[0].value).toBe(-200)
+      expect(result[0]?.value).toBe(-200)
     })
   })
 

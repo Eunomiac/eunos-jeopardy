@@ -170,13 +170,11 @@ export function App() {
 
     if (profileError) {
       console.error('❌ Error fetching user profile:', profileError)
-      console.log('🎮 Set to player mode (error fallback)')
+      console.log('❌ Set to player mode (error fallback)')
       return 'player'
     }
 
-    const role = profile.role as 'host' | 'player';
-    console.log('👤 Detected role:', role)
-    return role
+    return profile.role as 'host' | 'player';
   }, [user])
 
   /**

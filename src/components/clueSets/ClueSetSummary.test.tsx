@@ -229,6 +229,7 @@ describe('ClueSetSummary', () => {
       mockClueSetService.getClueSetSummary.mockResolvedValue(mockSummary)
 
       // Omit onDeleted instead of passing undefined (exactOptionalPropertyTypes)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { onDeleted: _removed, ...propsWithoutOnDeleted } = mockProps
       render(<ClueSetSummary {...propsWithoutOnDeleted} />)
 
@@ -241,6 +242,7 @@ describe('ClueSetSummary', () => {
       mockClueSetService.getClueSetSummary.mockResolvedValue(mockSummary)
 
       // Omit onError instead of passing undefined (exactOptionalPropertyTypes)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { onError: _removed, ...propsWithoutOnError } = mockProps
       render(<ClueSetSummary {...propsWithoutOnError} />)
 

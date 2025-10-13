@@ -146,15 +146,15 @@ function checkClueColumns(clues: Tables<'clues'>[]) {
   }
 
   // Display available columns for reference
-  console.log('Columns:', Object.keys(clues[0]))
+  console.log('Columns:', Object.keys(clues[0] ?? {}))
 
   // Check for current schema fields
-  const hasPrompt = 'prompt' in clues[0]
-  const hasResponse = 'response' in clues[0]
+  const hasPrompt = 'prompt' in (clues[0] ?? [])
+  const hasResponse = 'response' in (clues[0] ?? [])
 
   // Check for legacy schema fields
-  const hasLegacyFields = 'question' in clues[0] || 'text' in clues[0]
-  const hasAnswer = 'answer' in clues[0]
+  const hasLegacyFields = 'question' in (clues[0] ?? []) || 'text' in (clues[0] ?? [])
+  const hasAnswer = 'answer' in (clues[0] ?? [])
 
   // Report column analysis with visual indicators
   console.log('Column check:')
@@ -226,7 +226,7 @@ export async function testCurrentSchema() {
     // Test categories table for category organization
     const categories = await testTable('categories', '📂')
     if (categories && categories.length > 0) {
-      console.log('Columns:', Object.keys(categories[0]))
+      console.log('Columns:', Object.keys(categories[0] ?? []))
     }
 
   } catch (error) {

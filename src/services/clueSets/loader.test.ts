@@ -106,9 +106,9 @@ final,Geography,0,Largest country?,Russia`
       expect(result.rounds.jeopardy).toHaveLength(6) // 6 categories as per real validation
       expect(result.rounds.jeopardy[0]).toHaveProperty('name')
       expect(result.rounds.jeopardy[0]).toHaveProperty('clues')
-      expect(result.rounds.jeopardy[0].clues).toHaveLength(5) // 5 clues per category
+      expect(result.rounds.jeopardy[0]?.clues).toHaveLength(5) // 5 clues per category (should be 5)
       expect(result.rounds.jeopardy[1]).toHaveProperty('name')
-      expect(result.rounds.jeopardy[1].clues).toHaveLength(5) // 5 clues per category
+      expect(result.rounds.jeopardy[1]?.clues).toHaveLength(5) // 5 clues per category (should be 5)
     })
   })
 

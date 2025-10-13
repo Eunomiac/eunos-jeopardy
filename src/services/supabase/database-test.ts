@@ -147,14 +147,14 @@ export async function runDatabaseTests() {
 
   console.log("📊 Database test results:");
   TABLE_NAMES.forEach((tableName, index) => {
-    console.log(`- ${tableName}: ${samples[index].length} samples`);
+    console.log(`- ${tableName}: ${samples[index]?.length ?? "No"} samples`);
   });
 
-  if (samples[0].length > 0) {
-    const sampleElement = samples[0][0];
-    const keys = Object.keys(sampleElement).slice(0, 3); // Show first 3 properties
+  if ((samples[0]?.length ?? 0) > 0) {
+    const sampleElement = samples[0]?.[0];
+    const keys = Object.keys(sampleElement ?? {}).slice(0, 3); // Show first 3 properties
     const preview = keys.reduce<Record<string, unknown>>((obj, key) => {
-      obj[key] = sampleElement[key as keyof typeof sampleElement];
+      obj[key] = sampleElement?.[key as keyof typeof sampleElement];
       return obj;
     }, {});
     console.log("🃏 Sample element:", JSON.stringify(preview, null, 2));
