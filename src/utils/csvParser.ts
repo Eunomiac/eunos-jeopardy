@@ -36,6 +36,88 @@ export interface CSVRow {
 }
 
 /**
+ * Validates that all required fields are present in a CSV row.
+ *
+ * Ensures that each field extracted from the CSV line is defined and not empty.
+ * This prevents undefined values from propagating through the parsing pipeline.
+ *
+ * @param fields - Array of field values from CSV line
+ * @param rowNumber - Row number for error reporting (1-based, accounting for header)
+ * @throws {Error} When any required field is undefined or missing
+ *
+ * @since 0.1.0
+ * @author Euno's Jeopardy Team
+ */
+function validateFieldsPresent(fields: string[], rowNumber: number): void {
+  const [round, category, valueStr, prompt, response] = fields;
+
+  if (!round) {
+    throw new Error(`Round is undefined in row ${rowNumber}`);
+  }
+  if (!category) {
+    throw new Error(`Category is undefined in row ${rowNumber}`);
+  }
+  if (!valueStr) {
+    throw new Error(`Value is undefined in row ${rowNumber}`);
+  }
+  if (!prompt) {
+    throw new Error(`Prompt is undefined in row ${rowNumber}`);
+  }
+  if (!response) {
+    throw new Error(`Response is undefined in row ${rowNumber}`);
+  }
+}
+
+/**
+ * Validates and parses a single CSV row into a structured CSVRow object.
+ *
+ * Performs comprehensive validation on all fields including type checking,
+ * round validation, and numeric parsing. Extracts this logic from the main
+ * parsing loop to reduce cognitive complexity.
+ *
+ * @param fields - Array of field values from CSV line
+ * @param rowNumber - Row number for error reporting (1-based, accounting for header)
+ * @returns Validated and structured CSV row object
+ * @throws {Error} When validation fails for any field
+ *
+ * @since 0.1.0
+ * @author Euno's Jeopardy Team
+ */
+function validateAndCreateRow(fields: string[], rowNumber: number): CSVRow {
+  // Validate field count - Jeopardy CSV must have exactly 5 fields
+  if (fields.length !== 5) {
+    throw new Error(`Row ${rowNumber} has ${fields.length} fields, expected 5`);
+  }
+
+  // Validate all fields are present
+  validateFieldsPresent(fields, rowNumber);
+
+  // Destructure fields - TypeScript doesn't know validateFieldsPresent guarantees non-undefined
+  // so we assert the types after validation
+  const [round, category, valueStr, prompt, response] = fields as [string, string, string, string, string];
+
+  // Validate round type against allowed Jeopardy rounds
+  if (!isValidRoundType(round)) {
+    throw new Error(`Invalid round type "${round}" in row ${rowNumber}. Expected: jeopardy, double, or final`);
+  }
+
+  // Parse and validate numeric value field
+  const value = parseInt(valueStr, 10);
+  if (isNaN(value)) {
+    throw new Error(`Invalid value "${valueStr}" in row ${rowNumber}. Expected a number`);
+  }
+
+  // Create validated row object with trimmed text fields
+  return {
+    round,
+    category: category.trim(), // Remove extra whitespace
+    value,
+    prompt: prompt.trim(), // Clean clue text
+    response: response.trim() // Clean answer text
+  };
+}
+
+/**
  * Parses CSV text into structured Jeopardy clue data with comprehensive validation.
  *
  * This is the core parsing function that converts raw CSV text into structured
@@ -87,17 +169,17 @@ export interface CSVRow {
  */
 export function parseCSV(csvText: string): CSVRow[] {
   // Split into lines and remove any trailing whitespace
-  const lines = csvText.trim().split('\n')
+  const lines = csvText.trim().split('\n');
 
   // Validate that CSV has content
   if (lines.length === 0) {
-    throw new Error('CSV file is empty')
+    throw new Error('CSV file is empty');
   }
 
   // Skip header row (assumes first line contains column headers)
   // Expected header: round,category,value,prompt,response
-  const dataLines = lines.slice(1)
-  const rows: CSVRow[] = []
+  const dataLines = lines.slice(1);
+  const rows: CSVRow[] = [];
 
   // Process each data line with detailed validation
   for (let i = 0; i < dataLines.length; i++) {
@@ -110,44 +192,15 @@ export function parseCSV(csvText: string): CSVRow[] {
     // Skip empty lines (allows for formatting flexibility)
     if (trimmedLine) {
       // Parse the line handling quoted fields and embedded commas
-      const fields = parseCSVLine(line)
+      const fields = parseCSVLine(line);
 
-      // Validate field count - Jeopardy CSV must have exactly 5 fields
-      if (fields.length !== 5) {
-        throw new Error(`Row ${i + 2} has ${fields.length} fields, expected 5`)
-      }
-
-      // Destructure fields for clarity and type safety
-      const [round, category, valueStr, prompt, response] = fields
-
-      // Validate all fields are present (TypeScript guard)
-      if (!round || !category || !valueStr || !prompt || !response) {
-        throw new Error(`Row ${i + 2} has missing fields. All 5 fields are required.`)
-      }
-
-      // Validate round type against allowed Jeopardy rounds
-      if (!isValidRoundType(round)) {
-        throw new Error(`Invalid round type "${round}" in row ${i + 2}. Expected: jeopardy, double, or final`)
-      }
-
-      // Parse and validate numeric value field
-      const value = parseInt(valueStr, 10)
-      if (isNaN(value)) {
-        throw new Error(`Invalid value "${valueStr}" in row ${i + 2}. Expected a number`)
-      }
-
-      // Create validated row object with trimmed text fields
-      rows.push({
-        round,
-        category: category.trim(), // Remove extra whitespace
-        value,
-        prompt: prompt.trim(), // Clean clue text
-        response: response.trim() // Clean answer text
-      })
+      // Validate and create row (extracted to reduce complexity)
+      const row = validateAndCreateRow(fields, i + 2);
+      rows.push(row);
     }
   }
 
-  return rows
+  return rows;
 }
 
 /**
