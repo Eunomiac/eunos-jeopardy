@@ -105,9 +105,11 @@ export function createMockQueryBuilder() {
      * Convenience method for error responses
      */
     withError(error: PostgrestError) {
-      builder.single.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code, 10) : 500, statusText: error.message })
-      builder.maybeSingle.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code, 10) : 500, statusText: error.message })
-      return builder
+      const errorResponse = { data: null, error, count: null, status: error.code ? Number.parseInt(error.code, 10) : 500, statusText: error.message }
+      builder.single.mockResolvedValue(errorResponse)
+      builder.maybeSingle.mockResolvedValue(errorResponse)
+      // Also make the builder itself resolve to the error response (for delete/update/insert without .single())
+      return Object.assign(Promise.resolve(errorResponse), builder)
     },
   }
 

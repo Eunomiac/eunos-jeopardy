@@ -25,9 +25,12 @@ interface PlayerJoinProps {
 /**
  * Extracts the username portion from an email address to use as default nickname.
  * @param email - The email address
- * @returns The username portion (everything before @)
+ * @returns The username portion (everything before @), or 'Player' if email is empty
  */
-const getDefaultNicknameFromEmail = (email: string): string => email.split('@')[0] ?? 'Player'
+const getDefaultNicknameFromEmail = (email: string): string => {
+  const username = email.split('@')[0]
+  return (username && username.length > 0) ? username : 'Player'
+}
 
 export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
   const { user } = useAuth()

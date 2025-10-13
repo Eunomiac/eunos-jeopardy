@@ -1436,10 +1436,10 @@ describe('GameService', () => {
       const gameId = 'game-123'
       const clueId = 'clue-456'
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId, focused_clue_id: clueId }
+      const mockGame = createMockGame({ id: gameId, host_id: hostId, focused_clue_id: clueId })
 
       // Mock updateGame (setFocusedClue just calls updateGame)
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame)
 
       const result = await GameService.setFocusedClue(gameId, clueId, hostId)
 
@@ -1452,9 +1452,9 @@ describe('GameService', () => {
     it('should clear focused clue when clueId is null', async () => {
       const gameId = 'game-123'
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId, focused_clue_id: null }
+      const mockGame = createMockGame({ id: gameId, host_id: hostId, focused_clue_id: null })
 
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame)
 
       const result = await GameService.setFocusedClue(gameId, null, hostId)
 
@@ -1470,9 +1470,9 @@ describe('GameService', () => {
       const gameId = 'game-123'
       const playerId = 'player-456'
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId, focused_player_id: playerId }
+      const mockGame = createMockGame({ id: gameId, host_id: hostId, focused_player_id: playerId })
 
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame)
 
       const result = await GameService.setFocusedPlayer(gameId, playerId, hostId)
 
@@ -1485,9 +1485,9 @@ describe('GameService', () => {
     it('should clear focused player when playerId is null', async () => {
       const gameId = 'game-123'
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId, focused_player_id: null }
+      const mockGame = createMockGame({ id: gameId, host_id: hostId, focused_player_id: null })
 
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame)
 
       const result = await GameService.setFocusedPlayer(gameId, null, hostId)
 
@@ -1506,10 +1506,10 @@ describe('GameService', () => {
       const playerResponse = 'What is the answer?'
       const scoreValue = 200
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId }
+      const mockGame = createMockGame({ id: gameId, host_id: hostId })
 
       // Mock getGame for authorization
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(createMockGame(mockGame))
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
 
       // Mock database operations
       mockSupabase.from.mockImplementation((table: string) => {
@@ -1543,7 +1543,7 @@ describe('GameService', () => {
       const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue(createMockPlayer({}))
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame)
 
       const result = await GameService.markPlayerCorrect(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
 
@@ -1592,10 +1592,10 @@ describe('GameService', () => {
       const playerResponse = 'Wrong answer'
       const scoreValue = 200
       const hostId = 'host-123'
-      const mockGame = { id: gameId, host_id: hostId }
+      const mockGame = createMockGame({ id: gameId, host_id: hostId })
 
       // Mock getGame for authorization
-      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(createMockGame(mockGame))
+      const getGameSpy = jest.spyOn(GameService, 'getGame').mockResolvedValue(mockGame)
 
       // Mock ClueService.isDailyDouble
       const mockClueService = ClueService as jest.Mocked<typeof ClueService>
@@ -1666,7 +1666,7 @@ describe('GameService', () => {
       const updatePlayerScoreSpy = jest.spyOn(GameService, 'updatePlayerScore').mockResolvedValue(createMockPlayer({}))
 
       // Mock updateGame
-      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(createMockGame(mockGame))
+      const updateGameSpy = jest.spyOn(GameService, 'updateGame').mockResolvedValue(mockGame)
 
       const result = await GameService.markPlayerWrong(gameId, clueId, playerId, playerResponse, scoreValue, hostId)
 

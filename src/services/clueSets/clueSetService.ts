@@ -118,6 +118,10 @@ export class ClueSetService {
       throw new Error(`Failed to retrieve clue sets: ${error.message}`)
     }
 
+    if (!data) {
+      return []
+    }
+
     return data.map((row) => ({
       id: row.id,
       name: row.name,
@@ -237,6 +241,10 @@ export class ClueSetService {
 
     if (boardsError) {
       throw new Error(`Failed to retrieve board categories: ${boardsError.message}`)
+    }
+
+    if (!boardsWithCategories) {
+      throw new Error('No board data returned')
     }
 
     // Organize categories by round
@@ -365,7 +373,7 @@ export class ClueSetService {
       throw new Error(`Failed to load board data: ${boardsError.message}`)
     }
 
-    if (!boards) {
+    if (!boards || boards.length === 0) {
       throw new Error('No board data found for clue set')
     }
 
@@ -464,6 +472,10 @@ export class ClueSetService {
 
     if (error) {
       throw new Error(`Failed to check duplicate name: ${error.message}`)
+    }
+
+    if (!data) {
+      return false
     }
 
     return data.length > 0
