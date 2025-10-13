@@ -87,19 +87,22 @@ export const mockGame: GameRow = {
 
 /**
  * Standard mock players array for testing multiplayer functionality
- * Used across: GameService.test.ts, GameHostDashboard.test.tsx
+ * Used across: GameService.test.ts, GameHostDashboard.test.tsx, PlayerDashboard.test.tsx
+ *
+ * IMPORTANT: First player must be the current user (user-123) for PlayerDashboard tests to work correctly.
+ * The component expects to find the current authenticated user in the players list.
  */
 export const mockPlayersData: PlayerRow[] = [
   {
     game_id: 'game-123',
-    user_id: 'user-456',
+    user_id: 'user-123', // Current authenticated user (matches mockUser.id)
     nickname: 'Player One',
     score: 1000,
     joined_at: '2023-01-01T00:00:00Z'
   },
   {
     game_id: 'game-123',
-    user_id: 'user-789',
+    user_id: 'user-456',
     nickname: 'Player Two',
     score: 500,
     joined_at: '2023-01-01T00:01:00Z'
