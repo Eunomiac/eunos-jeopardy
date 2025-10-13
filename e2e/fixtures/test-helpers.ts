@@ -32,7 +32,7 @@ export interface TestContext {
   hostLogger: { save: () => void };
   playerPages: Page[];
   playerContexts: BrowserContext[];
-  playerLoggers: Array<{ save: () => void }>;
+  playerLoggers: { save: () => void }[];
 }
 
 // ============================================================
@@ -49,7 +49,7 @@ export interface TestContext {
 export async function loginAs(
   page: Page,
   email: string,
-  password: string = '1234'
+  password = '1234'
 ): Promise<void> {
   await page.goto('/');
   await page.getByPlaceholder('Email').fill(email);
@@ -91,7 +91,7 @@ export async function loginAsPlayer(
   page: Page,
   email: string,
   nickname: string,
-  password: string = '1234'
+  password = '1234'
 ): Promise<void> {
   await loginAs(page, email, password);
   await setNickname(page, nickname);
@@ -123,7 +123,7 @@ export async function createTestContext(
   // Create player contexts
   const playerContexts: BrowserContext[] = [];
   const playerPages: Page[] = [];
-  const playerLoggers: Array<{ save: () => void }> = [];
+  const playerLoggers: { save: () => void }[] = [];
 
   for (let i = 0; i < numPlayers; i++) {
     const context = await browser.newContext();
@@ -154,7 +154,7 @@ export async function createTestContext(
 export async function cleanupTestContext(ctx: TestContext): Promise<void> {
   // Save all logs
   ctx.hostLogger.save();
-  ctx.playerLoggers.forEach(logger => logger.save());
+  ctx.playerLoggers.forEach((logger) => { logger.save(); });
 
   // Save coverage from all pages
   await saveCoverage(ctx.hostPage, 'host');
@@ -164,7 +164,7 @@ export async function cleanupTestContext(ctx: TestContext): Promise<void> {
 
   // Close all contexts
   await ctx.hostContext.close();
-  await Promise.all(ctx.playerContexts.map(c => c.close()));
+  await Promise.all(ctx.playerContexts.map((c) => c.close()));
 }
 
 // ============================================================
@@ -180,7 +180,7 @@ export async function cleanupTestContext(ctx: TestContext): Promise<void> {
  */
 export async function createGame(
   page: Page,
-  clueSetIndex: number = 1
+  clueSetIndex = 1
 ): Promise<void> {
   const clueSetDropdown = page.getByRole('combobox');
   await expect(clueSetDropdown).toBeVisible();
@@ -198,7 +198,7 @@ export async function createGame(
  */
 export async function createGameAsHost(
   page: Page,
-  clueSetIndex: number = 1
+  clueSetIndex = 1
 ): Promise<void> {
   await loginAs(page, TEST_USERS.host.email);
   await createGame(page, clueSetIndex);
@@ -249,7 +249,7 @@ export async function loginAndJoinAs(
  */
 export async function skipIntroAnimations(
   page: Page,
-  maxClicks: number = 10
+  maxClicks = 10
 ): Promise<void> {
   for (let i = 0; i < maxClicks; i++) {
     const nextButton = page.getByRole('button', { name: /Next|Continue|Start|Introduce/i }).first();
@@ -283,7 +283,7 @@ export async function startGameAndSkipIntro(hostPage: Page): Promise<void> {
  */
 export async function waitForGameBoard(
   page: Page,
-  timeout: number = 15000
+  timeout = 15000
 ): Promise<void> {
   await expect(page.locator('.game-board')).toBeVisible({ timeout });
 }
@@ -300,7 +300,7 @@ export async function waitForGameBoard(
  */
 export async function selectClue(
   hostPage: Page,
-  clueIndex: number = 0
+  clueIndex = 0
 ): Promise<void> {
   const clueCell = hostPage.locator('.clue-cell, .board-cell').nth(clueIndex);
   await expect(clueCell).toBeVisible({ timeout: 5000 });
