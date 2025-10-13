@@ -284,7 +284,7 @@ export default defineConfig({
      * Command to start the dev server
      * When VITE_COVERAGE=true, the istanbul plugin will instrument the code
      */
-    command: `cross-env VITE_COVERAGE=${  process.env['VITE_COVERAGE'] ?? 'false'  } npm run dev`,
+    command: 'npm run dev',
 
     /**
      * URL to check if server is ready
@@ -310,5 +310,14 @@ export default defineConfig({
      * but CI environments can be slower.
      */
     timeout: 120000, // 2 minutes
+
+    /**
+     * Pass environment variables to the dev server process.
+     * Using env avoids relying on the cross-env binary so the VS Code extension
+     * and CI both work consistently.
+     */
+    env: {
+      VITE_COVERAGE: process.env['VITE_COVERAGE'] ?? 'false',
+    },
   },
 });
