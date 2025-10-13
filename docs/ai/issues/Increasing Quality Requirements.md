@@ -1,3 +1,1 @@
-1. I've implemented a "Condition Coverage on New Code" requirement of >= 80% on SonarQube. Is our test reporter exporting condition coverage data (specifically in the github workflow)? If not, can you please configure it to do so?
-
-2. I'm receiving deprecation warnings in the Github workflow report relating to use of Node v.18.  Can you please update to a more modern version, and then update the .nvmrc file accordingly? (We may also have to update our action versions --- `actions/checkout@v4`, `actions/setup-node@v4`, etc., and we should verify all tests are still passing after the upgrade.)
+1. I'm receiving deprecation warnings in the Github workflow report relating to use of Node v.18.  Can you please update to a more modern version, and then update the .nvmrc file accordingly? (We may also have to update our action versions --- `actions/checkout@v4`, `actions/setup-node@v4`, etc., and we should verify all tests are still passing after the upgrade.)
