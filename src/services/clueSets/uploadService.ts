@@ -113,10 +113,16 @@ export class UploadService {
       const userClueSets = await ClueSetService.getUserClueSets(userId)
       const duplicate = userClueSets.find((cs) => cs.name.toLowerCase() === name.toLowerCase())
 
-      return {
-        isDuplicate: Boolean(duplicate),
-        existingId: duplicate?.id
+      const result: DuplicateCheckResult = {
+        isDuplicate: Boolean(duplicate)
+      };
+
+      // Only include existingId if duplicate exists (exactOptionalPropertyTypes compliance)
+      if (duplicate) {
+        result.existingId = duplicate.id;
       }
+
+      return result;
     } catch (error) {
       console.error('Error checking duplicate name:', error)
       // If we can't check, assume no duplicate to allow upload
@@ -193,10 +199,14 @@ export class UploadService {
     // Step 1: Validate the file
     const validation = this.validateFile(file)
     if (!validation.isValid) {
-      return {
-        success: false,
-        error: validation.error
+      const result: UploadResult = {
+        success: false
+      };
+      // Only include error if it exists (exactOptionalPropertyTypes compliance)
+      if (validation.error) {
+        result.error = validation.error;
       }
+      return result;
     }
 
     // Step 2: Prompt user for clue set name

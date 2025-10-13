@@ -168,14 +168,18 @@ export function useAlert(): UseAlertReturn {
     severity: AlertSeverity = "info"
   ): Promise<void> => {
     return new Promise((resolve) => {
-      setAlertState({
+      const newState: AlertState = {
         type: "notification",
         severity,
         message,
-        title,
         isVisible: true,
         onConfirm
-      });
+      };
+      // Only include title if provided (exactOptionalPropertyTypes compliance)
+      if (title !== undefined) {
+        newState.title = title;
+      }
+      setAlertState(newState);
       resolve();
     });
   }, []);
@@ -202,15 +206,19 @@ export function useAlert(): UseAlertReturn {
     severity: AlertSeverity = "warning"
   ): Promise<boolean> => {
     return new Promise((resolve) => {
-      setAlertState({
+      const newState: AlertState = {
         type: "confirmation",
         severity,
         message,
-        title,
         isVisible: true,
         onConfirm: buildOnConfirm(resolve),
         onCancel: buildOnCancel(resolve)
-      });
+      };
+      // Only include title if provided (exactOptionalPropertyTypes compliance)
+      if (title !== undefined) {
+        newState.title = title;
+      }
+      setAlertState(newState);
     });
   }, []);
 

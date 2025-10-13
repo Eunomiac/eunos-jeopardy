@@ -114,25 +114,25 @@ export class BroadcastService {
     // Set up event handlers
     if (handlers.onBuzzerUnlock) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.BUZZER_UNLOCK }, (message) => {
-        handlers.onBuzzerUnlock?.(message.payload as BuzzerUnlockPayload);
+        handlers.onBuzzerUnlock?.(message['payload'] as BuzzerUnlockPayload);
       });
     }
 
     if (handlers.onBuzzerLock) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.BUZZER_LOCK }, (message) => {
-        handlers.onBuzzerLock?.(message.payload as BuzzerLockPayload);
+        handlers.onBuzzerLock?.(message['payload'] as BuzzerLockPayload);
       });
     }
 
     if (handlers.onPlayerBuzz) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.PLAYER_BUZZ }, (message) => {
-        handlers.onPlayerBuzz?.(message.payload as PlayerBuzzPayload);
+        handlers.onPlayerBuzz?.(message['payload'] as PlayerBuzzPayload);
       });
     }
 
     if (handlers.onFocusPlayer) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.FOCUS_PLAYER }, (message) => {
-        handlers.onFocusPlayer?.(message.payload as FocusPlayerPayload);
+        handlers.onFocusPlayer?.(message['payload'] as FocusPlayerPayload);
       });
     }
 

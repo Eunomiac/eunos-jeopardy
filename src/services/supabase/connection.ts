@@ -143,13 +143,24 @@ export class SupabaseConnection {
     // Test current connection status
     const { connected, error } = await this.testConnection();
 
-    return {
+    const result: {
+      url: string;
+      connected: boolean;
+      error?: string;
+      timestamp: string;
+    } = {
       // Note: Uses import.meta.env for environment validation purposes
       url: import.meta.env.VITE_SUPABASE_URL,
       connected,
-      error,
       timestamp: new Date().toISOString(),
     };
+
+    // Only include error property if it exists (exactOptionalPropertyTypes compliance)
+    if (error) {
+      result.error = error;
+    }
+
+    return result;
   }
 
   /**

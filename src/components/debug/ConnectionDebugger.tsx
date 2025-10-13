@@ -143,17 +143,17 @@ export function ConnectionDebugger() {
             if (!prev.currentGameId) {
               const gameData = payload.new as Record<string, unknown>;
               if (
-                typeof gameData.id === "string" &&
+                typeof gameData["id"] === "string" &&
                 [
                   "lobby",
                   "game_intro",
                   "introducing_categories",
                   "in_progress",
-                ].includes(gameData.status)
+                ].includes(gameData["status"])
               ) {
                 return {
                   ...prev,
-                  currentGameId: gameData.id,
+                  currentGameId: gameData["id"],
                   lastUpdate: new Date(),
                 };
               }
