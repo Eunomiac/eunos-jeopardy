@@ -1,5 +1,5 @@
 // Jest setup file for this project
-import '../shared/types/index.d';
+// Note: Global types from src/shared/types/global.d.ts are automatically available
 import '@testing-library/jest-dom';
 
 // Mock window.matchMedia for responsive design tests
