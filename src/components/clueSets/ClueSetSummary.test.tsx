@@ -228,7 +228,9 @@ describe('ClueSetSummary', () => {
     it('should handle missing onDeleted callback', async () => {
       mockClueSetService.getClueSetSummary.mockResolvedValue(mockSummary)
 
-      render(<ClueSetSummary {...mockProps} onDeleted={undefined} />)
+      // Omit onDeleted instead of passing undefined (exactOptionalPropertyTypes)
+      const { onDeleted: _removed, ...propsWithoutOnDeleted } = mockProps
+      render(<ClueSetSummary {...propsWithoutOnDeleted} />)
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /delete clue set/i })).toBeInTheDocument()
@@ -238,7 +240,9 @@ describe('ClueSetSummary', () => {
     it('should handle missing onError callback', async () => {
       mockClueSetService.getClueSetSummary.mockResolvedValue(mockSummary)
 
-      render(<ClueSetSummary {...mockProps} onError={undefined} />)
+      // Omit onError instead of passing undefined (exactOptionalPropertyTypes)
+      const { onError: _removed, ...propsWithoutOnError } = mockProps
+      render(<ClueSetSummary {...propsWithoutOnError} />)
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /delete clue set/i })).toBeInTheDocument()

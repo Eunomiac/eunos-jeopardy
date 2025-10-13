@@ -139,7 +139,13 @@ describe('PlayerDashboard', () => {
     // Mock successful game loading
     mockGameService.getGame.mockResolvedValue(mockGame)
     mockGameService.getPlayers.mockResolvedValue(mockPlayersData)
-    mockGameService.addPlayer.mockResolvedValue(mockPlayersData[0])
+
+    // Defensive check for array access
+    const firstPlayer = mockPlayersData[0];
+    if (!firstPlayer) {
+      throw new Error('mockPlayersData[0] is undefined');
+    }
+    mockGameService.addPlayer.mockResolvedValue(firstPlayer)
 
     // Mock font assignment
     mockFontAssignmentService.getPlayerFont.mockResolvedValue('handwriting-1')
