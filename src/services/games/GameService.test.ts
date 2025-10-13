@@ -998,7 +998,7 @@ describe('GameService', () => {
 
     it('should transition from jeopardy to double when round is complete', async () => {
       const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(mockGame)
-      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+      const isRoundCompleteSpy = jest.spyOn(ClueService, 'isRoundComplete')
         .mockResolvedValue(true)
 
       const updatedGame = {
@@ -1037,7 +1037,7 @@ describe('GameService', () => {
     it('should transition from double to final when round is complete', async () => {
       const doubleGame = { ...mockGame, current_round: 'double' as const }
       const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(doubleGame)
-      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+      const isRoundCompleteSpy = jest.spyOn(ClueService, 'isRoundComplete')
         .mockResolvedValue(true)
 
       const updatedGame = {
@@ -1092,7 +1092,7 @@ describe('GameService', () => {
 
     it('should throw error when round is incomplete without force flag', async () => {
       const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(mockGame)
-      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+      const isRoundCompleteSpy = jest.spyOn(ClueService, 'isRoundComplete')
         .mockResolvedValue(false)
 
       await expect(GameService.transitionToNextRound('game-123', 'user-123', false))
@@ -1104,7 +1104,7 @@ describe('GameService', () => {
 
     it('should allow transition with incomplete round when force=true', async () => {
       const getGameSpy = jest.spyOn(GameService as any, 'getGame').mockResolvedValue(mockGame)
-      const isRoundCompleteSpy = jest.spyOn(require('../clues/ClueService').ClueService, 'isRoundComplete')
+      const isRoundCompleteSpy = jest.spyOn(ClueService, 'isRoundComplete')
         .mockResolvedValue(false)
 
       const updatedGame = {
