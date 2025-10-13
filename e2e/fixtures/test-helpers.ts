@@ -1,6 +1,7 @@
 import { Page, expect, Browser, BrowserContext } from '@playwright/test';
 import { TEST_USERS } from './test-users';
 import { startConsoleLogger } from './console-logger';
+import { saveCoverage } from './coverage-helpers';
 
 /**
  * Test Helper Functions for E2E Tests
@@ -146,7 +147,7 @@ export async function createTestContext(
 
 /**
  * Cleanup test context
- * Saves logs and closes all contexts
+ * Saves logs, coverage, and closes all contexts
  *
  * @param ctx - TestContext to cleanup
  */
@@ -154,6 +155,12 @@ export async function cleanupTestContext(ctx: TestContext): Promise<void> {
   // Save all logs
   ctx.hostLogger.save();
   ctx.playerLoggers.forEach(logger => logger.save());
+
+  // Save coverage from all pages
+  await saveCoverage(ctx.hostPage, 'host');
+  await Promise.all(
+    ctx.playerPages.map((page, i) => saveCoverage(page, `player${i + 1}`))
+  );
 
   // Close all contexts
   await ctx.hostContext.close();
