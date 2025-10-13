@@ -133,31 +133,13 @@ If found outside of `test-helpers.ts`, investigate whether the helper should be 
 3. Authentication flows (loginAsPlayer, createGameAsHost) - common patterns
 4. Atomic helpers (selectClue, unlockBuzzer, etc.) - smaller but still valuable
 
+If it is determined that a helper is not needed, add it to the "Justified Exception" section below.
+
 ---
 
-## Audit Results
+## Justified Exceptions
 
-### ✅ PASS: All Tests Use Helpers Consistently
-- `getByPlaceholder('Email')` - All logins use `loginAs()` helper
-- `getByPlaceholder('Your display name')` - All nickname setting uses `setNickname()` helper
-- `browser.newContext()` - All context creation uses `createTestContext()` helper
-- `getByRole('combobox')` - All game creation uses `createGame()` helper
-- `.clue-cell` locator - All clue selection uses `selectClue()` helper
-- `Unlock Buzzer` button - All uses `unlockBuzzer()` helper
-- `Correct|✓` button - All uses `markCorrect()` helper
-- `Wrong|✗` button - All uses `markWrong()` helper
-
-### ✅ RESOLVED: Issues Fixed During Audit
-
-#### Manual Clue Selection → Now Uses `selectClue()`
-- ✅ **game-intro-board.e2e.ts:107-119** - Replaced manual `.clue-cell` locator with `selectClue(hostPage, 0)`
-- ✅ **round-transition.e2e.ts:67-70** - Replaced manual `.clue-cell` locator in loop with `selectClue(hostPage, i)`
-- ✅ **round-transition.e2e.ts:132-133** - Replaced manual `.clue-cell` locator with `selectClue(hostPage, 0)`
-
-### ✅ JUSTIFIED EXCEPTION: Intentional Manual Code
-
-#### Race Condition Test - Manual Buzzer Clicks
-- **buzzer-system.e2e.ts:120-124** - Manual `.buzzer-button` locators for simultaneous clicks
-- **Justification:** Test specifically validates race condition handling by using `Promise.all()` to trigger truly simultaneous buzzer clicks from two players. Using the `buzzIn()` helper would add unnecessary abstraction that might mask timing issues.
-- **Documentation:** Added explanatory comment in code explaining why helper isn't used
-- **Status:** This is the ONLY place in all 8 test files where manual locators are intentionally used instead of helpers
+### **Race Condition Test (buzzer-system.e2e.ts:120-124)**
+- Uses manual `.buzzer-button` locators instead of `buzzIn()` helper
+- **Reason:** Test validates race condition handling by using `Promise.all()` to trigger truly simultaneous buzzer clicks. Using the helper would add abstraction that might mask timing issues.
+- **Documentation:** Explanatory comment in code

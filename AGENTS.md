@@ -206,6 +206,16 @@ The goal is to provide excellent coding assistance that helps create maintainabl
 - **Commit verification**: After git commit, use `git status` to verify success rather than reading from process output
 - **Avoid process hanging**: Don't attempt to read from or kill git processes - check status with separate commands
 
+## Documentation Standards
+- **Permanent, not transient**: Documentation should contain timeless, actionable information, not historical records of what was fixed or current status reports
+- **Remove resolved issues**: Don't document problems that have been solved - only document current patterns, best practices, and justified exceptions
+- **Actionable guidance**: Focus on "how to do X" not "we fixed Y" or "currently Z is working"
+- **Examples**:
+  - ❌ "Fixed: Manual clue selection → Now uses selectClue()" (transient)
+  - ✅ "Use selectClue() helper for all clue selection" (permanent)
+  - ❌ "All tests currently use helpers consistently" (status report)
+  - ✅ "Always use helpers - see HELPER_AUDIT_PATTERNS.md for patterns" (guidance)
+
 ## Notion Documentation
 - **Documentation types**: Distinguish between development documentation (technical specs, API docs) and end-user documentation (user guides, tutorials)
 - **Organic growth**: Grow end-user documentation organically during development
