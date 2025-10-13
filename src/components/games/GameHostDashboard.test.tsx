@@ -140,7 +140,8 @@ describe('GameHostDashboard', () => {
 
   describe('Loading States', () => {
     it('should show loading state initially', async () => {
-      mockGameService.getGame.mockImplementation(() => new Promise(() => {})) // Never resolves
+      // eslint-disable-next-line @typescript-eslint/no-empty-function -- Intentionally never-resolving promise for loading state test
+      mockGameService.getGame.mockImplementation(() => new Promise(() => {}))
 
       renderWithAuth(<GameHostDashboard {...mockProps} />)
 
@@ -203,7 +204,9 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
@@ -373,7 +376,9 @@ describe('GameHostDashboard', () => {
       beforeEach(async () => {
         renderWithAuth(<GameHostDashboard {...mockProps} />)
         await waitFor(() => {
+          // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
           expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+          // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
           expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
         })
       })
@@ -463,7 +468,9 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
@@ -498,7 +505,9 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
@@ -526,7 +535,9 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
@@ -546,7 +557,9 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })
@@ -583,7 +596,9 @@ describe('GameHostDashboard', () => {
     beforeEach(async () => {
       renderWithAuth(<GameHostDashboard {...mockProps} />)
       await waitFor(() => {
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('Game Host Dashboard')).toBeInTheDocument()
+        // eslint-disable-next-line jest/no-standalone-expect -- expect inside waitFor callback is valid
         expect(screen.getByText('BOARD CONTROL')).toBeInTheDocument()
       })
     })

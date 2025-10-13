@@ -123,24 +123,31 @@ describe('dailyDoubleAlgorithm', () => {
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
 
-      if (result.data) {
-        const position = result.data.dailyDoublePositions[0]
+      // Assert result.data exists to avoid conditional expects
+      expect(result.data).toBeDefined()
+      if (!result.data) return // Type guard for TypeScript
 
-        // Verify that the Daily Double position is valid
-        expect(position.category).toBeGreaterThanOrEqual(1)
-        expect(position.category).toBeLessThanOrEqual(6)
-        expect(position.row).toBeGreaterThanOrEqual(2) // Never row 1
-        expect(position.row).toBeLessThanOrEqual(5)
+      const position = result.data.dailyDoublePositions[0]
 
-        // Verify that the clue exists at that position
-        const clueAtPosition = result.data.clues.find(clue =>
-          clue.category === position.category && clue.row === position.row
-        )
-        expect(clueAtPosition).toBeDefined()
-
-        // Check that only one Daily Double position is generated
-        expect(result.data.dailyDoublePositions).toHaveLength(1)
+      // Defensive check for array access
+      if (!position) {
+        throw new Error('Daily Double position is undefined')
       }
+
+      // Verify that the Daily Double position is valid
+      expect(position.category).toBeGreaterThanOrEqual(1)
+      expect(position.category).toBeLessThanOrEqual(6)
+      expect(position.row).toBeGreaterThanOrEqual(2) // Never row 1
+      expect(position.row).toBeLessThanOrEqual(5)
+
+      // Verify that the clue exists at that position
+      const clueAtPosition = result.data.clues.find(clue =>
+        clue.category === position.category && clue.row === position.row
+      )
+      expect(clueAtPosition).toBeDefined()
+
+      // Check that only one Daily Double position is generated
+      expect(result.data.dailyDoublePositions).toHaveLength(1)
     })
 
     it('should fail validation for invalid round structure - wrong category count', () => {
@@ -193,25 +200,34 @@ describe('dailyDoubleAlgorithm', () => {
 
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
+      if (!result.data) return // Type guard for TypeScript
 
-      if (result.data) {
-        // Check that all original data is preserved
-        expect(result.data.round).toBe(originalData.round)
-        expect(result.data.categories).toHaveLength(originalData.categories.length)
-        expect(result.data.clues).toHaveLength(originalData.clues.length)
+      // Check that all original data is preserved
+      expect(result.data.round).toBe(originalData.round)
+      expect(result.data.categories).toHaveLength(originalData.categories.length)
+      expect(result.data.clues).toHaveLength(originalData.clues.length)
 
-        result.data.categories.forEach((category, i) => {
-          expect(category).toBe(originalData.categories[i])
-        })
+      result.data.categories.forEach((category, i) => {
+        const originalCategory = originalData.categories[i]
+        // Defensive check for array access
+        if (!originalCategory) {
+          throw new Error(`Original category at index ${i} is undefined`)
+        }
+        expect(category).toBe(originalCategory)
+      })
 
-        result.data.clues.forEach((clue, i) => {
-          expect(clue.category).toBe(originalData.clues[i].category)
-          expect(clue.row).toBe(originalData.clues[i].row)
-          expect(clue.value).toBe(originalData.clues[i].value)
-          expect(clue.prompt).toBe(originalData.clues[i].prompt)
-          expect(clue.response).toBe(originalData.clues[i].response)
-        })
-      }
+      result.data.clues.forEach((clue, i) => {
+        const originalClue = originalData.clues[i]
+        // Defensive check for array access
+        if (!originalClue) {
+          throw new Error(`Original clue at index ${i} is undefined`)
+        }
+        expect(clue.category).toBe(originalClue.category)
+        expect(clue.row).toBe(originalClue.row)
+        expect(clue.value).toBe(originalClue.value)
+        expect(clue.prompt).toBe(originalClue.prompt)
+        expect(clue.response).toBe(originalClue.response)
+      })
     })
   })
 })
