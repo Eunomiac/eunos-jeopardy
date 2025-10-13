@@ -28,6 +28,36 @@ fi
 
 echo "✅ Confirmed Euno's Jeopardy project directory"
 
+# Create a new branch for this remote agent task
+echo "🌿 Creating new branch for remote agent task..."
+
+# Get all branches matching the pattern remote-agent-task-<number>
+# Extract just the numbers, sort them numerically, and get the highest
+highest_num=$(git branch -a | \
+  grep -oE 'remote-agent-task-[0-9]+' | \
+  grep -oE '[0-9]+$' | \
+  sort -n | \
+  tail -n 1)
+
+# If no matching branches found, start at 0
+if [ -z "$highest_num" ]; then
+  highest_num=0
+fi
+
+# Increment to get the new branch number
+new_branch_num=$((highest_num + 1))
+new_branch_name="remote-agent-task-${new_branch_num}"
+
+echo "📌 Creating branch: $new_branch_name"
+
+# Create and checkout the new branch
+git checkout -b "$new_branch_name" || {
+  echo "❌ Error: Failed to create branch $new_branch_name"
+  exit 1
+}
+
+echo "✅ Successfully created and checked out branch: $new_branch_name"
+
 # Install dependencies (this handles all devDependencies including Jest, TypeScript, etc.)
 echo "📦 Installing dependencies..."
 npm install
