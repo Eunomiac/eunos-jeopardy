@@ -116,6 +116,8 @@ test.describe('Buzzer System - Smoke Tests', () => {
       // ============================================================
       // ACT: Both players attempt to buzz in simultaneously
       // ============================================================
+      // Note: Using manual locators instead of buzzIn() helper to ensure
+      // truly simultaneous clicks via Promise.all() for race condition test
       await Promise.all([
         player1Page.locator('.buzzer-button, button[class*="buzzer"]').click(),
         player2Page.locator('.buzzer-button, button[class*="buzzer"]').click()

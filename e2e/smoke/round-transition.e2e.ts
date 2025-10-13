@@ -4,6 +4,7 @@ import { cleanupTestUser } from '../fixtures/database-helpers';
 import {
   setupTestInProgress,
   cleanupTestContext,
+  selectClue,
   unlockBuzzer,
   buzzIn,
   markCorrect
@@ -66,9 +67,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
       for (let i = 0; i < 3; i++) {
         const clueCell = hostPage.locator('.clue-cell, [class*="clue"]').nth(i);
         if (await clueCell.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await clueCell.click();
-          await hostPage.waitForTimeout(1000);
-
+          await selectClue(hostPage, i);
           await unlockBuzzer(hostPage);
           await buzzIn(player1Page);
           await markCorrect(hostPage);
@@ -129,9 +128,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
         // ASSERT: Clue values are doubled
         // ============================================================
         // In Double Jeopardy, clue values should be 2x (e.g., $400, $800, $1200)
-        const firstClue = hostPage.locator('.clue-cell, [class*="clue"]').first();
-        await firstClue.click();
-        await hostPage.waitForTimeout(1000);
+        await selectClue(hostPage, 0);
 
         // Check if clue value indicators show doubled amounts
         const clueValue = hostPage.locator('text=/\\$[4-9][0-9]{2,}/').first();

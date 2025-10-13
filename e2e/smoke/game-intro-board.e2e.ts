@@ -3,7 +3,8 @@ import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
 import {
   setupTestWithLobby,
-  cleanupTestContext
+  cleanupTestContext,
+  selectClue
 } from '../fixtures/test-helpers';
 
 /**
@@ -115,9 +116,7 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Host can select a clue
       // ============================================================
-      const firstClue = clueCells.first();
-      await firstClue.click();
-      await hostPage.waitForTimeout(1000);
+      await selectClue(hostPage, 0);
 
       // Verify clue prompt or controls appear
       const cluePrompt = hostPage.locator('text=/What is|Who is|Clue|Prompt/i').first();
@@ -136,4 +135,3 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
     }
   });
 });
-
