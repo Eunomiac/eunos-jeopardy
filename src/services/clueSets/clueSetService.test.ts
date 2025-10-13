@@ -159,25 +159,19 @@ describe('ClueSetService', () => {
     it('should handle deletion database errors', async () => {
       // Mock successful ownership verification
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { owner_id: userId },
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ owner_id: userId })
+        )
         // Mock deletion failure
-        .mockReturnValueOnce({
-          delete: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Delete failed' }
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .delete()
+            .eq()
+            .withError({ message: 'Delete failed', details: '', hint: '', code: '500' })
+        )
 
       const result = await ClueSetService.deleteClueSet(clueSetId, userId)
 
@@ -214,18 +208,14 @@ describe('ClueSetService', () => {
     const userId = 'user-123'
 
     it('should return false for unique name', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
-                data: [],
-                error: null
-              })
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .eq()
+          .limit()
+          .withData([])
+      )
 
       const result = await ClueSetService.checkDuplicateName('Unique Name', userId)
 
@@ -233,18 +223,14 @@ describe('ClueSetService', () => {
     })
 
     it('should return true for duplicate name', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
-                data: [{ id: 'existing-id' }],
-                error: null
-              })
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .eq()
+          .limit()
+          .withData([{ id: 'existing-id' }])
+      )
 
       const result = await ClueSetService.checkDuplicateName('Duplicate Name', userId)
 
@@ -252,18 +238,14 @@ describe('ClueSetService', () => {
     })
 
     it('should handle database errors in duplicate check', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              limit: jest.fn().mockResolvedValue({
-                data: null,
-                error: { message: 'Database error' }
-              })
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .eq()
+          .limit()
+          .withError({ message: 'Database error', details: '', hint: '', code: '500' })
+      )
 
       await expect(ClueSetService.checkDuplicateName('Test Name', userId)).rejects.toThrow('Database error')
     })
@@ -312,35 +294,27 @@ describe('ClueSetService', () => {
 
       // Mock clue set query
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
         // Mock boards query
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
-                data: mockBoardsWithCategories,
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .order()
+            .withData(mockBoardsWithCategories)
+        )
         // Mock clue count query
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            in: jest.fn().mockResolvedValue({
-              count: 61
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .in()
+            .withResponse({ data: null, error: null, count: 61, status: 200, statusText: 'OK' })
+        )
 
       const result = await ClueSetService.getClueSetSummary(clueSetId)
 
@@ -358,16 +332,12 @@ describe('ClueSetService', () => {
     })
 
     it('should handle clue set not found', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Not found' }
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withError({ message: 'Not found', details: '', hint: '', code: '404' })
+      )
 
       await expect(ClueSetService.getClueSetSummary(clueSetId)).rejects.toThrow('Not found')
     })
@@ -380,26 +350,19 @@ describe('ClueSetService', () => {
       }
 
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
-                data: null,
-                error: { message: 'Boards error' }
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .order()
+            .withError({ message: 'Boards error', details: '', hint: '', code: '500' })
+        )
 
       await expect(ClueSetService.getClueSetSummary(clueSetId)).rejects.toThrow('Boards error')
     })
@@ -419,33 +382,25 @@ describe('ClueSetService', () => {
       ]
 
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
-                data: mockBoardsWithCategories,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            in: jest.fn().mockResolvedValue({
-              count: 0
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .order()
+            .withData(mockBoardsWithCategories)
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .in()
+            .withResponse({ data: null, error: null, count: 0, status: 200, statusText: 'OK' })
+        )
 
       const result = await ClueSetService.getClueSetSummary(clueSetId)
 
@@ -514,25 +469,19 @@ describe('ClueSetService', () => {
 
       // Mock clue set query
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
         // Mock boards query
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: mockBoards,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withData(mockBoards)
+        )
 
       const result = await ClueSetService.loadClueSetFromDatabase(clueSetId)
 
@@ -574,16 +523,12 @@ describe('ClueSetService', () => {
     })
 
     it('should handle clue set not found', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Not found' }
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withError({ message: 'Not found', details: '', hint: '', code: '404' })
+      )
 
       await expect(ClueSetService.loadClueSetFromDatabase(clueSetId)).rejects.toThrow('Not found')
     })
@@ -595,24 +540,18 @@ describe('ClueSetService', () => {
       }
 
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Boards error' }
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withError({ message: 'Boards error', details: '', hint: '', code: '500' })
+        )
 
       await expect(ClueSetService.loadClueSetFromDatabase(clueSetId)).rejects.toThrow('Boards error')
     })
@@ -624,24 +563,18 @@ describe('ClueSetService', () => {
       }
 
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withData([])
+        )
 
       await expect(ClueSetService.loadClueSetFromDatabase(clueSetId)).rejects.toThrow('No board data found for clue set')
     })
@@ -668,24 +601,18 @@ describe('ClueSetService', () => {
       ]
 
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockClueSet,
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: mockBoards,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData(mockClueSet)
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withData(mockBoards)
+        )
 
       const result = await ClueSetService.loadClueSetFromDatabase(clueSetId)
 
