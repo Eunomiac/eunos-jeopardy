@@ -48,10 +48,10 @@
     "jsx": "react-jsx",
 
     /* Modules */
-    // Note: Must use Node16 for both module and moduleResolution to satisfy TypeScript
-    // ts-jest handles the transformation regardless of this setting
-    "module": "Node16",
-    "moduleResolution": "node16",
+    // Note: Using bundler resolution to avoid requiring .js extensions in imports
+    // ts-jest with ESM preset handles the actual module transformation
+    "module": "ESNext",
+    "moduleResolution": "bundler",
 
     /* Type Checking */
     "types": ["@jest/globals", "@testing-library/jest-dom", "node"]
