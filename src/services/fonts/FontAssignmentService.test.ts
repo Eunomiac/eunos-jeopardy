@@ -103,38 +103,30 @@ describe('FontAssignmentService', () => {
     it('should assign permanent font when user has none', async () => {
       // Mock user profile without font
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { handwritten_font: null, temp_handwritten_font: null },
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ handwritten_font: null, temp_handwritten_font: null })
+        )
         // Mock font assignment counts query
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            not: jest.fn().mockResolvedValue({
-              data: [
-                { handwritten_font: 'handwritten-1' },
-                { handwritten_font: 'handwritten-2' },
-                { handwritten_font: 'handwritten-1' }
-              ],
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .not()
+            .withData([
+              { handwritten_font: 'handwritten-1' },
+              { handwritten_font: 'handwritten-2' },
+              { handwritten_font: 'handwritten-1' }
+            ])
+        )
         // Mock update query
-        .mockReturnValueOnce({
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .update()
+            .eq()
+            .withSingleData(null)
+        )
 
       const result = await FontAssignmentService.getPlayerFont(userId, gameId)
 
@@ -146,16 +138,12 @@ describe('FontAssignmentService', () => {
 
     it('should handle database errors gracefully', async () => {
       // Mock database error
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' }
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withError({ message: 'Database error', details: '', hint: '', code: '500' })
+      )
 
       const result = await FontAssignmentService.getPlayerFont(userId, gameId)
 
@@ -165,14 +153,12 @@ describe('FontAssignmentService', () => {
 
   describe('clearAllTemporaryFonts', () => {
     it('should clear all temporary fonts', async () => {
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          not: jest.fn().mockResolvedValue({
-            data: null,
-            error: null
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .update()
+          .not()
+          .withSingleData(null)
+      )
 
       await FontAssignmentService.clearAllTemporaryFonts()
 
@@ -182,14 +168,12 @@ describe('FontAssignmentService', () => {
     })
 
     it('should handle errors when clearing temporary fonts', async () => {
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          not: jest.fn().mockResolvedValue({
-            data: null,
-            error: { message: 'Update failed' }
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .update()
+          .not()
+          .withError({ message: 'Update failed', details: '', hint: '', code: '500' })
+      )
 
       // Should not throw error
       await expect(FontAssignmentService.clearAllTemporaryFonts()).resolves.toBeUndefined()
@@ -212,34 +196,26 @@ describe('FontAssignmentService', () => {
 
       // Mock the font counts query
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { handwritten_font: null, temp_handwritten_font: null },
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            not: jest.fn().mockResolvedValue({
-              data: Object.entries(fontCounts).flatMap(([font, count]) =>
-                Array(count).fill({ handwritten_font: font })
-              ),
-              error: null
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ handwritten_font: null, temp_handwritten_font: null })
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .not()
+            .withData(Object.entries(fontCounts).flatMap(([font, count]) =>
+              Array(count).fill({ handwritten_font: font })
+            ))
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .update()
+            .eq()
+            .withSingleData(null)
+        )
 
       const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
 
@@ -251,32 +227,24 @@ describe('FontAssignmentService', () => {
   describe('Edge Cases', () => {
     it('should handle empty font counts', async () => {
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { handwritten_font: null, temp_handwritten_font: null },
-                error: null
-              })
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            not: jest.fn().mockResolvedValue({
-              data: [], // No existing font assignments
-              error: null
-            })
-          })
-        } as any)
-        .mockReturnValueOnce({
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ handwritten_font: null, temp_handwritten_font: null })
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .not()
+            .withData([]) // No existing font assignments
+        )
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .update()
+            .eq()
+            .withSingleData(null)
+        )
 
       const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
 
@@ -286,16 +254,12 @@ describe('FontAssignmentService', () => {
     })
 
     it('should handle null user profile', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        })
-      } as any)
+      mockSupabase.from.mockReturnValue(
+        createMockQueryBuilder()
+          .select()
+          .eq()
+          .withSingleData(null)
+      )
 
       const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
 
@@ -305,43 +269,35 @@ describe('FontAssignmentService', () => {
     it('should handle all fonts in use edge case', async () => {
       // Mock user profile with permanent font
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ handwritten_font: 'handwritten-1', temp_handwritten_font: null })
+        )
         // Mock all 8 fonts in use
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            in: jest.fn().mockResolvedValue({
-              data: [
-                { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-2', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-3', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-4', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-5', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-6', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-7', temp_handwritten_font: null },
-                { handwritten_font: 'handwritten-8', temp_handwritten_font: null }
-              ],
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .in()
+            .withData([
+              { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-2', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-3', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-4', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-5', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-6', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-7', temp_handwritten_font: null },
+              { handwritten_font: 'handwritten-8', temp_handwritten_font: null }
+            ])
+        )
         // Mock temporary font assignment
-        .mockReturnValueOnce({
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .update()
+            .eq()
+            .withSingleData(null)
+        )
 
       // Override default mock - return 8 connected players
       mockGameService.getPlayers.mockResolvedValueOnce(
@@ -357,36 +313,28 @@ describe('FontAssignmentService', () => {
     it('should prioritize temp_handwritten_font over permanent font for other players', async () => {
       // Mock user profile
       mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { handwritten_font: 'handwritten-1', temp_handwritten_font: null },
-                error: null
-              })
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .eq()
+            .withSingleData({ handwritten_font: 'handwritten-1', temp_handwritten_font: null })
+        )
         // Mock other player using temp font that conflicts
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            in: jest.fn().mockResolvedValue({
-              data: [
-                { handwritten_font: 'handwritten-2', temp_handwritten_font: 'handwritten-1' }
-              ],
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .select()
+            .in()
+            .withData([
+              { handwritten_font: 'handwritten-2', temp_handwritten_font: 'handwritten-1' }
+            ])
+        )
         // Mock temporary font assignment
-        .mockReturnValueOnce({
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
-            })
-          })
-        } as any)
+        .mockReturnValueOnce(
+          createMockQueryBuilder()
+            .update()
+            .eq()
+            .withSingleData(null)
+        )
 
       // Override default mock - return other player
       mockGameService.getPlayers.mockResolvedValueOnce([
@@ -402,13 +350,10 @@ describe('FontAssignmentService', () => {
 
     it('should handle errors in font assignment gracefully', async () => {
       // Mock profile fetch error
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockRejectedValue(new Error('Database connection failed'))
-          })
-        })
-      } as any)
+      const mockBuilder = createMockQueryBuilder()
+      mockBuilder.select().eq()
+      mockBuilder.single.mockRejectedValue(new Error('Database connection failed'))
+      mockSupabase.from.mockReturnValue(mockBuilder)
 
       const result = await FontAssignmentService.getPlayerFont('user-123', 'game-456')
 
