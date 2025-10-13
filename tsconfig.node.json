@@ -1,27 +1,52 @@
+/**
+ * Node Tooling TypeScript Configuration - Build Tools & Config Files
+ *
+ * This configuration is specifically for Node.js-based build tooling and
+ * configuration files (Vite, ESLint, Playwright configs). It extends the base
+ * config and uses bundler module resolution since these tools process their
+ * own config files with modern module resolution.
+ *
+ * **Purpose:**
+ * - Type-check build tool configuration files
+ * - Enable importing TypeScript config files with extensions
+ * - Configure bundler resolution for modern tooling
+ * - Support ESM in Node.js configuration files
+ *
+ * **Changes from Base Config:**
+ * - Uses "bundler" module resolution (modern tools support this)
+ * - Allows importing .ts files with extensions (Vite/ESLint handle this)
+ * - No additional type definitions needed (tools provide their own)
+ *
+ * **Why These Settings:**
+ * - bundler resolution: Vite, ESLint, Playwright all use modern resolution
+ * - allowImportingTsExtensions: Config files can import other .ts files
+ * - No special types: Each tool (Vite, ESLint, Playwright) provides its own
+ *
+ * **Files Included:**
+ * - vite.config.ts: Vite bundler configuration
+ * - eslint.config.mjs: ESLint linting configuration
+ * - playwright.config.ts: Playwright E2E test configuration
+ *
+ * **Why Separate from App Config:**
+ * - These files run in Node.js during build, not in browser
+ * - Don't need React/DOM types
+ * - Have different module resolution needs than runtime code
+ * - Keeps build tooling isolated from application code
+ *
+ * **Used By:**
+ * - TypeScript compiler for config file validation
+ * - IDE for IntelliSense in config files
+ * - Build process for type checking tooling setup
+ */
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-    "target": "ES2023",
-    "lib": ["ES2023"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
+    /* Modules */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
 
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    /* Emit */
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo"
   },
-  "include": ["vite.config.ts", "eslint.config.mjs", "playwright.config.ts"],
-  "exclude": ["node_modules"],
+  "include": ["vite.config.ts", "eslint.config.mjs", "playwright.config.ts"]
 }

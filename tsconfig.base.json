@@ -1,0 +1,85 @@
+/**
+ * Base TypeScript Configuration - Shared Settings
+ *
+ * This is the foundation configuration that all other TypeScript configs extend.
+ * It defines the strictest possible type-checking rules and common settings that
+ * apply across the entire project, ensuring consistent code quality and catching
+ * potential bugs at compile time.
+ *
+ * **Purpose:**
+ * - Establishes baseline compiler settings for all TypeScript code
+ * - Enforces maximum type safety with strict mode and additional checks
+ * - Defines shared module resolution and interop settings
+ * - Configures path aliases for cleaner imports (@components, @services, etc.)
+ *
+ * **Key Features:**
+ * - ES2023 target with modern JavaScript features
+ * - Strict type checking with all optional safety checks enabled
+ * - ESM interop for compatibility with modern module systems
+ * - No emit (compilation handled by Vite/Jest, not tsc)
+ * - Path mapping for clean imports throughout the codebase
+ *
+ * **Extended By:**
+ * - tsconfig.app.json: Adds React/DOM types and bundler-specific settings
+ * - tsconfig.test.json: Adds Jest types and Node module resolution
+ * - tsconfig.e2e.json: Adds Playwright types and bundler resolution
+ * - tsconfig.node.json: Adds bundler resolution for build tools
+ *
+ * **Philosophy:**
+ * This config is intentionally strict. If a setting can catch bugs or improve
+ * code quality, it's enabled here. Individual configs only override when their
+ * specific runtime environment requires different behavior.
+ */
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "ES2023",
+    "lib": ["ES2023"],
+
+    /* Modules */
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+
+    /* Interop Constraints */
+    "esModuleInterop": true,
+    "isolatedModules": true,
+
+    /* Emit */
+    "noEmit": true,
+
+    /* Type Checking - Strict */
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUncheckedSideEffectImports": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": true,
+
+    /* Type Checking - Additional */
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Completeness */
+    "skipLibCheck": true,
+
+    /* Path Mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@styles/*": ["src/styles/*"],
+      "@components/*": ["src/components/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@services/*": ["src/services/*"],
+      "@types/*": ["src/types/*"],
+      "@utils/*": ["src/utils/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

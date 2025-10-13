@@ -18,7 +18,7 @@ export default defineConfig(
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: ['./tsconfig.app.json', './tsconfig.node.json', './tsconfig.e2e.json'],
+        project: ['./tsconfig.app.json', './tsconfig.node.json', './tsconfig.test.json', './tsconfig.e2e.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -29,6 +29,12 @@ export default defineConfig(
           destructuring: "all"
         }
       ],
+      '@typescript-eslint/dot-notation': [
+        'error',
+        {
+          allowIndexSignaturePropertyAccess: true
+        },
+      ],
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/restrict-template-expressions': [
         'error',
@@ -37,6 +43,11 @@ export default defineConfig(
           allowNullish: true
         },
       ],
+      // Allow classes with only static methods - valid architectural pattern for service classes
+      '@typescript-eslint/no-extraneous-class': 'off',
+      // Disable unnecessary-condition rule - conflicts with defensive programming when noUncheckedIndexedAccess is enabled
+      // With noUncheckedIndexedAccess, array[i] returns T | undefined even in bounded loops, making defensive checks valuable
+      '@typescript-eslint/no-unnecessary-condition': 'off',
     },
   },
   {

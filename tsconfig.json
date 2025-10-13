@@ -1,15 +1,35 @@
+/**
+ * Root TypeScript Configuration - Project References
+ *
+ * This is the root TypeScript configuration that orchestrates the entire project
+ * using TypeScript's "Project References" feature. It doesn't compile any files
+ * itself (files: []), but instead coordinates multiple independent TypeScript
+ * sub-projects that can be built separately and in parallel.
+ *
+ * **Purpose:**
+ * - Enables faster incremental builds by only rebuilding changed sub-projects
+ * - Allows different parts of the codebase to have different compiler settings
+ * - Improves IDE performance by isolating different contexts
+ * - Enforces clear boundaries between app code, tests, and tooling
+ *
+ * **Referenced Projects:**
+ * - tsconfig.app.json: Main application source code (React components, services)
+ * - tsconfig.test.json: Unit and integration tests (Jest)
+ * - tsconfig.e2e.json: End-to-end tests (Playwright)
+ * - tsconfig.node.json: Build tooling (Vite, ESLint, Playwright configs)
+ *
+ * **Build Command:**
+ * When you run `tsc -b`, TypeScript builds all referenced projects in dependency
+ * order, skipping unchanged projects for faster builds.
+ *
+ * @see https://www.typescriptlang.org/docs/handbook/project-references.html
+ */
 {
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" },
     { "path": "./tsconfig.test.json" },
-    { "path": "./tsconfig.e2e.json" }
-  ],
-  "exclude": ["node_modules"],
-  "compilerOptions": {
-    "target": "ES2023",
-    "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    { "path": "./tsconfig.e2e.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }

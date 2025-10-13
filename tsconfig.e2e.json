@@ -1,26 +1,50 @@
+/**
+ * E2E Test TypeScript Configuration - Playwright End-to-End Tests
+ *
+ * This configuration is specifically for end-to-end tests that run in Playwright.
+ * It extends the base config and uses bundler module resolution since Playwright
+ * test files are processed by its own bundler before execution.
+ *
+ * **Purpose:**
+ * - Type-check all Playwright test files and test utilities
+ * - Enable Playwright and Node.js type definitions
+ * - Configure bundler resolution for Playwright's test runner
+ * - Support modern ESM imports in test files
+ *
+ * **Changes from Base Config:**
+ * - Uses "bundler" module resolution (Playwright processes test files)
+ * - Adds Playwright and Node type definitions for test APIs
+ * - No DOM types needed (tests control browsers, don't run in them)
+ *
+ * **Why These Settings:**
+ * - bundler resolution: Playwright bundles test files before running them
+ * - Playwright types: Provides test, expect, Page, Browser APIs
+ * - Node types: E2E tests run in Node.js environment
+ * - No DOM: Tests use Playwright's browser automation, not DOM APIs directly
+ *
+ * **Why NOT Extend tsconfig.app.json:**
+ * - E2E tests don't need React/JSX or DOM types
+ * - Tests run in Node, not browser environment
+ * - Different type definitions needed (Playwright vs React Testing Library)
+ * - Keeps E2E config independent from app concerns
+ *
+ * **Includes:**
+ * - e2e/ directory: All end-to-end test files
+ * - playwright.config.ts: Playwright configuration file
+ *
+ * **Used By:**
+ * - Playwright test runner
+ * - ESLint for type-aware linting of E2E tests
+ * - IDE for E2E test file IntelliSense
+ */
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2023",
-    "module": "ESNext",
-    "lib": ["ES2023"],
+    /* Modules */
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
+
+    /* Type Checking */
     "types": ["node", "@playwright/test"]
   },
-  "include": [
-    "e2e/**/*.ts",
-    "playwright.config.ts"
-  ]
+  "include": ["e2e/**/*.ts", "playwright.config.ts"]
 }
-

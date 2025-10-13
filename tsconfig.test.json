@@ -1,27 +1,66 @@
+/**
+ * Test TypeScript Configuration - Jest Unit & Integration Tests
+ *
+ * This configuration is specifically for unit and integration tests that run
+ * in Jest with ts-jest. It extends the base config but uses Node.js-compatible
+ * module resolution since Jest runs in a Node environment, not a browser.
+ *
+ * **Purpose:**
+ * - Type-check all test files (*.test.ts, *.test.tsx, *.spec.*)
+ * - Enable React Testing Library and Jest type definitions
+ * - Configure Node.js module resolution for Jest compatibility
+ * - Support testing React components with JSX and DOM APIs
+ *
+ * **Changes from Base Config:**
+ * - Adds DOM and DOM.Iterable to lib (tests render React components)
+ * - Enables JSX with react-jsx transform (same as app for consistency)
+ * - Uses "node16" module resolution instead of "bundler" (Jest requirement)
+ * - Adds test-specific type definitions (@jest/globals, @testing-library/jest-dom)
+ *
+ * **Why These Settings:**
+ * - DOM types: React Testing Library renders components in jsdom environment
+ * - react-jsx: Tests need to render JSX just like the app
+ * - node16 resolution: Jest uses Node.js module resolution, not bundler magic
+ * - Test types: Provides Jest globals (describe, it, expect) and RTL matchers
+ *
+ * **Why NOT Extend tsconfig.app.json:**
+ * - App uses "bundler" resolution which Jest doesn't support
+ * - App allows importing .ts extensions which Jest can't handle
+ * - Tests need different type definitions than production code
+ * - Keeps test config independent from app bundler concerns
+ *
+ * **Includes:**
+ * - src/**/*.test.ts and .tsx: Unit tests co-located with source files
+ * - src/**/*.spec.ts and .tsx: Spec files (alternative test naming)
+ * - src/test/**: Test utilities, mocks, and setup files
+ *
+ * **Excludes:**
+ * - dist/, build/: Compiled output directories
+ *
+ * **Used By:**
+ * - Jest with ts-jest transformer
+ * - ESLint for type-aware linting of tests
+ * - IDE for test file IntelliSense
+ */
 {
-  "extends": "./tsconfig.app.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    /* Language and Environment */
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "verbatimModuleSyntax": false,
-    "allowImportingTsExtensions": false,
-    "noEmit": false,
-    "emitDeclarationOnly": false,
-    "types": ["jest", "@testing-library/jest-dom", "node"],
-    "skipLibCheck": true
+
+    /* Modules */
+    "moduleResolution": "node16",
+
+    /* Type Checking */
+    "types": ["@jest/globals", "@testing-library/jest-dom", "node"]
   },
   "include": [
-    "src/**/*",
-    "src/**/*.test.*",
-    "src/**/*.e2e.*",
-    "src/test/setup.ts"
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/test/**/*"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build"
-  ]
+  "exclude": ["dist", "build"]
 }
