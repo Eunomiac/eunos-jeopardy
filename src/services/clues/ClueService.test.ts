@@ -67,6 +67,7 @@ describe('ClueService', () => {
             })
           }
         }
+        throw new Error(`Unexpected table: ${table}`)
       })
 
       const result = await ClueService.initializeClueStates('game-123')
