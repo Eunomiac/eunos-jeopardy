@@ -101,10 +101,14 @@ export function parseCSV(csvText: string): CSVRow[] {
 
   // Process each data line with detailed validation
   for (let i = 0; i < dataLines.length; i++) {
-    const line = dataLines[i].trim()
+    const line = dataLines[i];
+    if (!line) {
+      throw new Error(`Data line at index ${i} is undefined`);
+    }
+    const trimmedLine = line.trim();
 
     // Skip empty lines (allows for formatting flexibility)
-    if (line) {
+    if (trimmedLine) {
       // Parse the line handling quoted fields and embedded commas
       const fields = parseCSVLine(line)
 

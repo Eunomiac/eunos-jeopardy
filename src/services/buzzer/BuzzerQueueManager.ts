@@ -104,7 +104,11 @@ export class BuzzerQueueManager {
     // Find insertion position (maintain sorted order by reaction time)
     let insertIndex = this.queue.length;
     for (let i = 0; i < this.queue.length; i++) {
-      if (reactionTimeMs < this.queue[i].reactionTimeMs) {
+      const queueEntry = this.queue[i];
+      if (!queueEntry) {
+        throw new Error(`Queue entry at index ${i} is undefined`);
+      }
+      if (reactionTimeMs < queueEntry.reactionTimeMs) {
         insertIndex = i;
         break;
       }
@@ -130,7 +134,8 @@ export class BuzzerQueueManager {
    * @returns Player ID of fastest player, or null if queue is empty
    */
   getFastestPlayer(): string | null {
-    return this.queue.length > 0 ? this.queue[0].playerId : null;
+    const fastest = this.queue[0];
+    return fastest ? fastest.playerId : null;
   }
 
   /**
@@ -139,7 +144,8 @@ export class BuzzerQueueManager {
    * @returns Nickname of fastest player, or null if queue is empty
    */
   getFastestPlayerNickname(): string | null {
-    return this.queue.length > 0 ? this.queue[0].playerNickname : null;
+    const fastest = this.queue[0];
+    return fastest ? fastest.playerNickname : null;
   }
 
   /**
@@ -148,7 +154,8 @@ export class BuzzerQueueManager {
    * @returns Reaction time of fastest player in ms, or null if queue is empty
    */
   getFastestReactionTime(): number | null {
-    return this.queue.length > 0 ? this.queue[0].reactionTimeMs : null;
+    const fastest = this.queue[0];
+    return fastest ? fastest.reactionTimeMs : null;
   }
 
   /**
