@@ -40,13 +40,17 @@ export function PlayerConnectionStatus({ playerId, playerName }: Readonly<Player
 
   // Helper: Check if player is present in presence state
   function isPlayerPresent(presenceState: Record<string, Presence[]>): boolean {
-    return Object.keys(presenceState).some((key) =>
-      presenceState[key].some((presence) => {
+    return Object.keys(presenceState).some((key) => {
+      const presences = presenceState[key];
+      if (!presences) {
+        return false;
+      }
+      return presences.some((presence) => {
         // Presence data can be in different locations depending on Supabase version
         const userData = presence as unknown as PresencePayload;
         return userData.user_id === playerId;
-      })
-    );
+      });
+    });
   }
 
   // Presence event handlers

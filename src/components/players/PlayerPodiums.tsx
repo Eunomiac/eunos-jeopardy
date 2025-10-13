@@ -202,7 +202,7 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
               isCurrentUser={true}
               isFocused={player.isFocused ?? false}
               onBuzz={() => onBuzz?.(player.id)}
-              reactionTime={player.reactionTime}
+              reactionTime={player.reactionTime ?? null}
               showReactionTime={player.showReactionTime ?? false}
             />
           ) : (

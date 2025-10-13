@@ -132,12 +132,18 @@ export class BuzzerStateService {
     const validTargets = BuzzerStateService.VALID_TRANSITIONS[from];
     const valid = validTargets.includes(to);
 
-    return {
+    const result: BuzzerStateTransition = {
       from,
       to,
-      valid,
-      reason: valid ? undefined : `Invalid transition from ${from} to ${to}`
+      valid
     };
+
+    // Only include reason if transition is invalid (exactOptionalPropertyTypes compliance)
+    if (!valid) {
+      result.reason = `Invalid transition from ${from} to ${to}`;
+    }
+
+    return result;
   }
 
   /**

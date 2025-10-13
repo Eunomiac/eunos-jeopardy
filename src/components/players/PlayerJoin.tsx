@@ -91,8 +91,11 @@ export function PlayerJoin({ onGameJoined }: Readonly<PlayerJoinProps>) {
           setError('Failed to check for available games')
           setAvailableGame(null)
         } else {
-          const foundGame = games.length > 0 ? games[0] : null
-          setAvailableGame(foundGame)
+          const foundGame = games.length > 0 ? games[0] : null;
+          // Only set if foundGame is not undefined (exactOptionalPropertyTypes compliance)
+          if (foundGame !== undefined) {
+            setAvailableGame(foundGame);
+          }
         }
       } catch (err) {
         console.error('❌ Error in checkForAvailableGame:', err)

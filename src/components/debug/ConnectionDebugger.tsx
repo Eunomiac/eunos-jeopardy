@@ -65,7 +65,9 @@ export function ConnectionDebugger() {
         const pathMatch = RegExp(/\/game\/([a-f0-9-]+)/).exec(
           window.location.pathname
         );
-        gameId = pathMatch ? pathMatch[1] : null;
+        const matchedId = pathMatch ? pathMatch[1] : null;
+        // Only assign if matchedId is not undefined (exactOptionalPropertyTypes compliance)
+        gameId = matchedId ?? null;
       }
 
       if (gameId && gameId !== connectionStatus.currentGameId) {

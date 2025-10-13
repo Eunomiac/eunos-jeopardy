@@ -47,6 +47,9 @@ export function ClueControlPanel(props: Readonly<ClueControlPanelProps>) {
 
     for (let categoryIndex = 0; categoryIndex < clueData.length; categoryIndex++) {
       const category = clueData[categoryIndex];
+      if (!category) {
+        throw new Error(`Category at index ${categoryIndex} is undefined`);
+      }
       const clueInCategory = category.clues.find((c) => c.id === focusedClue.id);
       if (clueInCategory) {
         return dailyDoublePositions.some(

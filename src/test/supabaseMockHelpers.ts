@@ -105,8 +105,8 @@ export function createMockQueryBuilder() {
      * Convenience method for error responses
      */
     withError(error: PostgrestError) {
-      builder.single.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code) : 500, statusText: error.message })
-      builder.maybeSingle.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code) : 500, statusText: error.message })
+      builder.single.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code, 10) : 500, statusText: error.message })
+      builder.maybeSingle.mockResolvedValue({ data: null, error, count: null, status: error.code ? Number.parseInt(error.code, 10) : 500, statusText: error.message })
       return builder
     },
   }

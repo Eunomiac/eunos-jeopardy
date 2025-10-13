@@ -100,7 +100,11 @@ export function BuzzerQueuePanel(props: Readonly<BuzzerQueuePanelProps>) {
                 timingText = index === 0 ? `${reactionTime} ms` : `+${reactionTime} ms`;
               } else {
                 const buzzTime = new Date(buzz.created_at);
-                const firstBuzzTime = new Date(buzzerQueue[0].created_at);
+                const firstBuzz = buzzerQueue[0];
+                if (!firstBuzz) {
+                  throw new Error('First buzz in queue is undefined');
+                }
+                const firstBuzzTime = new Date(firstBuzz.created_at);
                 const timeDiff = buzzTime.getTime() - firstBuzzTime.getTime();
                 timingText = timeDiff === 0 ? "0 ms" : `+${timeDiff} ms`;
               }
