@@ -73,7 +73,7 @@ export default defineConfig({
    * LEARNING NOTE: Set to 'false' in CI to see all failures at once. For learning,
    * 'true' helps you focus on one problem at a time.
    */
-  forbidOnly: !!process.env.CI, // Prevent 'test.only' in CI
+  forbidOnly: Boolean(process.env['CI']), // Prevent 'test.only' in CI
 
   /**
    * Retry Strategy
@@ -85,7 +85,7 @@ export default defineConfig({
    * - Local: 0 retries (you want to see failures immediately to learn from them)
    * - CI: 2 retries (network/timing issues are more common in CI)
    */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env['CI'] ? 2 : 0,
 
   /**
    * Parallel Workers
@@ -97,7 +97,7 @@ export default defineConfig({
    * - Local: 1 worker (easier to watch and debug)
    * - CI: All CPU cores (speed matters more than observability)
    */
-  workers: process.env.CI ? undefined : 1,
+  workers: process.env['CI'] ? undefined : 1,
 
   /**
    * Test Reporter
@@ -284,7 +284,7 @@ export default defineConfig({
      * Command to start the dev server
      * When VITE_COVERAGE=true, the istanbul plugin will instrument the code
      */
-    command: 'cross-env VITE_COVERAGE=' + (process.env.VITE_COVERAGE || 'false') + ' npm run dev',
+    command: `cross-env VITE_COVERAGE=${  process.env['VITE_COVERAGE'] || 'false'  } npm run dev`,
 
     /**
      * URL to check if server is ready
@@ -301,7 +301,7 @@ export default defineConfig({
      * - CI (reuseExistingServer: false): Always start fresh server to ensure
      *   clean state for testing.
      */
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env['CI'],
 
     /**
      * Timeout for server to start

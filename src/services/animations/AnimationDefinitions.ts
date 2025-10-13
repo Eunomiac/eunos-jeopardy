@@ -438,7 +438,7 @@ export const ClueRevealAnimation: AnimationDefinition<{
     // Clue reveal is "in the past" if there's a focused clue
     return (
       gameState.status === ("in_progress" as GameStatus) &&
-      !!gameState.focused_clue_id
+      Boolean(gameState.focused_clue_id)
     );
   },
 

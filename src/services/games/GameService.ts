@@ -67,7 +67,7 @@ export type ClueStateInsert = TablesInsert<'clue_states'>
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+ 
 export class GameService {
   /**
    * Gets the currently active game (lobby, game_intro, introducing_categories, in_progress, or round_transition status).

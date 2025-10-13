@@ -48,6 +48,12 @@ export default defineConfig(
       // Disable unnecessary-condition rule - conflicts with defensive programming when noUncheckedIndexedAccess is enabled
       // With noUncheckedIndexedAccess, array[i] returns T | undefined even in bounded loops, making defensive checks valuable
       '@typescript-eslint/no-unnecessary-condition': 'off',
+      // Require explicit type conversions - disallow implicit coercion tricks like !! for boolean, + for number, etc.
+      'no-implicit-coercion': ['error', {
+        boolean: true,  // Disallow !!x, require Boolean(x)
+        number: true,   // Disallow +x, require Number(x)
+        string: true    // Disallow '' + x, require String(x)
+      }],
     },
   },
   {

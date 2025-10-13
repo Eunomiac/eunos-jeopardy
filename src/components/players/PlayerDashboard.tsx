@@ -201,7 +201,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
         // Update tracking for category animations
         if (intent.type === "CategoryIntro") {
-          lastAnimatedCategory.current = params.categoryNumber as number;
+          lastAnimatedCategory.current = params["categoryNumber"] as number;
         }
       });
     });
@@ -274,7 +274,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
       clearTimeout(timeoutId);
       unsubscribe();
     };
-  }, [game?.id, gameId, animationService]); // Only run when game ID changes (mount/game change)
+  }, [game?.["id"], gameId, animationService]); // Only run when game ID changes (mount/game change)
 
   /**
    * Loads initial game data and player information.
@@ -665,13 +665,13 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
           if (user.id) {
             const clueData = payload.new;
             const lockedOutPlayers: string[] =
-              (clueData.locked_out_player_ids as Maybe<string[]>) ?? [];
+              (clueData["locked_out_player_ids"] as Maybe<string[]>) ?? [];
 
             // If current player was just locked out, freeze their buzzer
             if (
               lockedOutPlayers.includes(user.id) &&
               focusedClue &&
-              clueData.id === focusedClue.id
+              clueData["id"] === focusedClue.id
             ) {
               console.log("🚫 Current player locked out - freezing buzzer");
               setCurrentClue(null);
@@ -959,7 +959,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
   return (
     <div
-      className={`player-dashboard ${String(game?.status) || "loading"}`}
+      className={`player-dashboard ${String(game?.["status"]) || "loading"}`}
       data-game-id={gameId}
     >
       {/* Background Image */}
@@ -972,10 +972,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
       <div className="jeopardy-board-header">
         <h2>
           {(() => {
-            if (game?.current_round === "final") {
+            if (game?.["current_round"] === "final") {
               return "Final Jeopardy";
             }
-            if (game?.current_round === "double") {
+            if (game?.["current_round"] === "double") {
               return "Double Jeopardy Round";
             }
             return "The Jeopardy Round";
@@ -1000,7 +1000,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                 double:
                   "url('/assets/images/splash-double-jeopardy-small.webp')",
                 final: "url('/assets/images/splash-final-jeopardy-small.webp')",
-              }[(game?.current_round as Maybe<string>) ?? "jeopardy"],
+              }[(game?.["current_round"] as Maybe<string>) ?? "jeopardy"],
             } as React.CSSProperties
           }
         >
@@ -1012,7 +1012,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                 final: "/assets/images/splash-final-jeopardy.webp",
               };
               const roundKey =
-                (game?.current_round as Maybe<string>) ?? "jeopardy";
+                (game?.["current_round"] as Maybe<string>) ?? "jeopardy";
               return (
                 <img
                   src={splashImages[roundKey]}
@@ -1026,14 +1026,14 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
             <>
               {/* Category headers */}
               {(() => {
-                if (game.current_round === "final") {
+                if (game["current_round"] === "final") {
                   return (
                     <div key="final-category" className="category-header">
                       {clueSetData.rounds.final.name}
                     </div>
                   );
                 } else {
-                  const roundKey = game.current_round as "jeopardy" | "double";
+                  const roundKey = game["current_round"] as "jeopardy" | "double";
                   const currentRoundData = clueSetData.rounds[roundKey];
                   return currentRoundData.map(
                     (
@@ -1053,7 +1053,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
               {/* Clue cells */}
               {(() => {
-                if (game.current_round === "final") {
+                if (game["current_round"] === "final") {
                   return (
                     <button
                       type="button"
@@ -1067,7 +1067,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                 }
 
                 // Regular rounds: create grid of all clues
-                const roundKey = game.current_round as "jeopardy" | "double";
+                const roundKey = game["current_round"] as "jeopardy" | "double";
                 const currentRoundData = clueSetData.rounds[roundKey];
                 const allClues: {
                   categoryIndex: number;
@@ -1168,7 +1168,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
           ...player,
           buzzerState:
             player.id === user?.id ? buzzerState : BuzzerState.INACTIVE,
-          isFocused: game?.focused_player_id === player.id,
+          isFocused: game?.["focused_player_id"] === player.id,
           reactionTime: player.id === user?.id ? reactionTime : null,
           showReactionTime:
             player.id === user?.id && buzzerState === BuzzerState.BUZZED,
@@ -1204,7 +1204,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                   // Transform now handled by GSAP animation
                 >
                   {(() => {
-                    if (game.current_round === "final") {
+                    if (game["current_round"] === "final") {
                       // Final Jeopardy - single category
                       return (
                         <div key="final-category" className="category-header">
@@ -1213,7 +1213,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                       );
                     } else {
                       // Regular rounds - 6 categories
-                      const roundKey = game.current_round as
+                      const roundKey = game["current_round"] as
                         | "jeopardy"
                         | "double";
                       const currentRoundData = clueSetData.rounds[roundKey];

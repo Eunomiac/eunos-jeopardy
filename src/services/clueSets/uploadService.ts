@@ -114,7 +114,7 @@ export class UploadService {
       const duplicate = userClueSets.find((cs) => cs.name.toLowerCase() === name.toLowerCase())
 
       return {
-        isDuplicate: !!duplicate,
+        isDuplicate: Boolean(duplicate),
         existingId: duplicate?.id
       }
     } catch (error) {

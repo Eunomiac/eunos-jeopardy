@@ -1,47 +1,45 @@
-/**
- * Test TypeScript Configuration - Jest Unit & Integration Tests
- *
- * This configuration is specifically for unit and integration tests that run
- * in Jest with ts-jest. It extends the base config but uses Node.js-compatible
- * module resolution since Jest runs in a Node environment, not a browser.
- *
- * **Purpose:**
- * - Type-check all test files (*.test.ts, *.test.tsx, *.spec.*)
- * - Enable React Testing Library and Jest type definitions
- * - Configure Node.js module resolution for Jest compatibility
- * - Support testing React components with JSX and DOM APIs
- *
- * **Changes from Base Config:**
- * - Adds DOM and DOM.Iterable to lib (tests render React components)
- * - Enables JSX with react-jsx transform (same as app for consistency)
- * - Uses "node16" module resolution instead of "bundler" (Jest requirement)
- * - Adds test-specific type definitions (@jest/globals, @testing-library/jest-dom)
- *
- * **Why These Settings:**
- * - DOM types: React Testing Library renders components in jsdom environment
- * - react-jsx: Tests need to render JSX just like the app
- * - node16 resolution: Jest uses Node.js module resolution, not bundler magic
- * - Test types: Provides Jest globals (describe, it, expect) and RTL matchers
- *
- * **Why NOT Extend tsconfig.app.json:**
- * - App uses "bundler" resolution which Jest doesn't support
- * - App allows importing .ts extensions which Jest can't handle
- * - Tests need different type definitions than production code
- * - Keeps test config independent from app bundler concerns
- *
- * **Includes:**
- * - src/**/*.test.ts and .tsx: Unit tests co-located with source files
- * - src/**/*.spec.ts and .tsx: Spec files (alternative test naming)
- * - src/test/**: Test utilities, mocks, and setup files
- *
- * **Excludes:**
- * - dist/, build/: Compiled output directories
- *
- * **Used By:**
- * - Jest with ts-jest transformer
- * - ESLint for type-aware linting of tests
- * - IDE for test file IntelliSense
- */
+// Test TypeScript Configuration - Jest Unit & Integration Tests
+//
+// This configuration is specifically for unit and integration tests that run
+// in Jest with ts-jest. It extends the base config but uses Node.js-compatible
+// module resolution since Jest runs in a Node environment, not a browser.
+//
+// **Purpose:**
+// - Type-check all test files (*.test.ts, *.test.tsx, *.spec.*)
+// - Enable React Testing Library and Jest type definitions
+// - Configure Node.js module resolution for Jest compatibility
+// - Support testing React components with JSX and DOM APIs
+//
+// **Changes from Base Config:**
+// - Adds DOM and DOM.Iterable to lib (tests render React components)
+// - Enables JSX with react-jsx transform (same as app for consistency)
+// - Uses "node16" module resolution instead of "bundler" (Jest requirement)
+// - Adds test-specific type definitions (@jest/globals, @testing-library/jest-dom)
+//
+// **Why These Settings:**
+// - DOM types: React Testing Library renders components in jsdom environment
+// - react-jsx: Tests need to render JSX just like the app
+// - node16 resolution: Jest uses Node.js module resolution, not bundler magic
+// - Test types: Provides Jest globals (describe, it, expect) and RTL matchers
+//
+// **Why NOT Extend tsconfig.app.json:**
+// - App uses "bundler" resolution which Jest doesn't support
+// - App allows importing .ts extensions which Jest can't handle
+// - Tests need different type definitions than production code
+// - Keeps test config independent from app bundler concerns
+//
+// **Includes:**
+// - src/**/*.test.ts and .tsx: Unit tests co-located with source files
+// - src/**/*.spec.ts and .tsx: Spec files (alternative test naming)
+// - src/test/**: Test utilities, mocks, and setup files
+//
+// **Excludes:**
+// - dist/, build/: Compiled output directories
+//
+// **Used By:**
+// - Jest with ts-jest transformer
+// - ESLint for type-aware linting of tests
+// - IDE for test file IntelliSense
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
@@ -50,6 +48,7 @@
     "jsx": "react-jsx",
 
     /* Modules */
+    "module": "Node16",
     "moduleResolution": "node16",
 
     /* Type Checking */

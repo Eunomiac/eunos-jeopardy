@@ -351,7 +351,7 @@ export function App() {
               detail: {
                 gameId: playerGameId,
                 isLocked: newGameData.is_buzzer_locked,
-                hasFocusedClue: !!newGameData.focused_clue_id
+                hasFocusedClue: Boolean(newGameData.focused_clue_id)
               }
             }))
           }
@@ -807,7 +807,7 @@ export function App() {
             <>
               {/* Debug info - moved to separate statement */}
               {(() => {
-                console.log('🔍 Render state:', { user: !!user, roleLoading, userRole, mode })
+                console.log('🔍 Render state:', { user: Boolean(user), roleLoading, userRole, mode })
                 return null
               })()}
 

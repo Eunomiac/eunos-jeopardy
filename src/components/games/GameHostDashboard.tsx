@@ -1520,7 +1520,7 @@ export function GameHostDashboard({
    */
   const handleStartGame = async () => {
     if (!user || !game) {
-      console.log('🎬 Cannot start game - missing user or game:', { user: !!user, game: !!game });
+      console.log('🎬 Cannot start game - missing user or game:', { user: Boolean(user), game: Boolean(game) });
       return;
     }
 
