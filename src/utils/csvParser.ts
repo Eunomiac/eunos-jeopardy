@@ -102,7 +102,7 @@ export function parseCSV(csvText: string): CSVRow[] {
   // Process each data line with detailed validation
   for (let i = 0; i < dataLines.length; i++) {
     const line = dataLines[i];
-    if (!line) {
+    if (line === undefined) {
       throw new Error(`Data line at index ${i} is undefined`);
     }
     const trimmedLine = line.trim();
