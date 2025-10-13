@@ -317,6 +317,7 @@ export default defineConfig({
      * and CI both work consistently.
      */
     env: {
+      ...process.env,
       VITE_COVERAGE: process.env['VITE_COVERAGE'] ?? 'false',
     },
   },
