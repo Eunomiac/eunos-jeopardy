@@ -42,6 +42,7 @@ export default defineConfig(
           destructuring: "all"
         }
       ],
+      '@typescript-eslint/array-type': ['error', 'array-simple'],
       '@typescript-eslint/dot-notation': [
         'error',
         {

@@ -29,7 +29,7 @@ async function globalSetup() {
   // Load environment variables from .env.local file
   // LEARNING NOTE: Vite automatically loads .env.local in the app, but Playwright
   // runs in Node.js (not Vite), so we need to load it manually.
-  config({ path: '.env.local' });
+  config({ path: '.env.local', quiet: true });
   console.log('\n🚀 Starting Playwright E2E Tests\n');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('📋 Global Setup - Preparing Test Environment');

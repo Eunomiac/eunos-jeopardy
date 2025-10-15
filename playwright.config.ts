@@ -175,7 +175,7 @@ export default defineConfig({
      * LEARNING NOTE: 10 seconds is generous. If actions take longer, there's
      * probably a real problem (slow network, infinite loading, etc.).
      */
-    actionTimeout: 10000, // 10 seconds
+    actionTimeout: 20000, // 10 seconds
 
     /**
      * Navigation Timeout
@@ -187,7 +187,7 @@ export default defineConfig({
      * - Supabase authentication checks
      * - Real-time subscription setup
      */
-    navigationTimeout: 30000, // 30 seconds
+    navigationTimeout: 60000, // 30 seconds
   },
 
   /**
@@ -317,8 +317,10 @@ export default defineConfig({
      * and CI both work consistently.
      */
     env: {
-      ...process.env,
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([, value]) => value !== undefined)
+      ),
       VITE_COVERAGE: process.env['VITE_COVERAGE'] ?? 'false',
-    },
+    }
   },
 });

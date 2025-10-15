@@ -60,7 +60,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         await finalJeopardyButton.click();
         await hostPage.waitForTimeout(2000);
       } else {
-        console.log('⚠️  Final Jeopardy button not visible - may need to complete all clues');
+        test.info().annotations.push({ type: 'step', description: 'Final Jeopardy button not visible - may need to complete all clues' });
       }
 
       // ============================================================
@@ -70,7 +70,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
       const inFinalJeopardy = await finalJeopardyIndicator.isVisible({ timeout: 10000 }).catch(() => false);
 
       if (inFinalJeopardy) {
-        console.log('✅ Entered Final Jeopardy round');
+        test.info().annotations.push({ type: 'step', description: '✅ Entered Final Jeopardy round' });
 
         // ============================================================
         // ASSERT: Category is displayed
@@ -78,7 +78,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         const categoryDisplay = hostPage.locator('text=/Category|The category is/i').first();
         await expect(categoryDisplay).toBeVisible({ timeout: 5000 });
 
-        console.log('✅ Final Jeopardy category displayed');
+        test.info().annotations.push({ type: 'step', description: '✅ Final Jeopardy category displayed' });
 
         // ============================================================
         // ACT: Host reveals category to players
@@ -103,7 +103,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         await expect(player1WagerInput).toBeVisible({ timeout: 5000 });
         await expect(player2WagerInput).toBeVisible({ timeout: 5000 });
 
-        console.log('✅ Wager entry displayed for all players');
+        test.info().annotations.push({ type: 'step', description: '✅ Wager entry displayed for all players' });
 
         // ============================================================
         // ACT: Players enter wagers
@@ -118,7 +118,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
 
         await hostPage.waitForTimeout(2000);
 
-        console.log('✅ Both players submitted wagers');
+        test.info().annotations.push({ type: 'step', description: '✅ Both players submitted wagers' });
 
         // ============================================================
         // ASSERT: Clue is revealed after all wagers submitted
@@ -126,7 +126,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         const cluePrompt = hostPage.locator('text=/What is|Who is|Clue/i').first();
         await expect(cluePrompt).toBeVisible({ timeout: 5000 });
 
-        console.log('✅ Final Jeopardy clue revealed');
+        test.info().annotations.push({ type: 'step', description: '✅ Final Jeopardy clue revealed' });
 
         // ============================================================
         // ASSERT: Answer entry appears for all players
@@ -137,7 +137,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         await expect(player1AnswerInput).toBeVisible({ timeout: 5000 });
         await expect(player2AnswerInput).toBeVisible({ timeout: 5000 });
 
-        console.log('✅ Answer entry displayed for all players');
+        test.info().annotations.push({ type: 'step', description: '✅ Answer entry displayed for all players' });
 
         // ============================================================
         // ACT: Players submit answers
@@ -152,7 +152,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
 
         await hostPage.waitForTimeout(2000);
 
-        console.log('✅ Both players submitted answers');
+        test.info().annotations.push({ type: 'step', description: '✅ Both players submitted answers' });
 
         // ============================================================
         // ASSERT: Host can adjudicate answers
@@ -166,7 +166,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
 
         expect(hasAdjudicationButtons).toBe(true);
 
-        console.log('✅ Host adjudication controls displayed');
+        test.info().annotations.push({ type: 'step', description: '✅ Host adjudication controls displayed' });
 
         // ============================================================
         // ACT: Host adjudicates answers
@@ -187,7 +187,7 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         const finalScoreDisplay = hostPage.locator('text=/Final Score|Game Over|Winner/i').first();
         await expect(finalScoreDisplay).toBeVisible({ timeout: 10000 });
 
-        console.log('✅ Final scores displayed');
+        test.info().annotations.push({ type: 'step', description: '✅ Final scores displayed' });
 
         // ============================================================
         // ASSERT: Scores reflect wager adjustments
@@ -198,10 +198,10 @@ test.describe('Final Jeopardy - Smoke Tests', () => {
         await expect(aliceScore).toBeVisible({ timeout: 3000 });
         await expect(bobScore).toBeVisible({ timeout: 3000 });
 
-        console.log('✅ Final Jeopardy round completed successfully');
+        test.info().annotations.push({ type: 'step', description: '✅ Final Jeopardy round completed successfully' });
       } else {
-        console.log('⚠️  Could not reach Final Jeopardy - may require completing all previous rounds');
-        console.log('✅ Partial Final Jeopardy test completed');
+        test.info().annotations.push({ type: 'step', description: '⚠️  Could not reach Final Jeopardy - may require completing all previous rounds' });
+        test.info().annotations.push({ type: 'step', description: '✅ Partial Final Jeopardy test completed' });
       }
 
     } finally {

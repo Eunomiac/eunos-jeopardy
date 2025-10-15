@@ -17,6 +17,9 @@ export default defineConfig({
       forceBuildInstrument: false,
     }),
   ],
+  build: {
+    sourcemap: true
+  },
   css: {
     preprocessorOptions: {
       scss: {

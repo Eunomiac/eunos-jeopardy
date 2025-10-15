@@ -4,7 +4,10 @@ import { cleanupTestUser } from '../fixtures/database-helpers';
 import {
   setupTestWithLobby,
   cleanupTestContext,
-  selectClue
+  selectClue,
+  waitForGameBoard,
+  pausePageAnimationsAndCheck,
+  animationsSettled
 } from '../fixtures/test-helpers';
 
 /**
@@ -47,66 +50,109 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       const { hostPage, playerPages } = ctx;
       const [player1Page, player2Page] = playerPages;
 
+      if (!hostPage || !player1Page || !player2Page) {
+        throw new Error('Failed to setup pages');
+      }
+
       // ============================================================
       // ACT: Host starts the game
       // ============================================================
-      await hostPage.getByRole('button', { name: 'Start Game' }).click();
-      await hostPage.waitForTimeout(2000);
+
+      // We define this as a function, as it triggers an animation and must be run within the animation control helper.
+      const startGameClick = async () => hostPage
+        .getByRole('button', { name: 'Start Game' })
+        .click(); // Sends Supabase update; RTS triggers `player1Page` and `player2Page` to load the game screen AND start the intro animation
 
       // ============================================================
-      // ASSERT: Game intro animation appears
+      // ASSERT: Player Dashboards are loaded, initial animation state is correct
       // ============================================================
-      // Defensive checks for player pages
-      if (!player1Page || !player2Page) {
-        throw new Error('Failed to setup player pages');
-      }
+      test.info().annotations.push({ type: 'step', description: 'Initiating animation initial state check' });
 
-      await expect(hostPage.getByText(/Welcome to|Let's Play/i)).toBeVisible({ timeout: 10000 });
-      await expect(player1Page.getByText(/Welcome to|Let's Play/i)).toBeVisible({ timeout: 10000 });
-      await expect(player2Page.getByText(/Welcome to|Let's Play/i)).toBeVisible({ timeout: 10000 });
+      await pausePageAnimationsAndCheck(
+        startGameClick,
+        [
+          player1Page,
+          async () => {
+            await expect(player1Page.locator("button", { hasText: /\$\d\d\d\d?/}).first()).toBeAttached();
+            await expect(player1Page.locator("button", { hasText: /\$\d\d\d\d?/}).first()).toBeHidden();
+          }
+        ],
+        [
+          player2Page,
+          async () => {
+            await expect(player2Page.locator("button", { hasText: /\$\d\d\d\d?/}).first()).toBeAttached();
+            await expect(player2Page.locator("button", { hasText: /\$\d\d\d\d?/}).first()).toBeHidden();
+          }
+        ]
+      );
 
-      console.log('✅ Game intro animation displayed');
+      test.info().annotations.push({ type: 'step', description: 'Initial state check passed, animations resumed' });
+
+      // Wait for animations to complete before proceeding
+      await Promise.all([
+        animationsSettled(player1Page, 3000),
+        animationsSettled(player2Page, 3000)
+      ]);
+      test.info().annotations.push({ type: 'step', description: 'Animations settled' });
 
       // ============================================================
-      // ACT: Host advances through intro
+      // ASSERT: Player Dashboards are loaded, final state is correct
       // ============================================================
-      const nextButton = hostPage.getByRole('button', { name: /Next|Continue/i }).first();
-      await expect(nextButton).toBeVisible({ timeout: 5000 });
-      await nextButton.click();
-      await hostPage.waitForTimeout(1000);
+      await Promise.all([
+        expect(player1Page.locator("button[style*='opacity: 1']", { hasText: /\$\d\d\d\d?/})).toHaveCount(30),
+        expect(player2Page.locator("button[style*='opacity: 1']", { hasText: /\$\d\d\d\d?/})).toHaveCount(30)
+      ]);
+
+      test.info().annotations.push({ type: 'step', description: 'Game intro animation displayed' });
 
       // ============================================================
-      // ASSERT: Category introduction begins
+      // ACT: Host initializes category introduction
       // ============================================================
-      // Look for category names or "Category" text
-      const categoryIndicator = hostPage.locator('text=/Category|CATEGORY/i').first();
-      await expect(categoryIndicator).toBeVisible({ timeout: 10000 });
+      const startCategoryButton = hostPage.getByRole('button', { name: /Introduce Categories/i });
+      await expect(startCategoryButton).toBeVisible({ timeout: 5000 });
+      await startCategoryButton.click();
+      await expect(startCategoryButton).not.toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Category introduction started');
+      // Host pauses briefly to allow animation to complete
+      await hostPage.waitForTimeout(5000);
+
+      test.info().annotations.push({ type: 'step', description: 'Category introduction started' });
 
       // ============================================================
       // ACT: Host advances through all categories
       // ============================================================
       // Skip through up to 6 categories (standard Jeopardy board)
       for (let i = 0; i < 6; i++) {
-        const continueButton = hostPage.getByRole('button', { name: /Next|Continue/i }).first();
+        const continueButton = hostPage.getByRole('button', { name: /Next Category/i }).first();
         if (await continueButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+          test.info().annotations.push({ type: 'step', description: `Advancing to category ${i + 1}` });
           await continueButton.click();
-          await hostPage.waitForTimeout(500);
+          await expect(hostPage.getByText(`Category ${i + 1} of 6`)).toBeVisible({ timeout: 5000 });
+          test.info().annotations.push({ type: 'step', description: `Advanced to category ${i + 1}` });
         } else {
+          test.info().annotations.push({ type: 'step', description: `No more categories to advance` });
           break;
         }
       }
 
       // ============================================================
+      // ACT: After final category, hosts clicks "Start Game"
+      // ============================================================
+      test.info().annotations.push({ type: 'step', description: 'Advancing to game start' });
+      const startGameButton = hostPage.getByRole('button', { name: /Start Game/i }).first();
+      await expect(startGameButton).toBeVisible({ timeout: 5000 });
+      await startGameButton.click();
+      await expect(startGameButton).not.toBeVisible({ timeout: 5000 });
+
+      // ============================================================
       // ASSERT: Game board is displayed
       // ============================================================
       // player1Page and player2Page already checked above, safe to use
-      await expect(hostPage.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 15000 });
-      await expect(player1Page.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 15000 });
-      await expect(player2Page.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 15000 });
+      await waitForGameBoard(hostPage);
+      await waitForGameBoard(player1Page);
+      await waitForGameBoard(player2Page);
 
-      console.log('✅ Game board displayed after intro');
+      test.info().annotations.push({ type: 'step', description: 'Game board displayed after intro' });
 
       // ============================================================
       // ASSERT: Clue cells are visible
@@ -117,7 +163,7 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       const clueCount = await clueCells.count();
       expect(clueCount).toBeGreaterThan(0);
 
-      console.log(`✅ Found ${clueCount} clue cells on board`);
+      test.info().annotations.push({ type: 'step', description: `Found ${clueCount} clue cells on board` });
 
       // ============================================================
       // ASSERT: Host can select a clue
@@ -133,8 +179,8 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
 
       expect(clueVisible || buttonVisible).toBe(true);
 
-      console.log('✅ Host can select and interact with clues');
-      console.log('✅ Game introduction and board display flow completed successfully');
+      test.info().annotations.push({ type: 'step', description: 'Host can select and interact with clues' });
+      test.info().annotations.push({ type: 'step', description: 'Game introduction and board display flow completed successfully' });
 
     } finally {
       await cleanupTestContext(ctx);

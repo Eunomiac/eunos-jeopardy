@@ -1,4 +1,4 @@
-import { test, expect, Browser } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
 import {
@@ -38,7 +38,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
     ]);
   });
 
-  test('should allow multiple players to join game sequentially', async ({ browser }: { browser: Browser }) => {
+  test('should allow multiple players to join game sequentially', async ({ browser }) => {
     // ============================================================
     // ARRANGE: Setup game with 3 players in lobby
     // ============================================================
@@ -73,14 +73,14 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       await expect(hostPage.getByRole('button', { name: /Start.*Game/i })).toBeVisible();
 
-      console.log('✅ Multiple players successfully joined game');
+      test.info().annotations.push({ type: 'step', description: '✅ Multiple players successfully joined game' });
 
     } finally {
       await cleanupTestContext(ctx);
     }
   });
 
-  test('should prevent players from joining after game starts', async ({ browser }: { browser: Browser }) => {
+  test('should prevent players from joining after game starts', async ({ browser }) => {
     // ============================================================
     // ARRANGE: Setup game with 2 players in lobby
     // ============================================================
@@ -140,7 +140,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       const inProgressMessage = player3Page.getByText(/Waiting For Game/i);
       await expect(inProgressMessage).toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Late player correctly prevented from joining');
+      test.info().annotations.push({ type: 'step', description: '✅ Late player correctly prevented from joining' });
 
     } finally {
       await cleanupTestContext(ctx);
@@ -172,6 +172,6 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
     // Button should either be disabled or not visible
     expect(isDisabled || !isVisible).toBe(true);
 
-    console.log('✅ Host correctly prevented from starting game without players');
+    test.info().annotations.push({ type: 'step', description: '✅ Host correctly prevented from starting game without players' });
   });
 });

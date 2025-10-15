@@ -1,7 +1,27 @@
-import { Page, expect, Browser, BrowserContext } from '@playwright/test';
-import { TEST_USERS } from './test-users';
-import { startConsoleLogger } from './console-logger';
-import { saveCoverage } from './coverage-helpers';
+import gsap from "gsap";
+import {
+  Page,
+  expect,
+  Browser,
+  BrowserContext,
+  ConsoleMessage,
+} from "@playwright/test";
+import { TEST_USERS } from "./test-users";
+import { startConsoleLogger } from "./console-logger";
+import { saveCoverage } from "./coverage-helpers";
+import { getHostGame } from "./database-helpers";
+
+// Re-export database helpers for convenience
+export {
+  getHostGame,
+  getGameClues,
+  getDailyDoubleIndices,
+  markClueCompleted,
+  markRoundCompleted,
+  getGamePlayers,
+  updateGameStatus,
+  updateGameRound,
+} from "./database-helpers";
 
 /**
  * Test Helper Functions for E2E Tests
@@ -23,6 +43,30 @@ import { saveCoverage } from './coverage-helpers';
  */
 
 // ============================================================
+// Console Suppression for Production Code
+// ============================================================
+
+/**
+ * Suppress all console output from production code during tests
+ * This prevents production console.log/warn/error from cluttering test output
+ *
+ * @param page - Playwright page object
+ * @example
+ * await suppressProductionConsole(hostPage);
+ * await suppressProductionConsole(player1Page);
+ */
+export async function suppressProductionConsole(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    // Override with no-ops to suppress production console output
+    console.log = () => {};
+    console.warn = () => {};
+    console.error = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+  });
+}
+
+// ============================================================
 // Types
 // ============================================================
 
@@ -33,7 +77,28 @@ export interface TestContext {
   playerPages: Page[];
   playerContexts: BrowserContext[];
   playerLoggers: { save: () => void }[];
+  gameId?: string; // Game ID for database operations
 }
+
+const SUPPRESSIBLE_CONSOLE_METHODS = [
+  "log",
+  "error",
+  "warn",
+  "info",
+  "debug",
+] as const;
+type SuppressableConsoleMethod = (typeof SUPPRESSIBLE_CONSOLE_METHODS)[number];
+
+// Map Playwright console types to Node console methods we care about
+const CONSOLE_TYPE_MAP: Partial<
+  Record<ReturnType<ConsoleMessage["type"]>, SuppressableConsoleMethod>
+> = {
+  log: "log",
+  error: "error",
+  info: "info",
+  debug: "debug",
+  warning: "warn",
+};
 
 // ============================================================
 // Authentication & User Setup (Atomic Helpers)
@@ -49,13 +114,13 @@ export interface TestContext {
 export async function loginAs(
   page: Page,
   email: string,
-  password = '1234'
+  password = "1234"
 ): Promise<void> {
-  await page.goto('/');
-  await page.getByPlaceholder('Email').fill(email);
-  await page.getByPlaceholder('Password').fill(password);
-  await page.getByRole('button', { name: 'Login' }).click();
-  await expect(page.getByText('Currently logged in as')).toBeVisible();
+  await page.goto("/");
+  await page.getByPlaceholder("Email").fill(email);
+  await page.getByPlaceholder("Password").fill(password);
+  await page.getByRole("button", { name: "Login" }).click();
+  await expect(page.getByText("Currently logged in as")).toBeVisible();
 }
 
 /**
@@ -68,11 +133,11 @@ export async function loginAs(
  * @param nickname - Desired nickname
  */
 export async function setNickname(page: Page, nickname: string): Promise<void> {
-  const nicknameInput = page.getByPlaceholder('Your display name for this game...');
-  // Wait for profile to load (input has default value)
-  await expect(nicknameInput).not.toHaveValue('');
+  const nicknameInput = page.getByPlaceholder(
+    "Your display name for this game..."
+  );
   // Clear and set custom nickname
-  await nicknameInput.fill('');
+  await nicknameInput.fill("");
   await nicknameInput.fill(nickname);
   // Verify it stuck
   await expect(nicknameInput).toHaveValue(nickname);
@@ -91,7 +156,7 @@ export async function loginAsPlayer(
   page: Page,
   email: string,
   nickname: string,
-  password = '1234'
+  password = "1234"
 ): Promise<void> {
   await loginAs(page, email, password);
   await setNickname(page, nickname);
@@ -141,8 +206,26 @@ export async function createTestContext(
     hostLogger,
     playerPages,
     playerContexts,
-    playerLoggers
+    playerLoggers,
   };
+}
+
+export function suppressConsoleLogs(
+  pages: Page[] = [],
+  methods: ReadonlyArray<SuppressableConsoleMethod> = SUPPRESSIBLE_CONSOLE_METHODS
+) {
+  for (const page of pages) {
+    const handler = (msg: ConsoleMessage) => {
+      const mapped = CONSOLE_TYPE_MAP[msg.type()];
+      if (!mapped) {
+        return;
+      }
+      if (!methods.includes(mapped)) {
+        (console[mapped] as (...args: unknown[]) => void)(msg.text());
+      }
+    };
+    page.on("console", handler);
+  }
 }
 
 /**
@@ -154,10 +237,12 @@ export async function createTestContext(
 export async function cleanupTestContext(ctx: TestContext): Promise<void> {
   // Save all logs
   ctx.hostLogger.save();
-  ctx.playerLoggers.forEach((logger) => { logger.save(); });
+  ctx.playerLoggers.forEach((logger) => {
+    logger.save();
+  });
 
   // Save coverage from all pages
-  await saveCoverage(ctx.hostPage, 'host');
+  await saveCoverage(ctx.hostPage, "host");
   await Promise.all(
     ctx.playerPages.map((page, i) => saveCoverage(page, `player${i + 1}`))
   );
@@ -178,15 +263,13 @@ export async function cleanupTestContext(ctx: TestContext): Promise<void> {
  * @param page - Playwright page object
  * @param clueSetIndex - Index of clue set to select (defaults to 1)
  */
-export async function createGame(
-  page: Page,
-  clueSetIndex = 1
-): Promise<void> {
-  const clueSetDropdown = page.getByRole('combobox');
+export async function createGame(page: Page, clueSetIndex = 1): Promise<void> {
+  const clueSetDropdown = page.getByRole("combobox");
   await expect(clueSetDropdown).toBeVisible();
   await clueSetDropdown.selectOption({ index: clueSetIndex });
-  await page.getByText('Host Game').click();
-  await expect(page.getByText('Game Host Dashboard')).toBeVisible();
+  await page.getByText("Host Game").click();
+  const dashboardHeader = page.getByText("Game Host Dashboard");
+  await expect(dashboardHeader).toBeVisible();
 }
 
 /**
@@ -211,10 +294,14 @@ export async function createGameAsHost(
  * @param page - Playwright page object
  */
 export async function joinGame(page: Page): Promise<void> {
-  const joinButton = page.getByRole('button', { name: 'Join Game' });
-  await expect(joinButton).toBeEnabled({ timeout: 5000 });
+  const joinButton = page.getByRole("button", {
+    name: /Waiting for Game|Join Game/i,
+  });
+  // Wait for the joinButton to change text from "Waiting for Game" to "Join Game"
+  await expect(joinButton).toHaveText(/Join Game/i, { timeout: 10000 });
+  await expect(joinButton).toBeEnabled();
   await joinButton.click();
-  await expect(page.getByText('Game Lobby')).toBeVisible();
+  await expect(page.getByText("Game Lobby")).toBeVisible();
 }
 
 /**
@@ -235,8 +322,110 @@ export async function loginAndJoinAs(
 }
 
 // ============================================================
-// Game Flow & Navigation
+// Animation Helpers
 // ============================================================
+/**
+ * Pause GSAP animations BEFORE they would be triggered, then resume them after provided expectations are met.
+ *
+ * @param trigger - The promise that, when resolved, triggers the animation.
+ * @param expectations - An array of tuples, each containing a page and a promise that can check the state of the page before the animation begins.
+ *
+ * @example
+ * ```ts
+ * await pausePageAnimationsBefore(
+ *   async () => hostPage.getByRole('button', { name: 'Start Game' }).click(),
+ *   [
+ *     playerPage1, async () => {
+ *       await expect(player1Page.getByRole('img', { name: 'Jeopardy Board Background' }).first()).toBeAttached();
+ *       await expect(player1Page.getByRole('img', { name: 'Jeopardy Board Background' }).first()).toBeHidden();
+ *     }
+ *   ],
+ *   [
+ *     playerPage2, async () => {
+ *       await expect(player2Page.getByRole('img', { name: 'Jeopardy Board Background' }).first()).toBeAttached();
+ *       await expect(player2Page.getByRole('img', { name: 'Jeopardy Board Background' }).first()).toBeHidden();
+ *     }
+ *   ]
+ * );
+ * ```
+ */
+export async function pausePageAnimationsAndCheck(
+  trigger: () => Promise<unknown>,
+  ...expectations: Array<[Page, () => Promise<unknown>]>
+) {
+  // Pause the GSAP global timeline on all pages with expectations to check.
+  await Promise.all(
+    expectations.map(([page]) =>
+      page.evaluate(() => gsap.globalTimeline.pause())
+    )
+  );
+
+  // Wait for the trigger expectation to resolve.
+  await trigger();
+
+  // Wait for all expectations to resolve.
+  await Promise.all(expectations.map(([, expectation]) => expectation()));
+
+  // Resume the GSAP global timeline on all pages.
+  await Promise.allSettled(
+    expectations.map(([page]) =>
+      page.evaluate(() => {
+        // Standard promise won't resolve because event loop never idles after global timeline is resumed.
+        // setTimeout resolves the promise after a tick in the event loop.
+        gsap.globalTimeline.resume();
+        setTimeout(() => Promise.resolve(), 0);
+      })
+    )
+  );
+}
+
+/**
+ * Pause the GSAP global timeline after an expectation is resolved
+ * @param page - Playwright page object
+ * @param promise - Promise to await before resuming
+ */
+export async function pausePageAnimationsAfter(
+  page: Page,
+  promise: Promise<unknown>
+) {
+  await promise;
+  await page.evaluate(() => gsap.globalTimeline.pause());
+}
+
+/**
+ * Resume the GSAP global timeline after an expectation is resolved
+ * @param page - Playwright page object
+ * @param promise - Promise to await before resuming
+ */
+export async function resumePageAnimationsAfter(
+  page: Page,
+  promise: Promise<unknown>
+) {
+  await promise;
+  await page.evaluate(() => gsap.globalTimeline.resume());
+}
+
+/**
+ * Wait for all non-repeating GSAP animations to complete
+ * @param page The Playwright Page object.
+ * @param timeout The timeout for the poll in milliseconds. Defaults to max animation duration + 100ms.
+ */
+export async function animationsSettled(page: Page, bufferTime = 100) {
+  const maxDuration = await page.evaluate(() => {
+    return gsap.globalTimeline
+      .getChildren()
+      .filter((anim) => anim.repeat() !== -1)
+      .reduce((max, anim) => Math.max(max, anim.totalDuration()), 0);
+  });
+  // If no finite animations are found, return immediately.
+  if (maxDuration === 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    setTimeout(resolve, maxDuration * 1000 + bufferTime);
+  });
+}
 
 /**
  * Skip through game intro animations
@@ -252,7 +441,9 @@ export async function skipIntroAnimations(
   maxClicks = 10
 ): Promise<void> {
   for (let i = 0; i < maxClicks; i++) {
-    const nextButton = page.getByRole('button', { name: /Next|Continue|Start|Introduce/i }).first();
+    const nextButton = page
+      .getByRole("button", { name: /Next|Continue|Start|Introduce/i })
+      .first();
     if (await nextButton.isVisible({ timeout: 1000 }).catch(() => false)) {
       await nextButton.click();
       await page.waitForTimeout(500);
@@ -270,7 +461,7 @@ export async function skipIntroAnimations(
  * @param hostPage - Host's Playwright page object
  */
 export async function startGameAndSkipIntro(hostPage: Page): Promise<void> {
-  await hostPage.getByRole('button', { name: 'Start Game' }).click();
+  await hostPage.getByRole("button", { name: "Start Game" }).click();
   await hostPage.waitForTimeout(2000);
   await skipIntroAnimations(hostPage);
 }
@@ -285,7 +476,9 @@ export async function waitForGameBoard(
   page: Page,
   timeout = 15000
 ): Promise<void> {
-  await expect(page.locator('.game-board')).toBeVisible({ timeout });
+  await expect(
+    page.getByRole("button", { name: "Clue for $400" }).first()
+  ).toBeVisible({ timeout });
 }
 
 // ============================================================
@@ -298,11 +491,8 @@ export async function waitForGameBoard(
  * @param hostPage - Host's Playwright page object
  * @param clueIndex - Index of clue to select (defaults to 0 for first clue)
  */
-export async function selectClue(
-  hostPage: Page,
-  clueIndex = 0
-): Promise<void> {
-  const clueCell = hostPage.locator('.clue-cell, .board-cell').nth(clueIndex);
+export async function selectClue(hostPage: Page, clueIndex = 0): Promise<void> {
+  const clueCell = hostPage.locator(".clue-cell, .board-cell").nth(clueIndex);
   await expect(clueCell).toBeVisible({ timeout: 5000 });
   await clueCell.click();
   await hostPage.waitForTimeout(1000);
@@ -314,7 +504,9 @@ export async function selectClue(
  * @param hostPage - Host's Playwright page object
  */
 export async function unlockBuzzer(hostPage: Page): Promise<void> {
-  const unlockButton = hostPage.getByRole('button', { name: /Unlock Buzzer|Enable Buzzer/i });
+  const unlockButton = hostPage.getByRole("button", {
+    name: /Unlock Buzzer|Enable Buzzer/i,
+  });
   await expect(unlockButton).toBeVisible({ timeout: 5000 });
   await unlockButton.click();
 }
@@ -336,7 +528,9 @@ export async function buzzIn(playerPage: Page): Promise<void> {
  * @param hostPage - Host's Playwright page object
  */
 export async function markCorrect(hostPage: Page): Promise<void> {
-  const correctButton = hostPage.getByRole('button', { name: /Correct|✓|Award/i });
+  const correctButton = hostPage.getByRole("button", {
+    name: /Correct|✓|Award/i,
+  });
   await expect(correctButton).toBeVisible({ timeout: 5000 });
   await correctButton.click();
 }
@@ -347,7 +541,9 @@ export async function markCorrect(hostPage: Page): Promise<void> {
  * @param hostPage - Host's Playwright page object
  */
 export async function markWrong(hostPage: Page): Promise<void> {
-  const wrongButton = hostPage.getByRole('button', { name: /Wrong|✗|Incorrect/i });
+  const wrongButton = hostPage.getByRole("button", {
+    name: /Wrong|✗|Incorrect/i,
+  });
   await expect(wrongButton).toBeVisible({ timeout: 5000 });
   await wrongButton.click();
 }
@@ -373,11 +569,15 @@ export async function setupGameWithPlayers(
   playerNicknames: string[]
 ): Promise<void> {
   if (playerPages.length !== playerNicknames.length) {
-    throw new Error('Number of player pages must match number of nicknames');
+    throw new Error("Number of player pages must match number of nicknames");
   }
 
   // Players log in and set nicknames first
-  const playerEmails = [TEST_USERS.player1.email, TEST_USERS.player2.email, TEST_USERS.player3.email];
+  const playerEmails = [
+    TEST_USERS.player1.email,
+    TEST_USERS.player2.email,
+    TEST_USERS.player3.email,
+  ];
   for (let i = 0; i < playerPages.length; i++) {
     const playerPage = playerPages[i];
     const playerEmail = playerEmails[i];
@@ -398,13 +598,15 @@ export async function setupGameWithPlayers(
   for (const playerPage of playerPages) {
     // Defensive check - protects against undefined elements in array
     if (!playerPage) {
-      throw new Error('Player page is undefined in join loop');
+      throw new Error("Player page is undefined in join loop");
     }
     await joinGame(playerPage);
   }
 
   // Verify all players are in lobby
-  await expect(hostPage.getByText(`Total Players: ${playerPages.length}`)).toBeVisible();
+  await expect(
+    hostPage.getByText(`Total Players: ${playerPages.length}`)
+  ).toBeVisible();
 }
 
 /**
@@ -426,7 +628,7 @@ export async function setupGameInProgress(
   const firstPlayerPage = playerPages[0];
   // Defensive check for array access - protects against empty array
   if (!firstPlayerPage) {
-    throw new Error('No player pages provided to setupGameInProgress');
+    throw new Error("No player pages provided to setupGameInProgress");
   }
 
   await waitForGameBoard(firstPlayerPage);
@@ -446,8 +648,19 @@ export async function setupTestWithLobby(
   playerNicknames: string[],
   testName: string
 ): Promise<TestContext> {
-  const ctx = await createTestContext(browser, playerNicknames.length, testName);
+  const ctx = await createTestContext(
+    browser,
+    playerNicknames.length,
+    testName
+  );
   await setupGameWithPlayers(ctx.hostPage, ctx.playerPages, playerNicknames);
+
+  // Get the game ID from the database
+  const game = await getHostGame(TEST_USERS.host.id);
+  if (game) {
+    ctx.gameId = game.id;
+  }
+
   return ctx;
 }
 
@@ -465,7 +678,18 @@ export async function setupTestInProgress(
   playerNicknames: string[],
   testName: string
 ): Promise<TestContext> {
-  const ctx = await createTestContext(browser, playerNicknames.length, testName);
+  const ctx = await createTestContext(
+    browser,
+    playerNicknames.length,
+    testName
+  );
   await setupGameInProgress(ctx.hostPage, ctx.playerPages, playerNicknames);
+
+  // Get the game ID from the database
+  const game = await getHostGame(TEST_USERS.host.id);
+  if (game) {
+    ctx.gameId = game.id;
+  }
+
   return ctx;
 }

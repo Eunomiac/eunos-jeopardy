@@ -68,7 +68,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
       await expect(player1Page.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Daily Double splash screen displayed');
+      test.info().annotations.push({ type: 'step', description: '✅ Daily Double splash screen displayed' });
 
       // ============================================================
       // ACT: Host reveals the Daily Double prompt
@@ -84,7 +84,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       const wagerInput = player1Page.locator('input[type="number"], input[placeholder*="wager" i]');
       await expect(wagerInput).toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Wager entry displayed');
+      test.info().annotations.push({ type: 'step', description: '✅ Wager entry displayed' });
 
       // ============================================================
       // ACT: Player enters wager
@@ -101,7 +101,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       const cluePrompt = hostPage.locator('text=/What is|Who is|Clue/i').first();
       await expect(cluePrompt).toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Clue prompt displayed after wager');
+      test.info().annotations.push({ type: 'step', description: '✅ Clue prompt displayed after wager' });
 
       // ============================================================
       // ACT: Host unlocks buzzer for answer
@@ -118,7 +118,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       // ============================================================
       await expect(player1Page.getByText(/buzzed in|your turn/i)).toBeVisible({ timeout: 3000 });
 
-      console.log('✅ Player buzzed in for Daily Double');
+      test.info().annotations.push({ type: 'step', description: '✅ Player buzzed in for Daily Double' });
 
       // ============================================================
       // ACT: Host marks answer as correct
@@ -131,14 +131,14 @@ test.describe('Daily Double - Smoke Tests', () => {
       // Player should have gained $500
       await expect(hostPage.getByText(/Alice.*\$[5-9]/)).toBeVisible({ timeout: 3000 });
 
-      console.log('✅ Score updated correctly for Daily Double');
+      test.info().annotations.push({ type: 'step', description: '✅ Score updated correctly for Daily Double' });
 
       // ============================================================
       // ASSERT: Game returns to normal board state
       // ============================================================
       await expect(hostPage.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Daily Double correct answer flow completed successfully');
+      test.info().annotations.push({ type: 'step', description: '✅ Daily Double correct answer flow completed successfully' });
 
     } finally {
       await cleanupTestContext(ctx);
@@ -189,8 +189,8 @@ test.describe('Daily Double - Smoke Tests', () => {
       // Player should have lost $300 (negative score)
       await expect(hostPage.getByText(/Alice.*-\$[2-9]/)).toBeVisible({ timeout: 3000 });
 
-      console.log('✅ Score decreased correctly for wrong Daily Double answer');
-      console.log('✅ Daily Double wrong answer flow completed successfully');
+      test.info().annotations.push({ type: 'step', description: '✅ Score decreased correctly for wrong Daily Double answer' });
+      test.info().annotations.push({ type: 'step', description: '✅ Daily Double wrong answer flow completed successfully' });
 
     } finally {
       await cleanupTestContext(ctx);

@@ -83,7 +83,7 @@ test.describe('Buzzer System - Smoke Tests', () => {
       // ============================================================
       await expect(hostPage.getByText(/Alice.*\$[1-9]/)).toBeVisible({ timeout: 3000 });
 
-      console.log('✅ Basic buzzer flow completed successfully');
+      test.info().annotations.push({ type: 'step', description: 'Basic buzzer flow completed successfully' });
 
     } finally {
       await cleanupTestContext(ctx);
@@ -149,7 +149,7 @@ test.describe('Buzzer System - Smoke Tests', () => {
       // ============================================================
       await expect(hostPage.getByText(/Alice.*-\$[1-9]/)).toBeVisible({ timeout: 3000 });
 
-      console.log('✅ Race condition test completed successfully');
+      test.info().annotations.push({ type: 'step', description: 'Race condition test completed successfully' });
 
     } finally {
       await cleanupTestContext(ctx);

@@ -59,7 +59,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
       // ARRANGE: Record initial scores
       // ============================================================
       const initialScoreText = await hostPage.locator('text=/Alice.*\\$/').first().textContent();
-      console.log(`Initial score: ${initialScoreText}`);
+      test.info().annotations.push({ type: 'step', description: `Initial score: ${initialScoreText}` });
 
       // ============================================================
       // ACT: Complete all clues in Jeopardy round
@@ -80,7 +80,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
         }
       }
 
-      console.log('✅ Played several clues in Jeopardy round');
+      test.info().annotations.push({ type: 'step', description: '✅ Played several clues in Jeopardy round' });
 
       // ============================================================
       // ACT: Host triggers round transition
@@ -94,7 +94,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
         await hostPage.waitForTimeout(2000);
       } else {
         // Otherwise, try to complete remaining clues quickly
-        console.log('⚠️  Next Round button not visible - may need to complete all clues');
+        test.info().annotations.push({ type: 'step', description: '⚠️  Next Round button not visible - may need to complete all clues' });
       }
 
       // ============================================================
@@ -106,7 +106,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
       const transitioned = await doubleJeopardyIndicator.isVisible({ timeout: 10000 }).catch(() => false);
 
       if (transitioned) {
-        console.log('✅ Transitioned to Double Jeopardy round');
+        test.info().annotations.push({ type: 'step', description: '✅ Transitioned to Double Jeopardy round' });
 
         // ============================================================
         // ASSERT: New board is displayed
@@ -115,19 +115,19 @@ test.describe('Round Transitions - Smoke Tests', () => {
         await expect(player1Page.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 5000 });
         await expect(player2Page.locator('.game-board, [class*="board"]')).toBeVisible({ timeout: 5000 });
 
-        console.log('✅ New board displayed for Double Jeopardy');
+        test.info().annotations.push({ type: 'step', description: '✅ New board displayed for Double Jeopardy' });
 
         // ============================================================
         // ASSERT: Scores persisted from previous round
         // ============================================================
         const newScoreText = await hostPage.locator('text=/Alice.*\\$/').first().textContent();
-        console.log(`Score after transition: ${newScoreText}`);
+        test.info().annotations.push({ type: 'step', description: `Score after transition: ${newScoreText}` });
 
         // Score should still be visible and non-zero
         expect(newScoreText).toBeTruthy();
         expect(newScoreText).toContain('$');
 
-        console.log('✅ Scores persisted across round transition');
+        test.info().annotations.push({ type: 'step', description: '✅ Scores persisted across round transition' });
 
         // ============================================================
         // ASSERT: Clue values are doubled
@@ -140,13 +140,13 @@ test.describe('Round Transitions - Smoke Tests', () => {
         const hasDoubledValue = await clueValue.isVisible({ timeout: 3000 }).catch(() => false);
 
         if (hasDoubledValue) {
-          console.log('✅ Clue values are doubled in Double Jeopardy');
+          test.info().annotations.push({ type: 'step', description: '✅ Clue values are doubled in Double Jeopardy' });
         }
 
-        console.log('✅ Round transition completed successfully');
+        test.info().annotations.push({ type: 'step', description: '✅ Round transition completed successfully' });
       } else {
-        console.log('⚠️  Could not verify round transition - may require completing all clues');
-        console.log('✅ Partial round transition test completed');
+        test.info().annotations.push({ type: 'step', description: '⚠️  Could not verify round transition - may require completing all clues' });
+        test.info().annotations.push({ type: 'step', description: '✅ Partial round transition test completed' });
       }
 
     } finally {

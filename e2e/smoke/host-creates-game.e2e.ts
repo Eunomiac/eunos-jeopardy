@@ -49,6 +49,9 @@ test.describe('Host Creates Game - Smoke Test', () => {
     // ============================================================
     await expect(page.getByText(/Status.*Lobby|Lobby.*Status/i)).toBeVisible();
 
-    console.log('✅ Host successfully created game and reached dashboard');
+    test.info().annotations.push({
+      type: "Test Step",
+      description: "Host successfully created game and reached dashboard"
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { test, expect, Browser } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { cleanupTestUser } from '../fixtures/database-helpers';
 import {
@@ -48,10 +48,10 @@ test.describe('Player Joins Game - Smoke Test', () => {
     const waitingMessage = page.getByText(/Waiting for Game/i);
     await expect(waitingMessage).toBeVisible({ timeout: 5000 });
 
-    console.log('✅ Player successfully logged in and is waiting for game');
+    test.info().annotations.push({ type: 'step', description: '✅ Player successfully logged in and is waiting for game' });
   });
 
-  test('should allow player to join an active game', async ({ browser }: { browser: Browser }) => {
+  test('should allow player to join an active game', async ({ browser }) => {
     // ============================================================
     // ARRANGE: Create contexts for host and player
     // ============================================================
@@ -103,7 +103,7 @@ test.describe('Player Joins Game - Smoke Test', () => {
       await expect(hostPage.getByText('Alice')).toBeVisible({ timeout: 5000 });
       await expect(hostPage.getByText(/Total.*Players.*1|1.*Player/i)).toBeVisible({ timeout: 5000 });
 
-      console.log('✅ Player successfully joined active game');
+      test.info().annotations.push({ type: 'step', description: '✅ Player successfully joined active game' });
 
     } finally {
       await cleanupTestContext(ctx);
