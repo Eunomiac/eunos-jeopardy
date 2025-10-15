@@ -5,6 +5,7 @@ import {
   setupTestInProgress,
   cleanupTestContext,
   selectClue,
+  revealPrompt,
   unlockBuzzer,
   buzzIn,
   markCorrect,
@@ -56,6 +57,7 @@ test.describe('Buzzer System - Smoke Tests', () => {
       // ACT: Host selects a clue and unlocks buzzer
       // ============================================================
       await selectClue(hostPage, 0);
+      await revealPrompt(hostPage);
       await unlockBuzzer(hostPage);
 
       // ============================================================
@@ -121,6 +123,7 @@ test.describe('Buzzer System - Smoke Tests', () => {
       // ACT: Host selects clue and unlocks buzzer
       // ============================================================
       await selectClue(hostPage, 0);
+      await revealPrompt(hostPage);
       await unlockBuzzer(hostPage);
 
       // ============================================================

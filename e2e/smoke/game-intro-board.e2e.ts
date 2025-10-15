@@ -90,8 +90,8 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
 
       // Wait for animations to complete before proceeding
       await Promise.all([
-        animationsSettled(player1Page, 3000),
-        animationsSettled(player2Page, 3000)
+        animationsSettled(player1Page),
+        animationsSettled(player2Page)
       ]);
       test.info().annotations.push({ type: 'step', description: 'Animations settled' });
 
@@ -112,9 +112,6 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       await expect(startCategoryButton).toBeVisible({ timeout: 5000 });
       await startCategoryButton.click();
       await expect(startCategoryButton).not.toBeVisible({ timeout: 5000 });
-
-      // Host pauses briefly to allow animation to complete
-      await hostPage.waitForTimeout(5000);
 
       test.info().annotations.push({ type: 'step', description: 'Category introduction started' });
 

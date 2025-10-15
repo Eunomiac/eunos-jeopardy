@@ -105,12 +105,12 @@ export default defineConfig({
    * How test results are displayed. Multiple reporters can run simultaneously.
    *
    * LEARNING NOTE:
-   * - 'html': Creates a beautiful interactive report (open with 'npx playwright show-report')
+   * - 'html': Creates a beautiful interactive report (open on failure)
    * - 'list': Shows test progress in the terminal as they run
    * - 'json': Machine-readable format for CI/CD integration (added later)
    */
   reporter: [
-    ['html', { open: 'never' }], // Generate HTML report, don't auto-open
+    ['html', { open: 'on-failure' }], // Generate HTML report, open on failure
     ['list'], // Show progress in terminal
   ],
 
@@ -139,7 +139,7 @@ export default defineConfig({
      *
      * LEARNING NOTE:
      * - 'on-first-retry': Only record traces when a test fails and retries
-     * - View traces with: npx playwright show-trace trace.zip
+     * - View traces with: npx playwright show-trace trace.zip (or open in browser)
      * - Traces show you EXACTLY what happened, step by step
      */
     trace: 'on-first-retry',

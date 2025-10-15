@@ -499,6 +499,19 @@ export async function selectClue(hostPage: Page, clueIndex = 0): Promise<void> {
 }
 
 /**
+ * Reveal clue prompt to players
+ *
+ * @param hostPage - Host's Playwright page object
+ */
+export async function revealPrompt(hostPage: Page): Promise<void> {
+  const revealButton = hostPage.getByRole("button", {
+    name: /Reveal Prompt/i,
+  });
+  await expect(revealButton).toBeVisible({ timeout: 5000 });
+  await revealButton.click();
+}
+
+/**
  * Unlock buzzer for players
  *
  * @param hostPage - Host's Playwright page object

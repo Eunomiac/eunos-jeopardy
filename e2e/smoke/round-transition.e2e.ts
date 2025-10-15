@@ -5,6 +5,7 @@ import {
   setupTestInProgress,
   cleanupTestContext,
   selectClue,
+  revealPrompt,
   unlockBuzzer,
   buzzIn,
   markCorrect
@@ -73,6 +74,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
         const clueCell = hostPage.locator('.clue-cell, [class*="clue"]').nth(i);
         if (await clueCell.isVisible({ timeout: 1000 }).catch(() => false)) {
           await selectClue(hostPage, i);
+          await revealPrompt(hostPage);
           await unlockBuzzer(hostPage);
           await buzzIn(player1Page);
           await markCorrect(hostPage);
