@@ -170,7 +170,7 @@
     text-shadow: $shadow-sm;
     word-wrap: break-word;
     hyphens: auto;
-    line-height: 1.2;
+    line-height: 1;
     // Remove min-height to allow natural content expansion
     display: flex;
     align-items: center;
@@ -191,8 +191,8 @@
     text-shadow: $shadow-sm;
     cursor: pointer;
     transition: all $transition-fast;
-    min-height: 2em; // Minimum height for readability
-    line-height: 1.2;
+    min-height: unset; // Minimum height for readability
+    line-height: 1;
 
     // Reset button styling when used as button element
     &[type="button"] {

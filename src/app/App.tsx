@@ -185,23 +185,28 @@ export function App() {
     }
 
     try {
-      const activeGame = await GameService.getActiveGame()
+      // Check if player is in any active game by querying the players table
+      const { data: playerRecords, error: playerError } = await supabase
+        .from('players')
+        .select('game_id, games!inner(id, status)')
+        .eq('user_id', user.id)
+        .in('games.status', ['lobby', 'game_intro', 'introducing_categories', 'in_progress', 'round_transition'])
+        .limit(1)
+        .maybeSingle()
 
-      if (!activeGame) {
-        console.log('🎮 No active game, going to join screen')
+      if (playerError) {
+        console.error('❌ Error checking player game status:', playerError)
         setMode('player-join')
         return
       }
 
-      const players = await GameService.getPlayers(activeGame.id)
-      const playerInGame = players.find((p) => p.user_id === user.id)
-
-      if (playerInGame) {
-        console.log('🎯 Player already in active game, redirecting to lobby:', activeGame.id)
-        setPlayerGameId(activeGame.id)
-        setMode(activeGame.status === 'lobby' ? 'player-lobby' : 'player-game')
+      if (playerRecords && playerRecords.games) {
+        const gameStatus = playerRecords.games.status
+        console.log('🎯 Player already in active game, redirecting to lobby:', playerRecords.game_id)
+        setPlayerGameId(playerRecords.game_id)
+        setMode(gameStatus === 'lobby' ? 'player-lobby' : 'player-game')
       } else {
-        console.log('🎮 Active game exists but player not joined, going to join screen')
+        console.log('🎮 No active game for player, going to join screen')
         setMode('player-join')
       }
     } catch (gameError) {
@@ -214,8 +219,12 @@ export function App() {
    * Handles setup for host role users.
    */
   const handleHostRoleSetup = useCallback(async () => {
+    if (!user) {
+      return
+    }
+
     try {
-      const activeGame = await GameService.getActiveGame()
+      const activeGame = await GameService.getActiveGame(user.id)
 
       if (activeGame) {
         console.log('🎯 Active game found, redirecting to dashboard:', activeGame.id)
@@ -229,7 +238,7 @@ export function App() {
       console.error('❌ Error checking for active game:', gameError)
       setMode('clue-sets')
     }
-  }, [])
+  }, [user])
 
   /**
    * Effect to detect user role (host vs player) from the database profile.

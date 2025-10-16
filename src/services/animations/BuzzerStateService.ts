@@ -183,12 +183,13 @@ export class BuzzerStateService {
 
   /**
    * Checks if buzzer is interactive in the given state.
+   * LOCKED buzzers are enabled to allow early buzz detection (which triggers FROZEN state).
    *
    * @param state - Buzzer state
    * @returns Whether buzzer can be clicked
    */
   isInteractive(state: BuzzerState): boolean {
-    return state === BuzzerState.UNLOCKED;
+    return state === BuzzerState.UNLOCKED || state === BuzzerState.LOCKED;
   }
 
   /**

@@ -1,3 +1,6 @@
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '../../services/supabase/client';
+
 /**
  * Global setup utilities for Euno's Jeopardy application initialization.
  *
@@ -84,6 +87,17 @@ export function initializeAssert(): void {
   globalThis.assert = assert;
 }
 
+export function initializeDebugGlobals(): void {
+  Object.assign(
+    globalThis,
+    {
+      supabase,
+      createClient,
+      SupabaseClient
+    }
+  )
+}
+
 /**
  * Initializes all global utilities required by the Euno's Jeopardy application.
  *
@@ -123,6 +137,9 @@ export function initializeAssert(): void {
 export function initializeGlobals(): void {
   // Initialize assert function for runtime validation
   initializeAssert();
+
+  // Initialize debugging globals for use within devtools
+  initializeDebugGlobals();
 
   // Future global utilities can be initialized here
   // Example: initializeCustomLogger();

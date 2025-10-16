@@ -67,26 +67,28 @@ export type ClueStateInsert = TablesInsert<'clue_states'>
  * @since 0.1.0
  * @author Euno's Jeopardy Team
  */
- 
+
 export class GameService {
   /**
-   * Gets the currently active game (lobby, game_intro, introducing_categories, in_progress, or round_transition status).
+   * Gets the currently active game for a specific host (lobby, game_intro, introducing_categories, in_progress, or round_transition status).
    *
-   * This method enforces the "one game at a time" rule by finding any game
-   * that is currently in lobby, game_intro, introducing_categories, in_progress, or round_transition status. Used to prevent multiple
+   * This method enforces the "one game at a time per host" rule by finding any game
+   * that is currently in an active status for the specified host. Used to prevent multiple
    * simultaneous games and to redirect hosts to existing active games.
    *
    * **Business Logic:**
-   * - Only one game can be active at any time
+   * - Only one game can be active per host at any time
    * - Active games are those with status 'lobby', 'game_intro', 'introducing_categories', 'in_progress', or 'round_transition'
    * - Completed/cancelled games are not considered active
+   * - Filters by host_id to ensure users only see their own games
    *
+   * @param hostId - UUID of the host user to check for active games
    * @returns Promise resolving to the active game or null if none exists
    * @throws {Error} When database operation fails
    *
    * @example
    * ```typescript
-   * const activeGame = await GameService.getActiveGame();
+   * const activeGame = await GameService.getActiveGame(userId);
    * if (activeGame) {
    *   console.log(`Active game found: ${activeGame.id}`);
    *   // Redirect host to manage this game
@@ -98,10 +100,20 @@ export class GameService {
    * @since 0.1.0
    * @author Euno's Jeopardy Team
    */
-  static async getActiveGame(): Promise<Game | null> {
-    const { data, error } = await supabase
+  static async getActiveGame(hostId?: string): Promise<Game | null> {
+    // Build query conditionally based on whether hostId is provided
+    let query = supabase
       .from('games')
       .select()
+
+    // If hostId given, filter by host_id, otherwise skip the filter
+    if (hostId) {
+      query = query.eq('host_id', hostId)
+    }
+
+    // Apply remaining filters
+    const { data, error } = await query
+      // Filter by active game statuses
       .in('status', ['lobby', 'game_intro' as Game['status'], 'introducing_categories' as Game['status'], 'in_progress', 'round_transition' as Game['status']])
       .order('created_at', { ascending: false })
       .limit(1)

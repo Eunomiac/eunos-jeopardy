@@ -7,7 +7,7 @@ import {
   selectClue,
   unlockBuzzer,
   buzzIn,
-  markCorrect,
+  clickWhenEnabled,
   markWrong
 } from '../fixtures/test-helpers';
 
@@ -49,13 +49,17 @@ test.describe('Daily Double - Smoke Tests', () => {
     const ctx = await setupTestInProgress(browser, ['Alice', 'Bob'], 'daily-double-correct');
 
     try {
-      const { hostPage, playerPages } = ctx;
+      const { hostPage, playerPages, gameId } = ctx;
       const [player1Page] = playerPages;
+
+      if (!gameId) {
+        throw new Error('Failed to setup game');
+      }
 
       // ============================================================
       // ACT: Host selects a Daily Double clue (clue index 5 is often DD)
       // ============================================================
-      await selectClue(hostPage, 5);
+      await selectClue(hostPage, gameId, true);
 
       // ============================================================
       // ASSERT: Daily Double splash screen appears
@@ -63,6 +67,9 @@ test.describe('Daily Double - Smoke Tests', () => {
       // Defensive check for player1Page
       if (!player1Page) {
         throw new Error('Failed to setup player1 page');
+      }
+      if (!gameId) {
+        throw new Error('Failed to setup game');
       }
 
       await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
@@ -123,7 +130,7 @@ test.describe('Daily Double - Smoke Tests', () => {
       // ============================================================
       // ACT: Host marks answer as correct
       // ============================================================
-      await markCorrect(hostPage);
+      await clickWhenEnabled(hostPage.getByRole("button", { name: /Correct/i }));
 
       // ============================================================
       // ASSERT: Score updated with wager amount
@@ -152,18 +159,21 @@ test.describe('Daily Double - Smoke Tests', () => {
     const ctx = await setupTestInProgress(browser, ['Alice'], 'daily-double-wrong');
 
     try {
-      const { hostPage, playerPages } = ctx;
+      const { hostPage, playerPages, gameId } = ctx;
       const [player1Page] = playerPages;
 
       // Defensive check for player1Page
       if (!player1Page) {
         throw new Error('Failed to setup player1 page');
       }
+      if (!gameId) {
+        throw new Error('Failed to setup game');
+      }
 
       // ============================================================
       // ACT: Select Daily Double, reveal, enter wager
       // ============================================================
-      await selectClue(hostPage, 5);
+      await selectClue(hostPage, gameId, true);
       await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });
 
       const revealButton = hostPage.getByRole('button', { name: /Reveal|Daily Double/i });

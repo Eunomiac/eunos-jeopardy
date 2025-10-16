@@ -164,10 +164,12 @@ export function PlayerPodiums({ players, currentUserId, onBuzz }: Readonly<Playe
    * Renders a single player podium.
    */
   const renderPodium = (player: PlayerInfo, isMain = false) => {
-    // Add 'buzzed-in' class when player is focused
+    // Build podium classes based on player state
     const podiumClasses = [
       isMain ? 'player-podium main' : 'player-podium competitor',
-      player.isFocused ? 'buzzed-in' : ''
+      player.isFocused ? 'buzzed-in' : '',
+      player.buzzerState === BuzzerState.FROZEN ? 'podium-frozen' : '',
+      player.buzzerState ? `podium-${player.buzzerState.toLowerCase()}` : ''
     ].filter(Boolean).join(' ')
 
     return (

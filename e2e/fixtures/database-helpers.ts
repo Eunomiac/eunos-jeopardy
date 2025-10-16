@@ -134,34 +134,6 @@ export async function cleanupTestUser(userId: string): Promise<void> {
     .eq('user_id', userId);
 }
 
-/**
- * Verify test users exist in Supabase
- *
- * Checks that all test users are properly configured.
- * Useful for debugging test setup issues.
- *
- * @returns Object with verification results
- */
-export function verifyTestUsers(): {
-  configured: number;
-  total: number;
-  missing: string[];
-} {
-  const allUsers = Object.entries(TEST_USERS);
-
-  // All test users should have valid UUIDs (non-empty strings)
-  const configured = allUsers.filter(([, user]) => user.id.length > 0);
-  const missing = allUsers
-    .filter(([, user]) => user.id.length === 0)
-    .map(([key]) => key);
-
-  return {
-    configured: configured.length,
-    total: allUsers.length,
-    missing,
-  };
-}
-
 // ============================================================
 // Game State Query Helpers
 // ============================================================
@@ -264,19 +236,27 @@ export async function getGameClues(gameId: string): Promise<Array<Tables<'clues'
 }
 
 /**
- * Find Daily Double clue indices for a specific round
+ * Daily Double position interface matching database structure
+ */
+export interface DailyDoublePosition {
+  category: number; // 1-6
+  row: number; // 1-5
+}
+
+/**
+ * Get Daily Double positions for a specific round
  *
  * @param gameId - The UUID of the game
  * @param round - The round type ('jeopardy' or 'double')
- * @returns Array of clue indices (0-based) that are Daily Doubles
+ * @returns Array of Daily Double positions with category and row
  */
-export async function getDailyDoubleIndices(gameId: string, round: 'jeopardy' | 'double'): Promise<number[]> {
+export async function getDailyDoublePositions(gameId: string, round: 'jeopardy' | 'double'): Promise<DailyDoublePosition[]> {
   const supabase = getSupabaseClient();
 
   // Get the game to find the clue set
   const { data: game, error: gameError } = await supabase
     .from('games')
-    .select('clue_set_id')
+    .select('clue_set_id, current_round')
     .eq('id', gameId)
     .single();
 
@@ -302,12 +282,159 @@ export async function getDailyDoubleIndices(gameId: string, round: 'jeopardy' | 
     throw boardError;
   }
 
-  // daily_double_cells is a JSON array of indices
+  // daily_double_cells is a JSONB array of {category, row} objects
   if (!board.daily_double_cells || !Array.isArray(board.daily_double_cells)) {
     return [];
   }
 
-  return board.daily_double_cells as number[];
+  return board.daily_double_cells as unknown as DailyDoublePosition[];
+}
+
+/**
+ * Find Daily Double clue indices for a specific round
+ *
+ * @param gameId - The UUID of the game
+ * @param round - The round type ('jeopardy' or 'double')
+ * @returns Array of clue indices (0-based) that are Daily Doubles
+ */
+export async function getDailyDoubleIndices(gameId: string, round: 'jeopardy' | 'double'): Promise<number[]> {
+  const positions = await getDailyDoublePositions(gameId, round);
+
+  // Convert {category, row} positions to linear indices
+  // Board layout: 6 categories × 5 rows
+  // Index = (row - 1) * 6 + (category - 1)
+  return positions.map(pos => (pos.row - 1) * 6 + (pos.category - 1));
+}
+
+/**
+ * Clue information with board index
+ */
+export interface ClueInfo {
+  id: string;
+  prompt: string;
+  response: string;
+  value: number;
+  categoryName: string;
+  categoryPosition: number; // 1-6
+  cluePosition: number; // 1-5 (row)
+  boardIndex: number; // 0-29 (linear index on board)
+  isDailyDouble: boolean;
+  isCompleted: boolean;
+}
+
+/**
+ * Get available clues for the current round with their board indices
+ *
+ * @param gameId - The UUID of the game
+ * @returns Array of available clues with metadata
+ */
+export async function getAvailableClues(gameId: string): Promise<ClueInfo[]> {
+  const supabase = getSupabaseClient();
+
+  // Get the game to find current round and clue set
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('clue_set_id, current_round')
+    .eq('id', gameId)
+    .single();
+
+  if (gameError) {
+    console.error('Error fetching game:', gameError);
+    throw gameError;
+  }
+
+  if (!game.clue_set_id || !game.current_round) {
+    return [];
+  }
+
+  const round = game.current_round as 'jeopardy' | 'double' | 'final';
+
+  // Get Daily Double positions for this round
+  const ddPositions = round === 'final' ? [] : await getDailyDoublePositions(gameId, round);
+
+  // Get the board for this round
+  const { data: board, error: boardError } = await supabase
+    .from('boards')
+    .select('id')
+    .eq('clue_set_id', game.clue_set_id)
+    .eq('round', round)
+    .single();
+
+  if (boardError) {
+    console.error('Error fetching board:', boardError);
+    throw boardError;
+  }
+
+  // Get all categories for this board
+  const { data: categories, error: categoriesError } = await supabase
+    .from('categories')
+    .select('id, name, position')
+    .eq('board_id', board.id)
+    .order('position');
+
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError);
+    throw categoriesError;
+  }
+
+  const categoryIds = categories.map(cat => cat.id);
+
+  // Get all clues for these categories
+  const { data: clues, error: cluesError } = await supabase
+    .from('clues')
+    .select('*')
+    .in('category_id', categoryIds)
+    .order('position');
+
+  if (cluesError) {
+    console.error('Error fetching clues:', cluesError);
+    throw cluesError;
+  }
+
+  // Get clue states for this game
+  const { data: clueStates, error: statesError } = await supabase
+    .from('clue_states')
+    .select('*')
+    .eq('game_id', gameId);
+
+  if (statesError) {
+    console.error('Error fetching clue states:', statesError);
+    throw statesError;
+  }
+
+  // Build clue info array
+  const clueInfos: ClueInfo[] = [];
+
+  for (const clue of clues) {
+    const category = categories.find(cat => cat.id === clue.category_id);
+    if (!category) {continue;}
+
+    const state = clueStates?.find(s => s.clue_id === clue.id);
+    const isCompleted = state?.completed ?? false;
+
+    // Calculate board index: (row - 1) * 6 + (category - 1)
+    const boardIndex = ((clue.position ?? 1) - 1) * 6 + (category.position - 1);
+
+    // Check if this is a Daily Double
+    const isDailyDouble = ddPositions.some(
+      pos => pos.category === category.position && pos.row === (clue.position ?? 1)
+    );
+
+    clueInfos.push({
+      id: clue.id,
+      prompt: clue.prompt,
+      response: clue.response,
+      value: clue.value,
+      categoryName: category.name,
+      categoryPosition: category.position,
+      cluePosition: clue.position ?? 1,
+      boardIndex,
+      isDailyDouble,
+      isCompleted
+    });
+  }
+
+  return clueInfos;
 }
 
 // ============================================================
@@ -440,6 +567,31 @@ export async function getGamePlayers(gameId: string): Promise<Tables<'players'>[
 }
 
 /**
+ * Get a player's current score in a game
+ *
+ * @param gameId - The UUID of the game
+ * @param userId - The UUID of the user/player
+ * @returns The player's current score
+ */
+export async function getPlayerScore(gameId: string, userId: string): Promise<number> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('players')
+    .select('score')
+    .eq('game_id', gameId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching player score:', error);
+    throw error;
+  }
+
+  return data?.score ?? 0;
+}
+
+/**
  * Update game status
  *
  * @param gameId - The UUID of the game
@@ -483,4 +635,61 @@ export async function updateGameRound(
     console.error('Error updating game round:', error);
     throw error;
   }
+}
+
+/**
+ * Get category names for a specific round
+ *
+ * @param gameId - The UUID of the game
+ * @param round - The round type ('jeopardy', 'double', or 'final')
+ * @returns Array of category names in order by position
+ */
+export async function getCategoryNames(
+  gameId: string,
+  round: 'jeopardy' | 'double' | 'final'
+): Promise<string[]> {
+  const supabase = getSupabaseClient();
+
+  // Get the game to find the clue set
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('clue_set_id')
+    .eq('id', gameId)
+    .single();
+
+  if (gameError) {
+    console.error('Error fetching game:', gameError);
+    throw gameError;
+  }
+
+  if (!game.clue_set_id) {
+    return [];
+  }
+
+  // Get the board for this clue set and round
+  const { data: board, error: boardError } = await supabase
+    .from('boards')
+    .select('id')
+    .eq('clue_set_id', game.clue_set_id)
+    .eq('round', round)
+    .single();
+
+  if (boardError) {
+    console.error('Error fetching board:', boardError);
+    throw boardError;
+  }
+
+  // Get all categories for this board, ordered by position
+  const { data: categories, error: categoriesError } = await supabase
+    .from('categories')
+    .select('name, position')
+    .eq('board_id', board.id)
+    .order('position');
+
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError);
+    throw categoriesError;
+  }
+
+  return categories.map((cat) => cat.name);
 }

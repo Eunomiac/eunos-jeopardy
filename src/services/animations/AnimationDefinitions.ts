@@ -647,15 +647,6 @@ export const DailyDoubleClueRevealAnimation: AnimationDefinition<{
 };
 
 /**
- * Player Buzz-In Visual Feedback
- *
- * NOTE: This is now handled via CSS transitions, not GSAP animations.
- * When a player buzzes in, the .buzzed-in class is added to their podium,
- * which triggers a CSS transition on the .podium-buzzed-in overlay image.
- * See PlayerPodiums.scss for the CSS implementation.
- */
-
-/**
  * Round Transition Animation
  *
  * Animates the transition from "jeopardy" to "double" rounds

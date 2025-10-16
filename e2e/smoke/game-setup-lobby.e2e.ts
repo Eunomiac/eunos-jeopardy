@@ -5,9 +5,10 @@ import {
   setupTestWithLobby,
   cleanupTestContext,
   createTestContext,
-  loginAsPlayer,
-  createGameAsHost,
-  joinGame
+  loginUser,
+  createGame,
+  joinPlayers,
+  loginPlayers
 } from '../fixtures/test-helpers';
 
 /**
@@ -56,22 +57,25 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
       // ============================================================
       // ASSERT: All players should see lobby
       // ============================================================
-      await expect(player1Page.getByText(/Game.*Lobby|Lobby/i)).toBeVisible();
-      await expect(player2Page.getByText(/Game.*Lobby|Lobby/i)).toBeVisible();
-      await expect(player3Page.getByText(/Game.*Lobby|Lobby/i)).toBeVisible();
+      await Promise.all([
+        expect(player1Page.getByText(/Game.*Lobby|Lobby/i)).toBeVisible(),
+        expect(player2Page.getByText(/Game.*Lobby|Lobby/i)).toBeVisible(),
+        expect(player3Page.getByText(/Game.*Lobby|Lobby/i)).toBeVisible()
+      ]);
 
       // ============================================================
-      // ASSERT: Host should see all 3 players
+      // ASSERT: Host should see all 3 players & "Start Game" Button
       // ============================================================
-      await expect(hostPage.getByText('Alice')).toBeVisible();
-      await expect(hostPage.getByText('Bob')).toBeVisible();
-      await expect(hostPage.getByText('Charlie')).toBeVisible();
-      await expect(hostPage.getByText(/Total.*Players.*3|3.*Players/i)).toBeVisible();
-
-      // ============================================================
-      // ASSERT: Host should see "Start Game" button
-      // ============================================================
-      await expect(hostPage.getByRole('button', { name: /Start.*Game/i })).toBeVisible();
+      await Promise.all([
+        // All players should be in Player Control panel
+        expect(hostPage.getByText('Alice')).toBeVisible(),
+        expect(hostPage.getByText('Bob')).toBeVisible(),
+        expect(hostPage.getByText('Charlie')).toBeVisible(),
+        // Player Control panel should report accurate count
+        expect(hostPage.getByText(/Total.*Players.*3|3.*Players/i)).toBeVisible(),
+        // Host should see 'Start Game' button
+        expect(hostPage.getByRole('button', { name: /Start.*Game/i })).toBeVisible()
+      ]);
 
       test.info().annotations.push({ type: 'step', description: '✅ Multiple players successfully joined game' });
 
@@ -98,13 +102,11 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
         throw new Error('Failed to setup player pages');
       }
 
-      await loginAsPlayer(player1Page, TEST_USERS.player1.email, 'Alice');
-      await loginAsPlayer(player2Page, TEST_USERS.player2.email, 'Bob');
+      await loginPlayers([player1Page, player2Page, hostPage], [TEST_USERS.player1.email, TEST_USERS.player2.email, TEST_USERS.host.email], ['Alice', 'Bob']);
 
-      await createGameAsHost(hostPage);
+      await createGame(hostPage, 1);
 
-      await joinGame(player1Page);
-      await joinGame(player2Page);
+      await joinPlayers([player1Page, player2Page]);
 
       // ============================================================
       // ASSERT: Host sees 2 players
@@ -125,7 +127,7 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
         throw new Error('Failed to setup player3 page');
       }
 
-      await loginAsPlayer(player3Page, TEST_USERS.player3.email, 'Charlie');
+      await loginUser(player3Page, TEST_USERS.player3.email, 'Charlie');
 
       // ============================================================
       // ASSERT: Third player should NOT see "Join Game" button
@@ -151,7 +153,8 @@ test.describe('Game Setup & Lobby - Smoke Tests', () => {
     // ============================================================
     // ACT: Host logs in and creates game
     // ============================================================
-    await createGameAsHost(page);
+    await loginUser(page, TEST_USERS.host.email);
+    await createGame(page, 1);
 
     // ============================================================
     // ASSERT: Host should see dashboard

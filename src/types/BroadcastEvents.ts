@@ -36,6 +36,8 @@ export const BROADCAST_EVENTS = {
   PLAYER_BUZZ: 'player_buzz',
   /** Host or system sets focused player */
   FOCUS_PLAYER: 'focus_player',
+  /** Player buzzed early and is now frozen */
+  PLAYER_FROZEN: 'player_frozen',
 } as const;
 
 /**
@@ -109,13 +111,33 @@ export interface FocusPlayerPayload {
 }
 
 /**
+ * Player frozen event payload.
+ *
+ * Sent by player when they buzz early (while locked) and become frozen.
+ * Notifies all clients that this player is locked out.
+ */
+export interface PlayerFrozenPayload {
+  /** Game ID where player was frozen */
+  gameId: string;
+  /** Clue ID where early buzz occurred */
+  clueId: string;
+  /** Player ID who was frozen */
+  playerId: string;
+  /** Player nickname for display */
+  playerNickname: string;
+  /** Client timestamp for audit/debugging (milliseconds since epoch) */
+  clientTimestamp: number;
+}
+
+/**
  * Union type of all broadcast event payloads.
  */
 export type BroadcastPayload =
   | BuzzerUnlockPayload
   | BuzzerLockPayload
   | PlayerBuzzPayload
-  | FocusPlayerPayload;
+  | FocusPlayerPayload
+  | PlayerFrozenPayload;
 
 /**
  * Handler function for buzzer unlock events.
@@ -150,6 +172,14 @@ export type PlayerBuzzHandler = (payload: PlayerBuzzPayload) => void;
 export type FocusPlayerHandler = (payload: FocusPlayerPayload) => void;
 
 /**
+ * Handler function for player frozen events.
+ * Handlers are called synchronously for immediate UI updates.
+ * Any async operations (e.g., database writes) should be fired off
+ * in the background without blocking the handler.
+ */
+export type PlayerFrozenHandler = (payload: PlayerFrozenPayload) => void;
+
+/**
  * Collection of event handlers for buzzer broadcast events.
  *
  * All handlers are optional to allow selective subscription to events.
@@ -163,6 +193,8 @@ export interface BuzzerEventHandlers {
   onPlayerBuzz?: PlayerBuzzHandler;
   /** Handler for focus player events */
   onFocusPlayer?: FocusPlayerHandler;
+  /** Handler for player frozen events */
+  onPlayerFrozen?: PlayerFrozenHandler;
 }
 
 /**

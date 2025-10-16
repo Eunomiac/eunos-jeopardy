@@ -4,7 +4,7 @@ import { cleanupTestUser } from '../fixtures/database-helpers';
 import {
   createTestContext,
   cleanupTestContext,
-  loginAsPlayer,
+  loginUser,
   createGameAsHost,
   joinGame
 } from '../fixtures/test-helpers';
@@ -40,7 +40,7 @@ test.describe('Player Joins Game - Smoke Test', () => {
     // ============================================================
     // ACT: Player logs in and sets nickname
     // ============================================================
-    await loginAsPlayer(page, TEST_USERS.player1.email, 'Alice');
+    await loginUser(page, TEST_USERS.player1.email, 'Alice');
 
     // ============================================================
     // ASSERT: Player should see "Waiting for Game" or "No Active Game"
@@ -69,7 +69,7 @@ test.describe('Player Joins Game - Smoke Test', () => {
         throw new Error('Failed to setup player page');
       }
 
-      await loginAsPlayer(playerPage, TEST_USERS.player1.email, 'Alice');
+      await loginUser(playerPage, TEST_USERS.player1.email, 'Alice');
 
       // ============================================================
       // ASSERT: Player should see "Waiting for Game"

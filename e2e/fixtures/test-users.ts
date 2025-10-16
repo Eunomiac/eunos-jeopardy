@@ -6,14 +6,56 @@
  *
  * SETUP INSTRUCTIONS:
  * 1. Create these users in Supabase Auth (manually or via script)
- * 2. Update the `id` fields with the actual UUIDs from Supabase
- * 3. Ensure these users have the correct roles in the `user_roles` table
+ * 2. Update the `id` fields below with the actual Supabase user IDs
+ * 3. Ensure these users exist in the profiles table with matching emails
  *
  * SECURITY NOTE:
  * These credentials are for testing only. They use simple passwords because:
  * - They're in a test database (or isolated test users)
  * - They contain no real data
  * - They're reset before each test run
+ *
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 📋 TO GET THE CORRECT USER IDs FROM SUPABASE:
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Run this SQL query in the Supabase SQL Editor:
+ *
+ * ```sql
+ * SELECT
+ *   CASE
+ *     WHEN email = 'host@e2e.com' THEN 'host'
+ *     WHEN email = 'player1@e2e.com' THEN 'player1'
+ *     WHEN email = 'player2@e2e.com' THEN 'player2'
+ *     WHEN email = 'player3@e2e.com' THEN 'player3'
+ *   END as user_key,
+ *   email,
+ *   id,
+ *   '  ' ||
+ *   CASE
+ *     WHEN email = 'host@e2e.com' THEN 'host'
+ *     WHEN email = 'player1@e2e.com' THEN 'player1'
+ *     WHEN email = 'player2@e2e.com' THEN 'player2'
+ *     WHEN email = 'player3@e2e.com' THEN 'player3'
+ *   END ||
+ *   ': { email: ''' || email || ''', password: ''1234'', id: ''' || id || ''', role: ''' ||
+ *   CASE
+ *     WHEN email = 'host@e2e.com' THEN 'host'
+ *     ELSE 'player'
+ *   END || ''' },' as typescript_code
+ * FROM profiles
+ * WHERE email IN (
+ *   'host@e2e.com',
+ *   'player1@e2e.com',
+ *   'player2@e2e.com',
+ *   'player3@e2e.com'
+ * )
+ * ORDER BY email;
+ * ```
+ *
+ * Copy the IDs from the `id` column and paste them into the definitions below.
+ * Or copy the `typescript_code` column for ready-to-paste TypeScript code.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 export const TEST_USERS = {

@@ -7,7 +7,8 @@ import {
   selectClue,
   waitForGameBoard,
   pausePageAnimationsAndCheck,
-  animationsSettled
+  animationsSettled,
+  getCategoryNames
 } from '../fixtures/test-helpers';
 
 /**
@@ -47,11 +48,11 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
     const ctx = await setupTestWithLobby(browser, ['Alice', 'Bob'], 'game-intro');
 
     try {
-      const { hostPage, playerPages } = ctx;
+      const { hostPage, playerPages, gameId } = ctx;
       const [player1Page, player2Page] = playerPages;
 
-      if (!hostPage || !player1Page || !player2Page) {
-        throw new Error('Failed to setup pages');
+      if (!hostPage || !player1Page || !player2Page || !gameId) {
+        throw new Error('Failed to setup pages or game');
       }
 
       // ============================================================
@@ -106,6 +107,16 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       test.info().annotations.push({ type: 'step', description: 'Game intro animation displayed' });
 
       // ============================================================
+      // ARRANGE: Get category names from database
+      // ============================================================
+      const categoryNames = await getCategoryNames(ctx.gameId!, 'jeopardy');
+      expect(categoryNames.length).toBe(6); // Standard Jeopardy board has 6 categories
+      test.info().annotations.push({
+        type: 'step',
+        description: `Retrieved categories: ${categoryNames.join(', ')}`
+      });
+
+      // ============================================================
       // ACT: Host initializes category introduction
       // ============================================================
       const startCategoryButton = hostPage.getByRole('button', { name: /Introduce Categories/i });
@@ -116,19 +127,35 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       test.info().annotations.push({ type: 'step', description: 'Category introduction started' });
 
       // ============================================================
-      // ACT: Host advances through all categories
+      // ACT & ASSERT: Host advances through all categories, verifying each
       // ============================================================
-      // Skip through up to 6 categories (standard Jeopardy board)
-      for (let i = 0; i < 6; i++) {
-        const continueButton = hostPage.getByRole('button', { name: /Next Category/i }).first();
-        if (await continueButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-          test.info().annotations.push({ type: 'step', description: `Advancing to category ${i + 1}` });
+      for (let i = 0; i < categoryNames.length; i++) {
+        const categoryName = categoryNames[i];
+        if (!categoryName) {
+          throw new Error(`Category name at index ${i} is undefined`);
+        }
+        const categoryNumber = i + 1;
+
+        // Verify category is displayed on host page
+        await expect(hostPage.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+
+        // Verify category is visible on player page
+        // The category strip shows all categories, but only one is visible through the viewport
+        // We check that the category exists in the strip (it's in the DOM)
+        const player1CategoryStrip = player1Page.locator('.jeopardy-category-display-strip');
+        await expect(player1CategoryStrip.getByText(categoryName)).toBeVisible({ timeout: 5000 });
+
+        test.info().annotations.push({
+          type: 'step',
+          description: `✅ Category ${categoryNumber}: "${categoryName}" displayed correctly`
+        });
+
+        // Advance to next category (if not the last one)
+        if (i < categoryNames.length - 1) {
+          const continueButton = hostPage.getByRole('button', { name: /Next Category/i }).first();
+          await expect(continueButton).toBeVisible({ timeout: 2000 });
           await continueButton.click();
-          await expect(hostPage.getByText(`Category ${i + 1} of 6`)).toBeVisible({ timeout: 5000 });
-          test.info().annotations.push({ type: 'step', description: `Advanced to category ${i + 1}` });
-        } else {
-          test.info().annotations.push({ type: 'step', description: `No more categories to advance` });
-          break;
+          await expect(hostPage.getByText(`Category ${categoryNumber + 1} of 6`)).toBeVisible({ timeout: 5000 });
         }
       }
 
@@ -165,7 +192,7 @@ test.describe('Game Introduction & Board Display - Smoke Tests', () => {
       // ============================================================
       // ASSERT: Host can select a clue
       // ============================================================
-      await selectClue(hostPage, 0);
+      await selectClue(hostPage, gameId);
 
       // Verify clue prompt or controls appear
       const cluePrompt = hostPage.locator('text=/What is|Who is|Clue|Prompt/i').first();

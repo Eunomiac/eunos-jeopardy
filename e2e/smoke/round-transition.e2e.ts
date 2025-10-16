@@ -8,7 +8,7 @@ import {
   revealPrompt,
   unlockBuzzer,
   buzzIn,
-  markCorrect
+  clickWhenEnabled
 } from '../fixtures/test-helpers';
 
 /**
@@ -48,12 +48,12 @@ test.describe('Round Transitions - Smoke Tests', () => {
     const ctx = await setupTestInProgress(browser, ['Alice', 'Bob'], 'round-transition');
 
     try {
-      const { hostPage, playerPages } = ctx;
+      const { hostPage, playerPages, gameId } = ctx;
       const [player1Page, player2Page] = playerPages;
 
       // Defensive checks for player pages
-      if (!player1Page || !player2Page) {
-        throw new Error('Failed to setup player pages');
+      if (!player1Page || !player2Page || !gameId) {
+        throw new Error('Failed to setup player pages or game');
       }
 
       // ============================================================
@@ -73,11 +73,11 @@ test.describe('Round Transitions - Smoke Tests', () => {
       for (let i = 0; i < 3; i++) {
         const clueCell = hostPage.locator('.clue-cell, [class*="clue"]').nth(i);
         if (await clueCell.isVisible({ timeout: 1000 }).catch(() => false)) {
-          await selectClue(hostPage, i);
+          await selectClue(hostPage, gameId);
           await revealPrompt(hostPage);
           await unlockBuzzer(hostPage);
           await buzzIn(player1Page);
-          await markCorrect(hostPage);
+          await clickWhenEnabled(hostPage.getByRole("button", { name: /Correct/i }));
           await hostPage.waitForTimeout(500);
         }
       }
@@ -135,7 +135,7 @@ test.describe('Round Transitions - Smoke Tests', () => {
         // ASSERT: Clue values are doubled
         // ============================================================
         // In Double Jeopardy, clue values should be 2x (e.g., $400, $800, $1200)
-        await selectClue(hostPage, 0);
+        await selectClue(hostPage, gameId);
 
         // Check if clue value indicators show doubled amounts
         const clueValue = hostPage.locator('text=/\\$[4-9][0-9]{2,}/').first();

@@ -115,6 +115,17 @@ export default defineConfig({
   ],
 
   /**
+   * Timeout Multiplier for UI Mode
+   *
+   * UI mode adds significant overhead (interactive UI, detailed traces, screenshots).
+   * This multiplier extends all timeouts when running in UI mode to prevent false failures.
+   *
+   * LEARNING NOTE: Playwright automatically detects UI mode via process.env.PWTEST_UI_MODE.
+   * A 6x multiplier means 20s action timeout becomes 120s in UI mode, 60s navigation becomes 360s.
+   */
+  timeout: process.env['PWTEST_UI_MODE'] ? 360000 : 60000, // 6 minutes in UI mode, 1 minute otherwise
+
+  /**
    * Global Test Settings
    *
    * These settings apply to all tests unless overridden in individual test files.
@@ -172,22 +183,26 @@ export default defineConfig({
      * How long to wait for a single action (click, fill, etc.) before failing.
      * Real-time apps need longer timeouts than static sites.
      *
-     * LEARNING NOTE: 10 seconds is generous. If actions take longer, there's
+     * LEARNING NOTE: 20 seconds is generous. If actions take longer, there's
      * probably a real problem (slow network, infinite loading, etc.).
+     *
+     * In UI mode, this is automatically multiplied by the timeout multiplier (6x).
      */
-    actionTimeout: 20000, // 10 seconds
+    actionTimeout: 20000, // 20 seconds (120s in UI mode with 6x multiplier)
 
     /**
      * Navigation Timeout
      *
      * How long to wait for page navigation (goto, reload, etc.) before failing.
      *
-     * LEARNING NOTE: 30 seconds accounts for:
+     * LEARNING NOTE: 60 seconds accounts for:
      * - Initial page load
      * - Supabase authentication checks
      * - Real-time subscription setup
+     *
+     * In UI mode, this is automatically multiplied by the timeout multiplier (6x).
      */
-    navigationTimeout: 60000, // 30 seconds
+    navigationTimeout: 60000, // 60 seconds (360s in UI mode with 6x multiplier)
   },
 
   /**

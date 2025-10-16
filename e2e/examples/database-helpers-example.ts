@@ -50,8 +50,8 @@ test.describe('Database Helpers Examples', () => {
       // Verify at least one Daily Double exists
       expect(ddIndices.length).toBeGreaterThan(0);
 
-      // Select the first Daily Double clue
-      await selectClue(hostPage, ddIndices[0]);
+      // Select a Daily Double clue
+      await selectClue(hostPage, gameId, true);
 
       // Verify Daily Double splash appears
       await expect(hostPage.getByText(/Daily Double/i)).toBeVisible({ timeout: 5000 });

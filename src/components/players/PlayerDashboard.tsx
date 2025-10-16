@@ -12,7 +12,6 @@ import {
   type AnimationIntent,
 } from "../../services/animations/AnimationEvents";
 import { AnimationRegistry } from "../../services/animations/AnimationDefinitions";
-import { BuzzerStateService } from "../../services/animations/BuzzerStateService";
 import { GameStateClassService } from "../../services/animations/GameStateClassService";
 import { BroadcastService } from "../../services/realtime/BroadcastService";
 import type {
@@ -20,6 +19,7 @@ import type {
   BuzzerUnlockPayload,
   PlayerBuzzPayload,
   FocusPlayerPayload,
+  PlayerFrozenPayload,
 } from "../../types/BroadcastEvents";
 import { gsap } from "gsap";
 
@@ -80,9 +80,10 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
   const [currentClue, setCurrentClue] = useState<ClueInfo | null>(null);
   const [focusedClue, setFocusedClue] = useState<ClueInfo | null>(null);
   const [buzzerState, setBuzzerState] = useState<BuzzerState>(
-    BuzzerState.LOCKED
+    BuzzerState.INACTIVE
   );
   const [reactionTime, setReactionTime] = useState<number | null>(null);
+  const [frozenPlayerIds, setFrozenPlayerIds] = useState<Set<string>>(new Set());
 
   // Game board data
   const [clueSetData, setClueSetData] = useState<ClueSetData | null>(null);
@@ -107,7 +108,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
   // Animation services and refs
   const animationService = AnimationService.getInstance();
-  const buzzerStateService = BuzzerStateService.getInstance();
   GameStateClassService.getInstance();
   const displayWindowRef = useRef<HTMLDivElement>(null);
   const clueContentRef = useRef<HTMLDivElement>(null);
@@ -726,9 +726,20 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
         // Keep buzzer unlocked on error so player can try again
       }
     } else if (buzzerState === BuzzerState.LOCKED) {
-      // Player buzzed too early - set frozen state
+      // Player buzzed too early - set frozen state and broadcast
       setBuzzerState(BuzzerState.FROZEN);
       console.log("❄️ Player buzzed too early - frozen!");
+
+      // Broadcast frozen state to all clients
+      if (currentClue && user) {
+        const playerNickname = players.find((p) => p.id === user.id)?.name ?? 'Unknown';
+        void BroadcastService.broadcastPlayerFrozen(
+          gameId,
+          currentClue.id,
+          user.id,
+          playerNickname
+        );
+      }
     }
   }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime, players]);
 
@@ -799,7 +810,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
       onBuzzerLock: () => {
         console.log(`🔒 [Player] Buzzer locked`);
         setBuzzerUnlockTime(null);
-        setBuzzerState(BuzzerState.LOCKED);
+        // Preserve FROZEN state - don't override it
+        setBuzzerState((currentState) => {
+          if (currentState === BuzzerState.FROZEN) {
+            console.log(`🔒 [Player] Staying frozen despite lock`);
+            return BuzzerState.FROZEN;
+          }
+          return BuzzerState.LOCKED;
+        });
+        // Clear frozen players when clue ends
+        setFrozenPlayerIds(new Set());
       },
       onPlayerBuzz: (payload: PlayerBuzzPayload) => {
         console.log(
@@ -807,15 +827,24 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
         );
 
         // If this is our own buzz, set state to BUZZED
-        // Otherwise, lock the buzzer
+        // Otherwise, lock the buzzer (unless already frozen)
         if (payload.playerId === user.id) {
           console.log(
             `⚡ [Player] Received own buzz - setting state to BUZZED`
           );
           setBuzzerState(BuzzerState.BUZZED);
         } else {
-          console.log(`⚡ [Player] Another player buzzed - locking buzzer`);
-          setBuzzerState(BuzzerState.LOCKED);
+          // Preserve FROZEN state - don't override it
+          setBuzzerState((currentState) => {
+            if (currentState === BuzzerState.FROZEN) {
+              console.log(
+                `⚡ [Player] Another player buzzed - staying frozen`
+              );
+              return BuzzerState.FROZEN;
+            }
+            console.log(`⚡ [Player] Another player buzzed - locking buzzer`);
+            return BuzzerState.LOCKED;
+          });
         }
 
         // Track fastest buzz for late correction handling
@@ -839,6 +868,16 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
           `👁️ [Player] Focus player: ${payload.playerNickname} (${payload.source})`
         );
         setFastestPlayerId(payload.playerId);
+      },
+      onPlayerFrozen: (payload: PlayerFrozenPayload) => {
+        console.log(`❄️ [Player] Player frozen: ${payload.playerNickname}`);
+
+        // Add player to frozen set
+        setFrozenPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.add(payload.playerId);
+          return next;
+        });
       },
     });
 
@@ -1164,15 +1203,26 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
       {/* Player Podiums */}
       <PlayerPodiums
-        players={players.map((player) => ({
-          ...player,
-          buzzerState:
-            player.id === user?.id ? buzzerState : BuzzerState.INACTIVE,
-          isFocused: game?.["focused_player_id"] === player.id,
-          reactionTime: player.id === user?.id ? reactionTime : null,
-          showReactionTime:
-            player.id === user?.id && buzzerState === BuzzerState.BUZZED,
-        }))}
+        players={players.map((player) => {
+          // Determine buzzer state for this player
+          let playerBuzzerState: BuzzerState;
+          if (player.id === user?.id) {
+            playerBuzzerState = buzzerState;
+          } else if (frozenPlayerIds.has(player.id)) {
+            playerBuzzerState = BuzzerState.FROZEN;
+          } else {
+            playerBuzzerState = BuzzerState.INACTIVE;
+          }
+
+          return {
+            ...player,
+            buzzerState: playerBuzzerState,
+            isFocused: game?.["focused_player_id"] === player.id,
+            reactionTime: player.id === user?.id ? reactionTime : null,
+            showReactionTime:
+              player.id === user?.id && buzzerState === BuzzerState.BUZZED,
+          };
+        })}
         currentUserId={user?.id ?? ""}
         onBuzz={handleBuzz}
       />
@@ -1273,23 +1323,6 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                 {currentClue.isDailyDouble && (
                   <div className="daily-double-indicator">🎯 DAILY DOUBLE!</div>
                 )}
-
-                {/* Integrated Buzzer Display */}
-                <div className="integrated-buzzer-display">
-                  <button
-                    className={`integrated-buzzer ${buzzerStateService.getStateClassName(
-                      buzzerState
-                    )}`}
-                    onClick={handleBuzz}
-                    disabled={!buzzerStateService.isInteractive(buzzerState)}
-                  >
-                    {buzzerStateService.getStateDisplayText(buzzerState)}
-                  </button>
-
-                  {buzzerState === BuzzerState.BUZZED && reactionTime && (
-                    <div className="reaction-time">⚡ {reactionTime} ms</div>
-                  )}
-                </div>
               </div>
             );
           }

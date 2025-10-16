@@ -50,6 +50,7 @@ import {
   type BuzzerLockPayload,
   type PlayerBuzzPayload,
   type FocusPlayerPayload,
+  type PlayerFrozenPayload,
   type BroadcastSubscription,
 } from '../../types/BroadcastEvents';
 
@@ -133,6 +134,12 @@ export class BroadcastService {
     if (handlers.onFocusPlayer) {
       channel.on('broadcast', { event: BROADCAST_EVENTS.FOCUS_PLAYER }, (message) => {
         handlers.onFocusPlayer?.(message['payload'] as FocusPlayerPayload);
+      });
+    }
+
+    if (handlers.onPlayerFrozen) {
+      channel.on('broadcast', { event: BROADCAST_EVENTS.PLAYER_FROZEN }, (message) => {
+        handlers.onPlayerFrozen?.(message['payload'] as PlayerFrozenPayload);
       });
     }
 
@@ -305,6 +312,47 @@ export class BroadcastService {
     });
 
     console.log(`👁️ Broadcast focus player: ${playerNickname} (${source})`);
+  }
+
+  /**
+   * Broadcasts player frozen event (Player only).
+   *
+   * Signals to all clients that a player buzzed early and is now frozen/locked out.
+   * This allows other players' UIs to show the frozen state visually.
+   *
+   * @param gameId - Game ID
+   * @param clueId - Clue ID where early buzz occurred
+   * @param playerId - Player ID who was frozen
+   * @param playerNickname - Player nickname for display
+   * @returns Promise resolving when broadcast is sent
+   */
+  static async broadcastPlayerFrozen(
+    gameId: string,
+    clueId: string,
+    playerId: string,
+    playerNickname: string
+  ): Promise<void> {
+    const channel = this.activeChannels.get(gameId);
+    if (!channel) {
+      console.error(`❌ No active channel for game: ${gameId}`);
+      return;
+    }
+
+    const payload: PlayerFrozenPayload = {
+      gameId,
+      clueId,
+      playerId,
+      playerNickname,
+      clientTimestamp: Date.now(),
+    };
+
+    await channel.send({
+      type: 'broadcast',
+      event: BROADCAST_EVENTS.PLAYER_FROZEN,
+      payload,
+    });
+
+    console.log(`❄️ Broadcast player frozen: ${playerNickname}`);
   }
 
   /**

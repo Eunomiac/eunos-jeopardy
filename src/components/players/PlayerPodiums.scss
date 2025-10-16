@@ -96,6 +96,34 @@
       visibility: hidden;
     }
   }
+
+  // Visual feedback for frozen state (early buzz penalty)
+  &.podium-frozen {
+    opacity: 0.6;
+    filter: grayscale(50%);
+  }
+
+  // Optional: Add state-specific classes for all buzzer states
+  // These can be used for additional styling if needed
+  &.podium-hidden {
+    // Buzzer is hidden (game not started)
+  }
+
+  &.podium-inactive {
+    // Buzzer is inactive (no clue selected)
+  }
+
+  &.podium-locked {
+    // Buzzer is locked (clue revealed, waiting for unlock)
+  }
+
+  &.podium-unlocked {
+    // Buzzer is unlocked (players can buzz)
+  }
+
+  &.podium-buzzed {
+    // Player has buzzed in (handled by .buzzed-in above)
+  }
 }
 
 // Player buzzer container with integrated buzzer

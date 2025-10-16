@@ -1,11 +1,12 @@
 import { config } from 'dotenv';
-import { cleanupAllTestData, verifyTestUsers } from './fixtures/database-helpers';
+import { cleanupAllTestData } from './fixtures/database-helpers';
 
 /**
  * Playwright Global Setup
  *
  * This file runs ONCE before all tests start. It's the perfect place to:
  * - Load environment variables
+ * - Load test user IDs from Supabase
  * - Clean up test data from previous runs
  * - Verify test environment is configured correctly
  * - Set up any global state needed for tests
@@ -36,32 +37,8 @@ async function globalSetup() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   try {
-    // Step 1: Verify test users are configured
-    console.log('1️⃣  Verifying test user configuration...');
-    const verification = verifyTestUsers();
-
-    if (verification.configured === 0) {
-      console.error('\n❌ ERROR: No test users configured!');
-      console.error('   Please update e2e/fixtures/test-users.ts with actual Supabase user IDs.');
-      console.error('   See the file comments for setup instructions.\n');
-      throw new Error('Test users not configured');
-    }
-
-    if (verification.missing.length > 0) {
-      console.warn(`⚠️  Warning: ${verification.missing.length} test users not configured:`);
-      verification.missing.forEach((user) => { console.warn(`   - ${user}`) });
-      console.warn('   Some tests may be skipped.\n');
-    } else {
-      console.log(`✅ All ${verification.total} test users configured\n`);
-    }
-
-    // Step 2: Clean up test data from previous runs
-    console.log('2️⃣  Cleaning up test data from previous runs...');
-    await cleanupAllTestData();
-    console.log(''); // Empty line for readability
-
-    // Step 3: Verify environment variables
-    console.log('3️⃣  Verifying environment configuration...');
+    // Step 1: Verify environment variables
+    console.log('1️⃣  Verifying environment configuration...');
     const requiredEnvVars = [
       'VITE_SUPABASE_URL',
       'VITE_SUPABASE_ANON_KEY',
@@ -79,6 +56,12 @@ async function globalSetup() {
     }
 
     console.log('✅ Environment variables configured\n');
+
+    // Step 2: Clean up test data from previous runs
+    console.log('2️⃣  Cleaning up test data from previous runs...');
+    console.log('   This includes cancelling any active games from failed test runs');
+    await cleanupAllTestData();
+    console.log(''); // Empty line for readability
 
     // Success!
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
