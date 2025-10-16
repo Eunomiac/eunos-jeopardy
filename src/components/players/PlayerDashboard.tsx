@@ -621,13 +621,27 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
             clueState.clue_id === focusedClue.id
           ) {
             setCurrentClue(focusedClue);
-            setBuzzerState(BuzzerState.LOCKED); // Lock buzzer when clue is revealed
+            // Preserve FROZEN state when clue is revealed
+            setBuzzerState((currentState) => {
+              if (currentState === BuzzerState.FROZEN) {
+                console.log(`🔄 [Player] Clue revealed but staying frozen`);
+                return BuzzerState.FROZEN;
+              }
+              return BuzzerState.LOCKED;
+            });
           }
 
           // Hide modal, clear display window, and lock buzzer when clue is completed
           if (clueState.completed) {
             setCurrentClue(null);
-            setBuzzerState(BuzzerState.LOCKED);
+            // Preserve FROZEN state when clue is completed
+            setBuzzerState((currentState) => {
+              if (currentState === BuzzerState.FROZEN) {
+                console.log(`🔄 [Player] Clue completed but staying frozen`);
+                return BuzzerState.FROZEN;
+              }
+              return BuzzerState.LOCKED;
+            });
             setReactionTime(null);
 
             // Clear the dynamic display window
@@ -730,15 +744,45 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
       setBuzzerState(BuzzerState.FROZEN);
       console.log("❄️ Player buzzed too early - frozen!");
 
-      // Broadcast frozen state to all clients
+      // Broadcast frozen state to all clients and update database
       if (currentClue && user) {
         const playerNickname = players.find((p) => p.id === user.id)?.name ?? 'Unknown';
+
+        // Broadcast immediately for instant UI update
         void BroadcastService.broadcastPlayerFrozen(
           gameId,
           currentClue.id,
           user.id,
           playerNickname
         );
+
+        // Update database in background (database as final arbiter)
+        void (async () => {
+          try {
+            // Get current locked-out players
+            const { data: clueData } = await supabase
+              .from('clues')
+              .select('locked_out_player_ids')
+              .eq('id', currentClue.id)
+              .single();
+
+            const currentLockedOut = clueData?.locked_out_player_ids ?? [];
+
+            // Add this player if not already in the list
+            if (!currentLockedOut.includes(user.id)) {
+              const updatedLockedOut = [...currentLockedOut, user.id];
+
+              await supabase
+                .from('clues')
+                .update({ locked_out_player_ids: updatedLockedOut })
+                .eq('id', currentClue.id);
+
+              console.log(`❄️ Added ${user.id} to locked_out_player_ids for clue ${currentClue.id}`);
+            }
+          } catch (err) {
+            console.error('❌ Failed to update locked_out_player_ids:', err);
+          }
+        })();
       }
     }
   }, [buzzerState, user, currentClue, gameId, buzzerUnlockTime, players]);
@@ -920,12 +964,14 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
       // ONLY apply database override to LOCK the buzzer (recovery scenario)
       // NEVER unlock based on database - broadcasts handle that
+      // NEVER override FROZEN state - it must persist
       if (isLocked && buzzerState === BuzzerState.UNLOCKED) {
         console.log("🔄 [Player] Database override: locking buzzer (recovery)");
         setBuzzerState(BuzzerState.LOCKED);
         setReactionTime(null);
         setBuzzerUnlockTime(null);
       }
+      // Note: We intentionally do NOT override FROZEN state
       // Note: We intentionally do NOT unlock based on database state
       // All unlocking is handled by broadcasts for real-time responsiveness
     };
@@ -959,14 +1005,28 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
         if (isNewClue) {
           const clueInfo = await loadClueData(game.focused_clue_id);
           setFocusedClue(clueInfo);
-          setBuzzerState(BuzzerState.LOCKED);
+          // Preserve FROZEN state when clue changes
+          setBuzzerState((currentState) => {
+            if (currentState === BuzzerState.FROZEN) {
+              console.log(`🔄 [Player] New clue but staying frozen`);
+              return BuzzerState.FROZEN;
+            }
+            return BuzzerState.LOCKED;
+          });
           setReactionTime(null);
         }
       } else if (focusedClue) {
         // Clear focused clue if game doesn't have one
         setFocusedClue(null);
         setCurrentClue(null);
-        setBuzzerState(BuzzerState.LOCKED);
+        // Preserve FROZEN state when clearing clue
+        setBuzzerState((currentState) => {
+          if (currentState === BuzzerState.FROZEN) {
+            console.log(`🔄 [Player] Clearing clue but staying frozen`);
+            return BuzzerState.FROZEN;
+          }
+          return BuzzerState.LOCKED;
+        });
         setReactionTime(null);
       }
     };
