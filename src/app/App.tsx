@@ -200,7 +200,7 @@ export function App() {
         return
       }
 
-      if (playerRecords && playerRecords.games) {
+      if (playerRecords?.games) {
         const gameStatus = playerRecords.games.status
         console.log('🎯 Player already in active game, redirecting to lobby:', playerRecords.game_id)
         setPlayerGameId(playerRecords.game_id)
